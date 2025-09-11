@@ -41,19 +41,28 @@ class MainViewModel @Inject constructor(
     val enabledDeckIds = settingsRepository.settings
         .map { it.enabledDeckIds }
         .stateIn(viewModelScope, SharingStarted.Lazily, emptySet())
+    val trustedSources = settingsRepository.settings
+        .map { it.trustedSources }
+        .stateIn(viewModelScope, SharingStarted.Lazily, emptySet())
+
+    private val _downloadStatus = MutableStateFlow<String?>(null)
+    val downloadStatus: StateFlow<String?> = _downloadStatus.asStateFlow()
 
     init {
         viewModelScope.launch {
             val words = withContext(Dispatchers.IO) {
                 val content = context.assets.open("decks/sample_en.json").bufferedReader().use { it.readText() }
                 deckRepository.importJson(content)
-                // Ensure the bundled sample deck is enabled by default
-                // If user has no enabled decks yet, enable the sample.
-                // Non-blocking best-effort; ignore errors.
-                try {
-                    settingsRepository.setEnabledDeckIds(setOf("sample_en"))
-                } catch (_: Throwable) {}
-                wordDao.getWordTexts("sample_en")
+                // Prepare enabled deck ids
+                val s0 = settingsRepository.settings.first()
+                val initialEnabled = if (s0.enabledDeckIds.isEmpty()) setOf("sample_en") else s0.enabledDeckIds
+                if (s0.enabledDeckIds.isEmpty()) {
+                    try { settingsRepository.setEnabledDeckIds(initialEnabled) } catch (_: Throwable) {}
+                }
+                // Fetch words for enabled decks in preferred language
+                val language = s0.languagePreference
+                val allowNSFW = s0.allowNSFW
+                if (initialEnabled.isEmpty()) emptyList() else wordDao.getWordTextsForDecks(initialEnabled.toList(), language, allowNSFW)
             }
             val e = DefaultGameEngine(words, viewModelScope)
             _engine.value = e
@@ -75,6 +84,37 @@ class MainViewModel @Inject constructor(
             val current = settingsRepository.settings.first().enabledDeckIds.toMutableSet()
             if (enabled) current += id else current -= id
             settingsRepository.setEnabledDeckIds(current)
+        }
+    }
+
+    fun addTrustedSource(originOrHost: String) {
+        viewModelScope.launch {
+            val cur = settingsRepository.settings.first().trustedSources.toMutableSet()
+            cur += originOrHost.trim()
+            settingsRepository.setTrustedSources(cur)
+        }
+    }
+
+    fun removeTrustedSource(entry: String) {
+        viewModelScope.launch {
+            val cur = settingsRepository.settings.first().trustedSources.toMutableSet()
+            cur -= entry
+            settingsRepository.setTrustedSources(cur)
+        }
+    }
+
+    fun downloadPackFromUrl(url: String, expectedSha256: String?) {
+        viewModelScope.launch {
+            _downloadStatus.value = "Downloading…"
+            try {
+                val bytes = withContext(Dispatchers.IO) { downloader.download(url.trim(), expectedSha256?.trim().takeUnless { it.isNullOrEmpty() }) }
+                // Try JSON first
+                val text = bytes.toString(Charsets.UTF_8)
+                withContext(Dispatchers.IO) { deckRepository.importJson(text) }
+                _downloadStatus.value = "Imported deck from URL"
+            } catch (t: Throwable) {
+                _downloadStatus.value = "Failed: ${t.message}"
+            }
         }
     }
 }
