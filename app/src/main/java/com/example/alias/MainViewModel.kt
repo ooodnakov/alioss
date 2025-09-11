@@ -10,6 +10,7 @@ import com.example.alias.domain.DefaultGameEngine
 import com.example.alias.domain.GameEngine
 import com.example.alias.domain.MatchConfig
 import com.example.alias.data.settings.SettingsRepository
+import com.example.alias.data.settings.Settings
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -44,6 +45,8 @@ class MainViewModel @Inject constructor(
     val trustedSources = settingsRepository.settings
         .map { it.trustedSources }
         .stateIn(viewModelScope, SharingStarted.Lazily, emptySet())
+    val settings = settingsRepository.settings
+        .stateIn(viewModelScope, SharingStarted.Lazily, Settings())
 
     private val _downloadStatus = MutableStateFlow<String?>(null)
     val downloadStatus: StateFlow<String?> = _downloadStatus.asStateFlow()
@@ -121,6 +124,35 @@ class MainViewModel @Inject constructor(
             } catch (t: Throwable) {
                 _downloadStatus.value = "Failed: ${t.message}"
             }
+        }
+    }
+
+    fun updateSettings(roundSeconds: Int, targetWords: Int, maxSkips: Int, penaltyPerSkip: Int, language: String) {
+        viewModelScope.launch {
+            settingsRepository.updateRoundSeconds(roundSeconds)
+            settingsRepository.updateTargetWords(targetWords)
+            settingsRepository.updateSkipPolicy(maxSkips, penaltyPerSkip)
+            runCatching { settingsRepository.updateLanguagePreference(language) }
+        }
+    }
+
+    fun restartMatch() {
+        viewModelScope.launch {
+            val s = settingsRepository.settings.first()
+            val words = withContext(Dispatchers.IO) {
+                val enabled = s.enabledDeckIds
+                if (enabled.isEmpty()) emptyList() else wordDao.getWordTextsForDecks(enabled.toList(), s.languagePreference, s.allowNSFW)
+            }
+            val e = DefaultGameEngine(words, viewModelScope)
+            _engine.value = e
+            val config = MatchConfig(
+                targetWords = s.targetWords,
+                maxSkips = s.maxSkips,
+                penaltyPerSkip = s.penaltyPerSkip,
+                roundSeconds = s.roundSeconds
+            )
+            val seed = java.security.SecureRandom().nextLong()
+            e.startMatch(config, teams = listOf("Red", "Blue"), seed = seed)
         }
     }
 }
