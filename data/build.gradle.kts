@@ -42,4 +42,16 @@ dependencies {
 
     implementation("com.google.dagger:hilt-android:2.51")
     kapt("com.google.dagger:hilt-compiler:2.51")
+
+    // Preferences DataStore for local settings
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
+
+    testImplementation(kotlin("test"))
+
+    // HTTP client for manual pack downloads
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+
+    // Test utilities for HTTP
+    testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
+    testImplementation("com.squareup.okhttp3:okhttp-tls:4.12.0")
 }
