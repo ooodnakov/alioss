@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.alias.data.DeckRepository
 import com.example.alias.data.db.WordDao
+import com.example.alias.data.download.PackDownloader
 import com.example.alias.domain.DefaultGameEngine
 import com.example.alias.domain.GameEngine
 import com.example.alias.domain.MatchConfig
@@ -29,6 +30,7 @@ class MainViewModel @Inject constructor(
     private val deckRepository: DeckRepository,
     private val wordDao: WordDao,
     private val settingsRepository: SettingsRepository,
+    private val downloader: PackDownloader,
 ) : ViewModel() {
     private val _engine = MutableStateFlow<GameEngine?>(null)
     val engine: StateFlow<GameEngine?> = _engine.asStateFlow()
