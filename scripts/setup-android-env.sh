@@ -9,7 +9,7 @@ SDK_DIR="$HOME/android-sdk"
 CMD_TOOLS_ZIP="https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip"
 
 if ! command -v java >/dev/null 2>&1; then
-  echo "Installing JDK..."
+  echo "Installing JDK 21..."
   sudo apt-get update -y
   sudo apt-get install -y openjdk-21-jdk curl unzip
 fi
