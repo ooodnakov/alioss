@@ -59,6 +59,19 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
+private fun HomeScreen(onQuickPlay: () -> Unit, onDecks: () -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxSize().padding(24.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Button(onClick = onQuickPlay, modifier = Modifier.fillMaxWidth()) { Text("Quick Play") }
+        Spacer(Modifier.height(16.dp))
+        Button(onClick = onDecks, modifier = Modifier.fillMaxWidth()) { Text("Decks") }
+    }
+}
+
+@Composable
 private fun GameScreen(engine: GameEngine) {
     val state by engine.state.collectAsState()
     when (val s = state) {
@@ -99,6 +112,37 @@ private fun GameScreen(engine: GameEngine) {
             ) {
                 Text("Match over")
                 Text("Scores: ${s.scores}")
+            }
+        }
+    }
+}
+
+@Composable
+private fun DecksScreen(vm: MainViewModel) {
+    val decks by vm.decks.collectAsState()
+    val enabled by vm.enabledDeckIds.collectAsState()
+    Column(
+        modifier = Modifier.fillMaxSize().padding(16.dp)
+    ) {
+        Text("Decks", style = MaterialTheme.typography.headlineSmall)
+        Spacer(Modifier.height(16.dp))
+        if (decks.isEmpty()) {
+            Text("No decks installed")
+        } else {
+            decks.forEach { deck ->
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text(deck.name)
+                        Text(deck.language, style = MaterialTheme.typography.bodySmall)
+                    }
+                    val isEnabled = enabled.contains(deck.id)
+                    Button(onClick = { vm.setDeckEnabled(deck.id, !isEnabled) }) {
+                        Text(if (isEnabled) "Disable" else "Enable")
+                    }
+                }
             }
         }
     }
