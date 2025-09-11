@@ -6,7 +6,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlin.random.Random
 
 /**
@@ -30,43 +34,60 @@ class DefaultGameEngine(
     private var skipsRemaining: Int = 0
     private var timeRemaining: Int = 0
     private var timerJob: Job? = null
+    private val mutex = Mutex()
 
     override fun startMatch(config: MatchConfig, teams: List<String>, seed: Long) {
-        this.config = config
-        this.teams = teams
-        queue = words.shuffled(Random(seed)).toMutableList()
-        scores.clear()
-        teams.forEach { scores[it] = 0 }
-        processed = 0
-        currentTeam = 0
-        startTurn()
+        runBlocking {
+            mutex.withLock {
+                this@DefaultGameEngine.config = config
+                this@DefaultGameEngine.teams = teams
+                queue = words.shuffled(Random(seed)).toMutableList()
+                scores.clear()
+                teams.forEach { scores[it] = 0 }
+                processed = 0
+                currentTeam = 0
+                startTurnLocked()
+            }
+        }
     }
 
     override fun correct() {
-        if (_state.value !is GameState.TurnActive) return
-        turnScore++
-        processed++
-        advance()
+        runBlocking {
+            mutex.withLock {
+                if (_state.value !is GameState.TurnActive) return@withLock
+                turnScore++
+                processed++
+                advanceLocked()
+            }
+        }
     }
 
     override fun skip() {
-        if (_state.value !is GameState.TurnActive) return
-        if (skipsRemaining <= 0) return
-        skipsRemaining--
-        turnScore -= config.penaltyPerSkip
-        processed++
-        advance()
+        runBlocking {
+            mutex.withLock {
+                if (_state.value !is GameState.TurnActive) return@withLock
+                if (skipsRemaining <= 0) return@withLock
+                skipsRemaining--
+                turnScore -= config.penaltyPerSkip
+                processed++
+                advanceLocked()
+            }
+        }
     }
 
     override fun nextTurn() {
-        if (_state.value !is GameState.TurnFinished) return
-        currentTeam = (currentTeam + 1) % teams.size
-        startTurn()
+        runBlocking {
+            mutex.withLock {
+                if (_state.value !is GameState.TurnFinished) return@withLock
+                currentTeam = (currentTeam + 1) % teams.size
+                startTurnLocked()
+            }
+        }
     }
 
-    private fun startTurn() {
+    private suspend fun startTurnLocked() {
         if (processed >= config.targetWords || queue.isEmpty()) {
-            finishMatch()
+            finishMatchLocked()
             return
         }
         skipsRemaining = config.maxSkips
@@ -74,48 +95,50 @@ class DefaultGameEngine(
         turnScore = 0
         timerJob?.cancel()
         timerJob = scope.launch { tickTimer() }
-        advance()
+        advanceLocked()
     }
 
-    private fun advance() {
+    private suspend fun advanceLocked() {
         if (processed >= config.targetWords || queue.isEmpty()) {
-            finishTurn()
+            finishTurnLocked()
             return
         }
         val next = queue.removeFirst()
         val remaining = config.targetWords - processed
         val team = teams[currentTeam]
-        val totalScore = scores[team]!! + turnScore
-        _state.value = GameState.TurnActive(team, next, remaining, totalScore, skipsRemaining, timeRemaining)
+        val totalScore = scores.getOrDefault(team, 0) + turnScore
+        _state.update { GameState.TurnActive(team, next, remaining, totalScore, skipsRemaining, timeRemaining) }
     }
 
-    private fun finishTurn() {
+    private suspend fun finishTurnLocked() {
         timerJob?.cancel()
         val team = teams[currentTeam]
-        scores[team] = scores[team]!! + turnScore
+        scores[team] = scores.getOrDefault(team, 0) + turnScore
         if (processed >= config.targetWords || queue.isEmpty()) {
-            finishMatch()
+            finishMatchLocked()
         } else {
-            _state.value = GameState.TurnFinished(team, turnScore, scores.toMap())
+            _state.update { GameState.TurnFinished(team, turnScore, scores.toMap()) }
         }
     }
 
-    private fun finishMatch() {
+    private suspend fun finishMatchLocked() {
         timerJob?.cancel()
-        _state.value = GameState.MatchFinished(scores.toMap())
+        _state.update { GameState.MatchFinished(scores.toMap()) }
     }
 
     private suspend fun tickTimer() {
-        while (timeRemaining > 0) {
+        while (true) {
             delay(1000)
-            timeRemaining--
-            val current = _state.value
-            if (current is GameState.TurnActive) {
-                _state.value = current.copy(timeRemaining = timeRemaining)
+            mutex.withLock {
+                if (timeRemaining <= 0) return@withLock
+                timeRemaining--
+                _state.update { current ->
+                    if (current is GameState.TurnActive) current.copy(timeRemaining = timeRemaining) else current
+                }
+                if (timeRemaining <= 0 && _state.value is GameState.TurnActive) {
+                    finishTurnLocked()
+                }
             }
-        }
-        if (_state.value is GameState.TurnActive) {
-            finishTurn()
         }
     }
 }

@@ -18,10 +18,16 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlin {
-        jvmToolchain(21)
+        jvmToolchain(17)
     }
     kotlinOptions {
         jvmTarget = "17"
+    }
+}
+
+kapt {
+    arguments {
+        arg("room.schemaLocation", "$projectDir/schemas")
     }
 }
 

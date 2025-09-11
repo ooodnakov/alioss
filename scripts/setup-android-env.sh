@@ -5,6 +5,7 @@ set -euo pipefail
 
 REPO_ROOT="$(pwd)"
 SDK_DIR="$HOME/android-sdk"
+# NOTE: Update this URL when a new command line tools version is released.
 CMD_TOOLS_ZIP="https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip"
 
 if ! command -v java >/dev/null 2>&1; then
