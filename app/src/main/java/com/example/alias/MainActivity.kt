@@ -40,7 +40,8 @@ class MainActivity : ComponentActivity() {
                         composable("home") {
                             HomeScreen(
                                 onQuickPlay = { nav.navigate("game") },
-                                onDecks = { nav.navigate("decks") }
+                                onDecks = { nav.navigate("decks") },
+                                onSettings = { nav.navigate("settings") }
                             )
                         }
                         composable("game") {
@@ -50,11 +51,14 @@ class MainActivity : ComponentActivity() {
                                     Text("Loading…")
                                 }
                             } else {
-                                GameScreen(engine!!)
+                                GameScreen(engine!!, onRestart = { vm.restartMatch() })
                             }
                         }
                         composable("decks") {
                             DecksScreen(vm = vm)
+                        }
+                        composable("settings") {
+                            SettingsScreen(vm = vm, onBack = { nav.popBackStack() })
                         }
                     }
                 }
@@ -64,7 +68,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun HomeScreen(onQuickPlay: () -> Unit, onDecks: () -> Unit) {
+private fun HomeScreen(onQuickPlay: () -> Unit, onDecks: () -> Unit, onSettings: () -> Unit) {
     Column(
         modifier = Modifier.fillMaxSize().padding(24.dp),
         verticalArrangement = Arrangement.Center,
@@ -196,5 +200,39 @@ private fun DecksScreen(vm: MainViewModel) {
                 if (newTrusted.isNotBlank()) { vm.addTrustedSource(newTrusted.trim()); newTrusted = "" }
             }) { Text("Add") }
         }
+    }
+}
+
+@Composable
+private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit) {
+    val s by vm.settings.collectAsState()
+    var round by rememberSaveable(s) { mutableStateOf(s.roundSeconds.toString()) }
+    var target by rememberSaveable(s) { mutableStateOf(s.targetWords.toString()) }
+    var maxSkips by rememberSaveable(s) { mutableStateOf(s.maxSkips.toString()) }
+    var penalty by rememberSaveable(s) { mutableStateOf(s.penaltyPerSkip.toString()) }
+    var lang by rememberSaveable(s) { mutableStateOf(s.languagePreference) }
+
+    Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text("Settings", style = MaterialTheme.typography.headlineSmall)
+        TextField(value = round, onValueChange = { round = it }, label = { Text("Round seconds") }, modifier = Modifier.fillMaxWidth())
+        TextField(value = target, onValueChange = { target = it }, label = { Text("Target words") }, modifier = Modifier.fillMaxWidth())
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            TextField(value = maxSkips, onValueChange = { maxSkips = it }, label = { Text("Max skips") }, modifier = Modifier.weight(1f))
+            TextField(value = penalty, onValueChange = { penalty = it }, label = { Text("Penalty/skip") }, modifier = Modifier.weight(1f))
+        }
+        TextField(value = lang, onValueChange = { lang = it }, label = { Text("Language (e.g., en, ru)") }, modifier = Modifier.fillMaxWidth())
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(onClick = {
+                vm.updateSettings(
+                    roundSeconds = round.toIntOrNull() ?: s.roundSeconds,
+                    targetWords = target.toIntOrNull() ?: s.targetWords,
+                    maxSkips = maxSkips.toIntOrNull() ?: s.maxSkips,
+                    penaltyPerSkip = penalty.toIntOrNull() ?: s.penaltyPerSkip,
+                    language = lang.ifBlank { s.languagePreference }
+                )
+            }, modifier = Modifier.weight(1f)) { Text("Save") }
+            Button(onClick = { vm.restartMatch(); onBack() }, modifier = Modifier.weight(1f)) { Text("Save & Restart") }
+        }
+        Button(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("Back") }
     }
 }
