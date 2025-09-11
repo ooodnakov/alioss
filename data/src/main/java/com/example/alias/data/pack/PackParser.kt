@@ -43,6 +43,16 @@ object PackParser {
 
     fun fromJson(content: String): ParsedPack {
         val dto = json.decodeFromString<PackDto>(content)
+        // Basic input validation to avoid malformed or oversized packs.
+        PackValidator.validateFormat(dto.format)
+        PackValidator.validateDeck(
+            id = dto.deck.id,
+            language = dto.deck.language,
+            name = dto.deck.name,
+            version = dto.deck.version,
+            isNSFW = dto.deck.isNsfw
+        )
+        PackValidator.validateWordCount(dto.words.size)
         val deckEntity = DeckEntity(
             id = dto.deck.id,
             name = dto.deck.name,
@@ -53,6 +63,12 @@ object PackParser {
             updatedAt = dto.deck.updatedAt
         )
         val wordEntities = dto.words.map { word ->
+            PackValidator.validateWord(
+                text = word.text,
+                difficulty = word.difficulty,
+                category = word.category,
+                tabooStems = word.tabooStems
+            )
             WordEntity(
                 deckId = dto.deck.id,
                 text = word.text,
