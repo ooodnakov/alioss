@@ -51,8 +51,14 @@ class MainViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             val words = withContext(Dispatchers.IO) {
-                val content = context.assets.open("decks/sample_en.json").bufferedReader().use { it.readText() }
-                deckRepository.importJson(content)
+                // Import all bundled JSON decks from assets/decks/
+                val assetFiles = context.assets.list("decks")?.filter { it.endsWith(".json") } ?: emptyList()
+                for (f in assetFiles) {
+                    runCatching {
+                        val content = context.assets.open("decks/$f").bufferedReader().use { it.readText() }
+                        deckRepository.importJson(content)
+                    }
+                }
                 // Prepare enabled deck ids
                 val s0 = settingsRepository.settings.first()
                 val initialEnabled = if (s0.enabledDeckIds.isEmpty()) setOf("sample_en") else s0.enabledDeckIds
