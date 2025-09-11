@@ -3,9 +3,7 @@ package com.example.alias
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -15,10 +13,14 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.example.alias.domain.GameEngine
 import com.example.alias.domain.GameState
 import dagger.hilt.android.AndroidEntryPoint
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -27,12 +29,28 @@ class MainActivity : ComponentActivity() {
         setContent {
             AliasAppTheme {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                    val nav = rememberNavController()
                     val vm: MainViewModel = hiltViewModel()
-                    val engine by vm.engine.collectAsState()
-                    if (engine == null) {
-                        Text("Loading…")
-                    } else {
-                        GameScreen(engine!!)
+                    NavHost(navController = nav, startDestination = "home") {
+                        composable("home") {
+                            HomeScreen(
+                                onQuickPlay = { nav.navigate("game") },
+                                onDecks = { nav.navigate("decks") }
+                            )
+                        }
+                        composable("game") {
+                            val engine by vm.engine.collectAsState()
+                            if (engine == null) {
+                                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                    Text("Loading…")
+                                }
+                            } else {
+                                GameScreen(engine!!)
+                            }
+                        }
+                        composable("decks") {
+                            DecksScreen(vm = vm)
+                        }
                     }
                 }
             }
