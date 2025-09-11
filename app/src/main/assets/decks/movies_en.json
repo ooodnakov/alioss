@@ -1,0 +1,49 @@
+{
+  "format": "alias-deck@1",
+  "deck": {
+    "id": "movies_en_v1",
+    "name": "Movies (EN)",
+    "language": "en",
+    "version": 1,
+    "categories": ["movies"],
+    "isNSFW": false
+  },
+  "words": [
+    {"text": "Director", "difficulty": 2, "category": "movies"},
+    {"text": "Actor", "difficulty": 1, "category": "movies"},
+    {"text": "Scene", "difficulty": 1, "category": "movies"},
+    {"text": "Script", "difficulty": 2, "category": "movies"},
+    {"text": "Camera", "difficulty": 1, "category": "movies"},
+    {"text": "Studio", "difficulty": 2, "category": "movies"},
+    {"text": "Trailer", "difficulty": 1, "category": "movies"},
+    {"text": "Premiere", "difficulty": 2, "category": "movies"},
+    {"text": "Sequel", "difficulty": 2, "category": "movies"},
+    {"text": "Villain", "difficulty": 2, "category": "movies"},
+    {"text": "Hero", "difficulty": 1, "category": "movies"},
+    {"text": "Soundtrack", "difficulty": 2, "category": "movies"},
+    {"text": "Credits", "difficulty": 1, "category": "movies"},
+    {"text": "Ticket", "difficulty": 1, "category": "movies"},
+    {"text": "Popcorn", "difficulty": 1, "category": "movies"},
+    {"text": "Stunt", "difficulty": 2, "category": "movies"},
+    {"text": "Costume", "difficulty": 1, "category": "movies"},
+    {"text": "Make-up", "difficulty": 2, "category": "movies"},
+    {"text": "Animation", "difficulty": 2, "category": "movies"},
+    {"text": "Documentary", "difficulty": 2, "category": "movies"},
+    {"text": "Comedy", "difficulty": 1, "category": "movies"},
+    {"text": "Drama", "difficulty": 1, "category": "movies"},
+    {"text": "Thriller", "difficulty": 2, "category": "movies"},
+    {"text": "Horror", "difficulty": 2, "category": "movies"},
+    {"text": "Romance", "difficulty": 1, "category": "movies"},
+    {"text": "Blockbuster", "difficulty": 2, "category": "movies"},
+    {"text": "Cameo", "difficulty": 2, "category": "movies"},
+    {"text": "Spoiler", "difficulty": 1, "category": "movies"},
+    {"text": "Trilogy", "difficulty": 2, "category": "movies"},
+    {"text": "Box office", "difficulty": 2, "category": "movies"}
+  ],
+  "meta": {
+    "license": "CC0-1.0",
+    "attribution": "Community",
+    "stemsProvided": false
+  }
+}
+
