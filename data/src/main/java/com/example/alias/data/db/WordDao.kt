@@ -12,4 +12,16 @@ interface WordDao {
 
     @Query("SELECT text FROM words WHERE deckId = :deckId")
     suspend fun getWordTexts(deckId: String): List<String>
+
+    @Query(
+        "SELECT text FROM words " +
+            "WHERE deckId IN (:deckIds) " +
+            "AND language = :language " +
+            "AND (:allowNSFW = 1 OR isNSFW = 0)"
+    )
+    suspend fun getWordTextsForDecks(
+        deckIds: List<String>,
+        language: String,
+        allowNSFW: Boolean,
+    ): List<String>
 }
