@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Installs JDK and Android SDK command line tools, then builds project.
 # Designed for fresh Ubuntu/Debian-like environments.
-set -euo pipefail
+# set -euo pipefail
 
 REPO_ROOT="$(pwd)"
 SDK_DIR="$HOME/android-sdk"
