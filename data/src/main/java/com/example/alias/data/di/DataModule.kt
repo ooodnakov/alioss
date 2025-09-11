@@ -30,6 +30,6 @@ object DataModule {
 
     @Provides
     @Singleton
-    fun provideDeckRepository(deckDao: DeckDao, wordDao: WordDao): DeckRepository =
-        DeckRepositoryImpl(deckDao, wordDao)
+    fun provideDeckRepository(db: AliasDatabase, deckDao: DeckDao, wordDao: WordDao): DeckRepository =
+        DeckRepositoryImpl(db, deckDao, wordDao)
 }

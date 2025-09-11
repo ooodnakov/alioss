@@ -1,5 +1,7 @@
 package com.example.alias.data
 
+import androidx.room.withTransaction
+import com.example.alias.data.db.AliasDatabase
 import com.example.alias.data.db.DeckDao
 import com.example.alias.data.db.DeckEntity
 import com.example.alias.data.db.WordDao
@@ -16,6 +18,7 @@ interface DeckRepository {
 }
 
 class DeckRepositoryImpl(
+    private val db: AliasDatabase,
     private val deckDao: DeckDao,
     private val wordDao: WordDao
 ) : DeckRepository {
@@ -23,7 +26,9 @@ class DeckRepositoryImpl(
 
     override suspend fun importJson(content: String) {
         val parsed = PackParser.fromJson(content)
-        deckDao.insertDecks(listOf(parsed.deck))
-        wordDao.insertWords(parsed.words)
+        db.withTransaction {
+            deckDao.insertDecks(listOf(parsed.deck))
+            wordDao.insertWords(parsed.words)
+        }
     }
 }

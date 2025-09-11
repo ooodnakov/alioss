@@ -6,7 +6,7 @@ import androidx.room.RoomDatabase
 @Database(
     entities = [DeckEntity::class, WordEntity::class],
     version = 1,
-    exportSchema = false,
+    exportSchema = true,
 )
 abstract class AliasDatabase : RoomDatabase() {
     abstract fun deckDao(): DeckDao

@@ -7,6 +7,7 @@ import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlin.test.assertIs
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class DefaultGameEngineTest {
@@ -48,16 +49,16 @@ class DefaultGameEngineTest {
         val engine = DefaultGameEngine(listOf("a", "b", "c"), this)
         engine.startMatch(config, teams = listOf("t"), seed = 0L)
 
-        var s = engine.state.value as GameState.TurnActive
+        var s = assertIs<GameState.TurnActive>(engine.state.value)
         assertEquals(1, s.skipsRemaining)
 
         engine.skip()
-        s = engine.state.value as GameState.TurnActive
+        s = assertIs<GameState.TurnActive>(engine.state.value)
         assertEquals(0, s.skipsRemaining)
         assertEquals(-1, s.score)
 
         engine.skip() // should be ignored
-        s = engine.state.value as GameState.TurnActive
+        s = assertIs<GameState.TurnActive>(engine.state.value)
         assertEquals(0, s.skipsRemaining)
         assertEquals(-1, s.score)
     }
@@ -83,12 +84,12 @@ class DefaultGameEngineTest {
         // let timer expire for first team
         advanceTimeBy(1000)
         runCurrent()
-        val finished = engine.state.value as GameState.TurnFinished
+        val finished = assertIs<GameState.TurnFinished>(engine.state.value)
         assertEquals("A", finished.team)
         assertEquals(0, finished.deltaScore)
 
         engine.nextTurn()
-        val active = engine.state.value as GameState.TurnActive
+        val active = assertIs<GameState.TurnActive>(engine.state.value)
         assertEquals("B", active.team)
     }
 }
