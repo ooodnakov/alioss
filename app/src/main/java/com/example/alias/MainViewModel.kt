@@ -8,6 +8,7 @@ import com.example.alias.data.db.WordDao
 import com.example.alias.domain.DefaultGameEngine
 import com.example.alias.domain.GameEngine
 import com.example.alias.domain.MatchConfig
+import com.example.alias.data.settings.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
