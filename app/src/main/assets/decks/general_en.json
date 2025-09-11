@@ -1,0 +1,49 @@
+{
+  "format": "alias-deck@1",
+  "deck": {
+    "id": "general_en_v1",
+    "name": "General (EN)",
+    "language": "en",
+    "version": 1,
+    "categories": ["general"],
+    "isNSFW": false
+  },
+  "words": [
+    {"text": "Apple", "difficulty": 1, "category": "general"},
+    {"text": "River", "difficulty": 1, "category": "general"},
+    {"text": "Mountain", "difficulty": 1, "category": "general"},
+    {"text": "Teacher", "difficulty": 1, "category": "general"},
+    {"text": "Bicycle", "difficulty": 1, "category": "general"},
+    {"text": "Computer", "difficulty": 2, "category": "general"},
+    {"text": "Library", "difficulty": 2, "category": "general"},
+    {"text": "Music", "difficulty": 1, "category": "general"},
+    {"text": "Painting", "difficulty": 2, "category": "general"},
+    {"text": "Football", "difficulty": 1, "category": "general"},
+    {"text": "Airplane", "difficulty": 2, "category": "general"},
+    {"text": "Hospital", "difficulty": 2, "category": "general"},
+    {"text": "Garden", "difficulty": 1, "category": "general"},
+    {"text": "Ocean", "difficulty": 2, "category": "general"},
+    {"text": "Camera", "difficulty": 2, "category": "general"},
+    {"text": "Newspaper", "difficulty": 2, "category": "general"},
+    {"text": "Restaurant", "difficulty": 2, "category": "general"},
+    {"text": "Sandwich", "difficulty": 1, "category": "general"},
+    {"text": "Chocolate", "difficulty": 1, "category": "general"},
+    {"text": "Umbrella", "difficulty": 1, "category": "general"},
+    {"text": "Suitcase", "difficulty": 2, "category": "general"},
+    {"text": "Mirror", "difficulty": 1, "category": "general"},
+    {"text": "Ladder", "difficulty": 2, "category": "general"},
+    {"text": "Pillow", "difficulty": 1, "category": "general"},
+    {"text": "Bottle", "difficulty": 1, "category": "general"},
+    {"text": "Candle", "difficulty": 1, "category": "general"},
+    {"text": "Bridge", "difficulty": 2, "category": "general"},
+    {"text": "Forest", "difficulty": 1, "category": "general"},
+    {"text": "Island", "difficulty": 2, "category": "general"},
+    {"text": "Robot", "difficulty": 2, "category": "general"}
+  ],
+  "meta": {
+    "license": "CC0-1.0",
+    "attribution": "Community",
+    "stemsProvided": false
+  }
+}
+
