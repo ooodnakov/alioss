@@ -37,6 +37,7 @@ sealed interface GameState {
         val score: Int,
         val skipsRemaining: Int,
         val timeRemaining: Int,
+        val totalSeconds: Int,
     ) : GameState
 
     /** A team's turn has ended and awaits the next team. */

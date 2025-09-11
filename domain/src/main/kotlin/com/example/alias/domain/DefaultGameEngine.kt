@@ -107,7 +107,7 @@ class DefaultGameEngine(
         val remaining = config.targetWords - processed
         val team = teams[currentTeam]
         val totalScore = scores.getOrDefault(team, 0) + turnScore
-        _state.update { GameState.TurnActive(team, next, remaining, totalScore, skipsRemaining, timeRemaining) }
+        _state.update { GameState.TurnActive(team, next, remaining, totalScore, skipsRemaining, timeRemaining, config.roundSeconds) }
     }
 
     private suspend fun finishTurnLocked() {
