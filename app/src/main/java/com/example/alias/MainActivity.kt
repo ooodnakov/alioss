@@ -19,6 +19,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.ui.text.style.TextAlign
 import com.example.alias.domain.GameEngine
 import com.example.alias.domain.GameState
 import dagger.hilt.android.AndroidEntryPoint
@@ -77,28 +79,33 @@ private fun HomeScreen(onQuickPlay: () -> Unit, onDecks: () -> Unit, onSettings:
         Button(onClick = onQuickPlay, modifier = Modifier.fillMaxWidth()) { Text("Quick Play") }
         Spacer(Modifier.height(16.dp))
         Button(onClick = onDecks, modifier = Modifier.fillMaxWidth()) { Text("Decks") }
+        Spacer(Modifier.height(16.dp))
+        Button(onClick = onSettings, modifier = Modifier.fillMaxWidth()) { Text("Settings") }
     }
 }
 
 @Composable
-private fun GameScreen(engine: GameEngine) {
+private fun GameScreen(engine: GameEngine, onRestart: () -> Unit) {
     val state by engine.state.collectAsState()
     when (val s = state) {
         GameState.Idle -> Text("Idle")
         is GameState.TurnActive -> {
+            val progress = if (s.totalSeconds > 0) s.timeRemaining.toFloat() / s.totalSeconds else 0f
             Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.Center,
+                modifier = Modifier.fillMaxSize().padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("Team: ${s.team}")
-                Text(s.word)
-                Text("Remaining: ${s.remaining}")
-                Text("Score: ${s.score}")
-                Text("Skips left: ${s.skipsRemaining}")
-                Text("Time left: ${s.timeRemaining}s")
-                Button(onClick = { engine.correct() }) { Text("Correct") }
-                Button(onClick = { engine.skip() }) { Text("Skip") }
+                LinearProgressIndicator(progress = progress, modifier = Modifier.fillMaxWidth())
+                Text("${s.timeRemaining}s", style = MaterialTheme.typography.headlineLarge, textAlign = TextAlign.Center)
+                Text("Team: ${s.team}", style = MaterialTheme.typography.titleMedium)
+                Text(s.word, style = MaterialTheme.typography.displaySmall, textAlign = TextAlign.Center)
+                Text("Remaining: ${s.remaining} • Score: ${s.score} • Skips: ${s.skipsRemaining}")
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Button(onClick = { engine.correct() }, modifier = Modifier.weight(1f)) { Text("Correct") }
+                    Button(onClick = { engine.skip() }, modifier = Modifier.weight(1f)) { Text("Skip") }
+                }
+                Button(onClick = onRestart, modifier = Modifier.fillMaxWidth()) { Text("Restart Match") }
             }
         }
         is GameState.TurnFinished -> {
@@ -121,6 +128,8 @@ private fun GameScreen(engine: GameEngine) {
             ) {
                 Text("Match over")
                 Text("Scores: ${s.scores}")
+                Text("Start a new match from Settings or Restart.")
+                Button(onClick = onRestart) { Text("Restart Match") }
             }
         }
     }
