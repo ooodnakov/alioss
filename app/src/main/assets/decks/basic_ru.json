@@ -1,0 +1,48 @@
+{
+  "format": "alias-deck@1",
+  "deck": {
+    "id": "basic_ru_v1",
+    "name": "Базовый (RU)",
+    "language": "ru",
+    "version": 1,
+    "categories": ["общие"],
+    "isNSFW": false
+  },
+  "words": [
+    {"text": "Яблоко", "difficulty": 1, "category": "общие"},
+    {"text": "Река", "difficulty": 1, "category": "общие"},
+    {"text": "Гора", "difficulty": 1, "category": "общие"},
+    {"text": "Учитель", "difficulty": 1, "category": "общие"},
+    {"text": "Велосипед", "difficulty": 1, "category": "общие"},
+    {"text": "Компьютер", "difficulty": 2, "category": "общие"},
+    {"text": "Библиотека", "difficulty": 2, "category": "общие"},
+    {"text": "Музыка", "difficulty": 1, "category": "общие"},
+    {"text": "Картина", "difficulty": 2, "category": "общие"},
+    {"text": "Футбол", "difficulty": 1, "category": "общие"},
+    {"text": "Самолёт", "difficulty": 2, "category": "общие"},
+    {"text": "Больница", "difficulty": 2, "category": "общие"},
+    {"text": "Сад", "difficulty": 1, "category": "общие"},
+    {"text": "Океан", "difficulty": 2, "category": "общие"},
+    {"text": "Камера", "difficulty": 2, "category": "общие"},
+    {"text": "Газета", "difficulty": 2, "category": "общие"},
+    {"text": "Ресторан", "difficulty": 2, "category": "общие"},
+    {"text": "Бутерброд", "difficulty": 1, "category": "общие"},
+    {"text": "Шоколад", "difficulty": 1, "category": "общие"},
+    {"text": "Зонт", "difficulty": 1, "category": "общие"},
+    {"text": "Чемодан", "difficulty": 2, "category": "общие"},
+    {"text": "Зеркало", "difficulty": 1, "category": "общие"},
+    {"text": "Лестница", "difficulty": 2, "category": "общие"},
+    {"text": "Подушка", "difficulty": 1, "category": "общие"},
+    {"text": "Бутылка", "difficulty": 1, "category": "общие"},
+    {"text": "Свеча", "difficulty": 1, "category": "общие"},
+    {"text": "Мост", "difficulty": 2, "category": "общие"},
+    {"text": "Лес", "difficulty": 1, "category": "общие"},
+    {"text": "Остров", "difficulty": 2, "category": "общие"}
+  ],
+  "meta": {
+    "license": "CC0-1.0",
+    "attribution": "Community",
+    "stemsProvided": false
+  }
+}
+
