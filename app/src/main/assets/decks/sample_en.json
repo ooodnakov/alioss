@@ -1,0 +1,14 @@
+{
+  "format": "alias-deck@1",
+  "deck": {
+    "id": "sample_en",
+    "name": "Sample (EN)",
+    "language": "en",
+    "isNSFW": false
+  },
+  "words": [
+    { "text": "Director", "difficulty": 1 },
+    { "text": "Producer", "difficulty": 1 },
+    { "text": "Actor", "difficulty": 1 }
+  ]
+}
