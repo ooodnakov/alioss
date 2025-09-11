@@ -8,9 +8,14 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -121,6 +126,11 @@ private fun GameScreen(engine: GameEngine) {
 private fun DecksScreen(vm: MainViewModel) {
     val decks by vm.decks.collectAsState()
     val enabled by vm.enabledDeckIds.collectAsState()
+    val trusted by vm.trustedSources.collectAsState()
+    val status by vm.downloadStatus.collectAsState()
+    var url by rememberSaveable { mutableStateOf("") }
+    var sha by rememberSaveable { mutableStateOf("") }
+    var newTrusted by rememberSaveable { mutableStateOf("") }
     Column(
         modifier = Modifier.fillMaxSize().padding(16.dp)
     ) {
@@ -144,6 +154,47 @@ private fun DecksScreen(vm: MainViewModel) {
                     }
                 }
             }
+        }
+
+        Spacer(Modifier.height(24.dp))
+        Text("Download Pack", style = MaterialTheme.typography.titleMedium)
+        Spacer(Modifier.height(8.dp))
+        TextField(value = url, onValueChange = { url = it }, label = { Text("HTTPS URL") }, modifier = Modifier.fillMaxWidth())
+        Spacer(Modifier.height(8.dp))
+        TextField(value = sha, onValueChange = { sha = it }, label = { Text("Expected SHA-256 (optional)") }, modifier = Modifier.fillMaxWidth())
+        Spacer(Modifier.height(8.dp))
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Button(onClick = { vm.downloadPackFromUrl(url, sha) }) { Text("Download & Import") }
+            Spacer(Modifier.width(12.dp))
+            Button(onClick = {
+                // Add host of URL to trusted list for convenience
+                runCatching {
+                    val host = java.net.URI(url).host ?: ""
+                    if (host.isNotBlank()) vm.addTrustedSource(host)
+                }
+            }) { Text("Trust Host") }
+        }
+        if (!status.isNullOrEmpty()) {
+            Spacer(Modifier.height(8.dp))
+            Text(status!!, color = MaterialTheme.colorScheme.primary)
+        }
+
+        Spacer(Modifier.height(24.dp))
+        Text("Trusted Sources", style = MaterialTheme.typography.titleMedium)
+        Spacer(Modifier.height(8.dp))
+        trusted.forEach { entry ->
+            Row(Modifier.fillMaxWidth().padding(vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(entry, modifier = Modifier.weight(1f))
+                Button(onClick = { vm.removeTrustedSource(entry) }) { Text("Remove") }
+            }
+        }
+        Spacer(Modifier.height(8.dp))
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            TextField(value = newTrusted, onValueChange = { newTrusted = it }, label = { Text("Add host/origin") }, modifier = Modifier.weight(1f))
+            Spacer(Modifier.width(8.dp))
+            Button(onClick = {
+                if (newTrusted.isNotBlank()) { vm.addTrustedSource(newTrusted.trim()); newTrusted = "" }
+            }) { Text("Add") }
         }
     }
 }
