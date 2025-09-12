@@ -22,6 +22,7 @@ interface SettingsRepository {
     suspend fun updateRoundSeconds(value: Int)
     suspend fun updateTargetWords(value: Int)
     suspend fun updateSkipPolicy(maxSkips: Int, penaltyPerSkip: Int)
+    suspend fun updatePunishSkips(value: Boolean)
     suspend fun updateLanguagePreference(language: String)
     suspend fun setEnabledDeckIds(ids: Set<String>)
     suspend fun updateAllowNSFW(value: Boolean)
@@ -45,6 +46,7 @@ data class Settings(
     val targetWords: Int = 20,
     val maxSkips: Int = 3,
     val penaltyPerSkip: Int = 1,
+    val punishSkips: Boolean = true,
     val languagePreference: String = "en",
     val enabledDeckIds: Set<String> = emptySet(),
     val teams: List<String> = DEFAULT_TEAMS,
@@ -66,6 +68,7 @@ class SettingsRepositoryImpl(
             targetWords = p[Keys.TARGET_WORDS] ?: 20,
             maxSkips = p[Keys.MAX_SKIPS] ?: 3,
             penaltyPerSkip = p[Keys.PENALTY_PER_SKIP] ?: 1,
+            punishSkips = p[Keys.PUNISH_SKIPS] ?: true,
             languagePreference = p[Keys.LANGUAGE] ?: "en",
             enabledDeckIds = p[Keys.ENABLED_DECK_IDS] ?: emptySet(),
             teams = p[Keys.TEAMS]?.split("|")?.filter { it.isNotBlank() }?.take(SettingsRepository.MAX_TEAMS)?.let {
@@ -93,6 +96,10 @@ class SettingsRepositoryImpl(
             it[Keys.MAX_SKIPS] = maxSkips.coerceIn(0, 50)
             it[Keys.PENALTY_PER_SKIP] = penaltyPerSkip.coerceIn(0, 10)
         }
+    }
+
+    override suspend fun updatePunishSkips(value: Boolean) {
+        dataStore.edit { it[Keys.PUNISH_SKIPS] = value }
     }
 
     override suspend fun updateLanguagePreference(language: String) {
@@ -146,6 +153,7 @@ class SettingsRepositoryImpl(
         val TARGET_WORDS = intPreferencesKey("target_words")
         val MAX_SKIPS = intPreferencesKey("max_skips")
         val PENALTY_PER_SKIP = intPreferencesKey("penalty_per_skip")
+        val PUNISH_SKIPS = booleanPreferencesKey("punish_skips")
         val LANGUAGE = stringPreferencesKey("language_preference")
         val ENABLED_DECK_IDS = stringSetPreferencesKey("enabled_deck_ids")
         val ALLOW_NSFW = booleanPreferencesKey("allow_nsfw")
