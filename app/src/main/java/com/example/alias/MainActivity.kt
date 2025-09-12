@@ -60,11 +60,21 @@ import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.LibraryBooks
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.CardDefaults
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.graphics.vector.ImageVector
 import kotlinx.coroutines.launch
 import com.example.alias.ui.WordCard
 import com.example.alias.ui.WordCardAction
@@ -149,18 +159,87 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 private fun HomeScreen(onQuickPlay: () -> Unit, onDecks: () -> Unit, onSettings: () -> Unit) {
+    val colors = MaterialTheme.colorScheme
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(24.dp),
-        verticalArrangement = Arrangement.Center,
+        verticalArrangement = Arrangement.spacedBy(20.dp, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Button(onClick = onQuickPlay, modifier = Modifier.fillMaxWidth()) { Text("Quick Play") }
-        Spacer(Modifier.height(16.dp))
-        FilledTonalButton(onClick = onDecks, modifier = Modifier.fillMaxWidth()) { Text("Decks") }
-        Spacer(Modifier.height(16.dp))
-        OutlinedButton(onClick = onSettings, modifier = Modifier.fillMaxWidth()) { Text("Settings") }
+        // App title / branding
+        Text(
+            text = "Alias",
+            style = MaterialTheme.typography.displaySmall,
+            color = colors.primary
+        )
+        Spacer(Modifier.height(8.dp))
+        // Primary actions as sleek cards
+        HomeActionCard(
+            icon = Icons.Filled.PlayArrow,
+            title = "Quick Play",
+            subtitle = "Start a match with current settings",
+            onClick = onQuickPlay,
+            containerColor = colors.primaryContainer,
+            contentColor = colors.onPrimaryContainer
+        )
+        HomeActionCard(
+            icon = Icons.Filled.LibraryBooks,
+            title = "Decks",
+            subtitle = "Manage and import word decks",
+            onClick = onDecks,
+            containerColor = colors.secondaryContainer,
+            contentColor = colors.onSecondaryContainer
+        )
+        HomeActionCard(
+            icon = Icons.Filled.Settings,
+            title = "Settings",
+            subtitle = "Time, teams, language and more",
+            onClick = onSettings,
+            containerColor = colors.tertiaryContainer,
+            contentColor = colors.onTertiaryContainer
+        )
+    }
+}
+
+@Composable
+private fun HomeActionCard(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit,
+    containerColor: Color,
+    contentColor: Color,
+) {
+    ElevatedCard(
+        onClick = onClick,
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = containerColor,
+            contentColor = contentColor
+        ),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 18.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(44.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(icon, contentDescription = null)
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(title, style = MaterialTheme.typography.titleMedium)
+                Spacer(Modifier.height(2.dp))
+                Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = contentColor.copy(alpha = 0.8f))
+            }
+        }
     }
 }
 
@@ -215,6 +294,11 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                 LinearProgressIndicator(progress = { progress }, color = barColor, modifier = Modifier.fillMaxWidth())
                 Text("${s.timeRemaining}s", style = MaterialTheme.typography.headlineLarge, textAlign = TextAlign.Center)
                 Text("Team: ${s.team}", style = MaterialTheme.typography.titleMedium)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    AssistChip(onClick = {}, enabled = false, label = { Text("Remaining ${s.remaining}") })
+                    AssistChip(onClick = {}, enabled = false, label = { Text("Score ${s.score}") })
+                    AssistChip(onClick = {}, enabled = false, label = { Text("Skips ${s.skipsRemaining}") })
+                }
                         val computedNext = engine.peekNextWord()
                         val nextWord = frozenNext ?: computedNext
                         Box(Modifier.fillMaxWidth().height(200.dp)) {
@@ -291,12 +375,12 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                             onClick = onCorrect,
                             enabled = !isProcessing,
                             modifier = Modifier.fillMaxWidth().height(80.dp)
-                        ) { Text("Correct") }
+                        ) { Icon(Icons.Filled.Check, contentDescription = null); Spacer(Modifier.width(8.dp)); Text("Correct") }
                         Button(
                             onClick = onSkip,
                             enabled = !isProcessing && s.skipsRemaining > 0,
                             modifier = Modifier.fillMaxWidth().height(80.dp)
-                        ) { Text("Skip") }
+                        ) { Icon(Icons.Filled.Close, contentDescription = null); Spacer(Modifier.width(8.dp)); Text("Skip") }
                     }
                 } else {
                     val onCorrect = {
@@ -320,12 +404,12 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                             onClick = onCorrect,
                             enabled = !isProcessing,
                             modifier = Modifier.weight(1f).height(60.dp)
-                        ) { Text("Correct") }
+                        ) { Icon(Icons.Filled.Check, contentDescription = null); Spacer(Modifier.width(8.dp)); Text("Correct") }
                         Button(
                             onClick = onSkip,
                             enabled = !isProcessing && s.skipsRemaining > 0,
                             modifier = Modifier.weight(1f).height(60.dp)
-                        ) { Text("Skip") }
+                        ) { Icon(Icons.Filled.Close, contentDescription = null); Spacer(Modifier.width(8.dp)); Text("Skip") }
                     }
                 }
                 Button(onClick = { vm.restartMatch() }, modifier = Modifier.fillMaxWidth()) { Text("Restart Match") }

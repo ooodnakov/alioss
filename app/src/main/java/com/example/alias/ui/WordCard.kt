@@ -146,9 +146,10 @@ fun WordCard(
                     }
                 )
             },
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(20.dp),
         color = MaterialTheme.colorScheme.surface,
-        shadowElevation = 8.dp
+        tonalElevation = 6.dp,
+        shadowElevation = 10.dp
     ) {
         Box(
             modifier = Modifier.fillMaxWidth().height(200.dp),
