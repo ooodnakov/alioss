@@ -35,7 +35,8 @@ class DefaultGameEngine(
     private var timeRemaining: Int = 0
     private var timerJob: Job? = null
     private var currentWord: String = ""
-    private val turnResults: MutableList<WordResult> = mutableListOf()
+    private val outcomes: MutableList<TurnOutcome> = mutableListOf()
+    private var matchOver: Boolean = false
     private val mutex = Mutex()
 
     override fun startMatch(config: MatchConfig, teams: List<String>, seed: Long) {
@@ -48,6 +49,7 @@ class DefaultGameEngine(
                 teams.forEach { scores[it] = 0 }
                 processed = 0
                 currentTeam = 0
+                matchOver = false
                 startTurnLocked()
             }
         }
@@ -59,7 +61,7 @@ class DefaultGameEngine(
                 if (_state.value !is GameState.TurnActive) return@withLock
                 turnScore++
                 processed++
-                turnResults.add(WordResult(currentWord, true))
+                outcomes.add(TurnOutcome(currentWord, true, System.currentTimeMillis()))
                 advanceLocked()
             }
         }
@@ -73,7 +75,7 @@ class DefaultGameEngine(
                 skipsRemaining--
                 turnScore -= config.penaltyPerSkip
                 processed++
-                turnResults.add(WordResult(currentWord, false))
+                outcomes.add(TurnOutcome(currentWord, false, System.currentTimeMillis()))
                 advanceLocked()
             }
         }
@@ -83,24 +85,30 @@ class DefaultGameEngine(
         runBlocking {
             mutex.withLock {
                 if (_state.value !is GameState.TurnFinished) return@withLock
-                currentTeam = (currentTeam + 1) % teams.size
-                startTurnLocked()
+                if (matchOver) {
+                    finishMatchLocked()
+                } else {
+                    outcomes.clear()
+                    currentTeam = (currentTeam + 1) % teams.size
+                    startTurnLocked()
+                }
             }
         }
     }
 
-    override fun adjustScore(delta: Int) {
+    override fun overrideOutcome(index: Int, correct: Boolean) {
         runBlocking {
             mutex.withLock {
                 val current = _state.value
-                if (current is GameState.TurnFinished) {
-                    val team = current.team
-                    scores[team] = scores.getOrDefault(team, 0) + delta
-                    _state.value = current.copy(
-                        deltaScore = current.deltaScore + delta,
-                        scores = scores.toMap(),
-                    )
-                }
+                if (current !is GameState.TurnFinished) return@withLock
+                val item = outcomes.getOrNull(index) ?: return@withLock
+                if (item.correct == correct) return@withLock
+                val team = current.team
+                val change = if (correct) 1 + config.penaltyPerSkip else -(1 + config.penaltyPerSkip)
+                turnScore += change
+                scores[team] = scores.getOrDefault(team, 0) + change
+                outcomes[index] = item.copy(correct = correct)
+                _state.update { GameState.TurnFinished(team, turnScore, scores.toMap(), outcomes.toList(), matchOver) }
             }
         }
     }
@@ -113,7 +121,7 @@ class DefaultGameEngine(
         skipsRemaining = config.maxSkips
         timeRemaining = config.roundSeconds
         turnScore = 0
-        turnResults.clear()
+        outcomes.clear()
         timerJob?.cancel()
         timerJob = scope.launch { tickTimer() }
         advanceLocked()
@@ -136,11 +144,8 @@ class DefaultGameEngine(
         timerJob?.cancel()
         val team = teams[currentTeam]
         scores[team] = scores.getOrDefault(team, 0) + turnScore
-        if (processed >= config.targetWords || queue.isEmpty()) {
-            finishMatchLocked()
-        } else {
-            _state.update { GameState.TurnFinished(team, turnScore, scores.toMap(), turnResults.toList()) }
-        }
+        matchOver = processed >= config.targetWords || queue.isEmpty()
+        _state.update { GameState.TurnFinished(team, turnScore, scores.toMap(), outcomes.toList(), matchOver) }
     }
 
     private suspend fun finishMatchLocked() {

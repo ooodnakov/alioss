@@ -21,8 +21,8 @@ interface GameEngine {
     /** Advance to the next team's turn after a finished turn. */
     fun nextTurn()
 
-    /** Adjust the last turn's score by [delta]. */
-    fun adjustScore(delta: Int)
+    /** Override the outcome of a word at [index] in the last turn. */
+    fun overrideOutcome(index: Int, correct: Boolean)
 }
 
 /**
@@ -48,7 +48,8 @@ sealed interface GameState {
         val team: String,
         val deltaScore: Int,
         val scores: Map<String, Int>,
-        val results: List<WordResult>,
+        val outcomes: List<TurnOutcome>,
+        val matchOver: Boolean,
     ) : GameState
 
     /** The current match has finished. */
@@ -65,8 +66,9 @@ data class MatchConfig(
     val roundSeconds: Int,
 )
 
-/** Result of a single word in a turn. */
-data class WordResult(
+/** Outcome of a single word during a turn. */
+data class TurnOutcome(
     val word: String,
     val correct: Boolean,
+    val timestamp: Long,
 )

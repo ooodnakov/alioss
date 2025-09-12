@@ -9,6 +9,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.test.assertIs
 import kotlin.test.assertContentEquals
+import kotlin.test.assertFalse
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class DefaultGameEngineTest {
@@ -88,6 +89,7 @@ class DefaultGameEngineTest {
         val finished = assertIs<GameState.TurnFinished>(engine.state.value)
         assertEquals("A", finished.team)
         assertEquals(0, finished.deltaScore)
+        assertFalse(finished.matchOver)
 
         engine.nextTurn()
         val active = assertIs<GameState.TurnActive>(engine.state.value)
@@ -95,26 +97,30 @@ class DefaultGameEngineTest {
     }
 
     @Test
-    fun `records results and adjusts score`() = runTest {
-        val engine = DefaultGameEngine(listOf("a", "b", "c", "d"), this)
-        val cfg = config.copy(targetWords = 3, maxSkips = 1, penaltyPerSkip = 1, roundSeconds = 5)
-        engine.startMatch(cfg, teams = listOf("t"), seed = 0L)
+    fun `records outcomes and allows override`() = runTest {
+        val words = listOf("apple", "banana")
+        val engine = DefaultGameEngine(words, this)
+        val short = config.copy(targetWords = 2, roundSeconds = 10)
+        engine.startMatch(short, teams = listOf("Team"), seed = 0L)
 
         var s = assertIs<GameState.TurnActive>(engine.state.value)
-        val first = s.word
+        assertEquals("apple", s.word)
         engine.correct()
         s = assertIs<GameState.TurnActive>(engine.state.value)
-        val second = s.word
+        assertEquals("banana", s.word)
         engine.skip()
-        advanceTimeBy(5000)
-        runCurrent()
-        val finished = assertIs<GameState.TurnFinished>(engine.state.value)
-        assertContentEquals(listOf(WordResult(first, true), WordResult(second, false)), finished.results)
-        assertEquals(0, finished.deltaScore)
 
-        engine.adjustScore(2)
-        val adjusted = assertIs<GameState.TurnFinished>(engine.state.value)
-        assertEquals(2, adjusted.deltaScore)
-        assertEquals(2, adjusted.scores["t"])
+        val finished = assertIs<GameState.TurnFinished>(engine.state.value)
+        assertEquals(0, finished.deltaScore) // +1 -1
+        assertEquals(2, finished.outcomes.size)
+        assertTrue(finished.outcomes[0].correct)
+        assertFalse(finished.outcomes[1].correct)
+        assertFalse(finished.matchOver)
+
+        engine.overrideOutcome(1, true)
+        val updated = assertIs<GameState.TurnFinished>(engine.state.value)
+        assertEquals(2, updated.deltaScore)
+        assertTrue(updated.outcomes[1].correct)
+        assertEquals(2, updated.scores["Team"])
     }
 }
