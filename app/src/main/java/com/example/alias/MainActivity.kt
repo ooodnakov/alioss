@@ -25,6 +25,8 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.Divider
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.ui.graphics.Color
@@ -234,22 +236,16 @@ private fun DecksScreen(vm: MainViewModel) {
         if (decks.isEmpty()) {
             Text("No decks installed")
         } else {
-            decks.forEach { deck ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(Modifier.weight(1f)) {
-                        Text(deck.name)
-                        Text(deck.language, style = MaterialTheme.typography.bodySmall)
+            decks.forEachIndexed { index, deck ->
+                val isEnabled = enabled.contains(deck.id)
+                ListItem(
+                    headlineContent = { Text(deck.name) },
+                    supportingContent = { Text(deck.language, style = MaterialTheme.typography.bodySmall) },
+                    trailingContent = {
+                        Switch(checked = isEnabled, onCheckedChange = { vm.setDeckEnabled(deck.id, it) })
                     }
-                    val isEnabled = enabled.contains(deck.id)
-                    FilledTonalButton(onClick = { vm.setDeckEnabled(deck.id, !isEnabled) }) {
-                        Text(if (isEnabled) "Disable" else "Enable")
-                    }
-                }
+                )
+                if (index < decks.lastIndex) Divider()
             }
         }
 
@@ -271,24 +267,21 @@ private fun DecksScreen(vm: MainViewModel) {
                 }
             }) { Text("Trust Host") }
         }
-        if (!status.isNullOrEmpty()) {
-            Spacer(Modifier.height(8.dp))
-            Text(status!!, color = MaterialTheme.colorScheme.primary)
-        }
+        // No inline status; global snackbar will show download progress/results
 
         Spacer(Modifier.height(24.dp))
         Text("Trusted Sources", style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(8.dp))
-        trusted.forEach { entry ->
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 2.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(entry, modifier = Modifier.weight(1f))
-                OutlinedButton(onClick = { vm.removeTrustedSource(entry) }) { Text("Remove") }
-            }
+        trusted.forEachIndexed { i, entry ->
+            ListItem(
+                headlineContent = { Text(entry) },
+                trailingContent = {
+                    IconButton(onClick = { vm.removeTrustedSource(entry) }) {
+                        Icon(Icons.Filled.Delete, contentDescription = "Remove")
+                    }
+                }
+            )
+            if (i < trusted.size - 1) Divider()
         }
         Spacer(Modifier.height(8.dp))
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -376,18 +369,27 @@ private fun RoundSummaryScreen(vm: MainViewModel, s: GameState.TurnFinished) {
         Text("Score change: ${s.deltaScore}")
         LazyColumn(Modifier.weight(1f)) {
             itemsIndexed(s.outcomes) { index, o ->
-                Row(
-                    Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(o.word, modifier = Modifier.weight(1f))
-                    Text(if (o.correct) "✓" else "✗")
-                    Row {
-                        Button(onClick = { vm.overrideOutcome(index, true) }) { Text("+") }
-                        Spacer(Modifier.width(4.dp))
-                        Button(onClick = { vm.overrideOutcome(index, false) }) { Text("-") }
+                ListItem(
+                    leadingContent = {
+                        Icon(
+                            if (o.correct) Icons.Filled.Check else Icons.Filled.Close,
+                            contentDescription = null,
+                            tint = if (o.correct) Color(0xFF2E7D32) else MaterialTheme.colorScheme.error
+                        )
+                    },
+                    headlineContent = { Text(o.word) },
+                    trailingContent = {
+                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            IconButton(onClick = { vm.overrideOutcome(index, true) }) {
+                                Icon(Icons.Filled.Check, contentDescription = "Mark correct")
+                            }
+                            IconButton(onClick = { vm.overrideOutcome(index, false) }) {
+                                Icon(Icons.Filled.Close, contentDescription = "Mark incorrect")
+                            }
+                        }
                     }
-                }
+                )
+                if (index < s.outcomes.lastIndex) Divider()
             }
         }
         Scoreboard(s.scores)
