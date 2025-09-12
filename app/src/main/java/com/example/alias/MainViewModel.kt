@@ -108,7 +108,7 @@ class MainViewModel @Inject constructor(
                 roundSeconds = s.roundSeconds
             )
             val seed = java.security.SecureRandom().nextLong()
-            e.startMatch(config, teams = listOf("Red", "Blue"), seed = seed)
+            e.startMatch(config, teams = s.teams, seed = seed)
         }
     }
 
@@ -173,16 +173,22 @@ class MainViewModel @Inject constructor(
         haptics: Boolean,
         oneHanded: Boolean,
         orientation: String,
+        teams: List<String>,
     ) {
-        settingsRepository.updateRoundSeconds(roundSeconds)
-        settingsRepository.updateTargetWords(targetWords)
-        settingsRepository.updateSkipPolicy(maxSkips, penaltyPerSkip)
-        settingsRepository.updateAllowNSFW(allowNSFW)
-        settingsRepository.updateHapticsEnabled(haptics)
-        settingsRepository.updateOneHandedLayout(oneHanded)
-        settingsRepository.updateOrientation(orientation)
-        runCatching { settingsRepository.updateLanguagePreference(language) }
-        _uiEvents.tryEmit(UiEvent(message = "Settings updated", actionLabel = "Dismiss"))
+
+
+        viewModelScope.launch {
+          settingsRepository.updateRoundSeconds(roundSeconds)
+          settingsRepository.updateTargetWords(targetWords)
+          settingsRepository.updateSkipPolicy(maxSkips, penaltyPerSkip)
+          settingsRepository.updateAllowNSFW(allowNSFW)
+          settingsRepository.updateHapticsEnabled(haptics)
+          settingsRepository.updateOneHandedLayout(oneHanded)
+          settingsRepository.updateOrientation(orientation)
+          runCatching { settingsRepository.updateLanguagePreference(language) }
+          _uiEvents.tryEmit(UiEvent(message = "Settings updated", actionLabel = "Dismiss"))
+        }
+
     }
 
     fun restartMatch() {
@@ -201,7 +207,7 @@ class MainViewModel @Inject constructor(
                 roundSeconds = s.roundSeconds
             )
             val seed = java.security.SecureRandom().nextLong()
-            e.startMatch(config, teams = listOf("Red", "Blue"), seed = seed)
+            e.startMatch(config, teams = s.teams, seed = seed)
             _uiEvents.tryEmit(UiEvent(message = "Match restarted", actionLabel = "Dismiss"))
         }
     }

@@ -61,6 +61,12 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import kotlinx.coroutines.launch
+import com.example.alias.ui.WordCard
+import com.example.alias.ui.WordCardAction
+import com.example.alias.data.settings.SettingsRepository
+private const val MIN_TEAMS = SettingsRepository.MIN_TEAMS
+private const val MAX_TEAMS = SettingsRepository.MAX_TEAMS
+
 
 
 @AndroidEntryPoint
@@ -177,6 +183,8 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                     vibrator?.vibrate(effect)
                 }
             }
+            var isProcessing by remember { mutableStateOf(false) }
+            LaunchedEffect(s.word) { isProcessing = false }
             Column(
                 modifier = Modifier.fillMaxSize().padding(24.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
@@ -185,17 +193,57 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                 LinearProgressIndicator(progress = progress, color = barColor, modifier = Modifier.fillMaxWidth())
                 Text("${s.timeRemaining}s", style = MaterialTheme.typography.headlineLarge, textAlign = TextAlign.Center)
                 Text("Team: ${s.team}", style = MaterialTheme.typography.titleMedium)
-                Text(s.word, style = MaterialTheme.typography.displaySmall, textAlign = TextAlign.Center)
+                WordCard(
+                    word = s.word,
+                    enabled = !isProcessing,
+                    vibrator = vibrator,
+                    hapticsEnabled = settings.hapticsEnabled,
+                    onActionStart = { isProcessing = true },
+                    onAction = {
+                        when (it) {
+                            WordCardAction.Correct -> engine.correct()
+                            WordCardAction.Skip -> engine.skip()
+                        }
+                    }
+                )
                 Text("Remaining: ${s.remaining} • Score: ${s.score} • Skips: ${s.skipsRemaining}")
                 if (settings.oneHandedLayout) {
                     Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        Button(onClick = { engine.correct() }, modifier = Modifier.fillMaxWidth().height(80.dp)) { Text("Correct") }
-                        Button(onClick = { engine.skip() }, modifier = Modifier.fillMaxWidth().height(80.dp)) { Text("Skip") }
+                        val onWordAction = { action: () -> Unit ->
+                            if (!isProcessing) {
+                                isProcessing = true
+                                action()
+                            }
+                        }
+                        Button(
+                            onClick = { onWordAction(engine::correct) },
+                            enabled = !isProcessing,
+                            modifier = Modifier.fillMaxWidth().height(80.dp)
+                        ) { Text("Correct") }
+                        Button(
+                            onClick = { onWordAction(engine::skip) },
+                            enabled = !isProcessing,
+                            modifier = Modifier.fillMaxWidth().height(80.dp)
+                        ) { Text("Skip") }
                     }
                 } else {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                        Button(onClick = { engine.correct() }, modifier = Modifier.weight(1f).height(60.dp)) { Text("Correct") }
-                        Button(onClick = { engine.skip() }, modifier = Modifier.weight(1f).height(60.dp)) { Text("Skip") }
+                        val onWordAction = { action: () -> Unit ->
+                            if (!isProcessing) {
+                                isProcessing = true
+                                action()
+                            }
+                        }
+                        Button(
+                            onClick = { onWordAction(engine::correct) },
+                            enabled = !isProcessing,
+                            modifier = Modifier.weight(1f).height(60.dp)
+                        ) { Text("Correct") }
+                        Button(
+                            onClick = { onWordAction(engine::skip) },
+                            enabled = !isProcessing,
+                            modifier = Modifier.weight(1f).height(60.dp)
+                        ) { Text("Skip") }
                     }
                 }
                 Button(onClick = { vm.restartMatch() }, modifier = Modifier.fillMaxWidth()) { Text("Restart Match") }
@@ -315,6 +363,8 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit) {
     var oneHand by rememberSaveable(s) { mutableStateOf(s.oneHandedLayout) }
     var orientation by rememberSaveable(s) { mutableStateOf(s.orientation) }
     val scope = rememberCoroutineScope()
+    var teams by rememberSaveable(s) { mutableStateOf(s.teams) }
+
 
     Column(
         Modifier
@@ -354,6 +404,7 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit) {
                 }
             }
         }
+
         Button(onClick = {
             scope.launch {
                 vm.updateSettings(
@@ -371,6 +422,53 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit) {
                 onBack()
             }
         }, modifier = Modifier.fillMaxWidth()) { Text("Save") }
+        Text("Teams", style = MaterialTheme.typography.titleMedium)
+        teams.forEachIndexed { index, name ->
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { new ->
+                        teams = teams.toMutableList().also { it[index] = new }
+                    },
+                    label = { Text("Team ${index + 1}") },
+                    modifier = Modifier.weight(1f)
+                )
+                IconButton(
+                    onClick = { teams = teams.toMutableList().also { it.removeAt(index) } },
+                    enabled = teams.size > MIN_TEAMS
+                ) {
+                    Icon(Icons.Filled.Delete, contentDescription = "Remove team")
+                }
+            }
+        }
+        if (teams.size < MAX_TEAMS) {
+            OutlinedButton(onClick = { teams = teams + "Team ${teams.size + 1}" }, modifier = Modifier.fillMaxWidth()) {
+                Icon(Icons.Filled.Add, contentDescription = null)
+                Text("Add Team", modifier = Modifier.padding(start = 4.dp))
+            }
+        }
+        val canSave = teams.count { it.isNotBlank() } >= MIN_TEAMS
+        val applySettings = {
+            vm.updateSettings(
+                roundSeconds = round.toIntOrNull() ?: s.roundSeconds,
+                targetWords = target.toIntOrNull() ?: s.targetWords,
+                maxSkips = maxSkips.toIntOrNull() ?: s.maxSkips,
+                penaltyPerSkip = penalty.toIntOrNull() ?: s.penaltyPerSkip,
+                language = lang.ifBlank { s.languagePreference },
+                haptics = haptics,
+                oneHanded = oneHand,
+                orientation = orientation,
+                teams = teams,
+            )
+        }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(onClick = { applySettings() }, enabled = canSave, modifier = Modifier.weight(1f)) { Text("Save") }
+            FilledTonalButton(onClick = {
+                applySettings()
+                vm.restartMatch()
+                onBack()
+            }, enabled = canSave, modifier = Modifier.weight(1f)) { Text("Save & Restart") }
+        }
         OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("Back") }
     }
 }
