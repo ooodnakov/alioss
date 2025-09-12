@@ -368,6 +368,7 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit) {
     var maxSkips by rememberSaveable(s) { mutableStateOf(s.maxSkips.toString()) }
     var penalty by rememberSaveable(s) { mutableStateOf(s.penaltyPerSkip.toString()) }
     var lang by rememberSaveable(s) { mutableStateOf(s.languagePreference) }
+    var punishSkips by rememberSaveable(s) { mutableStateOf(s.punishSkips) }
     var nsfw by rememberSaveable(s) { mutableStateOf(s.allowNSFW) }
     var haptics by rememberSaveable(s) { mutableStateOf(s.hapticsEnabled) }
     var oneHand by rememberSaveable(s) { mutableStateOf(s.oneHandedLayout) }
@@ -388,6 +389,10 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedTextField(value = maxSkips, onValueChange = { maxSkips = it }, label = { Text("Max skips") }, modifier = Modifier.weight(1f))
             OutlinedTextField(value = penalty, onValueChange = { penalty = it }, label = { Text("Penalty/skip") }, modifier = Modifier.weight(1f))
+        }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("Punish skips", modifier = Modifier.weight(1f))
+            Switch(checked = punishSkips, onCheckedChange = { punishSkips = it })
         }
         OutlinedTextField(value = lang, onValueChange = { lang = it }, label = { Text("Language (e.g., en, ru)") }, modifier = Modifier.fillMaxWidth())
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -422,11 +427,13 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit) {
                     targetWords = target.toIntOrNull() ?: s.targetWords,
                     maxSkips = maxSkips.toIntOrNull() ?: s.maxSkips,
                     penaltyPerSkip = penalty.toIntOrNull() ?: s.penaltyPerSkip,
+                    punishSkips = punishSkips,
                     language = lang.ifBlank { s.languagePreference },
                     allowNSFW = nsfw,
                     haptics = haptics,
                     oneHanded = oneHand,
                     orientation = orientation,
+                    teams = teams,
                 )
                 vm.restartMatch()
                 onBack()
@@ -459,17 +466,21 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit) {
         }
         val canSave = teams.count { it.isNotBlank() } >= MIN_TEAMS
         val applySettings = {
-            vm.updateSettings(
-                roundSeconds = round.toIntOrNull() ?: s.roundSeconds,
-                targetWords = target.toIntOrNull() ?: s.targetWords,
-                maxSkips = maxSkips.toIntOrNull() ?: s.maxSkips,
-                penaltyPerSkip = penalty.toIntOrNull() ?: s.penaltyPerSkip,
-                language = lang.ifBlank { s.languagePreference },
-                haptics = haptics,
-                oneHanded = oneHand,
-                orientation = orientation,
-                teams = teams,
-            )
+            scope.launch {
+                vm.updateSettings(
+                    roundSeconds = round.toIntOrNull() ?: s.roundSeconds,
+                    targetWords = target.toIntOrNull() ?: s.targetWords,
+                    maxSkips = maxSkips.toIntOrNull() ?: s.maxSkips,
+                    penaltyPerSkip = penalty.toIntOrNull() ?: s.penaltyPerSkip,
+                    punishSkips = punishSkips,
+                    language = lang.ifBlank { s.languagePreference },
+                    allowNSFW = nsfw,
+                    haptics = haptics,
+                    oneHanded = oneHand,
+                    orientation = orientation,
+                    teams = teams,
+                )
+            }
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(onClick = { applySettings() }, enabled = canSave, modifier = Modifier.weight(1f)) { Text("Save") }
