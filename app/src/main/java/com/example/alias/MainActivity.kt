@@ -16,6 +16,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -59,6 +60,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import kotlinx.coroutines.launch
 
 
 @AndroidEntryPoint
@@ -312,6 +314,7 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit) {
     var haptics by rememberSaveable(s) { mutableStateOf(s.hapticsEnabled) }
     var oneHand by rememberSaveable(s) { mutableStateOf(s.oneHandedLayout) }
     var orientation by rememberSaveable(s) { mutableStateOf(s.orientation) }
+    val scope = rememberCoroutineScope()
 
     Column(
         Modifier
@@ -352,18 +355,21 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit) {
             }
         }
         Button(onClick = {
-            vm.updateSettings(
-                roundSeconds = round.toIntOrNull() ?: s.roundSeconds,
-                targetWords = target.toIntOrNull() ?: s.targetWords,
-                maxSkips = maxSkips.toIntOrNull() ?: s.maxSkips,
-                penaltyPerSkip = penalty.toIntOrNull() ?: s.penaltyPerSkip,
-                language = lang.ifBlank { s.languagePreference },
-                allowNSFW = nsfw,
-                haptics = haptics,
-                oneHanded = oneHand,
-                orientation = orientation,
-            )
-            vm.restartMatch()
+            scope.launch {
+                vm.updateSettings(
+                    roundSeconds = round.toIntOrNull() ?: s.roundSeconds,
+                    targetWords = target.toIntOrNull() ?: s.targetWords,
+                    maxSkips = maxSkips.toIntOrNull() ?: s.maxSkips,
+                    penaltyPerSkip = penalty.toIntOrNull() ?: s.penaltyPerSkip,
+                    language = lang.ifBlank { s.languagePreference },
+                    allowNSFW = nsfw,
+                    haptics = haptics,
+                    oneHanded = oneHand,
+                    orientation = orientation,
+                )
+                vm.restartMatch()
+                onBack()
+            }
         }, modifier = Modifier.fillMaxWidth()) { Text("Save") }
         OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("Back") }
     }
