@@ -455,78 +455,92 @@ private fun DecksScreen(vm: MainViewModel) {
     val filePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let { vm.importDeckFromFile(it) }
     }
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text("Decks", style = MaterialTheme.typography.headlineSmall)
-        Spacer(Modifier.height(16.dp))
-        if (decks.isEmpty()) {
-            Text("No decks installed")
-        } else {
-            decks.forEachIndexed { index, deck ->
-                val isEnabled = enabled.contains(deck.id)
-                ListItem(
-                    headlineContent = { Text(deck.name) },
-                    supportingContent = {
-                        val info = buildString {
-                            append(deck.language)
-                            if (deck.isNSFW) append(" • NSFW")
+        item {
+            Text("Decks", style = MaterialTheme.typography.headlineSmall)
+        }
+        item {
+            ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        Text("Installed Decks", style = MaterialTheme.typography.titleMedium)
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            TextButton(onClick = { vm.setAllDecksEnabled(true) }) { Text("Enable all") }
+                            TextButton(onClick = { vm.setAllDecksEnabled(false) }) { Text("Disable all") }
                         }
-                        Text(info, style = MaterialTheme.typography.bodySmall)
-                    },
-                    trailingContent = {
-                        Switch(checked = isEnabled, onCheckedChange = { vm.setDeckEnabled(deck.id, it) })
                     }
-                )
-                if (index < decks.lastIndex) HorizontalDivider()
+                    if (decks.isEmpty()) {
+                        Text("No decks installed")
+                    } else {
+                        decks.forEachIndexed { index, deck ->
+                            val isEnabled = enabled.contains(deck.id)
+                            ListItem(
+                                headlineContent = { Text(deck.name) },
+                                supportingContent = {
+                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        AssistChip(onClick = {}, enabled = false, label = { Text(deck.language.uppercase()) })
+                                        if (deck.isNSFW) AssistChip(onClick = {}, enabled = false, label = { Text("NSFW") })
+                                    }
+                                },
+                                trailingContent = {
+                                    Switch(checked = isEnabled, onCheckedChange = { vm.setDeckEnabled(deck.id, it) })
+                                }
+                            )
+                            if (index < decks.lastIndex) HorizontalDivider()
+                        }
+                    }
+                }
             }
         }
-        Spacer(Modifier.height(24.dp))
-        Button(onClick = { filePicker.launch(arrayOf("application/json")) }) { Text("Import from file") }
-
-        Spacer(Modifier.height(24.dp))
-        Text("Download Pack", style = MaterialTheme.typography.titleMedium)
-        Spacer(Modifier.height(8.dp))
-        OutlinedTextField(value = url, onValueChange = { url = it }, label = { Text("HTTPS URL") }, modifier = Modifier.fillMaxWidth())
-        Spacer(Modifier.height(8.dp))
-        OutlinedTextField(value = sha, onValueChange = { sha = it }, label = { Text("Expected SHA-256 (optional)") }, modifier = Modifier.fillMaxWidth())
-        Spacer(Modifier.height(8.dp))
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Button(onClick = { vm.downloadPackFromUrl(url, sha) }) { Text("Download & Import") }
-            Spacer(Modifier.width(12.dp))
-            OutlinedButton(onClick = {
-                // Add host of URL to trusted list for convenience
-                runCatching {
-                    val host = java.net.URI(url).host ?: ""
-                    if (host.isNotBlank()) vm.addTrustedSource(host)
-                }
-            }) { Text("Trust Host") }
-        }
-        // No inline status; global snackbar will show download progress/results
-
-        Spacer(Modifier.height(24.dp))
-        Text("Trusted Sources", style = MaterialTheme.typography.titleMedium)
-        Spacer(Modifier.height(8.dp))
-        trusted.forEachIndexed { i, entry ->
-            ListItem(
-                headlineContent = { Text(entry) },
-                trailingContent = {
-                    IconButton(onClick = { vm.removeTrustedSource(entry) }) {
-                        Icon(Icons.Filled.Delete, contentDescription = "Remove")
+        item {
+            ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Import / Download", style = MaterialTheme.typography.titleMedium)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(onClick = { filePicker.launch(arrayOf("application/json")) }, modifier = Modifier.weight(1f)) { Text("Import file") }
+                        OutlinedButton(onClick = {
+                            runCatching {
+                                val host = java.net.URI(url).host ?: ""
+                                if (host.isNotBlank()) vm.addTrustedSource(host)
+                            }
+                        }) { Text("Trust host") }
+                    }
+                    OutlinedTextField(value = url, onValueChange = { url = it }, label = { Text("HTTPS URL") }, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(value = sha, onValueChange = { sha = it }, label = { Text("Expected SHA-256 (optional)") }, modifier = Modifier.fillMaxWidth())
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                        Button(onClick = { vm.downloadPackFromUrl(url, sha) }) { Text("Download & import") }
                     }
                 }
-            )
-            if (i < trusted.size - 1) HorizontalDivider()
+            }
         }
-        Spacer(Modifier.height(8.dp))
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            OutlinedTextField(value = newTrusted, onValueChange = { newTrusted = it }, label = { Text("Add host/origin") }, modifier = Modifier.weight(1f))
-            Spacer(Modifier.width(8.dp))
-            OutlinedButton(onClick = {
-                if (newTrusted.isNotBlank()) { vm.addTrustedSource(newTrusted.trim()); newTrusted = "" }
-            }) { Text("Add") }
+        item {
+            ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Trusted sources", style = MaterialTheme.typography.titleMedium)
+                    if (trusted.isEmpty()) {
+                        Text("No trusted sources yet")
+                    } else {
+                        trusted.forEachIndexed { i, entry ->
+                            ListItem(
+                                headlineContent = { Text(entry) },
+                                trailingContent = {
+                                    IconButton(onClick = { vm.removeTrustedSource(entry) }) { Icon(Icons.Filled.Delete, contentDescription = "Remove") }
+                                }
+                            )
+                            if (i < trusted.size - 1) HorizontalDivider()
+                        }
+                    }
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        OutlinedTextField(value = newTrusted, onValueChange = { newTrusted = it }, label = { Text("Add host/origin") }, modifier = Modifier.weight(1f))
+                        Spacer(Modifier.width(8.dp))
+                        OutlinedButton(onClick = { if (newTrusted.isNotBlank()) { vm.addTrustedSource(newTrusted.trim()); newTrusted = "" } }) { Text("Add") }
+                    }
+                }
+            }
         }
     }
 }
@@ -548,118 +562,131 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () ->
     var teams by rememberSaveable(s) { mutableStateOf(s.teams) }
 
 
-    Column(
-        Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+    val canSave = teams.count { it.isNotBlank() } >= MIN_TEAMS
+    val applySettings = {
+        scope.launch {
+            vm.updateSettings(
+                roundSeconds = round.toIntOrNull() ?: s.roundSeconds,
+                targetWords = target.toIntOrNull() ?: s.targetWords,
+                maxSkips = maxSkips.toIntOrNull() ?: s.maxSkips,
+                penaltyPerSkip = penalty.toIntOrNull() ?: s.penaltyPerSkip,
+                punishSkips = punishSkips,
+                language = lang.ifBlank { s.languagePreference },
+                allowNSFW = nsfw,
+                haptics = haptics,
+                oneHanded = oneHand,
+                orientation = orientation,
+                teams = teams,
+            )
+        }
+    }
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text("Settings", style = MaterialTheme.typography.headlineSmall)
-        OutlinedTextField(value = round, onValueChange = { round = it }, label = { Text("Round seconds") }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(value = target, onValueChange = { target = it }, label = { Text("Target words") }, modifier = Modifier.fillMaxWidth())
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedTextField(value = maxSkips, onValueChange = { maxSkips = it }, label = { Text("Max skips") }, modifier = Modifier.weight(1f))
-            OutlinedTextField(value = penalty, onValueChange = { penalty = it }, label = { Text("Penalty/skip") }, modifier = Modifier.weight(1f))
+        item { Text("Settings", style = MaterialTheme.typography.headlineSmall) }
+        item {
+            ElevatedCard(Modifier.fillMaxWidth()) {
+                Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Round & Goals", style = MaterialTheme.typography.titleMedium)
+                    OutlinedTextField(value = round, onValueChange = { round = it }, label = { Text("Round seconds") }, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(value = target, onValueChange = { target = it }, label = { Text("Target words") }, modifier = Modifier.fillMaxWidth())
+                }
+            }
         }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Punish skips", modifier = Modifier.weight(1f))
-            Switch(checked = punishSkips, onCheckedChange = { punishSkips = it })
-        }
-        OutlinedTextField(value = lang, onValueChange = { lang = it }, label = { Text("Language (e.g., en, ru)") }, modifier = Modifier.fillMaxWidth())
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Allow NSFW", modifier = Modifier.weight(1f))
-            Switch(checked = nsfw, onCheckedChange = { nsfw = it })
-        }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Haptics", modifier = Modifier.weight(1f))
-            Switch(checked = haptics, onCheckedChange = { haptics = it })
-        }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("One-hand layout", modifier = Modifier.weight(1f))
-            Switch(checked = oneHand, onCheckedChange = { oneHand = it })
-        }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Orientation", modifier = Modifier.weight(1f))
-            var expanded by remember { mutableStateOf(false) }
-            Box {
-                TextButton(onClick = { expanded = true }) { Text(orientation) }
-                DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                    listOf("system", "portrait", "landscape").forEach {
-                        DropdownMenuItem(text = { Text(it) }, onClick = { orientation = it; expanded = false })
+        item {
+            ElevatedCard(Modifier.fillMaxWidth()) {
+                Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Skips", style = MaterialTheme.typography.titleMedium)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(value = maxSkips, onValueChange = { maxSkips = it }, label = { Text("Max skips") }, modifier = Modifier.weight(1f))
+                        OutlinedTextField(value = penalty, onValueChange = { penalty = it }, label = { Text("Penalty/skip") }, modifier = Modifier.weight(1f))
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("Punish skips", modifier = Modifier.weight(1f))
+                        Switch(checked = punishSkips, onCheckedChange = { punishSkips = it })
                     }
                 }
             }
         }
-
-        Button(onClick = {
-            scope.launch {
-                vm.updateSettings(
-                    roundSeconds = round.toIntOrNull() ?: s.roundSeconds,
-                    targetWords = target.toIntOrNull() ?: s.targetWords,
-                    maxSkips = maxSkips.toIntOrNull() ?: s.maxSkips,
-                    penaltyPerSkip = penalty.toIntOrNull() ?: s.penaltyPerSkip,
-                    punishSkips = punishSkips,
-                    language = lang.ifBlank { s.languagePreference },
-                    allowNSFW = nsfw,
-                    haptics = haptics,
-                    oneHanded = oneHand,
-                    orientation = orientation,
-                    teams = teams,
-                )
-                vm.restartMatch()
-                onBack()
-            }
-        }, modifier = Modifier.fillMaxWidth()) { Text("Save") }
-        Text("Teams", style = MaterialTheme.typography.titleMedium)
-        teams.forEachIndexed { index, name ->
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { new ->
-                        teams = teams.toMutableList().also { it[index] = new }
-                    },
-                    label = { Text("Team ${index + 1}") },
-                    modifier = Modifier.weight(1f)
-                )
-                IconButton(
-                    onClick = { teams = teams.toMutableList().also { it.removeAt(index) } },
-                    enabled = teams.size > MIN_TEAMS
-                ) {
-                    Icon(Icons.Filled.Delete, contentDescription = "Remove team")
+        item {
+            ElevatedCard(Modifier.fillMaxWidth()) {
+                Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Language & Content", style = MaterialTheme.typography.titleMedium)
+                    OutlinedTextField(value = lang, onValueChange = { lang = it }, label = { Text("Language (e.g., en, ru)") }, modifier = Modifier.fillMaxWidth())
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("Allow NSFW", modifier = Modifier.weight(1f))
+                        Switch(checked = nsfw, onCheckedChange = { nsfw = it })
+                    }
                 }
             }
         }
-        if (teams.size < MAX_TEAMS) {
-            OutlinedButton(onClick = { teams = teams + "Team ${teams.size + 1}" }, modifier = Modifier.fillMaxWidth()) {
-                Icon(Icons.Filled.Add, contentDescription = null)
-                Text("Add Team", modifier = Modifier.padding(start = 4.dp))
+        item {
+            ElevatedCard(Modifier.fillMaxWidth()) {
+                Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Feedback & Layout", style = MaterialTheme.typography.titleMedium)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("Haptics", modifier = Modifier.weight(1f))
+                        Switch(checked = haptics, onCheckedChange = { haptics = it })
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("One-hand layout", modifier = Modifier.weight(1f))
+                        Switch(checked = oneHand, onCheckedChange = { oneHand = it })
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("Orientation", modifier = Modifier.weight(1f))
+                        var expanded by remember { mutableStateOf(false) }
+                        Box {
+                            TextButton(onClick = { expanded = true }) { Text(orientation) }
+                            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                                listOf("system", "portrait", "landscape").forEach {
+                                    DropdownMenuItem(text = { Text(it) }, onClick = { orientation = it; expanded = false })
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
-        val canSave = teams.count { it.isNotBlank() } >= MIN_TEAMS
-        val applySettings = {
-            scope.launch {
-                vm.updateSettings(
-                    roundSeconds = round.toIntOrNull() ?: s.roundSeconds,
-                    targetWords = target.toIntOrNull() ?: s.targetWords,
-                    maxSkips = maxSkips.toIntOrNull() ?: s.maxSkips,
-                    penaltyPerSkip = penalty.toIntOrNull() ?: s.penaltyPerSkip,
-                    punishSkips = punishSkips,
-                    language = lang.ifBlank { s.languagePreference },
-                    allowNSFW = nsfw,
-                    haptics = haptics,
-                    oneHanded = oneHand,
-                    orientation = orientation,
-                    teams = teams,
-                )
+        item {
+            ElevatedCard(Modifier.fillMaxWidth()) {
+                Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Teams", style = MaterialTheme.typography.titleMedium)
+                    teams.forEachIndexed { index, name ->
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            OutlinedTextField(
+                                value = name,
+                                onValueChange = { new -> teams = teams.toMutableList().also { it[index] = new } },
+                                label = { Text("Team ${index + 1}") },
+                                modifier = Modifier.weight(1f)
+                            )
+                            IconButton(
+                                onClick = { teams = teams.toMutableList().also { it.removeAt(index) } },
+                                enabled = teams.size > MIN_TEAMS
+                            ) { Icon(Icons.Filled.Delete, contentDescription = "Remove team") }
+                        }
+                        if (index < teams.lastIndex) HorizontalDivider()
+                    }
+                    if (teams.size < MAX_TEAMS) {
+                        OutlinedButton(onClick = { teams = teams + "Team ${teams.size + 1}" }, modifier = Modifier.fillMaxWidth()) {
+                            Icon(Icons.Filled.Add, contentDescription = null)
+                            Text("Add Team", modifier = Modifier.padding(start = 4.dp))
+                        }
+                    }
+                }
             }
         }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = { applySettings() }, enabled = canSave, modifier = Modifier.weight(1f)) { Text("Save") }
-            FilledTonalButton(onClick = {
-                applySettings()
-                vm.restartMatch()
-                onBack()
-            }, enabled = canSave, modifier = Modifier.weight(1f)) { Text("Save & Restart") }
+        item {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(onClick = { applySettings() }, enabled = canSave, modifier = Modifier.weight(1f)) { Text("Save") }
+                FilledTonalButton(onClick = {
+                    applySettings()
+                    vm.restartMatch()
+                    onBack()
+                }, enabled = canSave, modifier = Modifier.weight(1f)) { Text("Save & Restart") }
+            }
         }
         OutlinedButton(onClick = onAbout, modifier = Modifier.fillMaxWidth()) { Text("About") }
         OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("Back") }

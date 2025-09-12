@@ -133,6 +133,16 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    fun setAllDecksEnabled(enableAll: Boolean) {
+        viewModelScope.launch {
+            val all = deckRepository.getDecks().first().map { it.id }.toSet()
+            val target = if (enableAll) all else emptySet()
+            settingsRepository.setEnabledDeckIds(target)
+            val msg = if (enableAll) "Enabled all decks" else "Disabled all decks"
+            _uiEvents.tryEmit(UiEvent(message = msg, actionLabel = "OK"))
+        }
+    }
+
     fun addTrustedSource(originOrHost: String) {
         viewModelScope.launch {
             val cur = settingsRepository.settings.first().trustedSources.toMutableSet()
