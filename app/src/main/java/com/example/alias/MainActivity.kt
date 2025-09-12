@@ -305,6 +305,7 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit) {
     var haptics by rememberSaveable(s) { mutableStateOf(s.hapticsEnabled) }
     var oneHand by rememberSaveable(s) { mutableStateOf(s.oneHandedLayout) }
     var orientation by rememberSaveable(s) { mutableStateOf(s.orientation) }
+    var teams by rememberSaveable(s) { mutableStateOf(s.teams) }
 
     Column(
         Modifier
@@ -340,6 +341,31 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit) {
                 }
             }
         }
+        Text("Teams", style = MaterialTheme.typography.titleMedium)
+        teams.forEachIndexed { index, name ->
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { new ->
+                        teams = teams.toMutableList().also { it[index] = new }
+                    },
+                    label = { Text("Team ${index + 1}") },
+                    modifier = Modifier.weight(1f)
+                )
+                IconButton(
+                    onClick = { teams = teams.toMutableList().also { it.removeAt(index) } },
+                    enabled = teams.size > 2
+                ) {
+                    Icon(Icons.Filled.Delete, contentDescription = "Remove team")
+                }
+            }
+        }
+        if (teams.size < 6) {
+            OutlinedButton(onClick = { teams = teams + "Team ${teams.size + 1}" }, modifier = Modifier.fillMaxWidth()) {
+                Icon(Icons.Filled.Add, contentDescription = null)
+                Text("Add Team", modifier = Modifier.padding(start = 4.dp))
+            }
+        }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(onClick = {
                 vm.updateSettings(
@@ -351,9 +377,24 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit) {
                     haptics = haptics,
                     oneHanded = oneHand,
                     orientation = orientation,
+                    teams = teams,
                 )
             }, modifier = Modifier.weight(1f)) { Text("Save") }
-            FilledTonalButton(onClick = { vm.restartMatch(); onBack() }, modifier = Modifier.weight(1f)) { Text("Save & Restart") }
+            FilledTonalButton(onClick = {
+                vm.updateSettings(
+                    roundSeconds = round.toIntOrNull() ?: s.roundSeconds,
+                    targetWords = target.toIntOrNull() ?: s.targetWords,
+                    maxSkips = maxSkips.toIntOrNull() ?: s.maxSkips,
+                    penaltyPerSkip = penalty.toIntOrNull() ?: s.penaltyPerSkip,
+                    language = lang.ifBlank { s.languagePreference },
+                    haptics = haptics,
+                    oneHanded = oneHand,
+                    orientation = orientation,
+                    teams = teams,
+                )
+                vm.restartMatch()
+                onBack()
+            }, modifier = Modifier.weight(1f)) { Text("Save & Restart") }
         }
         OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("Back") }
     }

@@ -108,7 +108,7 @@ class MainViewModel @Inject constructor(
                 roundSeconds = s.roundSeconds
             )
             val seed = java.security.SecureRandom().nextLong()
-            e.startMatch(config, teams = listOf("Red", "Blue"), seed = seed)
+            e.startMatch(config, teams = s.teams, seed = seed)
         }
     }
 
@@ -172,6 +172,7 @@ class MainViewModel @Inject constructor(
         haptics: Boolean,
         oneHanded: Boolean,
         orientation: String,
+        teams: List<String>,
     ) {
         viewModelScope.launch {
             settingsRepository.updateRoundSeconds(roundSeconds)
@@ -180,6 +181,7 @@ class MainViewModel @Inject constructor(
             settingsRepository.updateHapticsEnabled(haptics)
             settingsRepository.updateOneHandedLayout(oneHanded)
             settingsRepository.updateOrientation(orientation)
+            settingsRepository.setTeams(teams)
             runCatching { settingsRepository.updateLanguagePreference(language) }
             _uiEvents.tryEmit(UiEvent(message = "Settings updated", actionLabel = "Dismiss"))
         }
@@ -201,7 +203,7 @@ class MainViewModel @Inject constructor(
                 roundSeconds = s.roundSeconds
             )
             val seed = java.security.SecureRandom().nextLong()
-            e.startMatch(config, teams = listOf("Red", "Blue"), seed = seed)
+            e.startMatch(config, teams = s.teams, seed = seed)
             _uiEvents.tryEmit(UiEvent(message = "Match restarted", actionLabel = "Dismiss"))
         }
     }
