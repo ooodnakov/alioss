@@ -7,9 +7,10 @@ Status: early skeleton wired end-to-end — sample deck import, Room schema, Hil
 
 **What You Get Today**
 - Local-only pass-and-play loop with a basic UI.
+- Timer with a progress bar, countdown text, and restart button.
+- Settings screen to configure round seconds, target words, skip policy, and language.
 - Deterministic word order with a seed; no repeats during the target window.
-- Minimal state machine: timed turns, correct/skip, next turn, match summary.
-- Data layer with Room, JSON pack parser, and a bundled sample deck.
+- Data layer with Room, JSON pack parser, and multiple bundled decks (EN/RU).
 
 
 **Non-Goals**
