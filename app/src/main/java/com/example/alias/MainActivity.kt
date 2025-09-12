@@ -35,6 +35,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.zIndex
 import android.os.VibrationEffect
@@ -148,7 +149,16 @@ class MainActivity : ComponentActivity() {
                     }
                     composable("settings") {
                         AppScaffold(title = "Settings", onBack = { nav.popBackStack() }, snackbarHostState = snack) {
-                            SettingsScreen(vm = vm, onBack = { nav.popBackStack() })
+                            SettingsScreen(
+                                vm = vm,
+                                onBack = { nav.popBackStack() },
+                                onAbout = { nav.navigate("about") }
+                            )
+                        }
+                    }
+                    composable("about") {
+                        AppScaffold(title = "About", onBack = { nav.popBackStack() }, snackbarHostState = snack) {
+                            AboutScreen()
                         }
                     }
                 }
@@ -522,7 +532,7 @@ private fun DecksScreen(vm: MainViewModel) {
 }
 
 @Composable
-private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit) {
+private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () -> Unit) {
     val s by vm.settings.collectAsState()
     var round by rememberSaveable(s) { mutableStateOf(s.roundSeconds.toString()) }
     var target by rememberSaveable(s) { mutableStateOf(s.targetWords.toString()) }
@@ -651,7 +661,24 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit) {
                 onBack()
             }, enabled = canSave, modifier = Modifier.weight(1f)) { Text("Save & Restart") }
         }
+        OutlinedButton(onClick = onAbout, modifier = Modifier.fillMaxWidth()) { Text("About") }
         OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("Back") }
+    }
+}
+
+@Composable
+private fun AboutScreen() {
+    val uriHandler = LocalUriHandler.current
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text("Author: Aleksandr Odnakov", style = MaterialTheme.typography.headlineSmall)
+        TextButton(onClick = { uriHandler.openUri("https://github.com/ooodnakov/alias-game") }) {
+            Text("github.com/ooodnakov/alias-game")
+        }
     }
 }
 
