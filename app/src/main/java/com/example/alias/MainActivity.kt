@@ -220,7 +220,7 @@ private fun DecksScreen(vm: MainViewModel) {
     val decks by vm.decks.collectAsState()
     val enabled by vm.enabledDeckIds.collectAsState()
     val trusted by vm.trustedSources.collectAsState()
-    val status by vm.downloadStatus.collectAsState()
+    // Status snackbars are handled globally via vm.uiEvents
     var url by rememberSaveable { mutableStateOf("") }
     var sha by rememberSaveable { mutableStateOf("") }
     var newTrusted by rememberSaveable { mutableStateOf("") }
