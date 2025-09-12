@@ -16,6 +16,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -59,11 +60,13 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import kotlinx.coroutines.launch
 import com.example.alias.ui.WordCard
 import com.example.alias.ui.WordCardAction
 import com.example.alias.data.settings.SettingsRepository
 private const val MIN_TEAMS = SettingsRepository.MIN_TEAMS
 private const val MAX_TEAMS = SettingsRepository.MAX_TEAMS
+
 
 
 @AndroidEntryPoint
@@ -287,7 +290,13 @@ private fun DecksScreen(vm: MainViewModel) {
                 val isEnabled = enabled.contains(deck.id)
                 ListItem(
                     headlineContent = { Text(deck.name) },
-                    supportingContent = { Text(deck.language, style = MaterialTheme.typography.bodySmall) },
+                    supportingContent = {
+                        val info = buildString {
+                            append(deck.language)
+                            if (deck.isNSFW) append(" • NSFW")
+                        }
+                        Text(info, style = MaterialTheme.typography.bodySmall)
+                    },
                     trailingContent = {
                         Switch(checked = isEnabled, onCheckedChange = { vm.setDeckEnabled(deck.id, it) })
                     }
@@ -349,10 +358,13 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit) {
     var maxSkips by rememberSaveable(s) { mutableStateOf(s.maxSkips.toString()) }
     var penalty by rememberSaveable(s) { mutableStateOf(s.penaltyPerSkip.toString()) }
     var lang by rememberSaveable(s) { mutableStateOf(s.languagePreference) }
+    var nsfw by rememberSaveable(s) { mutableStateOf(s.allowNSFW) }
     var haptics by rememberSaveable(s) { mutableStateOf(s.hapticsEnabled) }
     var oneHand by rememberSaveable(s) { mutableStateOf(s.oneHandedLayout) }
     var orientation by rememberSaveable(s) { mutableStateOf(s.orientation) }
+    val scope = rememberCoroutineScope()
     var teams by rememberSaveable(s) { mutableStateOf(s.teams) }
+
 
     Column(
         Modifier
@@ -368,6 +380,10 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit) {
             OutlinedTextField(value = penalty, onValueChange = { penalty = it }, label = { Text("Penalty/skip") }, modifier = Modifier.weight(1f))
         }
         OutlinedTextField(value = lang, onValueChange = { lang = it }, label = { Text("Language (e.g., en, ru)") }, modifier = Modifier.fillMaxWidth())
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("Allow NSFW", modifier = Modifier.weight(1f))
+            Switch(checked = nsfw, onCheckedChange = { nsfw = it })
+        }
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("Haptics", modifier = Modifier.weight(1f))
             Switch(checked = haptics, onCheckedChange = { haptics = it })
@@ -388,6 +404,24 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit) {
                 }
             }
         }
+
+        Button(onClick = {
+            scope.launch {
+                vm.updateSettings(
+                    roundSeconds = round.toIntOrNull() ?: s.roundSeconds,
+                    targetWords = target.toIntOrNull() ?: s.targetWords,
+                    maxSkips = maxSkips.toIntOrNull() ?: s.maxSkips,
+                    penaltyPerSkip = penalty.toIntOrNull() ?: s.penaltyPerSkip,
+                    language = lang.ifBlank { s.languagePreference },
+                    allowNSFW = nsfw,
+                    haptics = haptics,
+                    oneHanded = oneHand,
+                    orientation = orientation,
+                )
+                vm.restartMatch()
+                onBack()
+            }
+        }, modifier = Modifier.fillMaxWidth()) { Text("Save") }
         Text("Teams", style = MaterialTheme.typography.titleMedium)
         teams.forEachIndexed { index, name ->
             Row(verticalAlignment = Alignment.CenterVertically) {

@@ -163,28 +163,32 @@ class MainViewModel @Inject constructor(
     }
 
 
-    fun updateSettings(
+    suspend fun updateSettings(
         roundSeconds: Int,
         targetWords: Int,
         maxSkips: Int,
         penaltyPerSkip: Int,
         language: String,
+        allowNSFW: Boolean,
         haptics: Boolean,
         oneHanded: Boolean,
         orientation: String,
         teams: List<String>,
     ) {
+
+
         viewModelScope.launch {
-            settingsRepository.updateRoundSeconds(roundSeconds)
-            settingsRepository.updateTargetWords(targetWords)
-            settingsRepository.updateSkipPolicy(maxSkips, penaltyPerSkip)
-            settingsRepository.updateHapticsEnabled(haptics)
-            settingsRepository.updateOneHandedLayout(oneHanded)
-            settingsRepository.updateOrientation(orientation)
-            settingsRepository.setTeams(teams)
-            runCatching { settingsRepository.updateLanguagePreference(language) }
-            _uiEvents.tryEmit(UiEvent(message = "Settings updated", actionLabel = "Dismiss"))
+          settingsRepository.updateRoundSeconds(roundSeconds)
+          settingsRepository.updateTargetWords(targetWords)
+          settingsRepository.updateSkipPolicy(maxSkips, penaltyPerSkip)
+          settingsRepository.updateAllowNSFW(allowNSFW)
+          settingsRepository.updateHapticsEnabled(haptics)
+          settingsRepository.updateOneHandedLayout(oneHanded)
+          settingsRepository.updateOrientation(orientation)
+          runCatching { settingsRepository.updateLanguagePreference(language) }
+          _uiEvents.tryEmit(UiEvent(message = "Settings updated", actionLabel = "Dismiss"))
         }
+
     }
 
     fun restartMatch() {
