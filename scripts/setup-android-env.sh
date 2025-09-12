@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Installs JDK and Android SDK command line tools, then builds project.
+# Installs JDK 21 and Android SDK command line tools, then builds project.
 # Designed for Ubuntu/Debian; includes basic macOS handling.
 set -euo pipefail
 
