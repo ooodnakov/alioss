@@ -445,78 +445,92 @@ private fun DecksScreen(vm: MainViewModel) {
     val filePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let { vm.importDeckFromFile(it) }
     }
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text("Decks", style = MaterialTheme.typography.headlineSmall)
-        Spacer(Modifier.height(16.dp))
-        if (decks.isEmpty()) {
-            Text("No decks installed")
-        } else {
-            decks.forEachIndexed { index, deck ->
-                val isEnabled = enabled.contains(deck.id)
-                ListItem(
-                    headlineContent = { Text(deck.name) },
-                    supportingContent = {
-                        val info = buildString {
-                            append(deck.language)
-                            if (deck.isNSFW) append(" • NSFW")
+        item {
+            Text("Decks", style = MaterialTheme.typography.headlineSmall)
+        }
+        item {
+            ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        Text("Installed Decks", style = MaterialTheme.typography.titleMedium)
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            TextButton(onClick = { vm.setAllDecksEnabled(true) }) { Text("Enable all") }
+                            TextButton(onClick = { vm.setAllDecksEnabled(false) }) { Text("Disable all") }
                         }
-                        Text(info, style = MaterialTheme.typography.bodySmall)
-                    },
-                    trailingContent = {
-                        Switch(checked = isEnabled, onCheckedChange = { vm.setDeckEnabled(deck.id, it) })
                     }
-                )
-                if (index < decks.lastIndex) HorizontalDivider()
+                    if (decks.isEmpty()) {
+                        Text("No decks installed")
+                    } else {
+                        decks.forEachIndexed { index, deck ->
+                            val isEnabled = enabled.contains(deck.id)
+                            ListItem(
+                                headlineContent = { Text(deck.name) },
+                                supportingContent = {
+                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        AssistChip(onClick = {}, enabled = false, label = { Text(deck.language.uppercase()) })
+                                        if (deck.isNSFW) AssistChip(onClick = {}, enabled = false, label = { Text("NSFW") })
+                                    }
+                                },
+                                trailingContent = {
+                                    Switch(checked = isEnabled, onCheckedChange = { vm.setDeckEnabled(deck.id, it) })
+                                }
+                            )
+                            if (index < decks.lastIndex) HorizontalDivider()
+                        }
+                    }
+                }
             }
         }
-        Spacer(Modifier.height(24.dp))
-        Button(onClick = { filePicker.launch(arrayOf("application/json")) }) { Text("Import from file") }
-
-        Spacer(Modifier.height(24.dp))
-        Text("Download Pack", style = MaterialTheme.typography.titleMedium)
-        Spacer(Modifier.height(8.dp))
-        OutlinedTextField(value = url, onValueChange = { url = it }, label = { Text("HTTPS URL") }, modifier = Modifier.fillMaxWidth())
-        Spacer(Modifier.height(8.dp))
-        OutlinedTextField(value = sha, onValueChange = { sha = it }, label = { Text("Expected SHA-256 (optional)") }, modifier = Modifier.fillMaxWidth())
-        Spacer(Modifier.height(8.dp))
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Button(onClick = { vm.downloadPackFromUrl(url, sha) }) { Text("Download & Import") }
-            Spacer(Modifier.width(12.dp))
-            OutlinedButton(onClick = {
-                // Add host of URL to trusted list for convenience
-                runCatching {
-                    val host = java.net.URI(url).host ?: ""
-                    if (host.isNotBlank()) vm.addTrustedSource(host)
-                }
-            }) { Text("Trust Host") }
-        }
-        // No inline status; global snackbar will show download progress/results
-
-        Spacer(Modifier.height(24.dp))
-        Text("Trusted Sources", style = MaterialTheme.typography.titleMedium)
-        Spacer(Modifier.height(8.dp))
-        trusted.forEachIndexed { i, entry ->
-            ListItem(
-                headlineContent = { Text(entry) },
-                trailingContent = {
-                    IconButton(onClick = { vm.removeTrustedSource(entry) }) {
-                        Icon(Icons.Filled.Delete, contentDescription = "Remove")
+        item {
+            ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Import / Download", style = MaterialTheme.typography.titleMedium)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(onClick = { filePicker.launch(arrayOf("application/json")) }, modifier = Modifier.weight(1f)) { Text("Import file") }
+                        OutlinedButton(onClick = {
+                            runCatching {
+                                val host = java.net.URI(url).host ?: ""
+                                if (host.isNotBlank()) vm.addTrustedSource(host)
+                            }
+                        }) { Text("Trust host") }
+                    }
+                    OutlinedTextField(value = url, onValueChange = { url = it }, label = { Text("HTTPS URL") }, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(value = sha, onValueChange = { sha = it }, label = { Text("Expected SHA-256 (optional)") }, modifier = Modifier.fillMaxWidth())
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                        Button(onClick = { vm.downloadPackFromUrl(url, sha) }) { Text("Download & import") }
                     }
                 }
-            )
-            if (i < trusted.size - 1) HorizontalDivider()
+            }
         }
-        Spacer(Modifier.height(8.dp))
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            OutlinedTextField(value = newTrusted, onValueChange = { newTrusted = it }, label = { Text("Add host/origin") }, modifier = Modifier.weight(1f))
-            Spacer(Modifier.width(8.dp))
-            OutlinedButton(onClick = {
-                if (newTrusted.isNotBlank()) { vm.addTrustedSource(newTrusted.trim()); newTrusted = "" }
-            }) { Text("Add") }
+        item {
+            ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Trusted sources", style = MaterialTheme.typography.titleMedium)
+                    if (trusted.isEmpty()) {
+                        Text("No trusted sources yet")
+                    } else {
+                        trusted.forEachIndexed { i, entry ->
+                            ListItem(
+                                headlineContent = { Text(entry) },
+                                trailingContent = {
+                                    IconButton(onClick = { vm.removeTrustedSource(entry) }) { Icon(Icons.Filled.Delete, contentDescription = "Remove") }
+                                }
+                            )
+                            if (i < trusted.size - 1) HorizontalDivider()
+                        }
+                    }
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        OutlinedTextField(value = newTrusted, onValueChange = { newTrusted = it }, label = { Text("Add host/origin") }, modifier = Modifier.weight(1f))
+                        Spacer(Modifier.width(8.dp))
+                        OutlinedButton(onClick = { if (newTrusted.isNotBlank()) { vm.addTrustedSource(newTrusted.trim()); newTrusted = "" } }) { Text("Add") }
+                    }
+                }
+            }
         }
     }
 }
