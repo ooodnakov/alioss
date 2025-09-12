@@ -24,6 +24,9 @@ interface SettingsRepository {
     suspend fun setEnabledDeckIds(ids: Set<String>)
     suspend fun updateAllowNSFW(value: Boolean)
     suspend fun updateStemmingEnabled(value: Boolean)
+    suspend fun updateHapticsEnabled(value: Boolean)
+    suspend fun updateOneHandedLayout(value: Boolean)
+    suspend fun updateOrientation(value: String)
 
     // Trusted pack sources (hosts or origins) for manual downloads
     suspend fun setTrustedSources(origins: Set<String>)
@@ -38,6 +41,9 @@ data class Settings(
     val enabledDeckIds: Set<String> = emptySet(),
     val allowNSFW: Boolean = false,
     val stemmingEnabled: Boolean = false,
+    val hapticsEnabled: Boolean = true,
+    val oneHandedLayout: Boolean = false,
+    val orientation: String = "system",
     val trustedSources: Set<String> = emptySet(),
 )
 
@@ -55,6 +61,9 @@ class SettingsRepositoryImpl(
             enabledDeckIds = p[Keys.ENABLED_DECK_IDS] ?: emptySet(),
             allowNSFW = p[Keys.ALLOW_NSFW] ?: false,
             stemmingEnabled = p[Keys.STEMMING_ENABLED] ?: false,
+            hapticsEnabled = p[Keys.HAPTICS_ENABLED] ?: true,
+            oneHandedLayout = p[Keys.ONE_HANDED] ?: false,
+            orientation = p[Keys.ORIENTATION] ?: "system",
             trustedSources = p[Keys.TRUSTED_SOURCES] ?: emptySet(),
         )
     }
@@ -93,6 +102,22 @@ class SettingsRepositoryImpl(
         dataStore.edit { it[Keys.STEMMING_ENABLED] = value }
     }
 
+    override suspend fun updateHapticsEnabled(value: Boolean) {
+        dataStore.edit { it[Keys.HAPTICS_ENABLED] = value }
+    }
+
+    override suspend fun updateOneHandedLayout(value: Boolean) {
+        dataStore.edit { it[Keys.ONE_HANDED] = value }
+    }
+
+    override suspend fun updateOrientation(value: String) {
+        val norm = when (value.lowercase()) {
+            "portrait", "landscape", "system" -> value.lowercase()
+            else -> "system"
+        }
+        dataStore.edit { it[Keys.ORIENTATION] = norm }
+    }
+
     override suspend fun setTrustedSources(origins: Set<String>) {
         // Store as provided; downloader applies normalization when checking.
         dataStore.edit { it[Keys.TRUSTED_SOURCES] = origins }
@@ -107,6 +132,9 @@ class SettingsRepositoryImpl(
         val ENABLED_DECK_IDS = stringSetPreferencesKey("enabled_deck_ids")
         val ALLOW_NSFW = booleanPreferencesKey("allow_nsfw")
         val STEMMING_ENABLED = booleanPreferencesKey("stemming_enabled")
+        val HAPTICS_ENABLED = booleanPreferencesKey("haptics_enabled")
+        val ONE_HANDED = booleanPreferencesKey("one_handed_layout")
+        val ORIENTATION = stringPreferencesKey("orientation_mode")
         val TRUSTED_SOURCES = stringSetPreferencesKey("trusted_sources")
     }
 }

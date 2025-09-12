@@ -129,11 +129,23 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun updateSettings(roundSeconds: Int, targetWords: Int, maxSkips: Int, penaltyPerSkip: Int, language: String) {
+    fun updateSettings(
+        roundSeconds: Int,
+        targetWords: Int,
+        maxSkips: Int,
+        penaltyPerSkip: Int,
+        language: String,
+        haptics: Boolean,
+        oneHanded: Boolean,
+        orientation: String,
+    ) {
         viewModelScope.launch {
             settingsRepository.updateRoundSeconds(roundSeconds)
             settingsRepository.updateTargetWords(targetWords)
             settingsRepository.updateSkipPolicy(maxSkips, penaltyPerSkip)
+            settingsRepository.updateHapticsEnabled(haptics)
+            settingsRepository.updateOneHandedLayout(oneHanded)
+            settingsRepository.updateOrientation(orientation)
             runCatching { settingsRepository.updateLanguagePreference(language) }
         }
     }
