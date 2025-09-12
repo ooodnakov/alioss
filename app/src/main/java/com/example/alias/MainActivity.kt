@@ -12,6 +12,8 @@ import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -20,11 +22,23 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.Switch
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.platform.LocalContext
+import android.os.VibrationEffect
+import com.example.alias.data.settings.Settings
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import com.example.alias.domain.GameEngine
 import com.example.alias.domain.GameState
+import com.example.alias.domain.TurnOutcome
 import dagger.hilt.android.AndroidEntryPoint
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
@@ -50,12 +64,13 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("game") {
                             val engine by vm.engine.collectAsState()
+                            val settings by vm.settings.collectAsState()
                             if (engine == null) {
                                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                                     Text("Loading…")
                                 }
                             } else {
-                                GameScreen(engine!!, onRestart = { vm.restartMatch() })
+                                GameScreen(vm, engine!!, settings)
                             }
                         }
                         composable("decks") {
@@ -87,42 +102,76 @@ private fun HomeScreen(onQuickPlay: () -> Unit, onDecks: () -> Unit, onSettings:
 }
 
 @Composable
-private fun GameScreen(engine: GameEngine, onRestart: () -> Unit) {
+fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
+    val context = LocalContext.current
+    val activity = context as? android.app.Activity
+    DisposableEffect(settings.orientation) {
+        val original = activity?.requestedOrientation ?: android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        activity?.requestedOrientation = when (settings.orientation) {
+            "portrait" -> android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
+            "landscape" -> android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+            else -> android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        }
+        onDispose { activity?.requestedOrientation = original }
+    }
+    val vibrator = remember { context.getSystemService(android.os.Vibrator::class.java) }
     val state by engine.state.collectAsState()
     when (val s = state) {
         GameState.Idle -> Text("Idle")
         is GameState.TurnActive -> {
-            val progress = if (s.totalSeconds > 0) s.timeRemaining.toFloat() / s.totalSeconds else 0f
+            val rawProgress = if (s.totalSeconds > 0) s.timeRemaining.toFloat() / s.totalSeconds else 0f
+            val progress by animateFloatAsState(rawProgress, label = "timerProgress")
+            val targetColor = if (rawProgress > 0.5f) {
+                val t = (1 - rawProgress) * 2f
+                lerp(Color(0xFF4CAF50), Color(0xFFFFC107), t)
+            } else {
+                val t = rawProgress * 2f
+                lerp(Color(0xFFFFC107), Color(0xFFF44336), 1 - t)
+            }
+            val barColor by animateColorAsState(targetColor, label = "timerColor")
+            LaunchedEffect(s.timeRemaining) {
+                if (settings.hapticsEnabled && (s.timeRemaining == 10 || s.timeRemaining == 3)) {
+                    val effect = VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE)
+                    vibrator?.vibrate(effect)
+                }
+            }
             Column(
                 modifier = Modifier.fillMaxSize().padding(24.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                LinearProgressIndicator(progress = progress, modifier = Modifier.fillMaxWidth())
+                LinearProgressIndicator(progress = progress, color = barColor, modifier = Modifier.fillMaxWidth())
                 Text("${s.timeRemaining}s", style = MaterialTheme.typography.headlineLarge, textAlign = TextAlign.Center)
                 Text("Team: ${s.team}", style = MaterialTheme.typography.titleMedium)
                 Text(s.word, style = MaterialTheme.typography.displaySmall, textAlign = TextAlign.Center)
                 Text("Remaining: ${s.remaining} • Score: ${s.score} • Skips: ${s.skipsRemaining}")
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    Button(onClick = { engine.correct() }, modifier = Modifier.weight(1f)) { Text("Correct") }
-                    Button(onClick = { engine.skip() }, modifier = Modifier.weight(1f)) { Text("Skip") }
+                if (settings.oneHandedLayout) {
+                    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        Button(onClick = { engine.correct() }, modifier = Modifier.fillMaxWidth().height(80.dp)) { Text("Correct") }
+                        Button(onClick = { engine.skip() }, modifier = Modifier.fillMaxWidth().height(80.dp)) { Text("Skip") }
+                    }
+                } else {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        Button(onClick = { engine.correct() }, modifier = Modifier.weight(1f).height(60.dp)) { Text("Correct") }
+                        Button(onClick = { engine.skip() }, modifier = Modifier.weight(1f).height(60.dp)) { Text("Skip") }
+                    }
                 }
-                Button(onClick = onRestart, modifier = Modifier.fillMaxWidth()) { Text("Restart Match") }
+                Button(onClick = { vm.restartMatch() }, modifier = Modifier.fillMaxWidth()) { Text("Restart Match") }
             }
         }
         is GameState.TurnFinished -> {
-            RoundSummaryScreen(state = s, onNext = { engine.nextTurn() }, onAdjust = { engine.adjustScore(it) })
+            RoundSummaryScreen(vm = vm, s = s)
         }
         is GameState.MatchFinished -> {
             Column(
                 modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.Center,
+                verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("Match over")
-                Text("Scores: ${s.scores}")
+                Text("🎉 Match over 🎉", style = MaterialTheme.typography.headlineSmall)
+                Scoreboard(s.scores)
                 Text("Start a new match from Settings or Restart.")
-                Button(onClick = onRestart) { Text("Restart Match") }
+                Button(onClick = { vm.restartMatch() }) { Text("Restart Match") }
             }
         }
     }
@@ -213,6 +262,9 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit) {
     var maxSkips by rememberSaveable(s) { mutableStateOf(s.maxSkips.toString()) }
     var penalty by rememberSaveable(s) { mutableStateOf(s.penaltyPerSkip.toString()) }
     var lang by rememberSaveable(s) { mutableStateOf(s.languagePreference) }
+    var haptics by rememberSaveable(s) { mutableStateOf(s.hapticsEnabled) }
+    var oneHand by rememberSaveable(s) { mutableStateOf(s.oneHandedLayout) }
+    var orientation by rememberSaveable(s) { mutableStateOf(s.orientation) }
 
     Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("Settings", style = MaterialTheme.typography.headlineSmall)
@@ -223,6 +275,26 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit) {
             TextField(value = penalty, onValueChange = { penalty = it }, label = { Text("Penalty/skip") }, modifier = Modifier.weight(1f))
         }
         TextField(value = lang, onValueChange = { lang = it }, label = { Text("Language (e.g., en, ru)") }, modifier = Modifier.fillMaxWidth())
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("Haptics", modifier = Modifier.weight(1f))
+            Switch(checked = haptics, onCheckedChange = { haptics = it })
+        }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("One-hand layout", modifier = Modifier.weight(1f))
+            Switch(checked = oneHand, onCheckedChange = { oneHand = it })
+        }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("Orientation", modifier = Modifier.weight(1f))
+            var expanded by remember { mutableStateOf(false) }
+            Box {
+                TextButton(onClick = { expanded = true }) { Text(orientation) }
+                DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                    listOf("system", "portrait", "landscape").forEach {
+                        DropdownMenuItem(text = { Text(it) }, onClick = { orientation = it; expanded = false })
+                    }
+                }
+            }
+        }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(onClick = {
                 vm.updateSettings(
@@ -230,7 +302,10 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit) {
                     targetWords = target.toIntOrNull() ?: s.targetWords,
                     maxSkips = maxSkips.toIntOrNull() ?: s.maxSkips,
                     penaltyPerSkip = penalty.toIntOrNull() ?: s.penaltyPerSkip,
-                    language = lang.ifBlank { s.languagePreference }
+                    language = lang.ifBlank { s.languagePreference },
+                    haptics = haptics,
+                    oneHanded = oneHand,
+                    orientation = orientation,
                 )
             }, modifier = Modifier.weight(1f)) { Text("Save") }
             Button(onClick = { vm.restartMatch(); onBack() }, modifier = Modifier.weight(1f)) { Text("Save & Restart") }
@@ -240,23 +315,46 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit) {
 }
 
 @Composable
-private fun RoundSummaryScreen(state: GameState.TurnFinished, onNext: () -> Unit, onAdjust: (Int) -> Unit) {
+private fun RoundSummaryScreen(vm: MainViewModel, s: GameState.TurnFinished) {
     Column(
         modifier = Modifier.fillMaxSize().padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.Top),
     ) {
-        Text("Turn summary for ${state.team}", style = MaterialTheme.typography.headlineSmall)
-        Text("Score change: ${state.deltaScore}")
+        Text("Turn summary for ${s.team}", style = MaterialTheme.typography.headlineSmall)
+        Text("Score change: ${s.deltaScore}")
         LazyColumn(Modifier.weight(1f)) {
-            items(state.results) { r ->
-                Text(text = (if (r.correct) "✅" else "❌") + " " + r.word)
+            itemsIndexed(s.outcomes) { index, o ->
+                Row(
+                    Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(o.word, modifier = Modifier.weight(1f))
+                    Text(if (o.correct) "✓" else "✗")
+                    Row {
+                        Button(onClick = { vm.overrideOutcome(index, true) }) { Text("+") }
+                        Spacer(Modifier.width(4.dp))
+                        Button(onClick = { vm.overrideOutcome(index, false) }) { Text("-") }
+                    }
+                }
             }
         }
-        Text("Scores: ${state.scores}")
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = { onAdjust(-1) }, modifier = Modifier.weight(1f)) { Text("-1") }
-            Button(onClick = { onAdjust(1) }, modifier = Modifier.weight(1f)) { Text("+1") }
+        Scoreboard(s.scores)
+        Button(onClick = { vm.nextTurn() }, modifier = Modifier.fillMaxWidth()) {
+            Text(if (s.matchOver) "End Match" else "Next Team")
         }
-        Button(onClick = onNext, modifier = Modifier.fillMaxWidth()) { Text("Next team") }
+    }
+}
+
+@Composable
+private fun Scoreboard(scores: Map<String, Int>) {
+    Column(Modifier.fillMaxWidth()) {
+        Text("Scoreboard", style = MaterialTheme.typography.titleMedium)
+        val max = scores.values.maxOrNull() ?: 0
+        val leaders = scores.filterValues { it == max }.keys
+        scores.forEach { (team, score) ->
+            val isLeader = leaders.contains(team)
+            val suffix = if (leaders.size > 1 && isLeader) " (tie)" else if (isLeader) " ←" else ""
+            Text("$team: $score$suffix")
+        }
     }
 }
