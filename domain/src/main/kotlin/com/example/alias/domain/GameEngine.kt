@@ -20,6 +20,9 @@ interface GameEngine {
 
     /** Advance to the next team's turn after a finished turn. */
     fun nextTurn()
+
+    /** Adjust the last turn's score by [delta]. */
+    fun adjustScore(delta: Int)
 }
 
 /**
@@ -45,6 +48,7 @@ sealed interface GameState {
         val team: String,
         val deltaScore: Int,
         val scores: Map<String, Int>,
+        val results: List<WordResult>,
     ) : GameState
 
     /** The current match has finished. */
@@ -59,4 +63,10 @@ data class MatchConfig(
     val maxSkips: Int,
     val penaltyPerSkip: Int,
     val roundSeconds: Int,
+)
+
+/** Result of a single word in a turn. */
+data class WordResult(
+    val word: String,
+    val correct: Boolean,
 )
