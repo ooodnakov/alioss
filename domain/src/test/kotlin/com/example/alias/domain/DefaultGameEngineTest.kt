@@ -93,4 +93,28 @@ class DefaultGameEngineTest {
         val active = assertIs<GameState.TurnActive>(engine.state.value)
         assertEquals("B", active.team)
     }
+
+    @Test
+    fun `records results and adjusts score`() = runTest {
+        val engine = DefaultGameEngine(listOf("a", "b", "c", "d"), this)
+        val cfg = config.copy(targetWords = 3, maxSkips = 1, penaltyPerSkip = 1, roundSeconds = 5)
+        engine.startMatch(cfg, teams = listOf("t"), seed = 0L)
+
+        var s = assertIs<GameState.TurnActive>(engine.state.value)
+        val first = s.word
+        engine.correct()
+        s = assertIs<GameState.TurnActive>(engine.state.value)
+        val second = s.word
+        engine.skip()
+        advanceTimeBy(5000)
+        runCurrent()
+        val finished = assertIs<GameState.TurnFinished>(engine.state.value)
+        assertContentEquals(listOf(WordResult(first, true), WordResult(second, false)), finished.results)
+        assertEquals(0, finished.deltaScore)
+
+        engine.adjustScore(2)
+        val adjusted = assertIs<GameState.TurnFinished>(engine.state.value)
+        assertEquals(2, adjusted.deltaScore)
+        assertEquals(2, adjusted.scores["t"])
+    }
 }
