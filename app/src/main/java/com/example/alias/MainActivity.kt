@@ -552,120 +552,133 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit) {
     var teams by rememberSaveable(s) { mutableStateOf(s.teams) }
 
 
-    Column(
-        Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+    val canSave = teams.count { it.isNotBlank() } >= MIN_TEAMS
+    val applySettings = {
+        scope.launch {
+            vm.updateSettings(
+                roundSeconds = round.toIntOrNull() ?: s.roundSeconds,
+                targetWords = target.toIntOrNull() ?: s.targetWords,
+                maxSkips = maxSkips.toIntOrNull() ?: s.maxSkips,
+                penaltyPerSkip = penalty.toIntOrNull() ?: s.penaltyPerSkip,
+                punishSkips = punishSkips,
+                language = lang.ifBlank { s.languagePreference },
+                allowNSFW = nsfw,
+                haptics = haptics,
+                oneHanded = oneHand,
+                orientation = orientation,
+                teams = teams,
+            )
+        }
+    }
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text("Settings", style = MaterialTheme.typography.headlineSmall)
-        OutlinedTextField(value = round, onValueChange = { round = it }, label = { Text("Round seconds") }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(value = target, onValueChange = { target = it }, label = { Text("Target words") }, modifier = Modifier.fillMaxWidth())
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedTextField(value = maxSkips, onValueChange = { maxSkips = it }, label = { Text("Max skips") }, modifier = Modifier.weight(1f))
-            OutlinedTextField(value = penalty, onValueChange = { penalty = it }, label = { Text("Penalty/skip") }, modifier = Modifier.weight(1f))
+        item { Text("Settings", style = MaterialTheme.typography.headlineSmall) }
+        item {
+            ElevatedCard(Modifier.fillMaxWidth()) {
+                Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Round & Goals", style = MaterialTheme.typography.titleMedium)
+                    OutlinedTextField(value = round, onValueChange = { round = it }, label = { Text("Round seconds") }, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(value = target, onValueChange = { target = it }, label = { Text("Target words") }, modifier = Modifier.fillMaxWidth())
+                }
+            }
         }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Punish skips", modifier = Modifier.weight(1f))
-            Switch(checked = punishSkips, onCheckedChange = { punishSkips = it })
-        }
-        OutlinedTextField(value = lang, onValueChange = { lang = it }, label = { Text("Language (e.g., en, ru)") }, modifier = Modifier.fillMaxWidth())
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Allow NSFW", modifier = Modifier.weight(1f))
-            Switch(checked = nsfw, onCheckedChange = { nsfw = it })
-        }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Haptics", modifier = Modifier.weight(1f))
-            Switch(checked = haptics, onCheckedChange = { haptics = it })
-        }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("One-hand layout", modifier = Modifier.weight(1f))
-            Switch(checked = oneHand, onCheckedChange = { oneHand = it })
-        }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Orientation", modifier = Modifier.weight(1f))
-            var expanded by remember { mutableStateOf(false) }
-            Box {
-                TextButton(onClick = { expanded = true }) { Text(orientation) }
-                DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                    listOf("system", "portrait", "landscape").forEach {
-                        DropdownMenuItem(text = { Text(it) }, onClick = { orientation = it; expanded = false })
+        item {
+            ElevatedCard(Modifier.fillMaxWidth()) {
+                Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Skips", style = MaterialTheme.typography.titleMedium)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(value = maxSkips, onValueChange = { maxSkips = it }, label = { Text("Max skips") }, modifier = Modifier.weight(1f))
+                        OutlinedTextField(value = penalty, onValueChange = { penalty = it }, label = { Text("Penalty/skip") }, modifier = Modifier.weight(1f))
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("Punish skips", modifier = Modifier.weight(1f))
+                        Switch(checked = punishSkips, onCheckedChange = { punishSkips = it })
                     }
                 }
             }
         }
-
-        Button(onClick = {
-            scope.launch {
-                vm.updateSettings(
-                    roundSeconds = round.toIntOrNull() ?: s.roundSeconds,
-                    targetWords = target.toIntOrNull() ?: s.targetWords,
-                    maxSkips = maxSkips.toIntOrNull() ?: s.maxSkips,
-                    penaltyPerSkip = penalty.toIntOrNull() ?: s.penaltyPerSkip,
-                    punishSkips = punishSkips,
-                    language = lang.ifBlank { s.languagePreference },
-                    allowNSFW = nsfw,
-                    haptics = haptics,
-                    oneHanded = oneHand,
-                    orientation = orientation,
-                    teams = teams,
-                )
-                vm.restartMatch()
-                onBack()
-            }
-        }, modifier = Modifier.fillMaxWidth()) { Text("Save") }
-        Text("Teams", style = MaterialTheme.typography.titleMedium)
-        teams.forEachIndexed { index, name ->
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { new ->
-                        teams = teams.toMutableList().also { it[index] = new }
-                    },
-                    label = { Text("Team ${index + 1}") },
-                    modifier = Modifier.weight(1f)
-                )
-                IconButton(
-                    onClick = { teams = teams.toMutableList().also { it.removeAt(index) } },
-                    enabled = teams.size > MIN_TEAMS
-                ) {
-                    Icon(Icons.Filled.Delete, contentDescription = "Remove team")
+        item {
+            ElevatedCard(Modifier.fillMaxWidth()) {
+                Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Language & Content", style = MaterialTheme.typography.titleMedium)
+                    OutlinedTextField(value = lang, onValueChange = { lang = it }, label = { Text("Language (e.g., en, ru)") }, modifier = Modifier.fillMaxWidth())
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("Allow NSFW", modifier = Modifier.weight(1f))
+                        Switch(checked = nsfw, onCheckedChange = { nsfw = it })
+                    }
                 }
             }
         }
-        if (teams.size < MAX_TEAMS) {
-            OutlinedButton(onClick = { teams = teams + "Team ${teams.size + 1}" }, modifier = Modifier.fillMaxWidth()) {
-                Icon(Icons.Filled.Add, contentDescription = null)
-                Text("Add Team", modifier = Modifier.padding(start = 4.dp))
+        item {
+            ElevatedCard(Modifier.fillMaxWidth()) {
+                Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Feedback & Layout", style = MaterialTheme.typography.titleMedium)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("Haptics", modifier = Modifier.weight(1f))
+                        Switch(checked = haptics, onCheckedChange = { haptics = it })
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("One-hand layout", modifier = Modifier.weight(1f))
+                        Switch(checked = oneHand, onCheckedChange = { oneHand = it })
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("Orientation", modifier = Modifier.weight(1f))
+                        var expanded by remember { mutableStateOf(false) }
+                        Box {
+                            TextButton(onClick = { expanded = true }) { Text(orientation) }
+                            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                                listOf("system", "portrait", "landscape").forEach {
+                                    DropdownMenuItem(text = { Text(it) }, onClick = { orientation = it; expanded = false })
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
-        val canSave = teams.count { it.isNotBlank() } >= MIN_TEAMS
-        val applySettings = {
-            scope.launch {
-                vm.updateSettings(
-                    roundSeconds = round.toIntOrNull() ?: s.roundSeconds,
-                    targetWords = target.toIntOrNull() ?: s.targetWords,
-                    maxSkips = maxSkips.toIntOrNull() ?: s.maxSkips,
-                    penaltyPerSkip = penalty.toIntOrNull() ?: s.penaltyPerSkip,
-                    punishSkips = punishSkips,
-                    language = lang.ifBlank { s.languagePreference },
-                    allowNSFW = nsfw,
-                    haptics = haptics,
-                    oneHanded = oneHand,
-                    orientation = orientation,
-                    teams = teams,
-                )
+        item {
+            ElevatedCard(Modifier.fillMaxWidth()) {
+                Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Teams", style = MaterialTheme.typography.titleMedium)
+                    teams.forEachIndexed { index, name ->
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            OutlinedTextField(
+                                value = name,
+                                onValueChange = { new -> teams = teams.toMutableList().also { it[index] = new } },
+                                label = { Text("Team ${index + 1}") },
+                                modifier = Modifier.weight(1f)
+                            )
+                            IconButton(
+                                onClick = { teams = teams.toMutableList().also { it.removeAt(index) } },
+                                enabled = teams.size > MIN_TEAMS
+                            ) { Icon(Icons.Filled.Delete, contentDescription = "Remove team") }
+                        }
+                        if (index < teams.lastIndex) HorizontalDivider()
+                    }
+                    if (teams.size < MAX_TEAMS) {
+                        OutlinedButton(onClick = { teams = teams + "Team ${teams.size + 1}" }, modifier = Modifier.fillMaxWidth()) {
+                            Icon(Icons.Filled.Add, contentDescription = null)
+                            Text("Add Team", modifier = Modifier.padding(start = 4.dp))
+                        }
+                    }
+                }
             }
         }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = { applySettings() }, enabled = canSave, modifier = Modifier.weight(1f)) { Text("Save") }
-            FilledTonalButton(onClick = {
-                applySettings()
-                vm.restartMatch()
-                onBack()
-            }, enabled = canSave, modifier = Modifier.weight(1f)) { Text("Save & Restart") }
+        item {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(onClick = { applySettings() }, enabled = canSave, modifier = Modifier.weight(1f)) { Text("Save") }
+                FilledTonalButton(onClick = {
+                    applySettings()
+                    vm.restartMatch()
+                    onBack()
+                }, enabled = canSave, modifier = Modifier.weight(1f)) { Text("Save & Restart") }
+            }
         }
-        OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("Back") }
+        item { OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("Back") } }
     }
 }
 
