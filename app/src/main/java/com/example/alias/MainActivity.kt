@@ -203,46 +203,38 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                 Text("Remaining: ${s.remaining} • Score: ${s.score} • Skips: ${s.skipsRemaining}")
                 if (settings.oneHandedLayout) {
                     Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        val onWordAction = { action: () -> Unit ->
+                            if (!isProcessing) {
+                                isProcessing = true
+                                action()
+                            }
+                        }
                         Button(
-                            onClick = {
-                                if (!isProcessing) {
-                                    isProcessing = true
-                                    engine.correct()
-                                }
-                            },
+                            onClick = { onWordAction(engine::correct) },
                             enabled = !isProcessing,
                             modifier = Modifier.fillMaxWidth().height(80.dp)
                         ) { Text("Correct") }
                         Button(
-                            onClick = {
-                                if (!isProcessing) {
-                                    isProcessing = true
-                                    engine.skip()
-                                }
-                            },
+                            onClick = { onWordAction(engine::skip) },
                             enabled = !isProcessing,
                             modifier = Modifier.fillMaxWidth().height(80.dp)
                         ) { Text("Skip") }
                     }
                 } else {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        val onWordAction = { action: () -> Unit ->
+                            if (!isProcessing) {
+                                isProcessing = true
+                                action()
+                            }
+                        }
                         Button(
-                            onClick = {
-                                if (!isProcessing) {
-                                    isProcessing = true
-                                    engine.correct()
-                                }
-                            },
+                            onClick = { onWordAction(engine::correct) },
                             enabled = !isProcessing,
                             modifier = Modifier.weight(1f).height(60.dp)
                         ) { Text("Correct") }
                         Button(
-                            onClick = {
-                                if (!isProcessing) {
-                                    isProcessing = true
-                                    engine.skip()
-                                }
-                            },
+                            onClick = { onWordAction(engine::skip) },
                             enabled = !isProcessing,
                             modifier = Modifier.weight(1f).height(60.dp)
                         ) { Text("Skip") }

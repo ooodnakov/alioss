@@ -23,7 +23,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.consume
 import androidx.compose.ui.input.pointer.pointerInput
@@ -40,6 +39,21 @@ import kotlin.math.roundToInt
 
 enum class WordCardAction { Correct, Skip }
 
+private val COMMIT_DISTANCE = 112.dp
+private const val ROTATION_DIVISOR = 20f
+private const val HAPTIC_DURATION_MS = 10
+private const val SWIPE_AWAY_MULTIPLIER = 4
+
+private suspend fun resetCard(
+    offsetX: Animatable<Float, *>,
+    rotationZ: Animatable<Float, *>
+) {
+    coroutineScope {
+        launch { offsetX.animateTo(0f) }
+        launch { rotationZ.animateTo(0f) }
+    }
+}
+
 @Composable
 fun WordCard(
     word: String,
@@ -55,7 +69,7 @@ fun WordCard(
     val fadeIn = remember { Animatable(0f) }
     var hapticPlayed by remember { mutableStateOf(false) }
     val density = LocalDensity.current
-    val commitPx = with(density) { 112.dp.toPx() }
+    val commitPx = with(density) { COMMIT_DISTANCE.toPx() }
 
     LaunchedEffect(word) {
         offsetX.snapTo(0f)
@@ -85,35 +99,38 @@ fun WordCard(
                         change.consume()
                         val newX = offsetX.value + drag.x
                         offsetX.snapTo(newX)
-                        rotationZ.snapTo(newX / 20f)
+                        rotationZ.snapTo(newX / ROTATION_DIVISOR)
                         if (!hapticPlayed && abs(newX) > commitPx) {
                             hapticPlayed = true
                             if (hapticsEnabled) {
-                                vibrator?.vibrate(VibrationEffect.createOneShot(10, VibrationEffect.DEFAULT_AMPLITUDE))
+                                vibrator?.vibrate(
+                                    VibrationEffect.createOneShot(
+                                        HAPTIC_DURATION_MS.toLong(),
+                                        VibrationEffect.DEFAULT_AMPLITUDE
+                                    )
+                                )
                             }
                         }
                     },
                     onDragCancel = {
-                        coroutineScope {
-                            launch { offsetX.animateTo(0f) }
-                            launch { rotationZ.animateTo(0f) }
-                        }
+                        resetCard(offsetX, rotationZ)
                     },
                     onDragEnd = {
                         if (abs(offsetX.value) > commitPx) {
                             onActionStart()
                             val dir = if (offsetX.value > 0f) WordCardAction.Correct else WordCardAction.Skip
-                            val target = if (dir == WordCardAction.Correct) commitPx * 4 else -commitPx * 4
+                            val target = if (dir == WordCardAction.Correct) {
+                                commitPx * SWIPE_AWAY_MULTIPLIER
+                            } else {
+                                -commitPx * SWIPE_AWAY_MULTIPLIER
+                            }
                             coroutineScope {
                                 launch { offsetX.animateTo(target, tween(200)) }
-                                launch { rotationZ.animateTo(target / 20f, tween(200)) }
+                                launch { rotationZ.animateTo(target / ROTATION_DIVISOR, tween(200)) }
                             }
                             onAction(dir)
                         } else {
-                            coroutineScope {
-                                launch { offsetX.animateTo(0f) }
-                                launch { rotationZ.animateTo(0f) }
-                            }
+                            resetCard(offsetX, rotationZ)
                         }
                     }
                 )
@@ -132,13 +149,19 @@ fun WordCard(
             )
             Text(
                 text = "Correct",
-                color = Color(0xFF4CAF50),
-                modifier = Modifier.align(Alignment.TopEnd).padding(16.dp).alpha(if (offsetX.value > 0f) fraction else 0f)
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(16.dp)
+                    .alpha(if (offsetX.value > 0f) fraction else 0f)
             )
             Text(
                 text = "Skip",
-                color = Color(0xFFF44336),
-                modifier = Modifier.align(Alignment.TopStart).padding(16.dp).alpha(if (offsetX.value < 0f) fraction else 0f)
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(16.dp)
+                    .alpha(if (offsetX.value < 0f) fraction else 0f)
             )
         }
     }
