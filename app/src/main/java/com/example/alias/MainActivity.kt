@@ -240,7 +240,13 @@ private fun DecksScreen(vm: MainViewModel) {
                 val isEnabled = enabled.contains(deck.id)
                 ListItem(
                     headlineContent = { Text(deck.name) },
-                    supportingContent = { Text(deck.language, style = MaterialTheme.typography.bodySmall) },
+                    supportingContent = {
+                        val info = buildString {
+                            append(deck.language)
+                            if (deck.isNSFW) append(" • NSFW")
+                        }
+                        Text(info, style = MaterialTheme.typography.bodySmall)
+                    },
                     trailingContent = {
                         Switch(checked = isEnabled, onCheckedChange = { vm.setDeckEnabled(deck.id, it) })
                     }
@@ -302,6 +308,7 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit) {
     var maxSkips by rememberSaveable(s) { mutableStateOf(s.maxSkips.toString()) }
     var penalty by rememberSaveable(s) { mutableStateOf(s.penaltyPerSkip.toString()) }
     var lang by rememberSaveable(s) { mutableStateOf(s.languagePreference) }
+    var nsfw by rememberSaveable(s) { mutableStateOf(s.allowNSFW) }
     var haptics by rememberSaveable(s) { mutableStateOf(s.hapticsEnabled) }
     var oneHand by rememberSaveable(s) { mutableStateOf(s.oneHandedLayout) }
     var orientation by rememberSaveable(s) { mutableStateOf(s.orientation) }
@@ -320,6 +327,10 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit) {
             OutlinedTextField(value = penalty, onValueChange = { penalty = it }, label = { Text("Penalty/skip") }, modifier = Modifier.weight(1f))
         }
         OutlinedTextField(value = lang, onValueChange = { lang = it }, label = { Text("Language (e.g., en, ru)") }, modifier = Modifier.fillMaxWidth())
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("Allow NSFW", modifier = Modifier.weight(1f))
+            Switch(checked = nsfw, onCheckedChange = { nsfw = it })
+        }
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("Haptics", modifier = Modifier.weight(1f))
             Switch(checked = haptics, onCheckedChange = { haptics = it })
@@ -340,21 +351,20 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit) {
                 }
             }
         }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = {
-                vm.updateSettings(
-                    roundSeconds = round.toIntOrNull() ?: s.roundSeconds,
-                    targetWords = target.toIntOrNull() ?: s.targetWords,
-                    maxSkips = maxSkips.toIntOrNull() ?: s.maxSkips,
-                    penaltyPerSkip = penalty.toIntOrNull() ?: s.penaltyPerSkip,
-                    language = lang.ifBlank { s.languagePreference },
-                    haptics = haptics,
-                    oneHanded = oneHand,
-                    orientation = orientation,
-                )
-            }, modifier = Modifier.weight(1f)) { Text("Save") }
-            FilledTonalButton(onClick = { vm.restartMatch(); onBack() }, modifier = Modifier.weight(1f)) { Text("Save & Restart") }
-        }
+        Button(onClick = {
+            vm.updateSettings(
+                roundSeconds = round.toIntOrNull() ?: s.roundSeconds,
+                targetWords = target.toIntOrNull() ?: s.targetWords,
+                maxSkips = maxSkips.toIntOrNull() ?: s.maxSkips,
+                penaltyPerSkip = penalty.toIntOrNull() ?: s.penaltyPerSkip,
+                language = lang.ifBlank { s.languagePreference },
+                allowNSFW = nsfw,
+                haptics = haptics,
+                oneHanded = oneHand,
+                orientation = orientation,
+            )
+            vm.restartMatch()
+        }, modifier = Modifier.fillMaxWidth()) { Text("Save") }
         OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("Back") }
     }
 }
