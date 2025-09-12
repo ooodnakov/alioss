@@ -314,8 +314,32 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                 Text(stringResource(R.string.team_label, s.team), style = MaterialTheme.typography.titleMedium)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     AssistChip(onClick = {}, enabled = false, label = { Text(stringResource(R.string.remaining_label, s.remaining)) })
-                    AssistChip(onClick = {}, enabled = false, label = { Text(stringResource(R.string.score_label, s.score)) })
-                    AssistChip(onClick = {}, enabled = false, label = { Text(stringResource(R.string.skips_label, s.skipsRemaining)) })
+                      AssistChip(
+                          onClick = {},
+                          enabled = false,
+                          label = {
+                              Text(
+                                  LocalContext.current.resources.getQuantityString(
+                                      R.plurals.score_label,
+                                      s.score,
+                                      s.score
+                                  )
+                              )
+                          }
+                      )
+                      AssistChip(
+                          onClick = {},
+                          enabled = false,
+                          label = {
+                              Text(
+                                  LocalContext.current.resources.getQuantityString(
+                                      R.plurals.skips_label,
+                                      s.skipsRemaining,
+                                      s.skipsRemaining
+                                  )
+                              )
+                          }
+                      )
                 }
                         val computedNext = engine.peekNextWord()
                         val nextWord = frozenNext ?: computedNext

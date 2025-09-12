@@ -13,8 +13,18 @@
     <string name="idle">Ожидание</string>
     <string name="team_label">Команда: %s</string>
     <string name="remaining_label">Осталось %d</string>
-    <string name="score_label">Очки %d</string>
-    <string name="skips_label">Пропуски %d</string>
+    <plurals name="score_label">
+        <item quantity="one">%d очко</item>
+        <item quantity="few">%d очка</item>
+        <item quantity="many">%d очков</item>
+        <item quantity="other">%d очка</item>
+    </plurals>
+    <plurals name="skips_label">
+        <item quantity="one">%d пропуск</item>
+        <item quantity="few">%d пропуска</item>
+        <item quantity="many">%d пропусков</item>
+        <item quantity="other">%d пропуска</item>
+    </plurals>
     <string name="summary_label">Осталось: %1$d • Очки: %2$d • Пропуски: %3$d</string>
     <string name="correct">Правильно</string>
     <string name="skip">Пропустить</string>
