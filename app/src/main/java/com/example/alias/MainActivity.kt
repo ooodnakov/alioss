@@ -3,6 +3,8 @@ package com.example.alias
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
@@ -226,6 +228,9 @@ private fun DecksScreen(vm: MainViewModel) {
     var url by rememberSaveable { mutableStateOf("") }
     var sha by rememberSaveable { mutableStateOf("") }
     var newTrusted by rememberSaveable { mutableStateOf("") }
+    val filePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let { vm.importDeckFromFile(it) }
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -248,6 +253,8 @@ private fun DecksScreen(vm: MainViewModel) {
                 if (index < decks.lastIndex) Divider()
             }
         }
+        Spacer(Modifier.height(24.dp))
+        Button(onClick = { filePicker.launch(arrayOf("application/json")) }) { Text("Import from file") }
 
         Spacer(Modifier.height(24.dp))
         Text("Download Pack", style = MaterialTheme.typography.titleMedium)
