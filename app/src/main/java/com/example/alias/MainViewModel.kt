@@ -106,7 +106,7 @@ class MainViewModel @Inject constructor(
             val config = MatchConfig(
                 targetWords = s.targetWords,
                 maxSkips = s.maxSkips,
-                penaltyPerSkip = s.penaltyPerSkip,
+                penaltyPerSkip = if (s.punishSkips) s.penaltyPerSkip else 0,
                 roundSeconds = s.roundSeconds
             )
             val seed = java.security.SecureRandom().nextLong()
@@ -202,6 +202,7 @@ class MainViewModel @Inject constructor(
         targetWords: Int,
         maxSkips: Int,
         penaltyPerSkip: Int,
+        punishSkips: Boolean,
         language: String,
         allowNSFW: Boolean,
         haptics: Boolean,
@@ -215,6 +216,7 @@ class MainViewModel @Inject constructor(
           settingsRepository.updateRoundSeconds(roundSeconds)
           settingsRepository.updateTargetWords(targetWords)
           settingsRepository.updateSkipPolicy(maxSkips, penaltyPerSkip)
+          settingsRepository.updatePunishSkips(punishSkips)
           settingsRepository.updateAllowNSFW(allowNSFW)
           settingsRepository.updateHapticsEnabled(haptics)
           settingsRepository.updateOneHandedLayout(oneHanded)
@@ -237,7 +239,7 @@ class MainViewModel @Inject constructor(
             val config = MatchConfig(
                 targetWords = s.targetWords,
                 maxSkips = s.maxSkips,
-                penaltyPerSkip = s.penaltyPerSkip,
+                penaltyPerSkip = if (s.punishSkips) s.penaltyPerSkip else 0,
                 roundSeconds = s.roundSeconds
             )
             val seed = java.security.SecureRandom().nextLong()
