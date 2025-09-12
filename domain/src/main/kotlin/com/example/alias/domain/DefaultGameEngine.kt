@@ -30,7 +30,7 @@ class DefaultGameEngine(
     private val scores: MutableMap<String, Int> = mutableMapOf()
     private var currentTeam: Int = 0
     private var turnScore: Int = 0
-    private var processed: Int = 0
+    private var correctTotal: Int = 0
     private var skipsRemaining: Int = 0
     private var timeRemaining: Int = 0
     private var timerJob: Job? = null
@@ -47,7 +47,7 @@ class DefaultGameEngine(
                 queue = words.shuffled(Random(seed)).toMutableList()
                 scores.clear()
                 teams.forEach { scores[it] = 0 }
-                processed = 0
+                correctTotal = 0
                 currentTeam = 0
                 matchOver = false
                 startTurnLocked()
@@ -60,7 +60,7 @@ class DefaultGameEngine(
             mutex.withLock {
                 if (_state.value !is GameState.TurnActive) return@withLock
                 turnScore++
-                processed++
+                correctTotal++
                 outcomes.add(TurnOutcome(currentWord, true, System.currentTimeMillis()))
                 advanceLocked()
             }
