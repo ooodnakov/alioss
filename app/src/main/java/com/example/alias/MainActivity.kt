@@ -59,6 +59,10 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import com.example.alias.data.settings.SettingsRepository
+
+private const val MIN_TEAMS = SettingsRepository.MIN_TEAMS
+private const val MAX_TEAMS = SettingsRepository.MAX_TEAMS
 
 
 @AndroidEntryPoint
@@ -354,47 +358,39 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit) {
                 )
                 IconButton(
                     onClick = { teams = teams.toMutableList().also { it.removeAt(index) } },
-                    enabled = teams.size > 2
+                    enabled = teams.size > MIN_TEAMS
                 ) {
                     Icon(Icons.Filled.Delete, contentDescription = "Remove team")
                 }
             }
         }
-        if (teams.size < 6) {
+        if (teams.size < MAX_TEAMS) {
             OutlinedButton(onClick = { teams = teams + "Team ${teams.size + 1}" }, modifier = Modifier.fillMaxWidth()) {
                 Icon(Icons.Filled.Add, contentDescription = null)
                 Text("Add Team", modifier = Modifier.padding(start = 4.dp))
             }
         }
+        val canSave = teams.count { it.isNotBlank() } >= MIN_TEAMS
+        val applySettings = {
+            vm.updateSettings(
+                roundSeconds = round.toIntOrNull() ?: s.roundSeconds,
+                targetWords = target.toIntOrNull() ?: s.targetWords,
+                maxSkips = maxSkips.toIntOrNull() ?: s.maxSkips,
+                penaltyPerSkip = penalty.toIntOrNull() ?: s.penaltyPerSkip,
+                language = lang.ifBlank { s.languagePreference },
+                haptics = haptics,
+                oneHanded = oneHand,
+                orientation = orientation,
+                teams = teams,
+            )
+        }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = {
-                vm.updateSettings(
-                    roundSeconds = round.toIntOrNull() ?: s.roundSeconds,
-                    targetWords = target.toIntOrNull() ?: s.targetWords,
-                    maxSkips = maxSkips.toIntOrNull() ?: s.maxSkips,
-                    penaltyPerSkip = penalty.toIntOrNull() ?: s.penaltyPerSkip,
-                    language = lang.ifBlank { s.languagePreference },
-                    haptics = haptics,
-                    oneHanded = oneHand,
-                    orientation = orientation,
-                    teams = teams,
-                )
-            }, modifier = Modifier.weight(1f)) { Text("Save") }
+            Button(onClick = { applySettings() }, enabled = canSave, modifier = Modifier.weight(1f)) { Text("Save") }
             FilledTonalButton(onClick = {
-                vm.updateSettings(
-                    roundSeconds = round.toIntOrNull() ?: s.roundSeconds,
-                    targetWords = target.toIntOrNull() ?: s.targetWords,
-                    maxSkips = maxSkips.toIntOrNull() ?: s.maxSkips,
-                    penaltyPerSkip = penalty.toIntOrNull() ?: s.penaltyPerSkip,
-                    language = lang.ifBlank { s.languagePreference },
-                    haptics = haptics,
-                    oneHanded = oneHand,
-                    orientation = orientation,
-                    teams = teams,
-                )
+                applySettings()
                 vm.restartMatch()
                 onBack()
-            }, modifier = Modifier.weight(1f)) { Text("Save & Restart") }
+            }, enabled = canSave, modifier = Modifier.weight(1f)) { Text("Save & Restart") }
         }
         OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("Back") }
     }

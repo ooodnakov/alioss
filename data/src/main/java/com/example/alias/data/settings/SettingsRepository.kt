@@ -33,6 +33,11 @@ interface SettingsRepository {
 
     // Trusted pack sources (hosts or origins) for manual downloads
     suspend fun setTrustedSources(origins: Set<String>)
+
+    companion object {
+        const val MIN_TEAMS = 2
+        const val MAX_TEAMS = 6
+    }
 }
 
 data class Settings(
@@ -63,8 +68,8 @@ class SettingsRepositoryImpl(
             penaltyPerSkip = p[Keys.PENALTY_PER_SKIP] ?: 1,
             languagePreference = p[Keys.LANGUAGE] ?: "en",
             enabledDeckIds = p[Keys.ENABLED_DECK_IDS] ?: emptySet(),
-            teams = p[Keys.TEAMS]?.split("|")?.filter { it.isNotBlank() }?.take(6)?.let {
-                if (it.size >= 2) it else DEFAULT_TEAMS
+            teams = p[Keys.TEAMS]?.split("|")?.filter { it.isNotBlank() }?.take(SettingsRepository.MAX_TEAMS)?.let {
+                if (it.size >= SettingsRepository.MIN_TEAMS) it else DEFAULT_TEAMS
             } ?: DEFAULT_TEAMS,
             allowNSFW = p[Keys.ALLOW_NSFW] ?: false,
             stemmingEnabled = p[Keys.STEMMING_ENABLED] ?: false,
@@ -126,8 +131,8 @@ class SettingsRepositoryImpl(
     }
 
     override suspend fun setTeams(teams: List<String>) {
-        val norm = teams.map { it.trim() }.filter { it.isNotEmpty() }.take(6)
-        require(norm.size in 2..6)
+        val norm = teams.map { it.trim() }.filter { it.isNotEmpty() }.take(SettingsRepository.MAX_TEAMS)
+        require(norm.size in SettingsRepository.MIN_TEAMS..SettingsRepository.MAX_TEAMS)
         dataStore.edit { it[Keys.TEAMS] = norm.joinToString("|") }
     }
 
