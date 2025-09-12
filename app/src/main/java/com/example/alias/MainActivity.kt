@@ -99,15 +99,17 @@ class MainActivity : ComponentActivity() {
 @Composable
 private fun HomeScreen(onQuickPlay: () -> Unit, onDecks: () -> Unit, onSettings: () -> Unit) {
     Column(
-        modifier = Modifier.fillMaxSize().padding(24.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Button(onClick = onQuickPlay, modifier = Modifier.fillMaxWidth()) { Text("Quick Play") }
         Spacer(Modifier.height(16.dp))
-        Button(onClick = onDecks, modifier = Modifier.fillMaxWidth()) { Text("Decks") }
+        FilledTonalButton(onClick = onDecks, modifier = Modifier.fillMaxWidth()) { Text("Decks") }
         Spacer(Modifier.height(16.dp))
-        Button(onClick = onSettings, modifier = Modifier.fillMaxWidth()) { Text("Settings") }
+        OutlinedButton(onClick = onSettings, modifier = Modifier.fillMaxWidth()) { Text("Settings") }
     }
 }
 
@@ -197,7 +199,9 @@ private fun DecksScreen(vm: MainViewModel) {
     var sha by rememberSaveable { mutableStateOf("") }
     var newTrusted by rememberSaveable { mutableStateOf("") }
     Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp)
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
     ) {
         Text("Decks", style = MaterialTheme.typography.headlineSmall)
         Spacer(Modifier.height(16.dp))
@@ -206,7 +210,9 @@ private fun DecksScreen(vm: MainViewModel) {
         } else {
             decks.forEach { deck ->
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(Modifier.weight(1f)) {
@@ -214,7 +220,7 @@ private fun DecksScreen(vm: MainViewModel) {
                         Text(deck.language, style = MaterialTheme.typography.bodySmall)
                     }
                     val isEnabled = enabled.contains(deck.id)
-                    Button(onClick = { vm.setDeckEnabled(deck.id, !isEnabled) }) {
+                    FilledTonalButton(onClick = { vm.setDeckEnabled(deck.id, !isEnabled) }) {
                         Text(if (isEnabled) "Disable" else "Enable")
                     }
                 }
@@ -224,14 +230,14 @@ private fun DecksScreen(vm: MainViewModel) {
         Spacer(Modifier.height(24.dp))
         Text("Download Pack", style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(8.dp))
-        TextField(value = url, onValueChange = { url = it }, label = { Text("HTTPS URL") }, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(value = url, onValueChange = { url = it }, label = { Text("HTTPS URL") }, modifier = Modifier.fillMaxWidth())
         Spacer(Modifier.height(8.dp))
-        TextField(value = sha, onValueChange = { sha = it }, label = { Text("Expected SHA-256 (optional)") }, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(value = sha, onValueChange = { sha = it }, label = { Text("Expected SHA-256 (optional)") }, modifier = Modifier.fillMaxWidth())
         Spacer(Modifier.height(8.dp))
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Button(onClick = { vm.downloadPackFromUrl(url, sha) }) { Text("Download & Import") }
             Spacer(Modifier.width(12.dp))
-            Button(onClick = {
+            OutlinedButton(onClick = {
                 // Add host of URL to trusted list for convenience
                 runCatching {
                     val host = java.net.URI(url).host ?: ""
@@ -248,16 +254,21 @@ private fun DecksScreen(vm: MainViewModel) {
         Text("Trusted Sources", style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(8.dp))
         trusted.forEach { entry ->
-            Row(Modifier.fillMaxWidth().padding(vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 2.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text(entry, modifier = Modifier.weight(1f))
-                Button(onClick = { vm.removeTrustedSource(entry) }) { Text("Remove") }
+                OutlinedButton(onClick = { vm.removeTrustedSource(entry) }) { Text("Remove") }
             }
         }
         Spacer(Modifier.height(8.dp))
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            TextField(value = newTrusted, onValueChange = { newTrusted = it }, label = { Text("Add host/origin") }, modifier = Modifier.weight(1f))
+            OutlinedTextField(value = newTrusted, onValueChange = { newTrusted = it }, label = { Text("Add host/origin") }, modifier = Modifier.weight(1f))
             Spacer(Modifier.width(8.dp))
-            Button(onClick = {
+            OutlinedButton(onClick = {
                 if (newTrusted.isNotBlank()) { vm.addTrustedSource(newTrusted.trim()); newTrusted = "" }
             }) { Text("Add") }
         }
@@ -276,15 +287,20 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit) {
     var oneHand by rememberSaveable(s) { mutableStateOf(s.oneHandedLayout) }
     var orientation by rememberSaveable(s) { mutableStateOf(s.orientation) }
 
-    Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(
+        Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
         Text("Settings", style = MaterialTheme.typography.headlineSmall)
-        TextField(value = round, onValueChange = { round = it }, label = { Text("Round seconds") }, modifier = Modifier.fillMaxWidth())
-        TextField(value = target, onValueChange = { target = it }, label = { Text("Target words") }, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(value = round, onValueChange = { round = it }, label = { Text("Round seconds") }, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(value = target, onValueChange = { target = it }, label = { Text("Target words") }, modifier = Modifier.fillMaxWidth())
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            TextField(value = maxSkips, onValueChange = { maxSkips = it }, label = { Text("Max skips") }, modifier = Modifier.weight(1f))
-            TextField(value = penalty, onValueChange = { penalty = it }, label = { Text("Penalty/skip") }, modifier = Modifier.weight(1f))
+            OutlinedTextField(value = maxSkips, onValueChange = { maxSkips = it }, label = { Text("Max skips") }, modifier = Modifier.weight(1f))
+            OutlinedTextField(value = penalty, onValueChange = { penalty = it }, label = { Text("Penalty/skip") }, modifier = Modifier.weight(1f))
         }
-        TextField(value = lang, onValueChange = { lang = it }, label = { Text("Language (e.g., en, ru)") }, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(value = lang, onValueChange = { lang = it }, label = { Text("Language (e.g., en, ru)") }, modifier = Modifier.fillMaxWidth())
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("Haptics", modifier = Modifier.weight(1f))
             Switch(checked = haptics, onCheckedChange = { haptics = it })
@@ -318,9 +334,9 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit) {
                     orientation = orientation,
                 )
             }, modifier = Modifier.weight(1f)) { Text("Save") }
-            Button(onClick = { vm.restartMatch(); onBack() }, modifier = Modifier.weight(1f)) { Text("Save & Restart") }
+            FilledTonalButton(onClick = { vm.restartMatch(); onBack() }, modifier = Modifier.weight(1f)) { Text("Save & Restart") }
         }
-        Button(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("Back") }
+        OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("Back") }
     }
 }
 
