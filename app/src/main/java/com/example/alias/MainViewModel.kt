@@ -107,11 +107,22 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun setDeckEnabled(id: String, enabled: Boolean) {
+    fun setDeckEnabled(id: String, enabled: Boolean, fromUndo: Boolean = false) {
         viewModelScope.launch {
             val current = settingsRepository.settings.first().enabledDeckIds.toMutableSet()
             if (enabled) current += id else current -= id
             settingsRepository.setEnabledDeckIds(current)
+            if (!fromUndo) {
+                val msg = if (enabled) "Enabled deck: $id" else "Disabled deck: $id"
+                _uiEvents.tryEmit(
+                    UiEvent(
+                        message = msg,
+                        actionLabel = "Undo",
+                        duration = SnackbarDuration.Short,
+                        onAction = { setDeckEnabled(id, !enabled, fromUndo = true) }
+                    )
+                )
+            }
         }
     }
 
@@ -133,18 +144,19 @@ class MainViewModel @Inject constructor(
 
     fun downloadPackFromUrl(url: String, expectedSha256: String?) {
         viewModelScope.launch {
-            _downloadStatus.value = "Downloading…"
+            _uiEvents.tryEmit(UiEvent(message = "Downloading…", duration = SnackbarDuration.Indefinite))
             try {
                 val bytes = withContext(Dispatchers.IO) { downloader.download(url.trim(), expectedSha256?.trim().takeUnless { it.isNullOrEmpty() }) }
                 // Try JSON first
                 val text = bytes.toString(Charsets.UTF_8)
                 withContext(Dispatchers.IO) { deckRepository.importJson(text) }
-                _downloadStatus.value = "Imported deck from URL"
+                _uiEvents.tryEmit(UiEvent(message = "Imported deck from URL", actionLabel = "OK", duration = SnackbarDuration.Short))
             } catch (t: Throwable) {
-                _downloadStatus.value = "Failed: ${t.message}"
+                _uiEvents.tryEmit(UiEvent(message = "Failed: ${t.message}", actionLabel = "Dismiss", duration = SnackbarDuration.Long, isError = true))
             }
         }
     }
+
 
     fun updateSettings(
         roundSeconds: Int,
@@ -164,6 +176,7 @@ class MainViewModel @Inject constructor(
             settingsRepository.updateOneHandedLayout(oneHanded)
             settingsRepository.updateOrientation(orientation)
             runCatching { settingsRepository.updateLanguagePreference(language) }
+            _uiEvents.tryEmit(UiEvent(message = "Settings updated", actionLabel = "Dismiss"))
         }
     }
 
@@ -184,6 +197,7 @@ class MainViewModel @Inject constructor(
             )
             val seed = java.security.SecureRandom().nextLong()
             e.startMatch(config, teams = listOf("Red", "Blue"), seed = seed)
+            _uiEvents.tryEmit(UiEvent(message = "Match restarted", actionLabel = "Dismiss"))
         }
     }
 
