@@ -21,6 +21,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import com.example.alias.domain.GameEngine
 import com.example.alias.domain.GameState
 import dagger.hilt.android.AndroidEntryPoint
@@ -109,16 +111,7 @@ private fun GameScreen(engine: GameEngine, onRestart: () -> Unit) {
             }
         }
         is GameState.TurnFinished -> {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text("Turn finished for ${s.team}")
-                Text("Delta: ${s.deltaScore}")
-                Text("Scores: ${s.scores}")
-                Button(onClick = { engine.nextTurn() }) { Text("Next turn") }
-            }
+            RoundSummaryScreen(state = s, onNext = { engine.nextTurn() }, onAdjust = { engine.adjustScore(it) })
         }
         is GameState.MatchFinished -> {
             Column(
@@ -243,5 +236,27 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit) {
             Button(onClick = { vm.restartMatch(); onBack() }, modifier = Modifier.weight(1f)) { Text("Save & Restart") }
         }
         Button(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("Back") }
+    }
+}
+
+@Composable
+private fun RoundSummaryScreen(state: GameState.TurnFinished, onNext: () -> Unit, onAdjust: (Int) -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxSize().padding(24.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.Top),
+    ) {
+        Text("Turn summary for ${state.team}", style = MaterialTheme.typography.headlineSmall)
+        Text("Score change: ${state.deltaScore}")
+        LazyColumn(Modifier.weight(1f)) {
+            items(state.results) { r ->
+                Text(text = (if (r.correct) "✅" else "❌") + " " + r.word)
+            }
+        }
+        Text("Scores: ${state.scores}")
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(onClick = { onAdjust(-1) }, modifier = Modifier.weight(1f)) { Text("-1") }
+            Button(onClick = { onAdjust(1) }, modifier = Modifier.weight(1f)) { Text("+1") }
+        }
+        Button(onClick = onNext, modifier = Modifier.fillMaxWidth()) { Text("Next team") }
     }
 }
