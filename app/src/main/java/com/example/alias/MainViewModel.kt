@@ -172,12 +172,14 @@ class MainViewModel @Inject constructor(
                         ?: throw IllegalStateException("Empty file")
                 }
                 val pack = withContext(Dispatchers.IO) { PackParser.fromJson(text) }
-                withContext(Dispatchers.IO) { deckRepository.importJson(text) }
-                val s = settingsRepository.settings.first()
-                if (pack.deck.language == s.languagePreference) {
-                    val ids = s.enabledDeckIds.toMutableSet()
-                    if (ids.add(pack.deck.id)) {
-                        settingsRepository.setEnabledDeckIds(ids)
+                withContext(Dispatchers.IO) { deckRepository.importPack(pack) }
+                runCatching {
+                    val s = settingsRepository.settings.first()
+                    if (pack.deck.language == s.languagePreference) {
+                        val ids = s.enabledDeckIds.toMutableSet()
+                        if (ids.add(pack.deck.id)) {
+                            settingsRepository.setEnabledDeckIds(ids)
+                        }
                     }
                 }
                 _uiEvents.tryEmit(UiEvent(message = "Imported deck", actionLabel = "OK", duration = SnackbarDuration.Short))

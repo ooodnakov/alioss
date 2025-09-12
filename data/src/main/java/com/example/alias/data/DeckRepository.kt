@@ -6,6 +6,7 @@ import com.example.alias.data.db.DeckDao
 import com.example.alias.data.db.DeckEntity
 import com.example.alias.data.db.WordDao
 import com.example.alias.data.pack.PackParser
+import com.example.alias.data.pack.ParsedPack
 import kotlinx.coroutines.flow.Flow
 
 /** Repository responsible for deck persistence and import. */
@@ -15,6 +16,9 @@ interface DeckRepository {
 
     /** Parse [content] as a JSON pack and store it. */
     suspend fun importJson(content: String)
+
+    /** Store a pre-parsed [pack]. */
+    suspend fun importPack(pack: ParsedPack)
 }
 
 class DeckRepositoryImpl(
@@ -25,10 +29,13 @@ class DeckRepositoryImpl(
     override fun getDecks(): Flow<List<DeckEntity>> = deckDao.getDecks()
 
     override suspend fun importJson(content: String) {
-        val parsed = PackParser.fromJson(content)
+        importPack(PackParser.fromJson(content))
+    }
+
+    override suspend fun importPack(pack: ParsedPack) {
         db.withTransaction {
-            deckDao.insertDecks(listOf(parsed.deck))
-            wordDao.insertWords(parsed.words)
+            deckDao.insertDecks(listOf(pack.deck))
+            wordDao.insertWords(pack.words)
         }
     }
 }
