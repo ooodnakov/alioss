@@ -55,10 +55,10 @@ Status: early skeleton wired end-to-end — sample deck import, Room schema, Hil
 
 - CLI
   - `./gradlew assembleDebug` to build the APK.
-  - `./gradlew domain:test` runs the engine unit tests.
+  - `./gradlew domain:test` — Runs the engine unit tests.
   - Convenience scripts:
-    - `scripts/dev-build.sh` — run tests then assemble.
-    - `scripts/run-domain-tests.sh` — run domain tests only.
+    - `scripts/dev-build.sh` — Runs tests and assembles the debug APK.
+    - `scripts/run-domain-tests.sh` — Runs the domain module tests.
   - Optional first-time env setup on Linux: `scripts/setup-android-env.sh` (installs SDK CLI tools, accepts licenses, builds).
 
 - Requirements
