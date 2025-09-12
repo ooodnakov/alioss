@@ -29,12 +29,14 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ListItem
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.zIndex
 import android.os.VibrationEffect
 import com.example.alias.data.settings.Settings
 import androidx.compose.ui.text.style.TextAlign
@@ -55,6 +57,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHostState
 import com.example.alias.MainViewModel.UiEvent
 import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material.icons.Icons
@@ -306,7 +309,7 @@ private fun DecksScreen(vm: MainViewModel) {
                         Switch(checked = isEnabled, onCheckedChange = { vm.setDeckEnabled(deck.id, it) })
                     }
                 )
-                if (index < decks.lastIndex) Divider()
+                if (index < decks.lastIndex) HorizontalDivider()
             }
         }
         Spacer(Modifier.height(24.dp))
@@ -344,7 +347,7 @@ private fun DecksScreen(vm: MainViewModel) {
                     }
                 }
             )
-            if (i < trusted.size - 1) Divider()
+            if (i < trusted.size - 1) HorizontalDivider()
         }
         Spacer(Modifier.height(8.dp))
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -510,7 +513,7 @@ private fun RoundSummaryScreen(vm: MainViewModel, s: GameState.TurnFinished) {
                         }
                     }
                 )
-                if (index < s.outcomes.lastIndex) Divider()
+                if (index < s.outcomes.lastIndex) HorizontalDivider()
             }
         }
         Scoreboard(s.scores)
