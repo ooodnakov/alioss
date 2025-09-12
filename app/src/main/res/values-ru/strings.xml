@@ -1,0 +1,38 @@
+<resources>
+    <string name="app_name">Элиас</string>
+    <string name="title_game">Игра</string>
+    <string name="title_decks">Колоды</string>
+    <string name="title_settings">Настройки</string>
+    <string name="title_about">О приложении</string>
+    <string name="back">Назад</string>
+    <string name="loading">Загрузка…</string>
+    <string name="quick_play">Быстрая игра</string>
+    <string name="quick_play_subtitle">Начать матч с текущими настройками</string>
+    <string name="decks_subtitle">Управление и импорт колод слов</string>
+    <string name="settings_subtitle">Время, команды, язык и другое</string>
+    <string name="idle">Ожидание</string>
+    <string name="team_label">Команда: %s</string>
+    <string name="remaining_label">Осталось %d</string>
+    <plurals name="score_label">
+        <item quantity="one">%d очко</item>
+        <item quantity="few">%d очка</item>
+        <item quantity="many">%d очков</item>
+        <item quantity="other">%d очка</item>
+    </plurals>
+    <plurals name="skips_label">
+        <item quantity="one">%d пропуск</item>
+        <item quantity="few">%d пропуска</item>
+        <item quantity="many">%d пропусков</item>
+        <item quantity="other">%d пропуска</item>
+    </plurals>
+    <string name="summary_label">Осталось: %1$d • Очки: %2$d • Пропуски: %3$d</string>
+    <string name="correct">Правильно</string>
+    <string name="skip">Пропустить</string>
+    <string name="restart_match">Перезапустить матч</string>
+    <string name="start_new_match">Начните новый матч через Настройки или Перезапуск.</string>
+    <string name="scoreboard">Таблица результатов</string>
+    <string name="end_match">Завершить матч</string>
+    <string name="next_team">Следующая команда</string>
+    <string name="turn_summary">Итоги хода для %s</string>
+    <string name="score_change">Изменение счёта: %d</string>
+</resources>

@@ -129,7 +129,7 @@ class MainActivity : ComponentActivity() {
                 }
                 NavHost(navController = nav, startDestination = "home") {
                     composable("home") {
-                        AppScaffold(title = "Alias", snackbarHostState = snack) {
+                        AppScaffold(title = stringResource(R.string.app_name), snackbarHostState = snack) {
                             HomeScreen(
                                 onQuickPlay = { vm.restartMatch(); nav.navigate("game") },
                                 onDecks = { nav.navigate("decks") },
@@ -140,10 +140,10 @@ class MainActivity : ComponentActivity() {
                     composable("game") {
                         val engine by vm.engine.collectAsState()
                         val settings by vm.settings.collectAsState()
-                        AppScaffold(title = "Game", onBack = { nav.popBackStack() }, snackbarHostState = snack) {
+                        AppScaffold(title = stringResource(R.string.title_game), onBack = { nav.popBackStack() }, snackbarHostState = snack) {
                             if (engine == null) {
                                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                    Text("Loading…")
+                                    Text(stringResource(R.string.loading))
                                 }
                             } else {
                                 GameScreen(vm, engine!!, settings)
@@ -151,12 +151,12 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                     composable("decks") {
-                        AppScaffold(title = "Decks", onBack = { nav.popBackStack() }, snackbarHostState = snack) {
+                        AppScaffold(title = stringResource(R.string.title_decks), onBack = { nav.popBackStack() }, snackbarHostState = snack) {
                             DecksScreen(vm = vm)
                         }
                     }
                     composable("settings") {
-                        AppScaffold(title = "Settings", onBack = { nav.popBackStack() }, snackbarHostState = snack) {
+                        AppScaffold(title = stringResource(R.string.title_settings), onBack = { nav.popBackStack() }, snackbarHostState = snack) {
                             SettingsScreen(
                                 vm = vm,
                                 onBack = { nav.popBackStack() },
@@ -165,7 +165,7 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                     composable("about") {
-                        AppScaffold(title = "About", onBack = { nav.popBackStack() }, snackbarHostState = snack) {
+                        AppScaffold(title = stringResource(R.string.title_about), onBack = { nav.popBackStack() }, snackbarHostState = snack) {
                             AboutScreen()
                         }
                     }
@@ -187,7 +187,7 @@ private fun HomeScreen(onQuickPlay: () -> Unit, onDecks: () -> Unit, onSettings:
     ) {
         // App title / branding
         Text(
-            text = "Alias",
+            text = stringResource(R.string.app_name),
             style = MaterialTheme.typography.displaySmall,
             color = colors.primary
         )
@@ -195,24 +195,24 @@ private fun HomeScreen(onQuickPlay: () -> Unit, onDecks: () -> Unit, onSettings:
         // Primary actions as sleek cards
         HomeActionCard(
             icon = Icons.Filled.PlayArrow,
-            title = "Quick Play",
-            subtitle = "Start a match with current settings",
+            title = stringResource(R.string.quick_play),
+            subtitle = stringResource(R.string.quick_play_subtitle),
             onClick = onQuickPlay,
             containerColor = colors.primaryContainer,
             contentColor = colors.onPrimaryContainer
         )
         HomeActionCard(
             icon = Icons.Filled.LibraryBooks,
-            title = "Decks",
-            subtitle = "Manage and import word decks",
+            title = stringResource(R.string.title_decks),
+            subtitle = stringResource(R.string.decks_subtitle),
             onClick = onDecks,
             containerColor = colors.secondaryContainer,
             contentColor = colors.onSecondaryContainer
         )
         HomeActionCard(
             icon = Icons.Filled.Settings,
-            title = "Settings",
-            subtitle = "Time, teams, language and more",
+            title = stringResource(R.string.title_settings),
+            subtitle = stringResource(R.string.settings_subtitle),
             onClick = onSettings,
             containerColor = colors.tertiaryContainer,
             contentColor = colors.onTertiaryContainer
@@ -277,7 +277,7 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
     val vibrator = remember { context.getSystemService(android.os.Vibrator::class.java) }
     val state by engine.state.collectAsState()
     when (val s = state) {
-        GameState.Idle -> Text("Idle")
+        GameState.Idle -> Text(stringResource(R.string.idle))
         is GameState.TurnActive -> {
             val rawProgress = if (s.totalSeconds > 0) s.timeRemaining.toFloat() / s.totalSeconds else 0f
             val progress by animateFloatAsState(rawProgress, label = "timerProgress")
@@ -311,11 +311,35 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
             ) {
                 LinearProgressIndicator(progress = { progress }, color = barColor, modifier = Modifier.fillMaxWidth())
                 Text("${s.timeRemaining}s", style = MaterialTheme.typography.headlineLarge, textAlign = TextAlign.Center)
-                Text("Team: ${s.team}", style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.team_label, s.team), style = MaterialTheme.typography.titleMedium)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    AssistChip(onClick = {}, enabled = false, label = { Text("Remaining ${s.remaining}") })
-                    AssistChip(onClick = {}, enabled = false, label = { Text("Score ${s.score}") })
-                    AssistChip(onClick = {}, enabled = false, label = { Text("Skips ${s.skipsRemaining}") })
+                    AssistChip(onClick = {}, enabled = false, label = { Text(stringResource(R.string.remaining_label, s.remaining)) })
+                      AssistChip(
+                          onClick = {},
+                          enabled = false,
+                          label = {
+                              Text(
+                                  LocalContext.current.resources.getQuantityString(
+                                      R.plurals.score_label,
+                                      s.score,
+                                      s.score
+                                  )
+                              )
+                          }
+                      )
+                      AssistChip(
+                          onClick = {},
+                          enabled = false,
+                          label = {
+                              Text(
+                                  LocalContext.current.resources.getQuantityString(
+                                      R.plurals.skips_label,
+                                      s.skipsRemaining,
+                                      s.skipsRemaining
+                                  )
+                              )
+                          }
+                      )
                 }
                         val computedNext = engine.peekNextWord()
                         val nextWord = frozenNext ?: computedNext
@@ -370,7 +394,7 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                                 animateAppear = false,
                             )
                         }
-                Text("Remaining: ${s.remaining} • Score: ${s.score} • Skips: ${s.skipsRemaining}")
+                Text(stringResource(R.string.summary_label, s.remaining, s.score, s.skipsRemaining))
                 if (settings.oneHandedLayout) {
                     val onCorrect = {
                         if (!isProcessing) {
@@ -393,12 +417,12 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                             onClick = onCorrect,
                             enabled = !isProcessing,
                             modifier = Modifier.fillMaxWidth().height(80.dp)
-                        ) { Icon(Icons.Filled.Check, contentDescription = null); Spacer(Modifier.width(8.dp)); Text("Correct") }
+                        ) { Icon(Icons.Filled.Check, contentDescription = null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.correct)) }
                         Button(
                             onClick = onSkip,
                             enabled = !isProcessing && s.skipsRemaining > 0,
                             modifier = Modifier.fillMaxWidth().height(80.dp)
-                        ) { Icon(Icons.Filled.Close, contentDescription = null); Spacer(Modifier.width(8.dp)); Text("Skip") }
+                        ) { Icon(Icons.Filled.Close, contentDescription = null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.skip)) }
                     }
                 } else {
                     val onCorrect = {
@@ -422,15 +446,15 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                             onClick = onCorrect,
                             enabled = !isProcessing,
                             modifier = Modifier.weight(1f).height(60.dp)
-                        ) { Icon(Icons.Filled.Check, contentDescription = null); Spacer(Modifier.width(8.dp)); Text("Correct") }
+                        ) { Icon(Icons.Filled.Check, contentDescription = null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.correct)) }
                         Button(
                             onClick = onSkip,
                             enabled = !isProcessing && s.skipsRemaining > 0,
                             modifier = Modifier.weight(1f).height(60.dp)
-                        ) { Icon(Icons.Filled.Close, contentDescription = null); Spacer(Modifier.width(8.dp)); Text("Skip") }
+                        ) { Icon(Icons.Filled.Close, contentDescription = null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.skip)) }
                     }
                 }
-                Button(onClick = { vm.restartMatch() }, modifier = Modifier.fillMaxWidth()) { Text("Restart Match") }
+                Button(onClick = { vm.restartMatch() }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.restart_match)) }
             }
         }
         is GameState.TurnFinished -> {
@@ -444,11 +468,11 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
             ) {
                 Text("🎉 Match over 🎉", style = MaterialTheme.typography.headlineSmall)
                 Scoreboard(s.scores)
-                Text("Start a new match from Settings or Restart.")
-                Button(onClick = { vm.restartMatch() }) { Text("Restart Match") }
-            }
+                Text(stringResource(R.string.start_new_match))
+                Button(onClick = { vm.restartMatch() }) { Text(stringResource(R.string.restart_match)) }
         }
     }
+}
 }
 
 @Composable
@@ -469,7 +493,7 @@ private fun DecksScreen(vm: MainViewModel) {
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
-            Text("Decks", style = MaterialTheme.typography.headlineSmall)
+            Text(stringResource(R.string.title_decks), style = MaterialTheme.typography.headlineSmall)
         }
         item {
             ElevatedCard(modifier = Modifier.fillMaxWidth()) {
@@ -696,8 +720,8 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () ->
                 }, enabled = canSave, modifier = Modifier.weight(1f)) { Text("Save & Restart") }
             }
         }
-        item { OutlinedButton(onClick = onAbout, modifier = Modifier.fillMaxWidth()) { Text("About") } }
-        item { OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("Back") } }
+        item { OutlinedButton(onClick = onAbout, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.title_about)) } }
+        item { OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.back)) } }
     }
 }
 
@@ -756,7 +780,7 @@ private fun AboutScreen() {
         item {
             ElevatedCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("About", style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.title_about), style = MaterialTheme.typography.titleMedium)
                     Text("Author: Aleksandr Odnakov", style = MaterialTheme.typography.bodyMedium)
                     Text("No telemetry, no ads, all offline.", style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
                 }
@@ -771,8 +795,8 @@ private fun RoundSummaryScreen(vm: MainViewModel, s: GameState.TurnFinished) {
         modifier = Modifier.fillMaxSize().padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.Top),
     ) {
-        Text("Turn summary for ${s.team}", style = MaterialTheme.typography.headlineSmall)
-        Text("Score change: ${s.deltaScore}")
+        Text(stringResource(R.string.turn_summary, s.team), style = MaterialTheme.typography.headlineSmall)
+        Text(stringResource(R.string.score_change, s.deltaScore))
         LazyColumn(Modifier.weight(1f)) {
             itemsIndexed(s.outcomes) { index, o ->
                 ListItem(
@@ -800,7 +824,7 @@ private fun RoundSummaryScreen(vm: MainViewModel, s: GameState.TurnFinished) {
         }
         Scoreboard(s.scores)
         Button(onClick = { vm.nextTurn() }, modifier = Modifier.fillMaxWidth()) {
-            Text(if (s.matchOver) "End Match" else "Next Team")
+            Text(if (s.matchOver) stringResource(R.string.end_match) else stringResource(R.string.next_team))
         }
     }
 }
@@ -808,7 +832,7 @@ private fun RoundSummaryScreen(vm: MainViewModel, s: GameState.TurnFinished) {
 @Composable
 private fun Scoreboard(scores: Map<String, Int>) {
     Column(Modifier.fillMaxWidth()) {
-        Text("Scoreboard", style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(R.string.scoreboard), style = MaterialTheme.typography.titleMedium)
         val max = scores.values.maxOrNull() ?: 0
         val leaders = scores.filterValues { it == max }.keys
         scores.forEach { (team, score) ->

@@ -34,6 +34,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.example.alias.R
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -161,7 +163,7 @@ fun WordCard(
                 textAlign = TextAlign.Center
             )
             Text(
-                text = "Correct",
+                text = stringResource(R.string.correct),
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
@@ -169,7 +171,7 @@ fun WordCard(
                     .alpha(if (currentX > 0f) fraction else 0f)
             )
             Text(
-                text = "Skip",
+                text = stringResource(R.string.skip),
                 color = MaterialTheme.colorScheme.error,
                 modifier = Modifier
                     .align(Alignment.TopStart)
