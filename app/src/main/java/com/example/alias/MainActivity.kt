@@ -189,64 +189,131 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                 }
             }
             var isProcessing by remember { mutableStateOf(false) }
-            LaunchedEffect(s.word) { isProcessing = false }
+            var committing by remember { mutableStateOf(false) }
+            var frozenNext by remember { mutableStateOf<String?>(null) }
+            LaunchedEffect(s.word) {
+                // Word advanced: re-enable actions and unfreeze preview
+                isProcessing = false
+                committing = false
+                frozenNext = null
+            }
             Column(
                 modifier = Modifier.fillMaxSize().padding(24.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                LinearProgressIndicator(progress = progress, color = barColor, modifier = Modifier.fillMaxWidth())
+                LinearProgressIndicator(progress = { progress }, color = barColor, modifier = Modifier.fillMaxWidth())
                 Text("${s.timeRemaining}s", style = MaterialTheme.typography.headlineLarge, textAlign = TextAlign.Center)
                 Text("Team: ${s.team}", style = MaterialTheme.typography.titleMedium)
-                WordCard(
-                    word = s.word,
-                    enabled = !isProcessing,
-                    vibrator = vibrator,
-                    hapticsEnabled = settings.hapticsEnabled,
-                    onActionStart = { isProcessing = true },
-                    onAction = {
-                        when (it) {
-                            WordCardAction.Correct -> engine.correct()
-                            WordCardAction.Skip -> engine.skip()
+                        val computedNext = engine.peekNextWord()
+                        val nextWord = frozenNext ?: computedNext
+                        Box(Modifier.fillMaxWidth().height(200.dp)) {
+                            // Pre-render the next card underneath to avoid flicker when advancing
+                            if (nextWord != null) {
+                                WordCard(
+                                    word = nextWord,
+                                    modifier = Modifier
+                                        .matchParentSize()
+                                        .zIndex(0f)
+                                        .alpha(if (committing) 1f else 0f),
+                                    enabled = false,
+                                    vibrator = null,
+                                    hapticsEnabled = false,
+                                    onActionStart = {},
+                                    onAction = {},
+                                    animateAppear = false,
+                                    allowSkip = s.skipsRemaining > 0,
+                                )
+                            }
+                            WordCard(
+                                word = s.word,
+                                modifier = Modifier.matchParentSize().zIndex(1f),
+                                enabled = true,
+                                vibrator = vibrator,
+                                hapticsEnabled = settings.hapticsEnabled,
+                                onActionStart = {
+                                    // Freeze the preview so it doesn't swap to next-next mid-animation
+                                    if (!committing) {
+                                        frozenNext = computedNext
+                                        committing = true
+                                    }
+                                    isProcessing = true
+                                },
+                                onAction = {
+                                    when (it) {
+                                        WordCardAction.Correct -> {
+                                            engine.correct()
+                                            isProcessing = false
+                                        }
+                                        WordCardAction.Skip -> if (s.skipsRemaining > 0) {
+                                            engine.skip()
+                                            isProcessing = false
+                                        } else {
+                                            // No skips left: ignore gesture and keep card
+                                            isProcessing = false
+                                        }
+                                    }
+                                },
+                                allowSkip = s.skipsRemaining > 0,
+                                animateAppear = false,
+                            )
                         }
-                    }
-                )
                 Text("Remaining: ${s.remaining} • Score: ${s.score} • Skips: ${s.skipsRemaining}")
                 if (settings.oneHandedLayout) {
-                    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        val onWordAction = { action: () -> Unit ->
-                            if (!isProcessing) {
+                    val onCorrect = {
+                        if (!isProcessing) {
+                            isProcessing = true
+                            engine.correct()
+                        }
+                    }
+                    val onSkip = {
+                        if (!isProcessing) {
+                            if (s.skipsRemaining > 0) {
                                 isProcessing = true
-                                action()
+                                engine.skip()
+                            } else {
+                                // No skips left; ignore without blocking input
                             }
                         }
+                    }
+                    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                         Button(
-                            onClick = { onWordAction(engine::correct) },
+                            onClick = onCorrect,
                             enabled = !isProcessing,
                             modifier = Modifier.fillMaxWidth().height(80.dp)
                         ) { Text("Correct") }
                         Button(
-                            onClick = { onWordAction(engine::skip) },
-                            enabled = !isProcessing,
+                            onClick = onSkip,
+                            enabled = !isProcessing && s.skipsRemaining > 0,
                             modifier = Modifier.fillMaxWidth().height(80.dp)
                         ) { Text("Skip") }
                     }
                 } else {
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                        val onWordAction = { action: () -> Unit ->
-                            if (!isProcessing) {
+                    val onCorrect = {
+                        if (!isProcessing) {
+                            isProcessing = true
+                            engine.correct()
+                        }
+                    }
+                    val onSkip = {
+                        if (!isProcessing) {
+                            if (s.skipsRemaining > 0) {
                                 isProcessing = true
-                                action()
+                                engine.skip()
+                            } else {
+                                // No skips left; ignore without blocking input
                             }
                         }
+                    }
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                         Button(
-                            onClick = { onWordAction(engine::correct) },
+                            onClick = onCorrect,
                             enabled = !isProcessing,
                             modifier = Modifier.weight(1f).height(60.dp)
                         ) { Text("Correct") }
                         Button(
-                            onClick = { onWordAction(engine::skip) },
-                            enabled = !isProcessing,
+                            onClick = onSkip,
+                            enabled = !isProcessing && s.skipsRemaining > 0,
                             modifier = Modifier.weight(1f).height(60.dp)
                         ) { Text("Skip") }
                     }
