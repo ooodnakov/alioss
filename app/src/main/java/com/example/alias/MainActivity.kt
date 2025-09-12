@@ -87,15 +87,25 @@ class MainActivity : ComponentActivity() {
                 // Collect general UI events and show snackbars
                 LaunchedEffect(Unit) {
                     vm.uiEvents.collect { ev: UiEvent ->
-                        val result = snack.showSnackbar(
-                            message = ev.message,
-                            actionLabel = ev.actionLabel,
-                            withDismissAction = ev.actionLabel == null,
-                            duration = ev.duration
-                        )
-                        if (result == SnackbarResult.ActionPerformed) {
-                            ev.onAction?.invoke()
+                        // Always show, but enforce a 1s auto-dismiss for non-indefinite events.
+                        val showJob = launch {
+                            val result = snack.showSnackbar(
+                                message = ev.message,
+                                actionLabel = ev.actionLabel,
+                                withDismissAction = ev.actionLabel == null,
+                                duration = if (ev.duration == SnackbarDuration.Indefinite) SnackbarDuration.Indefinite else SnackbarDuration.Indefinite
+                            )
+                            if (result == SnackbarResult.ActionPerformed) {
+                                ev.onAction?.invoke()
+                            }
                         }
+                        if (ev.duration != SnackbarDuration.Indefinite) {
+                            launch {
+                                kotlinx.coroutines.delay(1000)
+                                snack.currentSnackbarData?.dismiss()
+                            }
+                        }
+                        showJob.join()
                     }
                 }
                 NavHost(navController = nav, startDestination = "home") {
