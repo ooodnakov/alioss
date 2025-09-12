@@ -208,13 +208,14 @@ class MainViewModel @Inject constructor(
             viewModelScope.launch {
                 val entries = current.outcomes.map {
                     com.example.alias.data.db.TurnHistoryEntity(
-                        team = current.team,
-                        word = it.word,
-                        correct = it.correct,
-                        timestamp = it.timestamp,
+                        0L,
+                        current.team,
+                        it.word,
+                        it.correct,
+                        it.timestamp
                     )
                 }
-                withContext(Dispatchers.IO) { historyRepository.save(entries) }
+                historyRepository.save(entries)
                 e.nextTurn()
             }
         }
