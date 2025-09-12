@@ -36,6 +36,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.zIndex
 import android.os.VibrationEffect
@@ -71,11 +72,18 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.LibraryBooks
+import androidx.compose.material.icons.filled.Code
+import androidx.compose.material.icons.filled.OpenInNew
+import androidx.compose.material.icons.filled.BugReport
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.CardDefaults
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.foundation.clickable
 import kotlinx.coroutines.launch
 import com.example.alias.ui.WordCard
 import com.example.alias.ui.WordCardAction
@@ -688,23 +696,71 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () ->
                 }, enabled = canSave, modifier = Modifier.weight(1f)) { Text("Save & Restart") }
             }
         }
-        OutlinedButton(onClick = onAbout, modifier = Modifier.fillMaxWidth()) { Text("About") }
-        OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("Back") }
+        item { OutlinedButton(onClick = onAbout, modifier = Modifier.fillMaxWidth()) { Text("About") } }
+        item { OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("Back") } }
     }
 }
 
 @Composable
 private fun AboutScreen() {
     val uriHandler = LocalUriHandler.current
-    Column(
+    val colors = MaterialTheme.colorScheme
+    val version = BuildConfig.VERSION_NAME
+    LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text("Author: Aleksandr Odnakov", style = MaterialTheme.typography.headlineSmall)
-        TextButton(onClick = { uriHandler.openUri("https://github.com/ooodnakov/alias-game") }) {
-            Text("github.com/ooodnakov/alias-game")
+        item {
+            // Hero card
+            ElevatedCard(Modifier.fillMaxWidth()) {
+                Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Box(
+                            modifier = Modifier.size(56.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Filled.Info, contentDescription = null, tint = colors.primary)
+                        }
+                        Column(Modifier.weight(1f)) {
+                            Text("Alias", style = MaterialTheme.typography.headlineSmall)
+                            Text("Version $version", style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
+                        }
+                    }
+                }
+            }
+        }
+        item {
+            ElevatedCard(Modifier.fillMaxWidth()) {
+                Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text("Links", style = MaterialTheme.typography.titleMedium)
+                    ListItem(
+                        leadingContent = { Icon(Icons.Filled.Code, contentDescription = null) },
+                        headlineContent = { Text("Source code") },
+                        supportingContent = { Text("github.com/ooodnakov/alias-game") },
+                        trailingContent = { Icon(Icons.Filled.OpenInNew, contentDescription = null) },
+                        modifier = Modifier.clickable { uriHandler.openUri("https://github.com/ooodnakov/alias-game") }
+                    )
+                    HorizontalDivider()
+                    ListItem(
+                        leadingContent = { Icon(Icons.Filled.BugReport, contentDescription = null) },
+                        headlineContent = { Text("Report an issue") },
+                        supportingContent = { Text("Open GitHub issues") },
+                        trailingContent = { Icon(Icons.Filled.OpenInNew, contentDescription = null) },
+                        modifier = Modifier.clickable { uriHandler.openUri("https://github.com/ooodnakov/alias-game/issues") }
+                    )
+                }
+            }
+        }
+        item {
+            ElevatedCard(Modifier.fillMaxWidth()) {
+                Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("About", style = MaterialTheme.typography.titleMedium)
+                    Text("Author: Aleksandr Odnakov", style = MaterialTheme.typography.bodyMedium)
+                    Text("No telemetry, no ads, all offline.", style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
+                }
+            }
         }
     }
 }
