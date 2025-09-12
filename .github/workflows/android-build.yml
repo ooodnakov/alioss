@@ -27,18 +27,12 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-          cache: 'gradle'
-
-      - name: Set up Gradle cache
-        uses: gradle/gradle-build-action@v2
+      
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v3
 
       - name: Run unit tests (domain, data, app)
-        uses: gradle/gradle-build-action@v2
-        with:
-          gradle-version: 8.7
-          arguments: |
-            --version
-            :domain:test :data:test :app:testDebugUnitTest --no-daemon --console=plain
+        run: ./gradlew --version :domain:test :data:test :app:testDebugUnitTest --no-daemon --console=plain
 
       - name: Upload test reports
         if: always()
@@ -69,10 +63,9 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-          cache: 'gradle'
 
-      - name: Set up Gradle cache
-        uses: gradle/gradle-build-action@v2
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v3
 
       - name: Install Android SDK (no build)
         env:
@@ -83,11 +76,7 @@ jobs:
           bash scripts/setup-android-env.sh
 
       - name: Assemble debug APK
-        uses: gradle/gradle-build-action@v2
-        with:
-          gradle-version: 8.7
-          arguments: |
-            :app:assembleDebug --no-daemon --console=plain
+        run: ./gradlew :app:assembleDebug --no-daemon --console=plain
 
       - name: Upload debug APK
         if: always()
