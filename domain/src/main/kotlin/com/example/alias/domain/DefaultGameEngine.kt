@@ -34,6 +34,8 @@ class DefaultGameEngine(
     private var skipsRemaining: Int = 0
     private var timeRemaining: Int = 0
     private var timerJob: Job? = null
+    private var currentWord: String = ""
+    private val turnResults: MutableList<WordResult> = mutableListOf()
     private val mutex = Mutex()
 
     override fun startMatch(config: MatchConfig, teams: List<String>, seed: Long) {
@@ -57,6 +59,7 @@ class DefaultGameEngine(
                 if (_state.value !is GameState.TurnActive) return@withLock
                 turnScore++
                 processed++
+                turnResults.add(WordResult(currentWord, true))
                 advanceLocked()
             }
         }
@@ -70,6 +73,7 @@ class DefaultGameEngine(
                 skipsRemaining--
                 turnScore -= config.penaltyPerSkip
                 processed++
+                turnResults.add(WordResult(currentWord, false))
                 advanceLocked()
             }
         }
@@ -85,6 +89,22 @@ class DefaultGameEngine(
         }
     }
 
+    override fun adjustScore(delta: Int) {
+        runBlocking {
+            mutex.withLock {
+                val current = _state.value
+                if (current is GameState.TurnFinished) {
+                    val team = current.team
+                    scores[team] = scores.getOrDefault(team, 0) + delta
+                    _state.value = current.copy(
+                        deltaScore = current.deltaScore + delta,
+                        scores = scores.toMap(),
+                    )
+                }
+            }
+        }
+    }
+
     private suspend fun startTurnLocked() {
         if (processed >= config.targetWords || queue.isEmpty()) {
             finishMatchLocked()
@@ -93,6 +113,7 @@ class DefaultGameEngine(
         skipsRemaining = config.maxSkips
         timeRemaining = config.roundSeconds
         turnScore = 0
+        turnResults.clear()
         timerJob?.cancel()
         timerJob = scope.launch { tickTimer() }
         advanceLocked()
@@ -107,6 +128,7 @@ class DefaultGameEngine(
         val remaining = config.targetWords - processed
         val team = teams[currentTeam]
         val totalScore = scores.getOrDefault(team, 0) + turnScore
+        currentWord = next
         _state.update { GameState.TurnActive(team, next, remaining, totalScore, skipsRemaining, timeRemaining, config.roundSeconds) }
     }
 
@@ -117,7 +139,7 @@ class DefaultGameEngine(
         if (processed >= config.targetWords || queue.isEmpty()) {
             finishMatchLocked()
         } else {
-            _state.update { GameState.TurnFinished(team, turnScore, scores.toMap()) }
+            _state.update { GameState.TurnFinished(team, turnScore, scores.toMap(), turnResults.toList()) }
         }
     }
 
