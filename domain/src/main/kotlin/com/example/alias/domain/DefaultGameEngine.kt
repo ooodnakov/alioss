@@ -95,6 +95,14 @@ class DefaultGameEngine(
         }
     }
 
+    override fun peekNextWord(): String? {
+        return runBlocking {
+            mutex.withLock {
+                queue.firstOrNull()
+            }
+        }
+    }
+
     override fun overrideOutcome(index: Int, correct: Boolean) {
         runBlocking {
             mutex.withLock {

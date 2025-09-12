@@ -23,6 +23,9 @@ interface GameEngine {
 
     /** Override the outcome of a word at [index] in the last turn. */
     fun overrideOutcome(index: Int, correct: Boolean)
+
+    /** Optional hint for UI: preview the next word without advancing state. */
+    fun peekNextWord(): String?
 }
 
 /**
