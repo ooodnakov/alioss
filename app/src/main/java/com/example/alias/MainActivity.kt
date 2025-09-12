@@ -6,7 +6,6 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -44,6 +43,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.alias.ui.AppScaffold
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.OutlinedTextField
+ 
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -51,20 +55,22 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             AliasAppTheme {
-                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    val nav = rememberNavController()
-                    val vm: MainViewModel = hiltViewModel()
-                    NavHost(navController = nav, startDestination = "home") {
-                        composable("home") {
+                val nav = rememberNavController()
+                val vm: MainViewModel = hiltViewModel()
+                NavHost(navController = nav, startDestination = "home") {
+                    composable("home") {
+                        AppScaffold(title = "Alias") {
                             HomeScreen(
                                 onQuickPlay = { nav.navigate("game") },
                                 onDecks = { nav.navigate("decks") },
                                 onSettings = { nav.navigate("settings") }
                             )
                         }
-                        composable("game") {
-                            val engine by vm.engine.collectAsState()
-                            val settings by vm.settings.collectAsState()
+                    }
+                    composable("game") {
+                        val engine by vm.engine.collectAsState()
+                        val settings by vm.settings.collectAsState()
+                        AppScaffold(title = "Game", onBack = { nav.popBackStack() }) {
                             if (engine == null) {
                                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                                     Text("Loading…")
@@ -73,10 +79,14 @@ class MainActivity : ComponentActivity() {
                                 GameScreen(vm, engine!!, settings)
                             }
                         }
-                        composable("decks") {
+                    }
+                    composable("decks") {
+                        AppScaffold(title = "Decks", onBack = { nav.popBackStack() }) {
                             DecksScreen(vm = vm)
                         }
-                        composable("settings") {
+                    }
+                    composable("settings") {
+                        AppScaffold(title = "Settings", onBack = { nav.popBackStack() }) {
                             SettingsScreen(vm = vm, onBack = { nav.popBackStack() })
                         }
                     }
