@@ -24,7 +24,7 @@ Status: early skeleton wired end-to-end — sample deck import, Room schema, Hil
 - Concurrency: Coroutines + Flow
 - Local storage: Room (SQLite)
 - I/O: Kotlinx Serialization (JSON packs)
-- Build: Gradle (AGP), Kotlin 1.9.x, Java 17 toolchain
+- Build: Gradle (AGP), Kotlin 1.9.x, Java 21 toolchain
 
 
 ## Architecture
@@ -55,10 +55,14 @@ Status: early skeleton wired end-to-end — sample deck import, Room schema, Hil
 
 - CLI
   - `./gradlew assembleDebug` to build the APK.
+  - `./gradlew domain:test` runs the engine unit tests.
+  - Convenience scripts:
+    - `scripts/dev-build.sh` — run tests then assemble.
+    - `scripts/run-domain-tests.sh` — run domain tests only.
   - Optional first-time env setup on Linux: `scripts/setup-android-env.sh` (installs SDK CLI tools, accepts licenses, builds).
 
 - Requirements
-  - JDK 17+, Android SDK 34, Gradle Wrapper included.
+  - JDK 21+, Android SDK 34, Gradle Wrapper included.
 
 
 ## Gameplay (MVP)
