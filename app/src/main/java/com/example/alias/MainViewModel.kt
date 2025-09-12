@@ -81,9 +81,14 @@ class MainViewModel @Inject constructor(
                         deckRepository.importJson(content)
                     }
                 }
-                // Prepare enabled deck ids
+                // Resolve enabled deck ids; if none set, pick available decks matching language preference
                 val s0 = settingsRepository.settings.first()
-                val initialEnabled = if (s0.enabledDeckIds.isEmpty()) setOf("sample_en") else s0.enabledDeckIds
+                val allDecks = deckRepository.getDecks().first()
+                val preferredIds = allDecks.filter { it.language == s0.languagePreference }.map { it.id }.toSet()
+                val fallbackIds = allDecks.map { it.id }.toSet()
+                val initialEnabled = if (s0.enabledDeckIds.isEmpty()) {
+                    if (preferredIds.isNotEmpty()) preferredIds else fallbackIds
+                } else s0.enabledDeckIds
                 if (s0.enabledDeckIds.isEmpty()) {
                     try { settingsRepository.setEnabledDeckIds(initialEnabled) } catch (_: Throwable) {}
                 }

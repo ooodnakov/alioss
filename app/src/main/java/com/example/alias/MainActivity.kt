@@ -89,7 +89,7 @@ class MainActivity : ComponentActivity() {
                     composable("home") {
                         AppScaffold(title = "Alias", snackbarHostState = snack) {
                             HomeScreen(
-                                onQuickPlay = { nav.navigate("game") },
+                                onQuickPlay = { vm.restartMatch(); nav.navigate("game") },
                                 onDecks = { nav.navigate("decks") },
                                 onSettings = { nav.navigate("settings") }
                             )
