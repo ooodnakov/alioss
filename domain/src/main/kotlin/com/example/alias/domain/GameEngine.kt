@@ -60,6 +60,7 @@ sealed interface GameState {
 
 /** Configuration options for starting a match. */
 data class MatchConfig(
+    // Target number of correctly guessed words to finish the match.
     val targetWords: Int,
     val maxSkips: Int,
     val penaltyPerSkip: Int,
