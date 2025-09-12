@@ -15,6 +15,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
@@ -24,15 +25,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.consume
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.layout.offset
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -44,15 +45,7 @@ private const val ROTATION_DIVISOR = 20f
 private const val HAPTIC_DURATION_MS = 10
 private const val SWIPE_AWAY_MULTIPLIER = 4
 
-private suspend fun resetCard(
-    offsetX: Animatable<Float, *>,
-    rotationZ: Animatable<Float, *>
-) {
-    coroutineScope {
-        launch { offsetX.animateTo(0f) }
-        launch { rotationZ.animateTo(0f) }
-    }
-}
+// No-op helper removed; handled inline with a coroutine
 
 @Composable
 fun WordCard(
@@ -63,44 +56,55 @@ fun WordCard(
     hapticsEnabled: Boolean,
     onActionStart: () -> Unit,
     onAction: (WordCardAction) -> Unit,
+    animateAppear: Boolean = true,
+    allowSkip: Boolean = true,
+    testTag: String? = null,
 ) {
-    val offsetX = remember { Animatable(0f) }
-    val rotationZ = remember { Animatable(0f) }
+    val animX = remember { Animatable(0f) }
     val fadeIn = remember { Animatable(0f) }
+    val scope = rememberCoroutineScope()
+    var dragX by remember { mutableStateOf(0f) }
     var hapticPlayed by remember { mutableStateOf(false) }
     val density = LocalDensity.current
     val commitPx = with(density) { COMMIT_DISTANCE.toPx() }
 
     LaunchedEffect(word) {
-        offsetX.snapTo(0f)
-        rotationZ.snapTo(0f)
+        animX.snapTo(0f)
         fadeIn.snapTo(0f)
         hapticPlayed = false
-        fadeIn.animateTo(1f, tween(250))
+        if (animateAppear) {
+            fadeIn.animateTo(1f, tween(250))
+        } else {
+            fadeIn.snapTo(1f)
+        }
     }
 
-    val fraction = (abs(offsetX.value) / commitPx).coerceIn(0f, 1f)
+    val currentX = dragX + animX.value
+    val fraction = (abs(currentX) / commitPx).coerceIn(0f, 1f)
     val scale = 1f + fraction * 0.05f
 
     Surface(
         modifier = modifier
+            .then(if (testTag != null) Modifier.testTag(testTag) else Modifier)
             .fillMaxWidth()
             .height(200.dp)
-            .offset { IntOffset(offsetX.value.roundToInt(), 0) }
-            .graphicsLayer { this.rotationZ = rotationZ.value; shadowElevation = 8.dp.toPx() }
+            .offset { IntOffset(currentX.roundToInt(), 0) }
+            .graphicsLayer(rotationZ = currentX / ROTATION_DIVISOR)
             .scale(scale)
             .alpha(fadeIn.value)
             .semantics { contentDescription = "$word. Swipe right for Correct, left for Skip." }
-            .pointerInput(enabled) {
+            .pointerInput(word, allowSkip) {
                 if (!enabled) return@pointerInput
                 detectDragGestures(
                     onDragStart = { hapticPlayed = false },
                     onDrag = { change, drag ->
-                        change.consume()
-                        val newX = offsetX.value + drag.x
-                        offsetX.snapTo(newX)
-                        rotationZ.snapTo(newX / ROTATION_DIVISOR)
-                        if (!hapticPlayed && abs(newX) > commitPx) {
+                        dragX += drag.x
+                        val commitAllowed = when {
+                            dragX > 0f && abs(dragX) > commitPx -> true // correct
+                            dragX < 0f && abs(dragX) > commitPx && allowSkip -> true // skip
+                            else -> false
+                        }
+                        if (!hapticPlayed && commitAllowed) {
                             hapticPlayed = true
                             if (hapticsEnabled) {
                                 vibrator?.vibrate(
@@ -113,30 +117,38 @@ fun WordCard(
                         }
                     },
                     onDragCancel = {
-                        resetCard(offsetX, rotationZ)
+                        scope.launch {
+                            // Convert accumulated drag into animatable position, then return to center
+                            val endX = dragX + animX.value
+                            dragX = 0f
+                            animX.snapTo(endX)
+                            animX.animateTo(0f, tween(200))
+                        }
                     },
                     onDragEnd = {
-                        if (abs(offsetX.value) > commitPx) {
-                            onActionStart()
-                            val dir = if (offsetX.value > 0f) WordCardAction.Correct else WordCardAction.Skip
-                            val target = if (dir == WordCardAction.Correct) {
-                                commitPx * SWIPE_AWAY_MULTIPLIER
+                        scope.launch {
+                            // Convert accumulated drag into animatable position, then decide action
+                            val endX = dragX + animX.value
+                            dragX = 0f
+                            animX.snapTo(endX)
+                            val commit = abs(endX) > commitPx
+                            val dir = if (endX > 0f) WordCardAction.Correct else WordCardAction.Skip
+                            val allowed = (dir == WordCardAction.Correct) || (dir == WordCardAction.Skip && allowSkip)
+                            if (commit && allowed) {
+                                onActionStart()
+                                val target = if (dir == WordCardAction.Correct) commitPx * SWIPE_AWAY_MULTIPLIER else -commitPx * SWIPE_AWAY_MULTIPLIER
+                                animX.animateTo(target, tween(200))
+                                onAction(dir)
                             } else {
-                                -commitPx * SWIPE_AWAY_MULTIPLIER
+                                animX.animateTo(0f, tween(200))
                             }
-                            coroutineScope {
-                                launch { offsetX.animateTo(target, tween(200)) }
-                                launch { rotationZ.animateTo(target / ROTATION_DIVISOR, tween(200)) }
-                            }
-                            onAction(dir)
-                        } else {
-                            resetCard(offsetX, rotationZ)
                         }
                     }
                 )
             },
         shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surface
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 8.dp
     ) {
         Box(
             modifier = Modifier.fillMaxWidth().height(200.dp),
@@ -153,7 +165,7 @@ fun WordCard(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(16.dp)
-                    .alpha(if (offsetX.value > 0f) fraction else 0f)
+                    .alpha(if (currentX > 0f) fraction else 0f)
             )
             Text(
                 text = "Skip",
@@ -161,7 +173,7 @@ fun WordCard(
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .padding(16.dp)
-                    .alpha(if (offsetX.value < 0f) fraction else 0f)
+                    .alpha(if (currentX < 0f) fraction else 0f)
             )
         }
     }
