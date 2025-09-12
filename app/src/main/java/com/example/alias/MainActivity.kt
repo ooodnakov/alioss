@@ -59,6 +59,8 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import com.example.alias.ui.WordCard
+import com.example.alias.ui.WordCardAction
 
 
 @AndroidEntryPoint
@@ -175,6 +177,8 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                     vibrator?.vibrate(effect)
                 }
             }
+            var isProcessing by remember { mutableStateOf(false) }
+            LaunchedEffect(s.word) { isProcessing = false }
             Column(
                 modifier = Modifier.fillMaxSize().padding(24.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
@@ -183,17 +187,65 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                 LinearProgressIndicator(progress = progress, color = barColor, modifier = Modifier.fillMaxWidth())
                 Text("${s.timeRemaining}s", style = MaterialTheme.typography.headlineLarge, textAlign = TextAlign.Center)
                 Text("Team: ${s.team}", style = MaterialTheme.typography.titleMedium)
-                Text(s.word, style = MaterialTheme.typography.displaySmall, textAlign = TextAlign.Center)
+                WordCard(
+                    word = s.word,
+                    enabled = !isProcessing,
+                    vibrator = vibrator,
+                    hapticsEnabled = settings.hapticsEnabled,
+                    onActionStart = { isProcessing = true },
+                    onAction = {
+                        when (it) {
+                            WordCardAction.Correct -> engine.correct()
+                            WordCardAction.Skip -> engine.skip()
+                        }
+                    }
+                )
                 Text("Remaining: ${s.remaining} • Score: ${s.score} • Skips: ${s.skipsRemaining}")
                 if (settings.oneHandedLayout) {
                     Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        Button(onClick = { engine.correct() }, modifier = Modifier.fillMaxWidth().height(80.dp)) { Text("Correct") }
-                        Button(onClick = { engine.skip() }, modifier = Modifier.fillMaxWidth().height(80.dp)) { Text("Skip") }
+                        Button(
+                            onClick = {
+                                if (!isProcessing) {
+                                    isProcessing = true
+                                    engine.correct()
+                                }
+                            },
+                            enabled = !isProcessing,
+                            modifier = Modifier.fillMaxWidth().height(80.dp)
+                        ) { Text("Correct") }
+                        Button(
+                            onClick = {
+                                if (!isProcessing) {
+                                    isProcessing = true
+                                    engine.skip()
+                                }
+                            },
+                            enabled = !isProcessing,
+                            modifier = Modifier.fillMaxWidth().height(80.dp)
+                        ) { Text("Skip") }
                     }
                 } else {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                        Button(onClick = { engine.correct() }, modifier = Modifier.weight(1f).height(60.dp)) { Text("Correct") }
-                        Button(onClick = { engine.skip() }, modifier = Modifier.weight(1f).height(60.dp)) { Text("Skip") }
+                        Button(
+                            onClick = {
+                                if (!isProcessing) {
+                                    isProcessing = true
+                                    engine.correct()
+                                }
+                            },
+                            enabled = !isProcessing,
+                            modifier = Modifier.weight(1f).height(60.dp)
+                        ) { Text("Correct") }
+                        Button(
+                            onClick = {
+                                if (!isProcessing) {
+                                    isProcessing = true
+                                    engine.skip()
+                                }
+                            },
+                            enabled = !isProcessing,
+                            modifier = Modifier.weight(1f).height(60.dp)
+                        ) { Text("Skip") }
                     }
                 }
                 Button(onClick = { vm.restartMatch() }, modifier = Modifier.fillMaxWidth()) { Text("Restart Match") }
