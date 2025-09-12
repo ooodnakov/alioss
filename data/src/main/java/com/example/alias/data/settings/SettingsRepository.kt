@@ -11,6 +11,8 @@ import androidx.datastore.preferences.core.stringSetPreferencesKey
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
+private val DEFAULT_TEAMS = listOf("Red", "Blue")
+
 /**
  * Local settings persisted via Preferences DataStore.
  */
@@ -27,9 +29,15 @@ interface SettingsRepository {
     suspend fun updateHapticsEnabled(value: Boolean)
     suspend fun updateOneHandedLayout(value: Boolean)
     suspend fun updateOrientation(value: String)
+    suspend fun setTeams(teams: List<String>)
 
     // Trusted pack sources (hosts or origins) for manual downloads
     suspend fun setTrustedSources(origins: Set<String>)
+
+    companion object {
+        const val MIN_TEAMS = 2
+        const val MAX_TEAMS = 6
+    }
 }
 
 data class Settings(
@@ -39,6 +47,7 @@ data class Settings(
     val penaltyPerSkip: Int = 1,
     val languagePreference: String = "en",
     val enabledDeckIds: Set<String> = emptySet(),
+    val teams: List<String> = DEFAULT_TEAMS,
     val allowNSFW: Boolean = false,
     val stemmingEnabled: Boolean = false,
     val hapticsEnabled: Boolean = true,
@@ -59,6 +68,9 @@ class SettingsRepositoryImpl(
             penaltyPerSkip = p[Keys.PENALTY_PER_SKIP] ?: 1,
             languagePreference = p[Keys.LANGUAGE] ?: "en",
             enabledDeckIds = p[Keys.ENABLED_DECK_IDS] ?: emptySet(),
+            teams = p[Keys.TEAMS]?.split("|")?.filter { it.isNotBlank() }?.take(SettingsRepository.MAX_TEAMS)?.let {
+                if (it.size >= SettingsRepository.MIN_TEAMS) it else DEFAULT_TEAMS
+            } ?: DEFAULT_TEAMS,
             allowNSFW = p[Keys.ALLOW_NSFW] ?: false,
             stemmingEnabled = p[Keys.STEMMING_ENABLED] ?: false,
             hapticsEnabled = p[Keys.HAPTICS_ENABLED] ?: true,
@@ -118,6 +130,12 @@ class SettingsRepositoryImpl(
         dataStore.edit { it[Keys.ORIENTATION] = norm }
     }
 
+    override suspend fun setTeams(teams: List<String>) {
+        val norm = teams.map { it.trim() }.filter { it.isNotEmpty() }.take(SettingsRepository.MAX_TEAMS)
+        require(norm.size in SettingsRepository.MIN_TEAMS..SettingsRepository.MAX_TEAMS)
+        dataStore.edit { it[Keys.TEAMS] = norm.joinToString("|") }
+    }
+
     override suspend fun setTrustedSources(origins: Set<String>) {
         // Store as provided; downloader applies normalization when checking.
         dataStore.edit { it[Keys.TRUSTED_SOURCES] = origins }
@@ -135,6 +153,7 @@ class SettingsRepositoryImpl(
         val HAPTICS_ENABLED = booleanPreferencesKey("haptics_enabled")
         val ONE_HANDED = booleanPreferencesKey("one_handed_layout")
         val ORIENTATION = stringPreferencesKey("orientation_mode")
+        val TEAMS = stringPreferencesKey("teams")
         val TRUSTED_SOURCES = stringSetPreferencesKey("trusted_sources")
     }
 }

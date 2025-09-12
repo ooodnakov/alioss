@@ -1,0 +1,98 @@
+name: Android CI (Build APK)
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+    branches: [ "**" ]
+
+concurrency:
+  group: android-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate Gradle Wrapper (tolerate missing JAR until committed)
+        uses: gradle/actions/wrapper-validation@v3
+        with:
+          min-wrapper-count: 0
+
+      - name: Set up Java 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: 'gradle'
+
+      - name: Set up Gradle cache
+        uses: gradle/gradle-build-action@v2
+
+      - name: Run unit tests (domain, data, app)
+        uses: gradle/gradle-build-action@v2
+        with:
+          gradle-version: 8.7
+          arguments: |
+            --version
+            :domain:test :data:test :app:testDebugUnitTest --no-daemon --console=plain
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-reports
+          path: |
+            domain/build/reports/tests/**
+            data/build/reports/tests/**
+            app/build/reports/tests/**
+          if-no-files-found: warn
+
+  build-apk:
+    needs: unit-tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate Gradle Wrapper (tolerate missing JAR until committed)
+        uses: gradle/actions/wrapper-validation@v3
+        with:
+          min-wrapper-count: 0
+
+      - name: Set up Java 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: 'gradle'
+
+      - name: Set up Gradle cache
+        uses: gradle/gradle-build-action@v2
+
+      - name: Install Android SDK (no build)
+        env:
+          ANDROID_PLATFORM: android-34
+          BUILD_TOOLS: 34.0.0
+          SKIP_BUILD: true
+        run: |
+          bash scripts/setup-android-env.sh
+
+      - name: Assemble debug APK
+        uses: gradle/gradle-build-action@v2
+        with:
+          gradle-version: 8.7
+          arguments: |
+            :app:assembleDebug --no-daemon --console=plain
+
+      - name: Upload debug APK
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
