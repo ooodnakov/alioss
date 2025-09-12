@@ -12,6 +12,8 @@ import com.example.alias.domain.GameEngine
 import com.example.alias.domain.MatchConfig
 import com.example.alias.data.settings.SettingsRepository
 import com.example.alias.data.settings.Settings
+import com.example.alias.data.pack.PackParser
+import android.net.Uri
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -158,6 +160,38 @@ class MainViewModel @Inject constructor(
                 _uiEvents.tryEmit(UiEvent(message = "Imported deck from URL", actionLabel = "OK", duration = SnackbarDuration.Short))
             } catch (t: Throwable) {
                 _uiEvents.tryEmit(UiEvent(message = "Failed: ${t.message}", actionLabel = "Dismiss", duration = SnackbarDuration.Long, isError = true))
+            }
+        }
+    }
+
+    fun importDeckFromFile(uri: Uri) {
+        viewModelScope.launch {
+            try {
+                val text = withContext(Dispatchers.IO) {
+                    context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
+                        ?: throw IllegalStateException("Empty file")
+                }
+                val pack = withContext(Dispatchers.IO) { PackParser.fromJson(text) }
+                withContext(Dispatchers.IO) { deckRepository.importPack(pack) }
+                runCatching {
+                    val s = settingsRepository.settings.first()
+                    if (pack.deck.language == s.languagePreference) {
+                        val ids = s.enabledDeckIds.toMutableSet()
+                        if (ids.add(pack.deck.id)) {
+                            settingsRepository.setEnabledDeckIds(ids)
+                        }
+                    }
+                }
+                _uiEvents.tryEmit(UiEvent(message = "Imported deck", actionLabel = "OK", duration = SnackbarDuration.Short))
+            } catch (t: Throwable) {
+                _uiEvents.tryEmit(
+                    UiEvent(
+                        message = "Failed: ${t.message}",
+                        actionLabel = "Dismiss",
+                        duration = SnackbarDuration.Long,
+                        isError = true
+                    )
+                )
             }
         }
     }
