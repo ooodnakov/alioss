@@ -16,6 +16,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -23,6 +24,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import androidx.compose.material3.SnackbarDuration
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -50,8 +54,21 @@ class MainViewModel @Inject constructor(
     val settings = settingsRepository.settings
         .stateIn(viewModelScope, SharingStarted.Lazily, Settings())
 
-    private val _downloadStatus = MutableStateFlow<String?>(null)
-    val downloadStatus: StateFlow<String?> = _downloadStatus.asStateFlow()
+    
+
+    // General UI events (e.g., snackbars)
+    data class UiEvent(
+        val message: String,
+        val actionLabel: String? = null,
+        val duration: SnackbarDuration = SnackbarDuration.Short,
+        val isError: Boolean = false,
+        val onAction: (suspend () -> Unit)? = null,
+    )
+    private val _uiEvents = MutableSharedFlow<UiEvent>(
+        extraBufferCapacity = 16,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
+    val uiEvents: SharedFlow<UiEvent> = _uiEvents
 
     init {
         viewModelScope.launch {

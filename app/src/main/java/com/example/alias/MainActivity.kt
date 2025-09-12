@@ -47,7 +47,17 @@ import com.example.alias.ui.AppScaffold
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.OutlinedTextField
- 
+import androidx.compose.material3.SnackbarHostState
+import com.example.alias.MainViewModel.UiEvent
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
+
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -57,9 +67,25 @@ class MainActivity : ComponentActivity() {
             AliasAppTheme {
                 val nav = rememberNavController()
                 val vm: MainViewModel = hiltViewModel()
+                val snack = remember { SnackbarHostState() }
+
+                // Collect general UI events and show snackbars
+                LaunchedEffect(Unit) {
+                    vm.uiEvents.collect { ev: UiEvent ->
+                        val result = snack.showSnackbar(
+                            message = ev.message,
+                            actionLabel = ev.actionLabel,
+                            withDismissAction = ev.actionLabel == null,
+                            duration = ev.duration
+                        )
+                        if (result == SnackbarResult.ActionPerformed) {
+                            ev.onAction?.invoke()
+                        }
+                    }
+                }
                 NavHost(navController = nav, startDestination = "home") {
                     composable("home") {
-                        AppScaffold(title = "Alias") {
+                        AppScaffold(title = "Alias", snackbarHostState = snack) {
                             HomeScreen(
                                 onQuickPlay = { nav.navigate("game") },
                                 onDecks = { nav.navigate("decks") },
@@ -70,7 +96,7 @@ class MainActivity : ComponentActivity() {
                     composable("game") {
                         val engine by vm.engine.collectAsState()
                         val settings by vm.settings.collectAsState()
-                        AppScaffold(title = "Game", onBack = { nav.popBackStack() }) {
+                        AppScaffold(title = "Game", onBack = { nav.popBackStack() }, snackbarHostState = snack) {
                             if (engine == null) {
                                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                                     Text("Loading…")
@@ -81,12 +107,12 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                     composable("decks") {
-                        AppScaffold(title = "Decks", onBack = { nav.popBackStack() }) {
+                        AppScaffold(title = "Decks", onBack = { nav.popBackStack() }, snackbarHostState = snack) {
                             DecksScreen(vm = vm)
                         }
                     }
                     composable("settings") {
-                        AppScaffold(title = "Settings", onBack = { nav.popBackStack() }) {
+                        AppScaffold(title = "Settings", onBack = { nav.popBackStack() }, snackbarHostState = snack) {
                             SettingsScreen(vm = vm, onBack = { nav.popBackStack() })
                         }
                     }
