@@ -13,6 +13,9 @@ import com.example.alias.data.DeckRepositoryImpl
 import com.example.alias.data.db.AliasDatabase
 import com.example.alias.data.db.DeckDao
 import com.example.alias.data.db.WordDao
+import com.example.alias.data.db.TurnHistoryDao
+import com.example.alias.data.TurnHistoryRepository
+import com.example.alias.data.TurnHistoryRepositoryImpl
 import com.example.alias.data.download.PackDownloader
 import com.example.alias.data.settings.SettingsRepository
 import com.example.alias.data.settings.SettingsRepositoryImpl
@@ -38,9 +41,17 @@ object DataModule {
     fun provideWordDao(db: AliasDatabase): WordDao = db.wordDao()
 
     @Provides
+    fun provideTurnHistoryDao(db: AliasDatabase): TurnHistoryDao = db.turnHistoryDao()
+
+    @Provides
     @Singleton
     fun provideDeckRepository(db: AliasDatabase, deckDao: DeckDao, wordDao: WordDao): DeckRepository =
         DeckRepositoryImpl(db, deckDao, wordDao)
+
+    @Provides
+    @Singleton
+    fun provideTurnHistoryRepository(dao: TurnHistoryDao): TurnHistoryRepository =
+        TurnHistoryRepositoryImpl(dao)
 
     @Provides
     @Singleton

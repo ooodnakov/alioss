@@ -4,11 +4,12 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 
 @Database(
-    entities = [DeckEntity::class, WordEntity::class],
-    version = 1,
+    entities = [DeckEntity::class, WordEntity::class, TurnHistoryEntity::class],
+    version = 2,
     exportSchema = true,
 )
 abstract class AliasDatabase : RoomDatabase() {
     abstract fun deckDao(): DeckDao
     abstract fun wordDao(): WordDao
+    abstract fun turnHistoryDao(): TurnHistoryDao
 }

@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.alias.data.DeckRepository
 import com.example.alias.data.db.WordDao
 import com.example.alias.data.download.PackDownloader
+import com.example.alias.data.TurnHistoryRepository
 import com.example.alias.domain.DefaultGameEngine
 import com.example.alias.domain.GameEngine
 import com.example.alias.domain.MatchConfig
@@ -32,6 +33,7 @@ class MainViewModel @Inject constructor(
     private val wordDao: WordDao,
     private val settingsRepository: SettingsRepository,
     private val downloader: PackDownloader,
+    private val historyRepository: TurnHistoryRepository,
 ) : ViewModel() {
     private val _engine = MutableStateFlow<GameEngine?>(null)
     val engine: StateFlow<GameEngine?> = _engine.asStateFlow()
@@ -154,5 +156,28 @@ class MainViewModel @Inject constructor(
             val seed = java.security.SecureRandom().nextLong()
             e.startMatch(config, teams = listOf("Red", "Blue"), seed = seed)
         }
+    }
+
+    fun nextTurn() {
+        val e = _engine.value ?: return
+        val current = e.state.value
+        if (current is com.example.alias.domain.GameState.TurnFinished) {
+            viewModelScope.launch {
+                val entries = current.outcomes.map {
+                    com.example.alias.data.db.TurnHistoryEntity(
+                        team = current.team,
+                        word = it.word,
+                        correct = it.correct,
+                        timestamp = it.timestamp,
+                    )
+                }
+                withContext(Dispatchers.IO) { historyRepository.save(entries) }
+                e.nextTurn()
+            }
+        }
+    }
+
+    fun overrideOutcome(index: Int, correct: Boolean) {
+        _engine.value?.overrideOutcome(index, correct)
     }
 }
