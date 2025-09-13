@@ -35,6 +35,8 @@ interface SettingsRepository {
     // Trusted pack sources (hosts or origins) for manual downloads
     suspend fun setTrustedSources(origins: Set<String>)
 
+    suspend fun updateSeenTutorial(value: Boolean)
+
     companion object {
         const val MIN_TEAMS = 2
         const val MAX_TEAMS = 6
@@ -56,6 +58,7 @@ data class Settings(
     val oneHandedLayout: Boolean = false,
     val orientation: String = "system",
     val trustedSources: Set<String> = emptySet(),
+    val seenTutorial: Boolean = false,
 )
 
 class SettingsRepositoryImpl(
@@ -80,6 +83,7 @@ class SettingsRepositoryImpl(
             oneHandedLayout = p[Keys.ONE_HANDED] ?: false,
             orientation = p[Keys.ORIENTATION] ?: "system",
             trustedSources = p[Keys.TRUSTED_SOURCES] ?: emptySet(),
+            seenTutorial = p[Keys.SEEN_TUTORIAL] ?: false,
         )
     }
 
@@ -148,6 +152,10 @@ class SettingsRepositoryImpl(
         dataStore.edit { it[Keys.TRUSTED_SOURCES] = origins }
     }
 
+    override suspend fun updateSeenTutorial(value: Boolean) {
+        dataStore.edit { it[Keys.SEEN_TUTORIAL] = value }
+    }
+
     private object Keys {
         val ROUND_SECONDS = intPreferencesKey("round_seconds")
         val TARGET_WORDS = intPreferencesKey("target_words")
@@ -163,5 +171,6 @@ class SettingsRepositoryImpl(
         val ORIENTATION = stringPreferencesKey("orientation_mode")
         val TEAMS = stringPreferencesKey("teams")
         val TRUSTED_SOURCES = stringSetPreferencesKey("trusted_sources")
+        val SEEN_TUTORIAL = booleanPreferencesKey("seen_tutorial")
     }
 }

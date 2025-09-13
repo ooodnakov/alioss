@@ -7,6 +7,7 @@ import com.example.alias.data.DeckRepository
 import com.example.alias.data.db.WordDao
 import com.example.alias.data.download.PackDownloader
 import com.example.alias.data.TurnHistoryRepository
+import com.example.alias.data.db.TurnHistoryEntity
 import com.example.alias.domain.DefaultGameEngine
 import com.example.alias.domain.GameEngine
 import com.example.alias.domain.MatchConfig
@@ -22,6 +23,7 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -55,6 +57,9 @@ class MainViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.Lazily, emptySet())
     val settings = settingsRepository.settings
         .stateIn(viewModelScope, SharingStarted.Lazily, Settings())
+
+    fun recentHistory(limit: Int): Flow<List<TurnHistoryEntity>> =
+        historyRepository.getRecent(limit)
 
     
 
@@ -160,6 +165,10 @@ class MainViewModel @Inject constructor(
     }
 
     suspend fun getWordCount(deckId: String): Int = deckRepository.getWordCount(deckId)
+
+    fun updateSeenTutorial(value: Boolean) {
+        viewModelScope.launch { settingsRepository.updateSeenTutorial(value) }
+    }
 
     fun downloadPackFromUrl(url: String, expectedSha256: String?) {
         viewModelScope.launch {

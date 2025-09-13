@@ -3,6 +3,7 @@
     <string name="title_game">Game</string>
     <string name="title_decks">Decks</string>
     <string name="title_settings">Settings</string>
+    <string name="title_history">History</string>
     <string name="title_about">About</string>
     <string name="back">Back</string>
     <string name="loading">Loading…</string>
@@ -10,6 +11,7 @@
     <string name="quick_play_subtitle">Start a match with current settings</string>
     <string name="decks_subtitle">Manage and import word decks</string>
     <string name="settings_subtitle">Time, teams, language and more</string>
+    <string name="history_subtitle">Review recent turns</string>
     <string name="idle">Idle</string>
     <string name="team_label">Team: %s</string>
     <string name="remaining_label">Remaining %d</string>
@@ -31,4 +33,8 @@
     <string name="next_team">Next Team</string>
     <string name="turn_summary">Turn summary for %s</string>
     <string name="score_change">Score change: %d</string>
+    <string name="tutorial_instructions">Swipe right for Correct, left for Skip.</string>
+    <string name="tutorial_dismiss">Got it</string>
+    <string name="show_tutorial_again">Show tutorial again</string>
+    <string name="no_history">No history yet</string>
 </resources>
