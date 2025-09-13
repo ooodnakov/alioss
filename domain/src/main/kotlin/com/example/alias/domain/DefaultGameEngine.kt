@@ -38,13 +38,14 @@ class DefaultGameEngine(
     private val outcomes: MutableList<TurnOutcome> = mutableListOf()
     private var matchOver: Boolean = false
     private val mutex = Mutex()
+    private val blockedWords = mutableSetOf<String>()
 
     override fun startMatch(config: MatchConfig, teams: List<String>, seed: Long) {
         runBlocking {
             mutex.withLock {
                 this@DefaultGameEngine.config = config
                 this@DefaultGameEngine.teams = teams
-                queue = words.shuffled(Random(seed)).toMutableList()
+                queue = words.filterNot { it in blockedWords }.shuffled(Random(seed)).toMutableList()
                 scores.clear()
                 teams.forEach { scores[it] = 0 }
                 correctTotal = 0
@@ -95,14 +96,6 @@ class DefaultGameEngine(
         }
     }
 
-    override fun peekNextWord(): String? {
-        return runBlocking {
-            mutex.withLock {
-                queue.firstOrNull()
-            }
-        }
-    }
-
     override fun overrideOutcome(index: Int, correct: Boolean) {
         runBlocking {
             mutex.withLock {
@@ -121,6 +114,26 @@ class DefaultGameEngine(
                 outcomes[index] = item.copy(correct = correct)
                 val nowMatchOver = correctTotal >= config.targetWords
                 _state.update { GameState.TurnFinished(team, turnScore, scores.toMap(), outcomes.toList(), nowMatchOver) }
+            }
+        }
+    }
+
+    override fun blockWord(word: String) {
+        runBlocking {
+            mutex.withLock {
+                if (!blockedWords.add(word)) return@withLock
+                queue.removeAll { it == word }
+                if (_state.value is GameState.TurnActive && currentWord == word) {
+                    advanceLocked()
+                }
+            }
+        }
+    }
+
+    override fun peekNextWord(): String? {
+        return runBlocking {
+            mutex.withLock {
+                queue.firstOrNull()
             }
         }
     }
