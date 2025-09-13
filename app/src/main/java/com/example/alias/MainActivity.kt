@@ -162,10 +162,27 @@ class MainActivity : ComponentActivity() {
                         route = "deck/{id}",
                         arguments = listOf(navArgument("id") { type = NavType.StringType })
                     ) { backStackEntry ->
-                        val id = backStackEntry.arguments?.getString("id") ?: return@composable
-                        val deck = vm.decks.collectAsState().value.find { it.id == id }
-                        AppScaffold(title = deck?.name ?: "Deck", onBack = { nav.popBackStack() }, snackbarHostState = snack) {
-                            DeckDetailScreen(vm = vm, deckId = id)
+                        val id = requireNotNull(backStackEntry.arguments?.getString("id"))
+                        val decks by vm.decks.collectAsState()
+                        val deck = decks.find { it.id == id }
+                        if (deck == null) {
+                            AppScaffold(
+                                title = "Deck",
+                                onBack = { nav.popBackStack() },
+                                snackbarHostState = snack
+                            ) {
+                                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                    Text("Deck not found")
+                                }
+                            }
+                        } else {
+                            AppScaffold(
+                                title = deck.name,
+                                onBack = { nav.popBackStack() },
+                                snackbarHostState = snack
+                            ) {
+                                DeckDetailScreen(vm = vm, deck = deck)
+                            }
                         }
                     }
                     composable("settings") {
@@ -592,30 +609,22 @@ private fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit)
 }
 
 @Composable
-private fun DeckDetailScreen(vm: MainViewModel, deckId: String) {
-    val decks by vm.decks.collectAsState()
-    val deck = decks.find { it.id == deckId }
+private fun DeckDetailScreen(vm: MainViewModel, deck: DeckEntity) {
     var count by remember { mutableStateOf<Int?>(null) }
-    LaunchedEffect(deckId) { count = vm.getWordCount(deckId) }
-    if (deck == null) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("Deck not found")
+    LaunchedEffect(deck.id) { count = vm.getWordCount(deck.id) }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(deck.name, style = MaterialTheme.typography.headlineSmall)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            AssistChip(onClick = {}, enabled = false, label = { Text(deck.language.uppercase()) })
+            if (deck.isNSFW) AssistChip(onClick = {}, enabled = false, label = { Text("NSFW") })
         }
-    } else {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(deck.name, style = MaterialTheme.typography.headlineSmall)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                AssistChip(onClick = {}, enabled = false, label = { Text(deck.language.uppercase()) })
-                if (deck.isNSFW) AssistChip(onClick = {}, enabled = false, label = { Text("NSFW") })
-            }
-            val countText = count?.toString() ?: "…"
-            Text("Word count: ${'$'}countText")
-        }
+        val countText = count?.toString() ?: "…"
+        Text("Word count: ${'$'}countText")
     }
 }
 
