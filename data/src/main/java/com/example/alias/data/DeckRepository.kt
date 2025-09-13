@@ -14,6 +14,9 @@ interface DeckRepository {
     /** Stream of all decks stored locally. */
     fun getDecks(): Flow<List<DeckEntity>>
 
+    /** Get number of words in a deck. */
+    suspend fun getWordCount(deckId: String): Int
+
     /** Parse [content] as a JSON pack and store it. */
     suspend fun importJson(content: String)
 
@@ -27,6 +30,8 @@ class DeckRepositoryImpl(
     private val wordDao: WordDao
 ) : DeckRepository {
     override fun getDecks(): Flow<List<DeckEntity>> = deckDao.getDecks()
+
+    override suspend fun getWordCount(deckId: String): Int = wordDao.getWordCount(deckId)
 
     override suspend fun importJson(content: String) {
         importPack(PackParser.fromJson(content))

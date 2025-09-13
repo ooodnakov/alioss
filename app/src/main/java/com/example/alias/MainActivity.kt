@@ -52,6 +52,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import com.example.alias.ui.AppScaffold
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.FilledTonalButton
@@ -88,6 +90,7 @@ import kotlinx.coroutines.launch
 import com.example.alias.ui.WordCard
 import com.example.alias.ui.WordCardAction
 import com.example.alias.data.settings.SettingsRepository
+import com.example.alias.data.db.DeckEntity
 private const val MIN_TEAMS = SettingsRepository.MIN_TEAMS
 private const val MAX_TEAMS = SettingsRepository.MAX_TEAMS
 
@@ -152,7 +155,17 @@ class MainActivity : ComponentActivity() {
                     }
                     composable("decks") {
                         AppScaffold(title = stringResource(R.string.title_decks), onBack = { nav.popBackStack() }, snackbarHostState = snack) {
-                            DecksScreen(vm = vm)
+                            DecksScreen(vm = vm, onDeckSelected = { nav.navigate("deck/${'$'}{it.id}") })
+                        }
+                    }
+                    composable(
+                        route = "deck/{id}",
+                        arguments = listOf(navArgument("id") { type = NavType.StringType })
+                    ) { backStackEntry ->
+                        val id = backStackEntry.arguments?.getString("id") ?: return@composable
+                        val deck = vm.decks.collectAsState().value.find { it.id == id }
+                        AppScaffold(title = deck?.name ?: "Deck", onBack = { nav.popBackStack() }, snackbarHostState = snack) {
+                            DeckDetailScreen(vm = vm, deckId = id)
                         }
                     }
                     composable("settings") {
@@ -476,7 +489,7 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
 }
 
 @Composable
-private fun DecksScreen(vm: MainViewModel) {
+private fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
     val decks by vm.decks.collectAsState()
     val enabled by vm.enabledDeckIds.collectAsState()
     val trusted by vm.trustedSources.collectAsState()
@@ -520,7 +533,8 @@ private fun DecksScreen(vm: MainViewModel) {
                                 },
                                 trailingContent = {
                                     Switch(checked = isEnabled, onCheckedChange = { vm.setDeckEnabled(deck.id, it) })
-                                }
+                                },
+                                modifier = Modifier.clickable { onDeckSelected(deck) }
                             )
                             if (index < decks.lastIndex) HorizontalDivider()
                         }
@@ -573,6 +587,34 @@ private fun DecksScreen(vm: MainViewModel) {
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun DeckDetailScreen(vm: MainViewModel, deckId: String) {
+    val decks by vm.decks.collectAsState()
+    val deck = decks.find { it.id == deckId }
+    var count by remember { mutableStateOf<Int?>(null) }
+    LaunchedEffect(deckId) { count = vm.getWordCount(deckId) }
+    if (deck == null) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text("Deck not found")
+        }
+    } else {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(deck.name, style = MaterialTheme.typography.headlineSmall)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                AssistChip(onClick = {}, enabled = false, label = { Text(deck.language.uppercase()) })
+                if (deck.isNSFW) AssistChip(onClick = {}, enabled = false, label = { Text("NSFW") })
+            }
+            val countText = count?.toString() ?: "…"
+            Text("Word count: ${'$'}countText")
         }
     }
 }

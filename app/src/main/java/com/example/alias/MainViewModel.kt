@@ -159,6 +159,8 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    suspend fun getWordCount(deckId: String): Int = deckRepository.getWordCount(deckId)
+
     fun downloadPackFromUrl(url: String, expectedSha256: String?) {
         viewModelScope.launch {
             _uiEvents.tryEmit(UiEvent(message = "Downloading…", duration = SnackbarDuration.Indefinite))
