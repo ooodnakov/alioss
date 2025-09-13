@@ -728,7 +728,7 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () ->
         }
         item {
             OutlinedButton(
-                onClick = { scope.launch { vm.updateSeenTutorial(false) } },
+                onClick = { vm.updateSeenTutorial(false) },
                 modifier = Modifier.fillMaxWidth()
             ) { Text(stringResource(R.string.show_tutorial_again)) }
         }
