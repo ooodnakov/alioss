@@ -355,6 +355,7 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                                     enabled = false,
                                     vibrator = null,
                                     hapticsEnabled = false,
+                                    soundEnabled = false,
                                     onActionStart = {},
                                     onAction = {},
                                     animateAppear = false,
@@ -367,6 +368,7 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                                 enabled = true,
                                 vibrator = vibrator,
                                 hapticsEnabled = settings.hapticsEnabled,
+                                soundEnabled = settings.soundEnabled,
                                 onActionStart = {
                                     // Freeze the preview so it doesn't swap to next-next mid-animation
                                     if (!committing) {
@@ -587,6 +589,7 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () ->
     var lang by rememberSaveable(s) { mutableStateOf(s.languagePreference) }
     var punishSkips by rememberSaveable(s) { mutableStateOf(s.punishSkips) }
     var nsfw by rememberSaveable(s) { mutableStateOf(s.allowNSFW) }
+    var sound by rememberSaveable(s) { mutableStateOf(s.soundEnabled) }
     var haptics by rememberSaveable(s) { mutableStateOf(s.hapticsEnabled) }
     var oneHand by rememberSaveable(s) { mutableStateOf(s.oneHandedLayout) }
     var orientation by rememberSaveable(s) { mutableStateOf(s.orientation) }
@@ -605,6 +608,7 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () ->
                 punishSkips = punishSkips,
                 language = lang.ifBlank { s.languagePreference },
                 allowNSFW = nsfw,
+                sound = sound,
                 haptics = haptics,
                 oneHanded = oneHand,
                 orientation = orientation,
@@ -659,6 +663,10 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () ->
             ElevatedCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("Feedback & Layout", style = MaterialTheme.typography.titleMedium)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("Sound effects", modifier = Modifier.weight(1f))
+                        Switch(checked = sound, onCheckedChange = { sound = it })
+                    }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text("Haptics", modifier = Modifier.weight(1f))
                         Switch(checked = haptics, onCheckedChange = { haptics = it })

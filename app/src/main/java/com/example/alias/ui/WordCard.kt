@@ -15,6 +15,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -28,6 +29,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.layout.offset
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -35,6 +37,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
+import android.media.MediaPlayer
 import com.example.alias.R
 import kotlinx.coroutines.launch
 import kotlin.math.abs
@@ -56,6 +59,7 @@ fun WordCard(
     enabled: Boolean,
     vibrator: Vibrator?,
     hapticsEnabled: Boolean,
+    soundEnabled: Boolean,
     onActionStart: () -> Unit,
     onAction: (WordCardAction) -> Unit,
     animateAppear: Boolean = true,
@@ -69,6 +73,15 @@ fun WordCard(
     var hapticPlayed by remember { mutableStateOf(false) }
     val density = LocalDensity.current
     val commitPx = with(density) { COMMIT_DISTANCE.toPx() }
+    val context = LocalContext.current
+    val correctPlayer = remember { MediaPlayer.create(context, R.raw.correct) }
+    val skipPlayer = remember { MediaPlayer.create(context, R.raw.skip) }
+    DisposableEffect(Unit) {
+        onDispose {
+            correctPlayer.release()
+            skipPlayer.release()
+        }
+    }
 
     LaunchedEffect(word) {
         animX.snapTo(0f)
@@ -140,6 +153,18 @@ fun WordCard(
                                 onActionStart()
                                 val target = if (dir == WordCardAction.Correct) commitPx * SWIPE_AWAY_MULTIPLIER else -commitPx * SWIPE_AWAY_MULTIPLIER
                                 animX.animateTo(target, tween(200))
+                                if (soundEnabled) {
+                                    when (dir) {
+                                        WordCardAction.Correct -> {
+                                            correctPlayer.seekTo(0)
+                                            correctPlayer.start()
+                                        }
+                                        WordCardAction.Skip -> {
+                                            skipPlayer.seekTo(0)
+                                            skipPlayer.start()
+                                        }
+                                    }
+                                }
                                 onAction(dir)
                             } else {
                                 animX.animateTo(0f, tween(200))

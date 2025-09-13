@@ -215,6 +215,7 @@ class MainViewModel @Inject constructor(
         punishSkips: Boolean,
         language: String,
         allowNSFW: Boolean,
+        sound: Boolean,
         haptics: Boolean,
         oneHanded: Boolean,
         orientation: String,
@@ -228,6 +229,7 @@ class MainViewModel @Inject constructor(
           settingsRepository.updateSkipPolicy(maxSkips, penaltyPerSkip)
           settingsRepository.updatePunishSkips(punishSkips)
           settingsRepository.updateAllowNSFW(allowNSFW)
+          settingsRepository.updateSoundEnabled(sound)
           settingsRepository.updateHapticsEnabled(haptics)
           settingsRepository.updateOneHandedLayout(oneHanded)
           settingsRepository.updateOrientation(orientation)

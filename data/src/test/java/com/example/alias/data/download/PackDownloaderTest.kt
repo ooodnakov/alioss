@@ -26,6 +26,7 @@ private class FakeSettingsRepo(origins: Set<String>) : SettingsRepository {
     override suspend fun setEnabledDeckIds(ids: Set<String>) = Unit
     override suspend fun updateAllowNSFW(value: Boolean) = Unit
     override suspend fun updateStemmingEnabled(value: Boolean) = Unit
+    override suspend fun updateSoundEnabled(value: Boolean) = Unit
     override suspend fun updateHapticsEnabled(value: Boolean) = Unit
     override suspend fun updateOneHandedLayout(value: Boolean) = Unit
     override suspend fun updateOrientation(value: String) = Unit

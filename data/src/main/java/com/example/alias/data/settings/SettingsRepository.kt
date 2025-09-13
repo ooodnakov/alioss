@@ -27,6 +27,7 @@ interface SettingsRepository {
     suspend fun setEnabledDeckIds(ids: Set<String>)
     suspend fun updateAllowNSFW(value: Boolean)
     suspend fun updateStemmingEnabled(value: Boolean)
+    suspend fun updateSoundEnabled(value: Boolean)
     suspend fun updateHapticsEnabled(value: Boolean)
     suspend fun updateOneHandedLayout(value: Boolean)
     suspend fun updateOrientation(value: String)
@@ -52,6 +53,7 @@ data class Settings(
     val teams: List<String> = DEFAULT_TEAMS,
     val allowNSFW: Boolean = false,
     val stemmingEnabled: Boolean = false,
+    val soundEnabled: Boolean = true,
     val hapticsEnabled: Boolean = true,
     val oneHandedLayout: Boolean = false,
     val orientation: String = "system",
@@ -76,6 +78,7 @@ class SettingsRepositoryImpl(
             } ?: DEFAULT_TEAMS,
             allowNSFW = p[Keys.ALLOW_NSFW] ?: false,
             stemmingEnabled = p[Keys.STEMMING_ENABLED] ?: false,
+            soundEnabled = p[Keys.SOUND_ENABLED] ?: true,
             hapticsEnabled = p[Keys.HAPTICS_ENABLED] ?: true,
             oneHandedLayout = p[Keys.ONE_HANDED] ?: false,
             orientation = p[Keys.ORIENTATION] ?: "system",
@@ -121,6 +124,10 @@ class SettingsRepositoryImpl(
         dataStore.edit { it[Keys.STEMMING_ENABLED] = value }
     }
 
+    override suspend fun updateSoundEnabled(value: Boolean) {
+        dataStore.edit { it[Keys.SOUND_ENABLED] = value }
+    }
+
     override suspend fun updateHapticsEnabled(value: Boolean) {
         dataStore.edit { it[Keys.HAPTICS_ENABLED] = value }
     }
@@ -158,6 +165,7 @@ class SettingsRepositoryImpl(
         val ENABLED_DECK_IDS = stringSetPreferencesKey("enabled_deck_ids")
         val ALLOW_NSFW = booleanPreferencesKey("allow_nsfw")
         val STEMMING_ENABLED = booleanPreferencesKey("stemming_enabled")
+        val SOUND_ENABLED = booleanPreferencesKey("sound_enabled")
         val HAPTICS_ENABLED = booleanPreferencesKey("haptics_enabled")
         val ONE_HANDED = booleanPreferencesKey("one_handed_layout")
         val ORIENTATION = stringPreferencesKey("orientation_mode")

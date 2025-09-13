@@ -54,11 +54,13 @@ Status: early skeleton wired end-to-end — sample deck import, Room schema, Hil
   - Open the root project and run the `app` configuration on an emulator/device.
 
 - CLI
-  - `./gradlew assembleDebug` to build the APK.
-  - `./gradlew domain:test` — Runs the engine unit tests.
+- `./gradlew assembleDebug` to build the APK.
+- `./gradlew domain:test` — Runs the engine unit tests.
   - Convenience scripts:
     - `scripts/dev-build.sh` — Runs tests and assembles the debug APK.
     - `scripts/run-domain-tests.sh` — Runs the domain module tests.
+  - Optional: run `scripts/generate-sfx.sh` to create placeholder sound effects
+    (`correct.wav`, `skip.wav`) under `app/src/main/res/raw/`.
   - Optional first-time env setup on Linux: `scripts/setup-android-env.sh` (installs SDK CLI tools, accepts licenses, builds).
 
 - Requirements
