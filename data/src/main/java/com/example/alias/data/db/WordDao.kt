@@ -13,6 +13,9 @@ interface WordDao {
     @Query("SELECT text FROM words WHERE deckId = :deckId")
     suspend fun getWordTexts(deckId: String): List<String>
 
+    @Query("SELECT COUNT(*) FROM words WHERE deckId = :deckId")
+    suspend fun getWordCount(deckId: String): Int
+
     @Query(
         "SELECT text FROM words " +
             "WHERE deckId IN (:deckIds) " +

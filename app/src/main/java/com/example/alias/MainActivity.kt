@@ -52,6 +52,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import com.example.alias.ui.AppScaffold
 import com.example.alias.ui.HistoryScreen
 import androidx.compose.material3.OutlinedButton
@@ -91,6 +93,7 @@ import com.example.alias.ui.WordCard
 import com.example.alias.ui.WordCardAction
 import com.example.alias.ui.TutorialOverlay
 import com.example.alias.data.settings.SettingsRepository
+import com.example.alias.data.db.DeckEntity
 private const val MIN_TEAMS = SettingsRepository.MIN_TEAMS
 private const val MAX_TEAMS = SettingsRepository.MAX_TEAMS
 private const val HISTORY_LIMIT = 50
@@ -157,7 +160,34 @@ class MainActivity : ComponentActivity() {
                     }
                     composable("decks") {
                         AppScaffold(title = stringResource(R.string.title_decks), onBack = { nav.popBackStack() }, snackbarHostState = snack) {
-                            DecksScreen(vm = vm)
+                            DecksScreen(vm = vm, onDeckSelected = { nav.navigate("deck/${'$'}{it.id}") })
+                        }
+                    }
+                    composable(
+                        route = "deck/{id}",
+                        arguments = listOf(navArgument("id") { type = NavType.StringType })
+                    ) { backStackEntry ->
+                        val id = requireNotNull(backStackEntry.arguments?.getString("id"))
+                        val decks by vm.decks.collectAsState()
+                        val deck = decks.find { it.id == id }
+                        if (deck == null) {
+                            AppScaffold(
+                                title = "Deck",
+                                onBack = { nav.popBackStack() },
+                                snackbarHostState = snack
+                            ) {
+                                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                    Text("Deck not found")
+                                }
+                            }
+                        } else {
+                            AppScaffold(
+                                title = deck.name,
+                                onBack = { nav.popBackStack() },
+                                snackbarHostState = snack
+                            ) {
+                                DeckDetailScreen(vm = vm, deck = deck)
+                            }
                         }
                     }
                     composable("settings") {
@@ -506,7 +536,7 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
 }
 
 @Composable
-private fun DecksScreen(vm: MainViewModel) {
+private fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
     val decks by vm.decks.collectAsState()
     val enabled by vm.enabledDeckIds.collectAsState()
     val trusted by vm.trustedSources.collectAsState()
@@ -550,7 +580,8 @@ private fun DecksScreen(vm: MainViewModel) {
                                 },
                                 trailingContent = {
                                     Switch(checked = isEnabled, onCheckedChange = { vm.setDeckEnabled(deck.id, it) })
-                                }
+                                },
+                                modifier = Modifier.clickable { onDeckSelected(deck) }
                             )
                             if (index < decks.lastIndex) HorizontalDivider()
                         }
@@ -604,6 +635,26 @@ private fun DecksScreen(vm: MainViewModel) {
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun DeckDetailScreen(vm: MainViewModel, deck: DeckEntity) {
+    var count by remember { mutableStateOf<Int?>(null) }
+    LaunchedEffect(deck.id) { count = vm.getWordCount(deck.id) }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(deck.name, style = MaterialTheme.typography.headlineSmall)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            AssistChip(onClick = {}, enabled = false, label = { Text(deck.language.uppercase()) })
+            if (deck.isNSFW) AssistChip(onClick = {}, enabled = false, label = { Text("NSFW") })
+        }
+        val countText = count?.toString() ?: "…"
+        Text("Word count: ${'$'}countText")
     }
 }
 

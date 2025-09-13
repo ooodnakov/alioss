@@ -164,6 +164,8 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    suspend fun getWordCount(deckId: String): Int = deckRepository.getWordCount(deckId)
+
     fun updateSeenTutorial(value: Boolean) {
         viewModelScope.launch { settingsRepository.updateSeenTutorial(value) }
     }
