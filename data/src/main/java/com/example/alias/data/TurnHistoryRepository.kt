@@ -2,9 +2,11 @@ package com.example.alias.data
 
 import com.example.alias.data.db.TurnHistoryDao
 import com.example.alias.data.db.TurnHistoryEntity
+import kotlinx.coroutines.flow.Flow
 
 interface TurnHistoryRepository {
     suspend fun save(entries: List<TurnHistoryEntity>)
+    fun getRecent(limit: Int): Flow<List<TurnHistoryEntity>>
 }
 
 class TurnHistoryRepositoryImpl(
@@ -13,5 +15,7 @@ class TurnHistoryRepositoryImpl(
     override suspend fun save(entries: List<TurnHistoryEntity>) {
         dao.insertAll(entries)
     }
+
+    override fun getRecent(limit: Int): Flow<List<TurnHistoryEntity>> = dao.getRecent(limit)
 }
 
