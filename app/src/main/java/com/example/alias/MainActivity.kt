@@ -92,6 +92,7 @@ import com.example.alias.ui.WordCardAction
 import com.example.alias.data.settings.SettingsRepository
 private const val MIN_TEAMS = SettingsRepository.MIN_TEAMS
 private const val MAX_TEAMS = SettingsRepository.MAX_TEAMS
+private const val HISTORY_LIMIT = 50
 
 
 
@@ -169,7 +170,9 @@ class MainActivity : ComponentActivity() {
                     }
                     composable("history") {
                         AppScaffold(title = stringResource(R.string.title_history), onBack = { nav.popBackStack() }, snackbarHostState = snack) {
-                            HistoryScreen(vm)
+                            val historyFlow = remember { vm.recentHistory(HISTORY_LIMIT) }
+                            val history by historyFlow.collectAsState(initial = emptyList())
+                            HistoryScreen(history)
                         }
                     }
                     composable("about") {
@@ -825,7 +828,7 @@ private fun RoundSummaryScreen(vm: MainViewModel, s: GameState.TurnFinished) {
                         Icon(
                             if (o.correct) Icons.Filled.Check else Icons.Filled.Close,
                             contentDescription = null,
-                            tint = if (o.correct) Color(0xFF2E7D32) else MaterialTheme.colorScheme.error
+                            tint = if (o.correct) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.error
                         )
                     },
                     headlineContent = { Text(o.word) },

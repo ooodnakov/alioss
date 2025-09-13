@@ -14,19 +14,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.ListItem
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.example.alias.MainViewModel
+import com.example.alias.data.db.TurnHistoryEntity
 import com.example.alias.R
 
 @Composable
-fun HistoryScreen(vm: MainViewModel, limit: Int = 50) {
-    val history by vm.recentHistory(limit).collectAsState(initial = emptyList())
+fun HistoryScreen(history: List<TurnHistoryEntity>) {
     if (history.isEmpty()) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text(stringResource(R.string.no_history))
@@ -45,7 +41,7 @@ fun HistoryScreen(vm: MainViewModel, limit: Int = 50) {
                         Icon(
                             if (entry.correct) Icons.Filled.Check else Icons.Filled.Close,
                             contentDescription = null,
-                            tint = if (entry.correct) Color(0xFF2E7D32) else MaterialTheme.colorScheme.error
+                            tint = if (entry.correct) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.error
                         )
                     }
                 )
