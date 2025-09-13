@@ -87,6 +87,7 @@ import androidx.compose.foundation.clickable
 import kotlinx.coroutines.launch
 import com.example.alias.ui.WordCard
 import com.example.alias.ui.WordCardAction
+import com.example.alias.ui.TutorialOverlay
 import com.example.alias.data.settings.SettingsRepository
 private const val MIN_TEAMS = SettingsRepository.MIN_TEAMS
 private const val MAX_TEAMS = SettingsRepository.MAX_TEAMS
@@ -304,100 +305,101 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                 committing = false
                 frozenNext = null
             }
-            Column(
-                modifier = Modifier.fillMaxSize().padding(24.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                LinearProgressIndicator(progress = { progress }, color = barColor, modifier = Modifier.fillMaxWidth())
-                Text("${s.timeRemaining}s", style = MaterialTheme.typography.headlineLarge, textAlign = TextAlign.Center)
-                Text(stringResource(R.string.team_label, s.team), style = MaterialTheme.typography.titleMedium)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    AssistChip(onClick = {}, enabled = false, label = { Text(stringResource(R.string.remaining_label, s.remaining)) })
-                      AssistChip(
-                          onClick = {},
-                          enabled = false,
-                          label = {
-                              Text(
-                                  LocalContext.current.resources.getQuantityString(
-                                      R.plurals.score_label,
-                                      s.score,
-                                      s.score
-                                  )
-                              )
-                          }
-                      )
-                      AssistChip(
-                          onClick = {},
-                          enabled = false,
-                          label = {
-                              Text(
-                                  LocalContext.current.resources.getQuantityString(
-                                      R.plurals.skips_label,
-                                      s.skipsRemaining,
-                                      s.skipsRemaining
-                                  )
-                              )
-                          }
-                      )
-                }
-                        val computedNext = engine.peekNextWord()
-                        val nextWord = frozenNext ?: computedNext
-                        Box(Modifier.fillMaxWidth().height(200.dp)) {
-                            // Pre-render the next card underneath to avoid flicker when advancing
-                            if (nextWord != null) {
-                                WordCard(
-                                    word = nextWord,
-                                    modifier = Modifier
-                                        .matchParentSize()
-                                        .zIndex(0f)
-                                        .alpha(if (committing) 1f else 0f),
-                                    enabled = false,
-                                    vibrator = null,
-                                    hapticsEnabled = false,
-                                    onActionStart = {},
-                                    onAction = {},
-                                    animateAppear = false,
-                                    allowSkip = s.skipsRemaining > 0,
+            Box(Modifier.fillMaxSize()) {
+                Column(
+                    modifier = Modifier.fillMaxSize().padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    LinearProgressIndicator(progress = { progress }, color = barColor, modifier = Modifier.fillMaxWidth())
+                    Text("${s.timeRemaining}s", style = MaterialTheme.typography.headlineLarge, textAlign = TextAlign.Center)
+                    Text(stringResource(R.string.team_label, s.team), style = MaterialTheme.typography.titleMedium)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        AssistChip(onClick = {}, enabled = false, label = { Text(stringResource(R.string.remaining_label, s.remaining)) })
+                        AssistChip(
+                            onClick = {},
+                            enabled = false,
+                            label = {
+                                Text(
+                                    LocalContext.current.resources.getQuantityString(
+                                        R.plurals.score_label,
+                                        s.score,
+                                        s.score
+                                    )
                                 )
                             }
+                        )
+                        AssistChip(
+                            onClick = {},
+                            enabled = false,
+                            label = {
+                                Text(
+                                    LocalContext.current.resources.getQuantityString(
+                                        R.plurals.skips_label,
+                                        s.skipsRemaining,
+                                        s.skipsRemaining
+                                    )
+                                )
+                            }
+                        )
+                    }
+                    val computedNext = engine.peekNextWord()
+                    val nextWord = frozenNext ?: computedNext
+                    Box(Modifier.fillMaxWidth().height(200.dp)) {
+                        // Pre-render the next card underneath to avoid flicker when advancing
+                        if (nextWord != null) {
                             WordCard(
-                                word = s.word,
-                                modifier = Modifier.matchParentSize().zIndex(1f),
-                                enabled = true,
-                                vibrator = vibrator,
-                                hapticsEnabled = settings.hapticsEnabled,
-                                onActionStart = {
-                                    // Freeze the preview so it doesn't swap to next-next mid-animation
-                                    if (!committing) {
-                                        frozenNext = computedNext
-                                        committing = true
-                                    }
-                                    isProcessing = true
-                                },
-                                onAction = {
-                                    when (it) {
-                                        WordCardAction.Correct -> {
-                                            engine.correct()
-                                            isProcessing = false
-                                        }
-                                        WordCardAction.Skip -> if (s.skipsRemaining > 0) {
-                                            engine.skip()
-                                            isProcessing = false
-                                        } else {
-                                            // No skips left: ignore gesture and keep card
-                                            isProcessing = false
-                                        }
-                                    }
-                                },
-                                allowSkip = s.skipsRemaining > 0,
+                                word = nextWord,
+                                modifier = Modifier
+                                    .matchParentSize()
+                                    .zIndex(0f)
+                                    .alpha(if (committing) 1f else 0f),
+                                enabled = false,
+                                vibrator = null,
+                                hapticsEnabled = false,
+                                onActionStart = {},
+                                onAction = {},
                                 animateAppear = false,
+                                allowSkip = s.skipsRemaining > 0,
                             )
                         }
-                Text(stringResource(R.string.summary_label, s.remaining, s.score, s.skipsRemaining))
-                if (settings.oneHandedLayout) {
-                    val onCorrect = {
-                        if (!isProcessing) {
+                        WordCard(
+                            word = s.word,
+                            modifier = Modifier.matchParentSize().zIndex(1f),
+                            enabled = true,
+                            vibrator = vibrator,
+                            hapticsEnabled = settings.hapticsEnabled,
+                            onActionStart = {
+                                // Freeze the preview so it doesn't swap to next-next mid-animation
+                                if (!committing) {
+                                    frozenNext = computedNext
+                                    committing = true
+                                }
+                                isProcessing = true
+                            },
+                            onAction = {
+                                when (it) {
+                                    WordCardAction.Correct -> {
+                                        engine.correct()
+                                        isProcessing = false
+                                    }
+                                    WordCardAction.Skip -> if (s.skipsRemaining > 0) {
+                                        engine.skip()
+                                        isProcessing = false
+                                    } else {
+                                        // No skips left: ignore gesture and keep card
+                                        isProcessing = false
+                                    }
+                                }
+                            },
+                            allowSkip = s.skipsRemaining > 0,
+                            animateAppear = false,
+                        )
+                    }
+                    Text(stringResource(R.string.summary_label, s.remaining, s.score, s.skipsRemaining))
+                    if (settings.oneHandedLayout) {
+                        val onCorrect = {
+                            if (!isProcessing) {
                             isProcessing = true
                             engine.correct()
                         }
@@ -456,6 +458,10 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                 }
                 Button(onClick = { vm.restartMatch() }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.restart_match)) }
             }
+            if (!settings.seenTutorial) {
+                TutorialOverlay { vm.updateSeenTutorial(true) }
+            }
+        }
         }
         is GameState.TurnFinished -> {
             RoundSummaryScreen(vm = vm, s = s)
@@ -719,6 +725,12 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () ->
                     onBack()
                 }, enabled = canSave, modifier = Modifier.weight(1f)) { Text("Save & Restart") }
             }
+        }
+        item {
+            OutlinedButton(
+                onClick = { scope.launch { vm.updateSeenTutorial(false) } },
+                modifier = Modifier.fillMaxWidth()
+            ) { Text(stringResource(R.string.show_tutorial_again)) }
         }
         item { OutlinedButton(onClick = onAbout, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.title_about)) } }
         item { OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.back)) } }

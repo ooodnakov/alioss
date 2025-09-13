@@ -31,4 +31,7 @@
     <string name="next_team">Next Team</string>
     <string name="turn_summary">Turn summary for %s</string>
     <string name="score_change">Score change: %d</string>
+    <string name="tutorial_instructions">Swipe right for Correct, left for Skip.</string>
+    <string name="tutorial_dismiss">Got it</string>
+    <string name="show_tutorial_again">Show tutorial again</string>
 </resources>
