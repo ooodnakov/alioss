@@ -36,6 +36,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.LocalConfiguration
+import android.content.res.Configuration
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.zIndex
@@ -82,12 +84,17 @@ import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.ScreenRotation
+import androidx.compose.material.icons.filled.ScreenLockPortrait
+import androidx.compose.material.icons.filled.ScreenLockLandscape
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilterChip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.Image
 import kotlinx.coroutines.launch
 import com.example.alias.ui.WordCard
 import com.example.alias.ui.WordCardAction
@@ -225,53 +232,100 @@ private fun HomeScreen(
     onHistory: () -> Unit,
 ) {
     val colors = MaterialTheme.colorScheme
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp, Alignment.CenterVertically),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        // App title / branding
-        Text(
-            text = stringResource(R.string.app_name),
-            style = MaterialTheme.typography.displaySmall,
-            color = colors.primary
-        )
-        Spacer(Modifier.height(8.dp))
-        // Primary actions as sleek cards
-        HomeActionCard(
-            icon = Icons.Filled.PlayArrow,
-            title = stringResource(R.string.quick_play),
-            subtitle = stringResource(R.string.quick_play_subtitle),
-            onClick = onQuickPlay,
-            containerColor = colors.primaryContainer,
-            contentColor = colors.onPrimaryContainer
-        )
-        HomeActionCard(
-            icon = Icons.Filled.LibraryBooks,
-            title = stringResource(R.string.title_decks),
-            subtitle = stringResource(R.string.decks_subtitle),
-            onClick = onDecks,
-            containerColor = colors.secondaryContainer,
-            contentColor = colors.onSecondaryContainer
-        )
-        HomeActionCard(
-            icon = Icons.Filled.Settings,
-            title = stringResource(R.string.title_settings),
-            subtitle = stringResource(R.string.settings_subtitle),
-            onClick = onSettings,
-            containerColor = colors.tertiaryContainer,
-            contentColor = colors.onTertiaryContainer
-        )
-        HomeActionCard(
-            icon = Icons.Filled.History,
-            title = stringResource(R.string.title_history),
-            subtitle = stringResource(R.string.history_subtitle),
-            onClick = onHistory,
-            containerColor = colors.surfaceVariant,
-            contentColor = colors.onSurfaceVariant
-        )
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+
+    if (isLandscape) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            horizontalArrangement = Arrangement.spacedBy(20.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Left: brand + primary action
+            Column(
+                modifier = Modifier.weight(1.4f),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalAlignment = Alignment.Start
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Image(painterResource(id = R.drawable.icon), contentDescription = null, modifier = Modifier.size(48.dp))
+                    Text(text = "Alias", style = MaterialTheme.typography.displaySmall, color = colors.primary)
+                }
+                HomeActionCard(
+                    icon = Icons.Filled.PlayArrow,
+                    title = "Quick Play",
+                    subtitle = "Start a match with current settings",
+                    onClick = onQuickPlay,
+                    containerColor = colors.primaryContainer,
+                    contentColor = colors.onPrimaryContainer
+                )
+            }
+            // Right: secondary actions stacked
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                HomeActionCard(
+                    icon = Icons.Filled.LibraryBooks,
+                    title = "Decks",
+                    subtitle = "Manage and import word decks",
+                    onClick = onDecks,
+                    containerColor = colors.secondaryContainer,
+                    contentColor = colors.onSecondaryContainer
+                )
+                HomeActionCard(
+                    icon = Icons.Filled.Settings,
+                    title = "Settings",
+                    subtitle = "Time, teams, language and more",
+                    onClick = onSettings,
+                    containerColor = colors.tertiaryContainer,
+                    contentColor = colors.onTertiaryContainer
+                )
+            }
+        }
+    } else {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp, Alignment.CenterVertically),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // App title / branding
+            Image(painterResource(id = R.drawable.icon), contentDescription = null, modifier = Modifier.size(56.dp))
+            Text(
+                text = "Alias",
+                style = MaterialTheme.typography.displaySmall,
+                color = colors.primary
+            )
+            // Primary actions as sleek cards
+            HomeActionCard(
+                icon = Icons.Filled.PlayArrow,
+                title = "Quick Play",
+                subtitle = "Start a match with current settings",
+                onClick = onQuickPlay,
+                containerColor = colors.primaryContainer,
+                contentColor = colors.onPrimaryContainer
+            )
+            HomeActionCard(
+                icon = Icons.Filled.LibraryBooks,
+                title = "Decks",
+                subtitle = "Manage and import word decks",
+                onClick = onDecks,
+                containerColor = colors.secondaryContainer,
+                contentColor = colors.onSecondaryContainer
+            )
+            HomeActionCard(
+                icon = Icons.Filled.Settings,
+                title = "Settings",
+                subtitle = "Time, teams, language and more",
+                onClick = onSettings,
+                containerColor = colors.tertiaryContainer,
+                contentColor = colors.onTertiaryContainer
+            )
+        }
     }
 }
 
@@ -334,6 +388,8 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
     when (val s = state) {
         GameState.Idle -> Text(stringResource(R.string.idle))
         is GameState.TurnActive -> {
+            val configuration = LocalConfiguration.current
+            val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
             val rawProgress = if (s.totalSeconds > 0) s.timeRemaining.toFloat() / s.totalSeconds else 0f
             val progress by animateFloatAsState(rawProgress, label = "timerProgress")
             val targetColor = if (rawProgress > 0.5f) {
@@ -359,163 +415,158 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                 committing = false
                 frozenNext = null
             }
-            Box(Modifier.fillMaxSize()) {
+            val CardStack: @Composable () -> Unit = {
+                val computedNext = engine.peekNextWord()
+                val nextWord = frozenNext ?: computedNext
+                Box(Modifier.fillMaxWidth().height(200.dp)) {
+                    if (nextWord != null) {
+                        WordCard(
+                            word = nextWord,
+                            modifier = Modifier
+                                .matchParentSize()
+                                .zIndex(0f)
+                                .alpha(if (committing) 1f else 0f),
+                            enabled = false,
+                            vibrator = null,
+                            hapticsEnabled = false,
+                            onActionStart = {},
+                            onAction = {},
+                            animateAppear = false,
+                            allowSkip = s.skipsRemaining > 0,
+                        )
+                    }
+                    WordCard(
+                        word = s.word,
+                        modifier = Modifier.matchParentSize().zIndex(1f),
+                        enabled = true,
+                        vibrator = vibrator,
+                        hapticsEnabled = settings.hapticsEnabled,
+                        onActionStart = {
+                            if (!committing) {
+                                frozenNext = computedNext
+                                committing = true
+                            }
+                            isProcessing = true
+                        },
+                        onAction = {
+                            when (it) {
+                                WordCardAction.Correct -> { engine.correct(); isProcessing = false }
+                                WordCardAction.Skip -> if (s.skipsRemaining > 0) { engine.skip(); isProcessing = false } else { isProcessing = false }
+                            }
+                        },
+                        allowSkip = s.skipsRemaining > 0,
+                        animateAppear = false,
+                    )
+                }
+            }
+
+            val Controls: @Composable () -> Unit = {
+                Text("${s.timeRemaining}s", style = MaterialTheme.typography.headlineLarge, textAlign = TextAlign.Center)
+                Text("Team: ${s.team}", style = MaterialTheme.typography.titleMedium)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    AssistChip(onClick = {}, enabled = false, label = { Text("Remaining ${s.remaining}") })
+                    AssistChip(onClick = {}, enabled = false, label = { Text("Score ${s.score}") })
+                    AssistChip(onClick = {}, enabled = false, label = { Text("Skips ${s.skipsRemaining}") })
+                }
+                Text("Remaining: ${s.remaining} • Score: ${s.score} • Skips: ${s.skipsRemaining}")
+            }
+
+            if (isLandscape) {
+                Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    LinearProgressIndicator(progress = { progress }, color = barColor, modifier = Modifier.fillMaxWidth())
+                    Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                            Controls()
+                            val onCorrect = {
+                                if (!isProcessing) { isProcessing = true; engine.correct() }
+                            }
+                            val onSkip = {
+                                if (!isProcessing) {
+                                    if (s.skipsRemaining > 0) { isProcessing = true; engine.skip() }
+                                }
+                            }
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                                Button(onClick = onCorrect, enabled = !isProcessing, modifier = Modifier.weight(1f).height(60.dp)) { Icon(Icons.Filled.Check, contentDescription = null); Spacer(Modifier.width(8.dp)); Text("Correct") }
+                                Button(onClick = onSkip, enabled = !isProcessing && s.skipsRemaining > 0, modifier = Modifier.weight(1f).height(60.dp)) { Icon(Icons.Filled.Close, contentDescription = null); Spacer(Modifier.width(8.dp)); Text("Skip") }
+                            }
+                            Button(onClick = { vm.restartMatch() }, modifier = Modifier.fillMaxWidth()) { Text("Restart Match") }
+                        }
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+                            CardStack()
+                        }
+                    }
+                }
+            } else {
                 Column(
                     modifier = Modifier.fillMaxSize().padding(24.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     LinearProgressIndicator(progress = { progress }, color = barColor, modifier = Modifier.fillMaxWidth())
-                    Text("${s.timeRemaining}s", style = MaterialTheme.typography.headlineLarge, textAlign = TextAlign.Center)
-                    Text(stringResource(R.string.team_label, s.team), style = MaterialTheme.typography.titleMedium)
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        AssistChip(onClick = {}, enabled = false, label = { Text(stringResource(R.string.remaining_label, s.remaining)) })
-                        AssistChip(
-                            onClick = {},
-                            enabled = false,
-                            label = {
-                                Text(
-                                    LocalContext.current.resources.getQuantityString(
-                                        R.plurals.score_label,
-                                        s.score,
-                                        s.score
-                                    )
-                                )
-                            }
-                        )
-                        AssistChip(
-                            onClick = {},
-                            enabled = false,
-                            label = {
-                                Text(
-                                    LocalContext.current.resources.getQuantityString(
-                                        R.plurals.skips_label,
-                                        s.skipsRemaining,
-                                        s.skipsRemaining
-                                    )
-                                )
-                            }
-                        )
-                    }
-                    val computedNext = engine.peekNextWord()
-                    val nextWord = frozenNext ?: computedNext
-                    Box(Modifier.fillMaxWidth().height(200.dp)) {
-                        // Pre-render the next card underneath to avoid flicker when advancing
-                        if (nextWord != null) {
-                            WordCard(
-                                word = nextWord,
-                                modifier = Modifier
-                                    .matchParentSize()
-                                    .zIndex(0f)
-                                    .alpha(if (committing) 1f else 0f),
-                                enabled = false,
-                                vibrator = null,
-                                hapticsEnabled = false,
-                                onActionStart = {},
-                                onAction = {},
-                                animateAppear = false,
-                                allowSkip = s.skipsRemaining > 0,
-                            )
-                        }
-                        WordCard(
-                            word = s.word,
-                            modifier = Modifier.matchParentSize().zIndex(1f),
-                            enabled = true,
-                            vibrator = vibrator,
-                            hapticsEnabled = settings.hapticsEnabled,
-                            onActionStart = {
-                                // Freeze the preview so it doesn't swap to next-next mid-animation
-                                if (!committing) {
-                                    frozenNext = computedNext
-                                    committing = true
-                                }
-                                isProcessing = true
-                            },
-                            onAction = {
-                                when (it) {
-                                    WordCardAction.Correct -> {
-                                        engine.correct()
-                                        isProcessing = false
-                                    }
-                                    WordCardAction.Skip -> if (s.skipsRemaining > 0) {
-                                        engine.skip()
-                                        isProcessing = false
-                                    } else {
-                                        // No skips left: ignore gesture and keep card
-                                        isProcessing = false
-                                    }
-                                }
-                            },
-                            allowSkip = s.skipsRemaining > 0,
-                            animateAppear = false,
-                        )
-                    }
-                    Text(stringResource(R.string.summary_label, s.remaining, s.score, s.skipsRemaining))
+                    Controls()
+                    CardStack()
                     if (settings.oneHandedLayout) {
                         val onCorrect = {
                             if (!isProcessing) {
-                            isProcessing = true
-                            engine.correct()
-                        }
-                    }
-                    val onSkip = {
-                        if (!isProcessing) {
-                            if (s.skipsRemaining > 0) {
                                 isProcessing = true
-                                engine.skip()
-                            } else {
-                                // No skips left; ignore without blocking input
+                                engine.correct()
                             }
                         }
-                    }
-                    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        Button(
-                            onClick = onCorrect,
-                            enabled = !isProcessing,
-                            modifier = Modifier.fillMaxWidth().height(80.dp)
-                        ) { Icon(Icons.Filled.Check, contentDescription = null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.correct)) }
-                        Button(
-                            onClick = onSkip,
-                            enabled = !isProcessing && s.skipsRemaining > 0,
-                            modifier = Modifier.fillMaxWidth().height(80.dp)
-                        ) { Icon(Icons.Filled.Close, contentDescription = null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.skip)) }
-                    }
-                } else {
-                    val onCorrect = {
-                        if (!isProcessing) {
-                            isProcessing = true
-                            engine.correct()
-                        }
-                    }
-                    val onSkip = {
-                        if (!isProcessing) {
-                            if (s.skipsRemaining > 0) {
-                                isProcessing = true
-                                engine.skip()
-                            } else {
-                                // No skips left; ignore without blocking input
+                        val onSkip = {
+                            if (!isProcessing) {
+                                if (s.skipsRemaining > 0) {
+                                    isProcessing = true
+                                    engine.skip()
+                                } else {
+                                    // No skips left; ignore without blocking input
+                                }
                             }
                         }
+                        Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                            Button(
+                                onClick = onCorrect,
+                                enabled = !isProcessing,
+                                modifier = Modifier.fillMaxWidth().height(80.dp)
+                            ) { Icon(Icons.Filled.Check, contentDescription = null); Spacer(Modifier.width(8.dp)); Text("Correct") }
+                            Button(
+                                onClick = onSkip,
+                                enabled = !isProcessing && s.skipsRemaining > 0,
+                                modifier = Modifier.fillMaxWidth().height(80.dp)
+                            ) { Icon(Icons.Filled.Close, contentDescription = null); Spacer(Modifier.width(8.dp)); Text("Skip") }
+                        }
+                    } else {
+                        val onCorrect = {
+                            if (!isProcessing) {
+                                isProcessing = true
+                                engine.correct()
+                            }
+                        }
+                        val onSkip = {
+                            if (!isProcessing) {
+                                if (s.skipsRemaining > 0) {
+                                    isProcessing = true
+                                    engine.skip()
+                                } else {
+                                    // No skips left; ignore without blocking input
+                                }
+                            }
+                        }
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                            Button(
+                                onClick = onCorrect,
+                                enabled = !isProcessing,
+                                modifier = Modifier.weight(1f).height(60.dp)
+                            ) { Icon(Icons.Filled.Check, contentDescription = null); Spacer(Modifier.width(8.dp)); Text("Correct") }
+                            Button(
+                                onClick = onSkip,
+                                enabled = !isProcessing && s.skipsRemaining > 0,
+                                modifier = Modifier.weight(1f).height(60.dp)
+                            ) { Icon(Icons.Filled.Close, contentDescription = null); Spacer(Modifier.width(8.dp)); Text("Skip") }
+                        }
                     }
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                        Button(
-                            onClick = onCorrect,
-                            enabled = !isProcessing,
-                            modifier = Modifier.weight(1f).height(60.dp)
-                        ) { Icon(Icons.Filled.Check, contentDescription = null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.correct)) }
-                        Button(
-                            onClick = onSkip,
-                            enabled = !isProcessing && s.skipsRemaining > 0,
-                            modifier = Modifier.weight(1f).height(60.dp)
-                        ) { Icon(Icons.Filled.Close, contentDescription = null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.skip)) }
-                    }
+                    Button(onClick = { vm.restartMatch() }, modifier = Modifier.fillMaxWidth()) { Text("Restart Match") }
                 }
-                Button(onClick = { vm.restartMatch() }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.restart_match)) }
             }
-            if (!settings.seenTutorial) {
-                TutorialOverlay { vm.updateSeenTutorial(true) }
-            }
-        }
         }
         is GameState.TurnFinished -> {
             RoundSummaryScreen(vm = vm, s = s)
@@ -748,16 +799,28 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () ->
                         Text("One-hand layout", modifier = Modifier.weight(1f))
                         Switch(checked = oneHand, onCheckedChange = { oneHand = it })
                     }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("Orientation", modifier = Modifier.weight(1f))
-                        var expanded by remember { mutableStateOf(false) }
-                        Box {
-                            TextButton(onClick = { expanded = true }) { Text(orientation) }
-                            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                                listOf("system", "portrait", "landscape").forEach {
-                                    DropdownMenuItem(text = { Text(it) }, onClick = { orientation = it; expanded = false })
-                                }
-                            }
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("Orientation")
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            val current = orientation
+                            FilterChip(
+                                selected = current == "system",
+                                onClick = { orientation = "system"; vm.setOrientation("system") },
+                                label = { Text("Auto") },
+                                leadingIcon = { Icon(Icons.Filled.ScreenRotation, contentDescription = null) }
+                            )
+                            FilterChip(
+                                selected = current == "portrait",
+                                onClick = { orientation = "portrait"; vm.setOrientation("portrait") },
+                                label = { Text("Portrait") },
+                                leadingIcon = { Icon(Icons.Filled.ScreenLockPortrait, contentDescription = null) }
+                            )
+                            FilterChip(
+                                selected = current == "landscape",
+                                onClick = { orientation = "landscape"; vm.setOrientation("landscape") },
+                                label = { Text("Landscape") },
+                                leadingIcon = { Icon(Icons.Filled.ScreenLockLandscape, contentDescription = null) }
+                            )
                         }
                     }
                 }

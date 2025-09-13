@@ -44,6 +44,20 @@ android {
     testOptions {
         unitTests.isIncludeAndroidResources = true
     }
+
+    buildTypes {
+        // Installable, release-like build signed with the debug keystore for local testing
+        create("devRelease") {
+            initWith(getByName("release"))
+            // Sign with the debug keystore so you can install via adb
+            signingConfig = signingConfigs.getByName("debug")
+            // Keep it fast by default; flip to true if you want to test shrinking locally
+            isMinifyEnabled = false
+            isShrinkResources = false
+            isDebuggable = false
+            matchingFallbacks += listOf("release")
+        }
+    }
 }
 
 dependencies {
