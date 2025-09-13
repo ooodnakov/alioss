@@ -164,6 +164,10 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    fun updateSeenTutorial(value: Boolean) {
+        viewModelScope.launch { settingsRepository.updateSeenTutorial(value) }
+    }
+
     fun downloadPackFromUrl(url: String, expectedSha256: String?) {
         viewModelScope.launch {
             _uiEvents.tryEmit(UiEvent(message = "Downloading…", duration = SnackbarDuration.Indefinite))
