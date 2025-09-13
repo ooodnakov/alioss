@@ -320,6 +320,7 @@ private fun HomeActionCard(
 fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
     val context = LocalContext.current
     val activity = context as? android.app.Activity
+    val coroutineScope = rememberCoroutineScope()
     DisposableEffect(settings.orientation) {
         val original = activity?.requestedOrientation ?: android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
         activity?.requestedOrientation = when (settings.orientation) {
@@ -353,11 +354,13 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
             var isProcessing by remember { mutableStateOf(false) }
             var committing by remember { mutableStateOf(false) }
             var frozenNext by remember { mutableStateOf<String?>(null) }
+            var computedNext by remember { mutableStateOf<String?>(null) }
             LaunchedEffect(s.word) {
                 // Word advanced: re-enable actions and unfreeze preview
                 isProcessing = false
                 committing = false
                 frozenNext = null
+                computedNext = engine.peekNextWord()
             }
             Box(Modifier.fillMaxSize()) {
                 Column(
@@ -397,7 +400,6 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                             }
                         )
                     }
-                    val computedNext = engine.peekNextWord()
                     val nextWord = frozenNext ?: computedNext
                     Box(Modifier.fillMaxWidth().height(200.dp)) {
                         // Pre-render the next card underneath to avoid flicker when advancing
@@ -434,12 +436,16 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                             onAction = {
                                 when (it) {
                                     WordCardAction.Correct -> {
-                                        engine.correct()
-                                        isProcessing = false
+                                        coroutineScope.launch {
+                                            engine.correct()
+                                            isProcessing = false
+                                        }
                                     }
                                     WordCardAction.Skip -> if (s.skipsRemaining > 0) {
-                                        engine.skip()
-                                        isProcessing = false
+                                        coroutineScope.launch {
+                                            engine.skip()
+                                            isProcessing = false
+                                        }
                                     } else {
                                         // No skips left: ignore gesture and keep card
                                         isProcessing = false
@@ -454,20 +460,26 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                     if (settings.oneHandedLayout) {
                         val onCorrect = {
                             if (!isProcessing) {
-                            isProcessing = true
-                            engine.correct()
-                        }
-                    }
-                    val onSkip = {
-                        if (!isProcessing) {
-                            if (s.skipsRemaining > 0) {
                                 isProcessing = true
-                                engine.skip()
-                            } else {
-                                // No skips left; ignore without blocking input
+                                coroutineScope.launch {
+                                    engine.correct()
+                                    isProcessing = false
+                                }
                             }
                         }
-                    }
+                        val onSkip = {
+                            if (!isProcessing) {
+                                if (s.skipsRemaining > 0) {
+                                    isProcessing = true
+                                    coroutineScope.launch {
+                                        engine.skip()
+                                        isProcessing = false
+                                    }
+                                } else {
+                                    // No skips left; ignore without blocking input
+                                }
+                            }
+                        }
                     Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                         Button(
                             onClick = onCorrect,
@@ -484,14 +496,20 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                     val onCorrect = {
                         if (!isProcessing) {
                             isProcessing = true
-                            engine.correct()
+                            coroutineScope.launch {
+                                engine.correct()
+                                isProcessing = false
+                            }
                         }
                     }
                     val onSkip = {
                         if (!isProcessing) {
                             if (s.skipsRemaining > 0) {
                                 isProcessing = true
-                                engine.skip()
+                                coroutineScope.launch {
+                                    engine.skip()
+                                    isProcessing = false
+                                }
                             } else {
                                 // No skips left; ignore without blocking input
                             }

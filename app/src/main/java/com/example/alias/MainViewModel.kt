@@ -290,6 +290,7 @@ class MainViewModel @Inject constructor(
     }
 
     fun overrideOutcome(index: Int, correct: Boolean) {
-        _engine.value?.overrideOutcome(index, correct)
+        val e = _engine.value ?: return
+        viewModelScope.launch { e.overrideOutcome(index, correct) }
     }
 }
