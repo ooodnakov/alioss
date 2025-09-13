@@ -53,6 +53,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.alias.ui.AppScaffold
+import com.example.alias.ui.HistoryScreen
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.OutlinedTextField
@@ -72,6 +73,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.LibraryBooks
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material.icons.filled.BugReport
@@ -90,6 +92,7 @@ import com.example.alias.ui.WordCardAction
 import com.example.alias.data.settings.SettingsRepository
 private const val MIN_TEAMS = SettingsRepository.MIN_TEAMS
 private const val MAX_TEAMS = SettingsRepository.MAX_TEAMS
+private const val HISTORY_LIMIT = 50
 
 
 
@@ -133,7 +136,8 @@ class MainActivity : ComponentActivity() {
                             HomeScreen(
                                 onQuickPlay = { vm.restartMatch(); nav.navigate("game") },
                                 onDecks = { nav.navigate("decks") },
-                                onSettings = { nav.navigate("settings") }
+                                onSettings = { nav.navigate("settings") },
+                                onHistory = { nav.navigate("history") }
                             )
                         }
                     }
@@ -164,6 +168,13 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                     }
+                    composable("history") {
+                        AppScaffold(title = stringResource(R.string.title_history), onBack = { nav.popBackStack() }, snackbarHostState = snack) {
+                            val historyFlow = remember { vm.recentHistory(HISTORY_LIMIT) }
+                            val history by historyFlow.collectAsState(initial = emptyList())
+                            HistoryScreen(history)
+                        }
+                    }
                     composable("about") {
                         AppScaffold(title = stringResource(R.string.title_about), onBack = { nav.popBackStack() }, snackbarHostState = snack) {
                             AboutScreen()
@@ -176,7 +187,12 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun HomeScreen(onQuickPlay: () -> Unit, onDecks: () -> Unit, onSettings: () -> Unit) {
+private fun HomeScreen(
+    onQuickPlay: () -> Unit,
+    onDecks: () -> Unit,
+    onSettings: () -> Unit,
+    onHistory: () -> Unit,
+) {
     val colors = MaterialTheme.colorScheme
     Column(
         modifier = Modifier
@@ -216,6 +232,14 @@ private fun HomeScreen(onQuickPlay: () -> Unit, onDecks: () -> Unit, onSettings:
             onClick = onSettings,
             containerColor = colors.tertiaryContainer,
             contentColor = colors.onTertiaryContainer
+        )
+        HomeActionCard(
+            icon = Icons.Filled.History,
+            title = stringResource(R.string.title_history),
+            subtitle = stringResource(R.string.history_subtitle),
+            onClick = onHistory,
+            containerColor = colors.surfaceVariant,
+            contentColor = colors.onSurfaceVariant
         )
     }
 }
@@ -804,7 +828,7 @@ private fun RoundSummaryScreen(vm: MainViewModel, s: GameState.TurnFinished) {
                         Icon(
                             if (o.correct) Icons.Filled.Check else Icons.Filled.Close,
                             contentDescription = null,
-                            tint = if (o.correct) Color(0xFF2E7D32) else MaterialTheme.colorScheme.error
+                            tint = if (o.correct) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.error
                         )
                     },
                     headlineContent = { Text(o.word) },
