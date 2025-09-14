@@ -21,6 +21,7 @@
 - Category filters: added persistent category selection, filter chips in Decks → Filters, applied in queries and word metadata.
 
 ## Backlog
+- Add ui localization setting English and Russian
 - Add word info to db, like, difficulty, category, and word classes. Display it on card and make filters in deck menu to filter words out 
   - Partially done: uses existing difficulty/category; added difficulty filter. Consider category and word-class filters next.
 - Bundled assets change detection: implemented; consider per-deck id tracking and pruning removed assets.
