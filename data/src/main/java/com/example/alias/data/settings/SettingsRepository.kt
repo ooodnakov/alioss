@@ -32,6 +32,7 @@ interface SettingsRepository {
     suspend fun updateSoundEnabled(value: Boolean)
     suspend fun updateOneHandedLayout(value: Boolean)
     suspend fun updateOrientation(value: String)
+    suspend fun updateUiLanguage(language: String)
     suspend fun updateDifficultyFilter(min: Int, max: Int)
     suspend fun setCategoriesFilter(categories: Set<String>)
     suspend fun setTeams(teams: List<String>)
@@ -60,6 +61,7 @@ data class Settings(
     val penaltyPerSkip: Int = 1,
     val punishSkips: Boolean = true,
     val languagePreference: String = "en",
+    val uiLanguage: String = "system",
     val enabledDeckIds: Set<String> = emptySet(),
     val teams: List<String> = DEFAULT_TEAMS,
     val allowNSFW: Boolean = false,
@@ -88,6 +90,7 @@ class SettingsRepositoryImpl(
             penaltyPerSkip = p[Keys.PENALTY_PER_SKIP] ?: 1,
             punishSkips = p[Keys.PUNISH_SKIPS] ?: true,
             languagePreference = p[Keys.LANGUAGE] ?: "en",
+            uiLanguage = p[Keys.UI_LANGUAGE] ?: "system",
             enabledDeckIds = p[Keys.ENABLED_DECK_IDS] ?: emptySet(),
             teams = p[Keys.TEAMS]?.split("|")?.filter { it.isNotBlank() }?.take(SettingsRepository.MAX_TEAMS)?.let {
                 if (it.size >= SettingsRepository.MIN_TEAMS) it else DEFAULT_TEAMS
@@ -165,6 +168,14 @@ class SettingsRepositoryImpl(
         dataStore.edit { it[Keys.ORIENTATION] = norm }
     }
 
+    override suspend fun updateUiLanguage(language: String) {
+        val norm = when (language.lowercase()) {
+            "system", "en", "ru" -> language.lowercase()
+            else -> "system"
+        }
+        dataStore.edit { it[Keys.UI_LANGUAGE] = norm }
+    }
+
     override suspend fun updateDifficultyFilter(min: Int, max: Int) {
         val lo = min.coerceIn(1, 5)
         val hi = max.coerceIn(1, 5)
@@ -216,6 +227,7 @@ class SettingsRepositoryImpl(
         val PENALTY_PER_SKIP = intPreferencesKey("penalty_per_skip")
         val PUNISH_SKIPS = booleanPreferencesKey("punish_skips")
         val LANGUAGE = stringPreferencesKey("language_preference")
+        val UI_LANGUAGE = stringPreferencesKey("ui_language")
         val ENABLED_DECK_IDS = stringSetPreferencesKey("enabled_deck_ids")
         val ALLOW_NSFW = booleanPreferencesKey("allow_nsfw")
         val STEMMING_ENABLED = booleanPreferencesKey("stemming_enabled")

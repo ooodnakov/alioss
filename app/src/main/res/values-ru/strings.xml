@@ -68,6 +68,10 @@
     <string name="haptics_label">Виброотклик</string>
     <string name="sound_effects_label">Звуковые эффекты</string>
     <string name="one_hand_layout_label">Удобно одной рукой</string>
+    <string name="ui_language_label">Язык интерфейса</string>
+    <string name="system_default_label">Системный</string>
+    <string name="english_label">Английский</string>
+    <string name="russian_label">Русский</string>
     <string name="orientation_label">Ориентация</string>
     <string name="auto_label">Авто</string>
     <string name="portrait_label">Портрет</string>
