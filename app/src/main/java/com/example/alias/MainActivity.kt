@@ -37,6 +37,8 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
 import android.content.res.Configuration
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.zIndex
 import android.os.VibrationEffect
@@ -120,6 +122,15 @@ class MainActivity : ComponentActivity() {
                 val nav = rememberNavController()
                 val vm: MainViewModel = hiltViewModel()
                 val snack = remember { SnackbarHostState() }
+                val settings by vm.settings.collectAsState()
+
+                LaunchedEffect(settings.uiLanguage) {
+                    val locales = when (settings.uiLanguage) {
+                        "system" -> LocaleListCompat.getEmptyLocaleList()
+                        else -> LocaleListCompat.forLanguageTags(settings.uiLanguage)
+                    }
+                    AppCompatDelegate.setApplicationLocales(locales)
+                }
 
                 // Collect general UI events and show snackbars
                 LaunchedEffect(Unit) {
@@ -822,6 +833,7 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () ->
     var maxSkips by rememberSaveable(s) { mutableStateOf(s.maxSkips.toString()) }
     var penalty by rememberSaveable(s) { mutableStateOf(s.penaltyPerSkip.toString()) }
     var lang by rememberSaveable(s) { mutableStateOf(s.languagePreference) }
+    var uiLang by rememberSaveable(s) { mutableStateOf(s.uiLanguage) }
     var punishSkips by rememberSaveable(s) { mutableStateOf(s.punishSkips) }
     var nsfw by rememberSaveable(s) { mutableStateOf(s.allowNSFW) }
     var haptics by rememberSaveable(s) { mutableStateOf(s.hapticsEnabled) }
@@ -843,6 +855,7 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () ->
                 penaltyPerSkip = penalty.toIntOrNull() ?: s.penaltyPerSkip,
                 punishSkips = punishSkips,
                 language = lang.ifBlank { s.languagePreference },
+                uiLanguage = uiLang,
                 allowNSFW = nsfw,
                 haptics = haptics,
                 sound = sound,
@@ -885,9 +898,27 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () ->
             }
         }
         item {
-            ElevatedCard(Modifier.fillMaxWidth()) {
-                Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(stringResource(R.string.language_and_content), style = MaterialTheme.typography.titleMedium)
+                    ElevatedCard(Modifier.fillMaxWidth()) {
+                        Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(stringResource(R.string.language_and_content), style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.ui_language_label))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        FilterChip(
+                            selected = uiLang == "system",
+                            onClick = { uiLang = "system" },
+                            label = { Text(stringResource(R.string.system_default_label)) }
+                        )
+                        FilterChip(
+                            selected = uiLang == "en",
+                            onClick = { uiLang = "en" },
+                            label = { Text(stringResource(R.string.english_label)) }
+                        )
+                        FilterChip(
+                            selected = uiLang == "ru",
+                            onClick = { uiLang = "ru" },
+                            label = { Text(stringResource(R.string.russian_label)) }
+                        )
+                    }
                     OutlinedTextField(value = lang, onValueChange = { lang = it }, label = { Text(stringResource(R.string.language_hint)) }, modifier = Modifier.fillMaxWidth())
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(stringResource(R.string.allow_nsfw_label), modifier = Modifier.weight(1f))

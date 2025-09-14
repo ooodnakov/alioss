@@ -299,6 +299,7 @@ class MainViewModel @Inject constructor(
         penaltyPerSkip: Int,
         punishSkips: Boolean,
         language: String,
+        uiLanguage: String,
         allowNSFW: Boolean,
         haptics: Boolean,
         sound: Boolean,
@@ -319,6 +320,7 @@ class MainViewModel @Inject constructor(
         settingsRepository.updateOneHandedLayout(oneHanded)
         settingsRepository.updateVerticalSwipes(verticalSwipes)
         settingsRepository.updateOrientation(orientation)
+        settingsRepository.updateUiLanguage(uiLanguage)
         // Language validation may fail; keep others applied regardless
         val langResult = runCatching { settingsRepository.updateLanguagePreference(language) }
         if (langResult.isFailure) {
