@@ -30,15 +30,16 @@ class DefaultGameEngineTest {
             engine.startMatch(config, teams = listOf("t"), seed = 123L)
             val seen = mutableListOf<String>()
             while (true) {
-                val s = engine.state.value
-                if (s is GameState.TurnActive) {
-                    seen += s.word
-                    engine.correct()
-                } else if (s is GameState.MatchFinished) {
-                    break
+                when (val s = engine.state.value) {
+                    is GameState.TurnActive -> {
+                        seen += s.word
+                        engine.correct()
+                    }
+                    is GameState.TurnFinished -> engine.nextTurn()
+                    is GameState.MatchFinished -> return seen
+                    GameState.Idle -> error("Unexpected Idle state during match")
                 }
             }
-            return seen
         }
 
         val first = runMatch()
@@ -63,6 +64,10 @@ class DefaultGameEngineTest {
         s = assertIs<GameState.TurnActive>(engine.state.value)
         assertEquals(0, s.skipsRemaining)
         assertEquals(-1, s.score)
+
+        // Let timer elapse so no coroutine lingers after the test
+        advanceTimeBy(config.roundSeconds * 1000L)
+        runCurrent()
     }
 
     @Test
@@ -107,7 +112,7 @@ class DefaultGameEngineTest {
         val cfg = config.copy(targetWords = 2, maxSkips = 1, penaltyPerSkip = 2, roundSeconds = 5)
         engine.startMatch(cfg, teams = listOf("t"), seed = 0L)
 
-        var s = assertIs<GameState.TurnActive>(engine.state.value)
+        assertIs<GameState.TurnActive>(engine.state.value)
         engine.correct()
         val finished = assertIs<GameState.TurnFinished>(engine.state.value)
         assertEquals(1, finished.deltaScore)
@@ -146,7 +151,7 @@ class DefaultGameEngineTest {
         engine.startMatch(short, teams = listOf("A", "B"), seed = 0L)
 
         // let timer expire for first team
-        advanceTimeBy(1000)
+        advanceTimeBy(short.roundSeconds * 1000L)
         runCurrent()
         val finished = assertIs<GameState.TurnFinished>(engine.state.value)
         assertEquals("A", finished.team)
@@ -156,6 +161,10 @@ class DefaultGameEngineTest {
         engine.nextTurn()
         val active = assertIs<GameState.TurnActive>(engine.state.value)
         assertEquals("B", active.team)
+
+        // Finish second team's timer to avoid leaving it running
+        advanceTimeBy(short.roundSeconds * 1000L)
+        runCurrent()
     }
 
     @Test
