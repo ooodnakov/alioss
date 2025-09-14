@@ -37,7 +37,7 @@ class DefaultGameEngineTest {
                     }
                     is GameState.TurnFinished -> engine.nextTurn()
                     is GameState.MatchFinished -> return seen
-                    GameState.Idle -> Unit
+                    GameState.Idle -> error("Unexpected Idle state during match")
                 }
             }
         }
@@ -151,7 +151,7 @@ class DefaultGameEngineTest {
         engine.startMatch(short, teams = listOf("A", "B"), seed = 0L)
 
         // let timer expire for first team
-        advanceTimeBy(1000)
+        advanceTimeBy(short.roundSeconds * 1000L)
         runCurrent()
         val finished = assertIs<GameState.TurnFinished>(engine.state.value)
         assertEquals("A", finished.team)
@@ -163,7 +163,7 @@ class DefaultGameEngineTest {
         assertEquals("B", active.team)
 
         // Finish second team's timer to avoid leaving it running
-        advanceTimeBy(1000)
+        advanceTimeBy(short.roundSeconds * 1000L)
         runCurrent()
     }
 
