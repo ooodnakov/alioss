@@ -50,7 +50,7 @@ class DefaultGameEngine(
                 correctTotal = 0
                 currentTeam = 0
                 matchOver = false
-                startTurnLocked()
+                prepareTurnLocked()
             }
         }
     }
@@ -89,8 +89,17 @@ class DefaultGameEngine(
                 } else {
                     outcomes.clear()
                     currentTeam = (currentTeam + 1) % teams.size
-                    startTurnLocked()
+                    prepareTurnLocked()
                 }
+            }
+        }
+    }
+
+    override fun startTurn() {
+        runBlocking {
+            mutex.withLock {
+                if (_state.value !is GameState.TurnPending) return@withLock
+                startTurnLocked()
             }
         }
     }
@@ -128,6 +137,14 @@ class DefaultGameEngine(
                 _state.update { GameState.TurnFinished(team, turnScore, scores.toMap(), outcomes.toList(), nowMatchOver) }
             }
         }
+    }
+
+    private suspend fun prepareTurnLocked() {
+        if (correctTotal >= config.targetWords) {
+            finishMatchLocked()
+            return
+        }
+        _state.update { GameState.TurnPending(teams[currentTeam]) }
     }
 
     private suspend fun startTurnLocked() {

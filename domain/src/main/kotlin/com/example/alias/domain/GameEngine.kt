@@ -21,6 +21,9 @@ interface GameEngine {
     /** Advance to the next team's turn after a finished turn. */
     fun nextTurn()
 
+    /** Begin the currently pending team's turn. */
+    fun startTurn()
+
     /** Override the outcome of a word at [index] in the last turn. */
     fun overrideOutcome(index: Int, correct: Boolean)
 
@@ -34,6 +37,11 @@ interface GameEngine {
 sealed interface GameState {
     /** Waiting to start a match. */
     data object Idle : GameState
+
+    /** A team's turn is ready to start. */
+    data class TurnPending(
+        val team: String,
+    ) : GameState
 
     /** A turn is active and [word] should be explained by [team]. */
     data class TurnActive(
