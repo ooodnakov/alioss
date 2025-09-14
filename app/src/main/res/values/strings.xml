@@ -83,6 +83,10 @@
     <string name="haptics_label">Haptics</string>
     <string name="sound_effects_label">Sound effects</string>
     <string name="one_hand_layout_label">One-hand layout</string>
+    <string name="ui_language_label">UI language</string>
+    <string name="system_default_label">System</string>
+    <string name="english_label">English</string>
+    <string name="russian_label">Russian</string>
     <string name="orientation_label">Orientation</string>
     <string name="auto_label">Auto</string>
     <string name="portrait_label">Portrait</string>
