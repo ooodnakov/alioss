@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#00000000</color>
-    <!-- Transparent background so only the SVG shape shows -->
+    <color name="ic_launcher_background">#F49619</color>
+    <!-- Match alias_logo.svg circle background -->
     
 </resources>

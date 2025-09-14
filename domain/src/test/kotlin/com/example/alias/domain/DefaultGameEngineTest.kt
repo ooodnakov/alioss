@@ -73,7 +73,69 @@ class DefaultGameEngineTest {
 
         advanceTimeBy(2000)
         runCurrent()
+        // Now emits TurnFinished(matchOver = true) first
+        val finished = assertIs<GameState.TurnFinished>(engine.state.value)
+        assertTrue(finished.matchOver)
+        engine.nextTurn()
         assertTrue(engine.state.value is GameState.MatchFinished)
+    }
+
+    @Test
+    fun `override from skip to correct restores penalty`() = runTest {
+        val engine = DefaultGameEngine(listOf("a"), this)
+        val cfg = config.copy(targetWords = 1, maxSkips = 1, penaltyPerSkip = 2, roundSeconds = 5)
+        engine.startMatch(cfg, teams = listOf("t"), seed = 0L)
+
+        var s = assertIs<GameState.TurnActive>(engine.state.value)
+        assertEquals("a", s.word)
+        engine.skip()
+        val finished = assertIs<GameState.TurnFinished>(engine.state.value)
+        // After skip: deltaScore = -2
+        assertEquals(-2, finished.deltaScore)
+
+        engine.overrideOutcome(0, true)
+        val updated = assertIs<GameState.TurnFinished>(engine.state.value)
+        // Change should be +3 (restore 2 penalty + 1 correct) -> total +1
+        assertEquals(1, updated.deltaScore)
+        assertEquals(1, updated.scores["t"]) // team total
+        assertTrue(updated.matchOver) // reached targetWords
+    }
+
+    @Test
+    fun `override from correct to incorrect applies penalty`() = runTest {
+        val engine = DefaultGameEngine(listOf("a"), this)
+        val cfg = config.copy(targetWords = 2, maxSkips = 1, penaltyPerSkip = 2, roundSeconds = 5)
+        engine.startMatch(cfg, teams = listOf("t"), seed = 0L)
+
+        var s = assertIs<GameState.TurnActive>(engine.state.value)
+        engine.correct()
+        val finished = assertIs<GameState.TurnFinished>(engine.state.value)
+        assertEquals(1, finished.deltaScore)
+
+        engine.overrideOutcome(0, false)
+        val updated = assertIs<GameState.TurnFinished>(engine.state.value)
+        // Change should be -(1+2) = -3; total delta becomes -2
+        assertEquals(-2, updated.deltaScore)
+        assertEquals(-2, updated.scores["t"]) // team total
+        assertFalse(updated.matchOver)
+    }
+
+    @Test
+    fun `timer appends pending word without penalty`() = runTest {
+        val engine = DefaultGameEngine(listOf("a"), this)
+        val cfg = config.copy(targetWords = 2, maxSkips = 1, penaltyPerSkip = 1, roundSeconds = 1)
+        engine.startMatch(cfg, teams = listOf("t"), seed = 0L)
+
+        advanceTimeBy(1000)
+        runCurrent()
+        val finished = assertIs<GameState.TurnFinished>(engine.state.value)
+        // One outcome appended for pending word; score unchanged
+        assertEquals(1, finished.outcomes.size)
+        assertEquals(0, finished.deltaScore)
+        // Mark it correct; should add +1 (no penalty restoration since not a skip)
+        engine.overrideOutcome(0, true)
+        val updated = assertIs<GameState.TurnFinished>(engine.state.value)
+        assertEquals(1, updated.deltaScore)
     }
 
     @Test

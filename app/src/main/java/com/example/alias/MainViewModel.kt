@@ -39,6 +39,8 @@ class MainViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val deckRepository: DeckRepository,
     private val wordDao: WordDao,
+    private val deckDao: com.example.alias.data.db.DeckDao,
+    private val turnHistoryDao: com.example.alias.data.db.TurnHistoryDao,
     private val settingsRepository: SettingsRepository,
     private val downloader: PackDownloader,
     private val historyRepository: TurnHistoryRepository,
@@ -80,14 +82,39 @@ class MainViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             val words = withContext(Dispatchers.IO) {
-                // Import all bundled JSON decks from assets/decks/
+                // Import bundled JSON decks from assets/decks/ when changed (by checksum) or on first run
                 val assetFiles = context.assets.list("decks")?.filter { it.endsWith(".json") } ?: emptyList()
+                val prev = settingsRepository.readBundledDeckHashes()
+                val digest = java.security.MessageDigest.getInstance("SHA-256")
+                fun sha256(bytes: ByteArray): String = digest.digest(bytes).joinToString("") { b -> "%02x".format(b) }
+                val currentEntries = mutableSetOf<String>()
+                val toImport = mutableListOf<String>()
                 for (f in assetFiles) {
+                    val bytes = runCatching { context.assets.open("decks/$f").use { it.readBytes() } }.getOrNull()
+                    if (bytes != null) {
+                        val h = sha256(bytes)
+                        val entry = "$f:$h"
+                        currentEntries += entry
+                        if (prev.none { it.startsWith("$f:") } || !prev.contains(entry)) {
+                            toImport += f
+                        }
+                    }
+                }
+                if (prev.isEmpty() && currentEntries.isEmpty()) {
+                    // No bundled content found; nothing to import
+                } else if (prev.isEmpty() && currentEntries.isNotEmpty()) {
+                    // First run: import all
+                    toImport.clear()
+                    toImport.addAll(assetFiles)
+                }
+                for (f in toImport) {
                     runCatching {
                         val content = context.assets.open("decks/$f").bufferedReader().use { it.readText() }
                         deckRepository.importJson(content)
                     }
                 }
+                // Persist current checksums if any
+                runCatching { settingsRepository.writeBundledDeckHashes(currentEntries) }
                 // Resolve enabled deck ids; if none set, pick available decks matching language preference
                 val s0 = settingsRepository.settings.first()
                 val allDecks = deckRepository.getDecks().first()
@@ -102,7 +129,32 @@ class MainViewModel @Inject constructor(
                 // Fetch words for enabled decks in preferred language
                 val language = s0.languagePreference
                 val allowNSFW = s0.allowNSFW
-                if (initialEnabled.isEmpty()) emptyList() else wordDao.getWordTextsForDecks(initialEnabled.toList(), language, allowNSFW)
+                val cats = s0.selectedCategories.toList()
+                val hasCats = if (cats.isEmpty()) 0 else 1
+                if (initialEnabled.isEmpty()) emptyList() else wordDao.getWordTextsForDecks(
+                    initialEnabled.toList(), language, allowNSFW, s0.minDifficulty, s0.maxDifficulty, cats, hasCats
+                )
+            }
+            // Also prepare word metadata for the same filtered set
+            viewModelScope.launch(Dispatchers.IO) {
+                val s = settingsRepository.settings.first()
+                val enabled = s.enabledDeckIds
+                val cats = s.selectedCategories.toList()
+                val hasCats = if (cats.isEmpty()) 0 else 1
+                val briefs = if (enabled.isEmpty()) emptyList() else wordDao.getWordBriefsForDecks(
+                    enabled.toList(), s.languagePreference, s.allowNSFW, s.minDifficulty, s.maxDifficulty, cats, hasCats
+                )
+                val map = briefs.associateBy({ it.text }) { WordInfo(it.difficulty, it.category) }
+                _wordInfo.value = map
+            }
+            // Load available categories for enabled decks
+            viewModelScope.launch(Dispatchers.IO) {
+                val s = settingsRepository.settings.first()
+                val enabled = s.enabledDeckIds
+                val list = if (enabled.isEmpty()) emptyList() else wordDao.getAvailableCategories(
+                    enabled.toList(), s.languagePreference, s.allowNSFW
+                ).sorted()
+                _availableCategories.value = list
             }
             val e = DefaultGameEngine(words, viewModelScope)
             _engine.value = e
@@ -150,9 +202,31 @@ class MainViewModel @Inject constructor(
 
     fun addTrustedSource(originOrHost: String) {
         viewModelScope.launch {
+            val input = originOrHost.trim().lowercase()
+            val normalized = when {
+                input.startsWith("https://") -> input.removeSuffix("/")
+                "://" in input -> null // reject non-https schemes
+                else -> input // bare host
+            }
+            if (normalized.isNullOrBlank()) {
+                _uiEvents.tryEmit(UiEvent(message = "Invalid host/origin", actionLabel = "Dismiss", duration = SnackbarDuration.Short, isError = true))
+                return@launch
+            }
             val cur = settingsRepository.settings.first().trustedSources.toMutableSet()
-            cur += originOrHost.trim()
+            cur += normalized
             settingsRepository.setTrustedSources(cur)
+        }
+    }
+
+    fun updateDifficultyFilter(min: Int, max: Int) {
+        viewModelScope.launch {
+            settingsRepository.updateDifficultyFilter(min, max)
+        }
+    }
+
+    fun updateCategoriesFilter(categories: Set<String>) {
+        viewModelScope.launch {
+            settingsRepository.setCategoriesFilter(categories)
         }
     }
 
@@ -227,25 +301,71 @@ class MainViewModel @Inject constructor(
         language: String,
         allowNSFW: Boolean,
         haptics: Boolean,
+        sound: Boolean,
         oneHanded: Boolean,
+        verticalSwipes: Boolean,
         orientation: String,
         teams: List<String>,
     ) {
-
-
-        viewModelScope.launch {
-          settingsRepository.updateRoundSeconds(roundSeconds)
-          settingsRepository.updateTargetWords(targetWords)
-          settingsRepository.updateSkipPolicy(maxSkips, penaltyPerSkip)
-          settingsRepository.updatePunishSkips(punishSkips)
-          settingsRepository.updateAllowNSFW(allowNSFW)
-          settingsRepository.updateHapticsEnabled(haptics)
-          settingsRepository.updateOneHandedLayout(oneHanded)
-          settingsRepository.updateOrientation(orientation)
-          runCatching { settingsRepository.updateLanguagePreference(language) }
-          _uiEvents.tryEmit(UiEvent(message = "Settings updated", actionLabel = "Dismiss"))
+        // Persist all settings synchronously so callers can chain actions reliably (e.g., Save & Restart)
+        val before = settingsRepository.settings.first()
+        settingsRepository.updateRoundSeconds(roundSeconds)
+        settingsRepository.updateTargetWords(targetWords)
+        settingsRepository.updateSkipPolicy(maxSkips, penaltyPerSkip)
+        settingsRepository.updatePunishSkips(punishSkips)
+        settingsRepository.updateAllowNSFW(allowNSFW)
+        settingsRepository.updateHapticsEnabled(haptics)
+        settingsRepository.updateSoundEnabled(sound)
+        settingsRepository.updateOneHandedLayout(oneHanded)
+        settingsRepository.updateVerticalSwipes(verticalSwipes)
+        settingsRepository.updateOrientation(orientation)
+        // Language validation may fail; keep others applied regardless
+        val langResult = runCatching { settingsRepository.updateLanguagePreference(language) }
+        if (langResult.isFailure) {
+            _uiEvents.tryEmit(UiEvent(message = langResult.exceptionOrNull()?.message ?: "Invalid language", duration = SnackbarDuration.Short, isError = true))
+        } else {
+            val newLang = language.trim().lowercase()
+            if (!newLang.equals(before.languagePreference, ignoreCase = true)) {
+                val decksAll = deckRepository.getDecks().first()
+                val preferred = decksAll.filter { it.language.equals(newLang, ignoreCase = true) }.map { it.id }.toSet()
+                if (preferred.isNotEmpty()) {
+                    val prevEnabled = before.enabledDeckIds
+                    if (prevEnabled != preferred) {
+                        settingsRepository.setEnabledDeckIds(preferred)
+                        _uiEvents.tryEmit(
+                            UiEvent(
+                                message = "Enabled ${preferred.size} deck(s) for $newLang",
+                                actionLabel = "Undo",
+                                onAction = { settingsRepository.setEnabledDeckIds(prevEnabled) }
+                            )
+                        )
+                    }
+                }
+            }
         }
+        // Ensure teams are saved
+        settingsRepository.setTeams(teams)
+        _uiEvents.tryEmit(UiEvent(message = "Settings updated", actionLabel = "Dismiss"))
+    }
 
+    data class WordInfo(val difficulty: Int, val category: String?)
+    private val _wordInfo = MutableStateFlow<Map<String, WordInfo>>(emptyMap())
+    val wordInfoByText: StateFlow<Map<String, WordInfo>> = _wordInfo.asStateFlow()
+    private val _availableCategories = MutableStateFlow<List<String>>(emptyList())
+    val availableCategories: StateFlow<List<String>> = _availableCategories.asStateFlow()
+
+    fun resetLocalData(onDone: (() -> Unit)? = null) {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                // Clear DB tables
+                turnHistoryDao.deleteAll()
+                deckDao.deleteAll() // cascades to words via FK
+                // Clear preferences
+                settingsRepository.clearAll()
+            }
+            _uiEvents.tryEmit(UiEvent(message = "Local data cleared", actionLabel = "OK"))
+            onDone?.invoke()
+        }
     }
 
     fun restartMatch() {
@@ -253,7 +373,30 @@ class MainViewModel @Inject constructor(
             val s = settingsRepository.settings.first()
             val words = withContext(Dispatchers.IO) {
                 val enabled = s.enabledDeckIds
-                if (enabled.isEmpty()) emptyList() else wordDao.getWordTextsForDecks(enabled.toList(), s.languagePreference, s.allowNSFW)
+                val cats = s.selectedCategories.toList()
+                val hasCats = if (cats.isEmpty()) 0 else 1
+                if (enabled.isEmpty()) emptyList() else wordDao.getWordTextsForDecks(
+                    enabled.toList(), s.languagePreference, s.allowNSFW, s.minDifficulty, s.maxDifficulty, cats, hasCats
+                )
+            }
+            // Update word info cache for current filters
+            viewModelScope.launch(Dispatchers.IO) {
+                val enabled = s.enabledDeckIds
+                val cats = s.selectedCategories.toList()
+                val hasCats = if (cats.isEmpty()) 0 else 1
+                val briefs = if (enabled.isEmpty()) emptyList() else wordDao.getWordBriefsForDecks(
+                    enabled.toList(), s.languagePreference, s.allowNSFW, s.minDifficulty, s.maxDifficulty, cats, hasCats
+                )
+                val map = briefs.associateBy({ it.text }) { WordInfo(it.difficulty, it.category) }
+                _wordInfo.value = map
+            }
+            // Update available categories
+            viewModelScope.launch(Dispatchers.IO) {
+                val enabled = s.enabledDeckIds
+                val list = if (enabled.isEmpty()) emptyList() else wordDao.getAvailableCategories(
+                    enabled.toList(), s.languagePreference, s.allowNSFW
+                ).sorted()
+                _availableCategories.value = list
             }
             val e = DefaultGameEngine(words, viewModelScope)
             _engine.value = e

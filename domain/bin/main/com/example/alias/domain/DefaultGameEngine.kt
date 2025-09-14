@@ -74,7 +74,7 @@ class DefaultGameEngine(
                 if (skipsRemaining <= 0) return@withLock
                 skipsRemaining--
                 turnScore -= config.penaltyPerSkip
-                outcomes.add(TurnOutcome(currentWord, false, System.currentTimeMillis()))
+                outcomes.add(TurnOutcome(currentWord, false, System.currentTimeMillis(), skipped = true))
                 advanceLocked()
             }
         }
@@ -111,14 +111,19 @@ class DefaultGameEngine(
                 val item = outcomes.getOrNull(index) ?: return@withLock
                 if (item.correct == correct) return@withLock
                 val team = current.team
-                val change = if (correct) 1 + config.penaltyPerSkip else -(1 + config.penaltyPerSkip)
+                val change = if (correct) {
+                    val penalty = if (!item.correct && item.skipped) config.penaltyPerSkip else 0
+                    1 + penalty
+                } else {
+                    -(1 + config.penaltyPerSkip)
+                }
                 turnScore += change
                 scores[team] = scores.getOrDefault(team, 0) + change
                 // Update total correct words across the match based on override
                 if (item.correct != correct) {
                     if (correct) correctTotal++ else correctTotal--
                 }
-                outcomes[index] = item.copy(correct = correct)
+                outcomes[index] = item.copy(correct = correct, skipped = !correct)
                 val nowMatchOver = correctTotal >= config.targetWords
                 _state.update { GameState.TurnFinished(team, turnScore, scores.toMap(), outcomes.toList(), nowMatchOver) }
             }
@@ -158,12 +163,16 @@ class DefaultGameEngine(
         scores[team] = scores.getOrDefault(team, 0) + turnScore
         val reachedTarget = correctTotal >= config.targetWords
         val noWordsLeft = queue.isEmpty()
-        matchOver = reachedTarget || (byTimer && noWordsLeft)
-        if (reachedTarget || (byTimer && noWordsLeft)) {
-            _state.update { GameState.MatchFinished(scores.toMap()) }
-        } else {
-            _state.update { GameState.TurnFinished(team, turnScore, scores.toMap(), outcomes.toList(), matchOver) }
+        // If timer expired while a word was shown, include it as pending (no penalty applied yet)
+        if (byTimer) {
+            val current = _state.value
+            if (current is GameState.TurnActive) {
+                outcomes.add(TurnOutcome(currentWord, false, System.currentTimeMillis(), skipped = false))
+            }
         }
+        matchOver = reachedTarget || (byTimer && noWordsLeft)
+        // Always end the turn first; if matchOver, UI can finalize via nextTurn()
+        _state.update { GameState.TurnFinished(team, turnScore, scores.toMap(), outcomes.toList(), matchOver) }
     }
 
     private suspend fun finishMatchLocked() {

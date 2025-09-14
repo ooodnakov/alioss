@@ -16,15 +16,62 @@ interface WordDao {
     @Query("SELECT COUNT(*) FROM words WHERE deckId = :deckId")
     suspend fun getWordCount(deckId: String): Int
 
+    @Query("DELETE FROM words WHERE deckId = :deckId")
+    suspend fun deleteByDeck(deckId: String)
+
     @Query(
         "SELECT text FROM words " +
             "WHERE deckId IN (:deckIds) " +
             "AND language = :language " +
-            "AND (:allowNSFW = 1 OR isNSFW = 0)"
+            "AND (:allowNSFW = 1 OR isNSFW = 0) " +
+            "AND difficulty BETWEEN :minDifficulty AND :maxDifficulty " +
+            "AND (:hasCategories = 0 OR category IN (:categories))"
     )
     suspend fun getWordTextsForDecks(
         deckIds: List<String>,
         language: String,
         allowNSFW: Boolean,
+        minDifficulty: Int,
+        maxDifficulty: Int,
+        categories: List<String>,
+        hasCategories: Int,
+    ): List<String>
+
+    @Query(
+        "SELECT text, difficulty, category FROM words " +
+            "WHERE deckId IN (:deckIds) " +
+            "AND language = :language " +
+            "AND (:allowNSFW = 1 OR isNSFW = 0) " +
+            "AND difficulty BETWEEN :minDifficulty AND :maxDifficulty " +
+            "AND (:hasCategories = 0 OR category IN (:categories))"
+    )
+    suspend fun getWordBriefsForDecks(
+        deckIds: List<String>,
+        language: String,
+        allowNSFW: Boolean,
+        minDifficulty: Int,
+        maxDifficulty: Int,
+        categories: List<String>,
+        hasCategories: Int,
+    ): List<WordBrief>
+
+    @Query(
+        "SELECT DISTINCT category FROM words " +
+            "WHERE deckId IN (:deckIds) " +
+            "AND language = :language " +
+            "AND category IS NOT NULL AND TRIM(category) != '' " +
+            "AND (:allowNSFW = 1 OR isNSFW = 0)"
+    )
+    suspend fun getAvailableCategories(
+        deckIds: List<String>,
+        language: String,
+        allowNSFW: Boolean,
     ): List<String>
 }
+
+/** Lightweight projection for word metadata shown in UI. */
+data class WordBrief(
+    val text: String,
+    val difficulty: Int,
+    val category: String?,
+)

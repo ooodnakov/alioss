@@ -60,18 +60,23 @@ fun WordCard(
     onAction: (WordCardAction) -> Unit,
     animateAppear: Boolean = true,
     allowSkip: Boolean = true,
+    verticalMode: Boolean = false,
     testTag: String? = null,
 ) {
     val animX = remember { Animatable(0f) }
+    val animY = remember { Animatable(0f) }
     val fadeIn = remember { Animatable(0f) }
     val scope = rememberCoroutineScope()
     var dragX by remember { mutableStateOf(0f) }
+    var dragY by remember { mutableStateOf(0f) }
     var hapticPlayed by remember { mutableStateOf(false) }
     val density = LocalDensity.current
     val commitPx = with(density) { COMMIT_DISTANCE.toPx() }
+    val instructions = if (verticalMode) stringResource(R.string.tutorial_instructions_vertical) else stringResource(R.string.tutorial_instructions)
 
     LaunchedEffect(word) {
         animX.snapTo(0f)
+        animY.snapTo(0f)
         fadeIn.snapTo(0f)
         hapticPlayed = false
         if (animateAppear) {
@@ -82,7 +87,9 @@ fun WordCard(
     }
 
     val currentX = dragX + animX.value
-    val fraction = (abs(currentX) / commitPx).coerceIn(0f, 1f)
+    val currentY = dragY + animY.value
+    val distance = if (verticalMode) abs(currentY) else abs(currentX)
+    val fraction = (distance / commitPx).coerceIn(0f, 1f)
     val scale = 1f + fraction * 0.05f
 
     Surface(
@@ -90,21 +97,29 @@ fun WordCard(
             .then(if (testTag != null) Modifier.testTag(testTag) else Modifier)
             .fillMaxWidth()
             .height(200.dp)
-            .offset { IntOffset(currentX.roundToInt(), 0) }
-            .graphicsLayer(rotationZ = currentX / ROTATION_DIVISOR)
+            .offset { IntOffset(currentX.roundToInt(), currentY.roundToInt()) }
+            .graphicsLayer(rotationZ = if (verticalMode) 0f else currentX / ROTATION_DIVISOR)
             .scale(scale)
             .alpha(fadeIn.value)
-            .semantics { contentDescription = "$word. Swipe right for Correct, left for Skip." }
-            .pointerInput(word, allowSkip) {
+            .semantics { contentDescription = "$word. $instructions" }
+            .pointerInput(word, allowSkip, verticalMode) {
                 if (!enabled) return@pointerInput
                 detectDragGestures(
                     onDragStart = { hapticPlayed = false },
                     onDrag = { change, drag ->
-                        dragX += drag.x
-                        val commitAllowed = when {
-                            dragX > 0f && abs(dragX) > commitPx -> true // correct
-                            dragX < 0f && abs(dragX) > commitPx && allowSkip -> true // skip
-                            else -> false
+                        if (verticalMode) {
+                            dragY += drag.y
+                        } else {
+                            dragX += drag.x
+                        }
+                        val commitAllowed = if (verticalMode) {
+                            val up = dragY < -commitPx
+                            val down = dragY > commitPx && allowSkip
+                            up || down
+                        } else {
+                            val right = dragX > commitPx
+                            val left = dragX < -commitPx && allowSkip
+                            right || left
                         }
                         if (!hapticPlayed && commitAllowed) {
                             hapticPlayed = true
@@ -122,27 +137,41 @@ fun WordCard(
                         scope.launch {
                             // Convert accumulated drag into animatable position, then return to center
                             val endX = dragX + animX.value
+                            val endY = dragY + animY.value
                             dragX = 0f
+                            dragY = 0f
                             animX.snapTo(endX)
+                            animY.snapTo(endY)
                             animX.animateTo(0f, tween(200))
+                            animY.animateTo(0f, tween(200))
                         }
                     },
                     onDragEnd = {
                         scope.launch {
                             // Convert accumulated drag into animatable position, then decide action
                             val endX = dragX + animX.value
+                            val endY = dragY + animY.value
                             dragX = 0f
+                            dragY = 0f
                             animX.snapTo(endX)
-                            val commit = abs(endX) > commitPx
-                            val dir = if (endX > 0f) WordCardAction.Correct else WordCardAction.Skip
+                            animY.snapTo(endY)
+                            val commit = if (verticalMode) abs(endY) > commitPx else abs(endX) > commitPx
+                            val correctDir = if (verticalMode) endY < 0f else endX > 0f
+                            val dir = if (correctDir) WordCardAction.Correct else WordCardAction.Skip
                             val allowed = (dir == WordCardAction.Correct) || (dir == WordCardAction.Skip && allowSkip)
                             if (commit && allowed) {
                                 onActionStart()
-                                val target = if (dir == WordCardAction.Correct) commitPx * SWIPE_AWAY_MULTIPLIER else -commitPx * SWIPE_AWAY_MULTIPLIER
-                                animX.animateTo(target, tween(200))
+                                if (verticalMode) {
+                                    val targetY = if (dir == WordCardAction.Correct) -commitPx * SWIPE_AWAY_MULTIPLIER else commitPx * SWIPE_AWAY_MULTIPLIER
+                                    animY.animateTo(targetY, tween(200))
+                                } else {
+                                    val targetX = if (dir == WordCardAction.Correct) commitPx * SWIPE_AWAY_MULTIPLIER else -commitPx * SWIPE_AWAY_MULTIPLIER
+                                    animX.animateTo(targetX, tween(200))
+                                }
                                 onAction(dir)
                             } else {
                                 animX.animateTo(0f, tween(200))
+                                animY.animateTo(0f, tween(200))
                             }
                         }
                     }
@@ -162,22 +191,41 @@ fun WordCard(
                 style = MaterialTheme.typography.displaySmall,
                 textAlign = TextAlign.Center
             )
-            Text(
-                text = stringResource(R.string.correct),
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(16.dp)
-                    .alpha(if (currentX > 0f) fraction else 0f)
-            )
-            Text(
-                text = stringResource(R.string.skip),
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(16.dp)
-                    .alpha(if (currentX < 0f) fraction else 0f)
-            )
+            if (verticalMode) {
+                Text(
+                    text = stringResource(R.string.correct),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(16.dp)
+                        .alpha(if (currentY < 0f) fraction else 0f)
+                )
+                Text(
+                    text = stringResource(R.string.skip),
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(16.dp)
+                        .alpha(if (currentY > 0f) fraction else 0f)
+                )
+            } else {
+                Text(
+                    text = stringResource(R.string.correct),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(16.dp)
+                        .alpha(if (currentX > 0f) fraction else 0f)
+                )
+                Text(
+                    text = stringResource(R.string.skip),
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(16.dp)
+                        .alpha(if (currentX < 0f) fraction else 0f)
+                )
+            }
         }
     }
 }

@@ -48,7 +48,7 @@ fun AppScaffold(
                 CenterAlignedTopAppBar(
                     title = {
                         Text(
-                            text = title,
+                            text = "",
                             style = MaterialTheme.typography.titleLarge,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
@@ -59,7 +59,7 @@ fun AppScaffold(
                             IconButton(onClick = onBack) {
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                    contentDescription = stringResource(R.string.back)
+                                    contentDescription = ""
                                 )
                             }
                         }

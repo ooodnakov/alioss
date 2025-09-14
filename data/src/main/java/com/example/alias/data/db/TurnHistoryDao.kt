@@ -12,5 +12,7 @@ interface TurnHistoryDao {
 
     @Query("SELECT * FROM turn_history ORDER BY id DESC LIMIT :limit")
     fun getRecent(limit: Int): Flow<List<TurnHistoryEntity>>
-}
 
+    @Query("DELETE FROM turn_history")
+    suspend fun deleteAll()
+}

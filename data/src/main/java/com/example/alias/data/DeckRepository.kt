@@ -40,6 +40,8 @@ class DeckRepositoryImpl(
     override suspend fun importPack(pack: ParsedPack) {
         db.withTransaction {
             deckDao.insertDecks(listOf(pack.deck))
+            // Replace words for the deck to avoid duplicates on re-import
+            wordDao.deleteByDeck(pack.deck.id)
             wordDao.insertWords(pack.words)
         }
     }

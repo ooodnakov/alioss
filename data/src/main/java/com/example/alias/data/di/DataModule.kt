@@ -32,7 +32,9 @@ object DataModule {
     @Provides
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): AliasDatabase =
-        Room.databaseBuilder(context, AliasDatabase::class.java, "alias.db").build()
+        Room.databaseBuilder(context, AliasDatabase::class.java, "alias.db")
+            .fallbackToDestructiveMigration()
+            .build()
 
     @Provides
     fun provideDeckDao(db: AliasDatabase): DeckDao = db.deckDao()

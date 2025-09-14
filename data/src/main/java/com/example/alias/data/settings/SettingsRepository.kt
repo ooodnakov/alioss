@@ -10,6 +10,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.first
 
 private val DEFAULT_TEAMS = listOf("Red", "Blue")
 
@@ -28,14 +29,23 @@ interface SettingsRepository {
     suspend fun updateAllowNSFW(value: Boolean)
     suspend fun updateStemmingEnabled(value: Boolean)
     suspend fun updateHapticsEnabled(value: Boolean)
+    suspend fun updateSoundEnabled(value: Boolean)
     suspend fun updateOneHandedLayout(value: Boolean)
     suspend fun updateOrientation(value: String)
+    suspend fun updateDifficultyFilter(min: Int, max: Int)
+    suspend fun setCategoriesFilter(categories: Set<String>)
     suspend fun setTeams(teams: List<String>)
+    suspend fun updateVerticalSwipes(value: Boolean)
 
     // Trusted pack sources (hosts or origins) for manual downloads
     suspend fun setTrustedSources(origins: Set<String>)
 
+    // Bundled deck asset hash tracking (filename:sha256)
+    suspend fun readBundledDeckHashes(): Set<String>
+    suspend fun writeBundledDeckHashes(entries: Set<String>)
+
     suspend fun updateSeenTutorial(value: Boolean)
+    suspend fun clearAll()
 
     companion object {
         const val MIN_TEAMS = 2
@@ -55,7 +65,12 @@ data class Settings(
     val allowNSFW: Boolean = false,
     val stemmingEnabled: Boolean = false,
     val hapticsEnabled: Boolean = true,
+    val soundEnabled: Boolean = true,
     val oneHandedLayout: Boolean = false,
+    val minDifficulty: Int = 1,
+    val maxDifficulty: Int = 5,
+    val verticalSwipes: Boolean = false,
+    val selectedCategories: Set<String> = emptySet(),
     val orientation: String = "system",
     val trustedSources: Set<String> = emptySet(),
     val seenTutorial: Boolean = false,
@@ -80,7 +95,12 @@ class SettingsRepositoryImpl(
             allowNSFW = p[Keys.ALLOW_NSFW] ?: false,
             stemmingEnabled = p[Keys.STEMMING_ENABLED] ?: false,
             hapticsEnabled = p[Keys.HAPTICS_ENABLED] ?: true,
+            soundEnabled = p[Keys.SOUND_ENABLED] ?: true,
             oneHandedLayout = p[Keys.ONE_HANDED] ?: false,
+            minDifficulty = p[Keys.MIN_DIFFICULTY] ?: 1,
+            maxDifficulty = p[Keys.MAX_DIFFICULTY] ?: 5,
+            verticalSwipes = p[Keys.VERTICAL_SWIPES] ?: false,
+            selectedCategories = p[Keys.CATEGORIES_FILTER] ?: emptySet(),
             orientation = p[Keys.ORIENTATION] ?: "system",
             trustedSources = p[Keys.TRUSTED_SOURCES] ?: emptySet(),
             seenTutorial = p[Keys.SEEN_TUTORIAL] ?: false,
@@ -129,6 +149,10 @@ class SettingsRepositoryImpl(
         dataStore.edit { it[Keys.HAPTICS_ENABLED] = value }
     }
 
+    override suspend fun updateSoundEnabled(value: Boolean) {
+        dataStore.edit { it[Keys.SOUND_ENABLED] = value }
+    }
+
     override suspend fun updateOneHandedLayout(value: Boolean) {
         dataStore.edit { it[Keys.ONE_HANDED] = value }
     }
@@ -141,10 +165,28 @@ class SettingsRepositoryImpl(
         dataStore.edit { it[Keys.ORIENTATION] = norm }
     }
 
+    override suspend fun updateDifficultyFilter(min: Int, max: Int) {
+        val lo = min.coerceIn(1, 5)
+        val hi = max.coerceIn(1, 5)
+        val (mn, mx) = if (lo <= hi) lo to hi else hi to lo
+        dataStore.edit {
+            it[Keys.MIN_DIFFICULTY] = mn
+            it[Keys.MAX_DIFFICULTY] = mx
+        }
+    }
+
+    override suspend fun setCategoriesFilter(categories: Set<String>) {
+        dataStore.edit { it[Keys.CATEGORIES_FILTER] = categories }
+    }
+
     override suspend fun setTeams(teams: List<String>) {
         val norm = teams.map { it.trim() }.filter { it.isNotEmpty() }.take(SettingsRepository.MAX_TEAMS)
         require(norm.size in SettingsRepository.MIN_TEAMS..SettingsRepository.MAX_TEAMS)
         dataStore.edit { it[Keys.TEAMS] = norm.joinToString("|") }
+    }
+
+    override suspend fun updateVerticalSwipes(value: Boolean) {
+        dataStore.edit { it[Keys.VERTICAL_SWIPES] = value }
     }
 
     override suspend fun setTrustedSources(origins: Set<String>) {
@@ -154,6 +196,17 @@ class SettingsRepositoryImpl(
 
     override suspend fun updateSeenTutorial(value: Boolean) {
         dataStore.edit { it[Keys.SEEN_TUTORIAL] = value }
+    }
+
+    override suspend fun readBundledDeckHashes(): Set<String> =
+        dataStore.data.first()[Keys.BUNDLED_DECK_HASHES] ?: emptySet()
+
+    override suspend fun writeBundledDeckHashes(entries: Set<String>) {
+        dataStore.edit { it[Keys.BUNDLED_DECK_HASHES] = entries }
+    }
+
+    override suspend fun clearAll() {
+        dataStore.edit { it.clear() }
     }
 
     private object Keys {
@@ -167,10 +220,16 @@ class SettingsRepositoryImpl(
         val ALLOW_NSFW = booleanPreferencesKey("allow_nsfw")
         val STEMMING_ENABLED = booleanPreferencesKey("stemming_enabled")
         val HAPTICS_ENABLED = booleanPreferencesKey("haptics_enabled")
+        val SOUND_ENABLED = booleanPreferencesKey("sound_enabled")
         val ONE_HANDED = booleanPreferencesKey("one_handed_layout")
+        val MIN_DIFFICULTY = intPreferencesKey("min_difficulty")
+        val MAX_DIFFICULTY = intPreferencesKey("max_difficulty")
+        val VERTICAL_SWIPES = booleanPreferencesKey("vertical_swipes")
+        val CATEGORIES_FILTER = stringSetPreferencesKey("categories_filter")
         val ORIENTATION = stringPreferencesKey("orientation_mode")
         val TEAMS = stringPreferencesKey("teams")
         val TRUSTED_SOURCES = stringSetPreferencesKey("trusted_sources")
         val SEEN_TUTORIAL = booleanPreferencesKey("seen_tutorial")
+        val BUNDLED_DECK_HASHES = stringSetPreferencesKey("bundled_deck_hashes")
     }
 }

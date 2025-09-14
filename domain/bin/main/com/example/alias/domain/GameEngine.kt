@@ -75,4 +75,5 @@ data class TurnOutcome(
     val word: String,
     val correct: Boolean,
     val timestamp: Long,
+    val skipped: Boolean = false,
 )

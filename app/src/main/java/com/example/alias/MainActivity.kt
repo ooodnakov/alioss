@@ -35,16 +35,16 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.LocalConfiguration
 import android.content.res.Configuration
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.zIndex
 import android.os.VibrationEffect
 import com.example.alias.data.settings.Settings
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import com.example.alias.domain.GameEngine
 import com.example.alias.domain.GameState
@@ -76,10 +76,10 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.LibraryBooks
+import androidx.compose.material.icons.automirrored.filled.LibraryBooks
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Code
-import androidx.compose.material.icons.filled.OpenInNew
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Public
@@ -91,16 +91,20 @@ import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.text.KeyboardOptions
 import kotlinx.coroutines.launch
 import com.example.alias.ui.WordCard
 import com.example.alias.ui.WordCardAction
 import com.example.alias.ui.TutorialOverlay
 import com.example.alias.data.settings.SettingsRepository
 import com.example.alias.data.db.DeckEntity
+import androidx.compose.ui.platform.LocalUriHandler
 private const val MIN_TEAMS = SettingsRepository.MIN_TEAMS
 private const val MAX_TEAMS = SettingsRepository.MAX_TEAMS
 private const val HISTORY_LIMIT = 50
@@ -126,7 +130,7 @@ class MainActivity : ComponentActivity() {
                                 message = ev.message,
                                 actionLabel = ev.actionLabel,
                                 withDismissAction = ev.actionLabel == null,
-                                duration = if (ev.duration == SnackbarDuration.Indefinite) SnackbarDuration.Indefinite else SnackbarDuration.Indefinite
+                                duration = ev.duration
                             )
                             if (result == SnackbarResult.ActionPerformed) {
                                 ev.onAction?.invoke()
@@ -184,7 +188,7 @@ class MainActivity : ComponentActivity() {
                                 snackbarHostState = snack
                             ) {
                                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                    Text("Deck not found")
+                                    Text(stringResource(R.string.deck_not_found))
                                 }
                             }
                         } else {
@@ -250,13 +254,13 @@ private fun HomeScreen(
                 horizontalAlignment = Alignment.Start
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Image(painterResource(id = R.drawable.icon), contentDescription = null, modifier = Modifier.size(48.dp))
-                    Text(text = "Alias", style = MaterialTheme.typography.displaySmall, color = colors.primary)
+                    Image(painterResource(id = R.drawable.ic_launcher_foreground_asset), contentDescription = null, modifier = Modifier.size(48.dp))
+                    Text(text = stringResource(R.string.app_name), style = MaterialTheme.typography.displaySmall, color = colors.primary)
                 }
                 HomeActionCard(
                     icon = Icons.Filled.PlayArrow,
-                    title = "Quick Play",
-                    subtitle = "Start a match with current settings",
+                    title = stringResource(R.string.quick_play),
+                    subtitle = stringResource(R.string.quick_play_subtitle),
                     onClick = onQuickPlay,
                     containerColor = colors.primaryContainer,
                     contentColor = colors.onPrimaryContainer
@@ -268,18 +272,26 @@ private fun HomeScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 HomeActionCard(
-                    icon = Icons.Filled.LibraryBooks,
-                    title = "Decks",
-                    subtitle = "Manage and import word decks",
+                    icon = Icons.AutoMirrored.Filled.LibraryBooks,
+                    title = stringResource(R.string.title_decks),
+                    subtitle = stringResource(R.string.decks_subtitle),
                     onClick = onDecks,
                     containerColor = colors.secondaryContainer,
                     contentColor = colors.onSecondaryContainer
                 )
                 HomeActionCard(
                     icon = Icons.Filled.Settings,
-                    title = "Settings",
-                    subtitle = "Time, teams, language and more",
+                    title = stringResource(R.string.title_settings),
+                    subtitle = stringResource(R.string.settings_subtitle),
                     onClick = onSettings,
+                    containerColor = colors.tertiaryContainer,
+                    contentColor = colors.onTertiaryContainer
+                )
+                HomeActionCard(
+                    icon = Icons.Filled.History,
+                    title = stringResource(R.string.title_history),
+                    subtitle = stringResource(R.string.history_subtitle),
+                    onClick = onHistory,
                     containerColor = colors.tertiaryContainer,
                     contentColor = colors.onTertiaryContainer
                 )
@@ -294,34 +306,42 @@ private fun HomeScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // App title / branding
-            Image(painterResource(id = R.drawable.icon), contentDescription = null, modifier = Modifier.size(56.dp))
+            Image(painterResource(id = R.drawable.ic_launcher_foreground_asset), contentDescription = null, modifier = Modifier.size(56.dp))
             Text(
-                text = "Alias",
+                text = stringResource(R.string.app_name),
                 style = MaterialTheme.typography.displaySmall,
                 color = colors.primary
             )
             // Primary actions as sleek cards
             HomeActionCard(
                 icon = Icons.Filled.PlayArrow,
-                title = "Quick Play",
-                subtitle = "Start a match with current settings",
+                title = stringResource(R.string.quick_play),
+                subtitle = stringResource(R.string.quick_play_subtitle),
                 onClick = onQuickPlay,
                 containerColor = colors.primaryContainer,
                 contentColor = colors.onPrimaryContainer
             )
             HomeActionCard(
-                icon = Icons.Filled.LibraryBooks,
-                title = "Decks",
-                subtitle = "Manage and import word decks",
+                icon = Icons.AutoMirrored.Filled.LibraryBooks,
+                title = stringResource(R.string.title_decks),
+                subtitle = stringResource(R.string.decks_subtitle),
                 onClick = onDecks,
                 containerColor = colors.secondaryContainer,
                 contentColor = colors.onSecondaryContainer
             )
             HomeActionCard(
                 icon = Icons.Filled.Settings,
-                title = "Settings",
-                subtitle = "Time, teams, language and more",
+                title = stringResource(R.string.title_settings),
+                subtitle = stringResource(R.string.settings_subtitle),
                 onClick = onSettings,
+                containerColor = colors.tertiaryContainer,
+                contentColor = colors.onTertiaryContainer
+            )
+            HomeActionCard(
+                icon = Icons.Filled.History,
+                title = stringResource(R.string.title_history),
+                subtitle = stringResource(R.string.history_subtitle),
+                onClick = onHistory,
                 containerColor = colors.tertiaryContainer,
                 contentColor = colors.onTertiaryContainer
             )
@@ -384,7 +404,16 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
         onDispose { activity?.requestedOrientation = original }
     }
     val vibrator = remember { context.getSystemService(android.os.Vibrator::class.java) }
+    val tone = remember { android.media.ToneGenerator(android.media.AudioManager.STREAM_MUSIC, 80) }
     val state by engine.state.collectAsState()
+    // Show tutorial overlay on first play (or when re-enabled via Settings)
+    var showTutorial by rememberSaveable(settings.seenTutorial) { mutableStateOf(!settings.seenTutorial) }
+    if (showTutorial) {
+        com.example.alias.ui.TutorialOverlay(onDismiss = {
+            showTutorial = false
+            vm.updateSeenTutorial(true)
+        })
+    }
     when (val s = state) {
         GameState.Idle -> Text(stringResource(R.string.idle))
         is GameState.TurnActive -> {
@@ -433,6 +462,7 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                             onAction = {},
                             animateAppear = false,
                             allowSkip = s.skipsRemaining > 0,
+                            verticalMode = settings.verticalSwipes,
                         )
                     }
                     WordCard(
@@ -450,25 +480,42 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                         },
                         onAction = {
                             when (it) {
-                                WordCardAction.Correct -> { engine.correct(); isProcessing = false }
-                                WordCardAction.Skip -> if (s.skipsRemaining > 0) { engine.skip(); isProcessing = false } else { isProcessing = false }
+                                WordCardAction.Correct -> {
+                                    if (settings.soundEnabled) tone.startTone(android.media.ToneGenerator.TONE_PROP_ACK, 100)
+                                    engine.correct(); isProcessing = false
+                                }
+                                WordCardAction.Skip -> {
+                                    if (s.skipsRemaining > 0) {
+                                        if (settings.soundEnabled) tone.startTone(android.media.ToneGenerator.TONE_PROP_NACK, 100)
+                                        engine.skip(); isProcessing = false
+                                    } else { isProcessing = false }
+                                }
                             }
                         },
                         allowSkip = s.skipsRemaining > 0,
+                        verticalMode = settings.verticalSwipes,
                         animateAppear = false,
                     )
                 }
             }
 
+            val infoMap by vm.wordInfoByText.collectAsState()
             val Controls: @Composable () -> Unit = {
                 Text("${s.timeRemaining}s", style = MaterialTheme.typography.headlineLarge, textAlign = TextAlign.Center)
-                Text("Team: ${s.team}", style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.team_label, s.team), style = MaterialTheme.typography.titleMedium)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    AssistChip(onClick = {}, enabled = false, label = { Text("Remaining ${s.remaining}") })
-                    AssistChip(onClick = {}, enabled = false, label = { Text("Score ${s.score}") })
-                    AssistChip(onClick = {}, enabled = false, label = { Text("Skips ${s.skipsRemaining}") })
+                    AssistChip(onClick = {}, enabled = false, label = { Text(stringResource(R.string.remaining_label, s.remaining)) })
+                    AssistChip(onClick = {}, enabled = false, label = { Text(pluralStringResource(R.plurals.score_label, s.score, s.score)) })
+                    AssistChip(onClick = {}, enabled = false, label = { Text(pluralStringResource(R.plurals.skips_label, s.skipsRemaining, s.skipsRemaining)) })
+                    val meta = infoMap[s.word]
+                    if (meta != null) {
+                        AssistChip(onClick = {}, enabled = false, label = { Text("D${meta.difficulty}") })
+                        meta.category?.takeIf { it.isNotBlank() }?.let { cat ->
+                            AssistChip(onClick = {}, enabled = false, label = { Text(cat) })
+                        }
+                    }
                 }
-                Text("Remaining: ${s.remaining} • Score: ${s.score} • Skips: ${s.skipsRemaining}")
+                Text(stringResource(R.string.summary_label, s.remaining, s.score, s.skipsRemaining))
             }
 
             if (isLandscape) {
@@ -486,10 +533,10 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                                 }
                             }
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                                Button(onClick = onCorrect, enabled = !isProcessing, modifier = Modifier.weight(1f).height(60.dp)) { Icon(Icons.Filled.Check, contentDescription = null); Spacer(Modifier.width(8.dp)); Text("Correct") }
-                                Button(onClick = onSkip, enabled = !isProcessing && s.skipsRemaining > 0, modifier = Modifier.weight(1f).height(60.dp)) { Icon(Icons.Filled.Close, contentDescription = null); Spacer(Modifier.width(8.dp)); Text("Skip") }
+                            Button(onClick = onCorrect, enabled = !isProcessing, modifier = Modifier.weight(1f).height(60.dp)) { Icon(Icons.Filled.Check, contentDescription = null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.correct)) }
+                            Button(onClick = onSkip, enabled = !isProcessing && s.skipsRemaining > 0, modifier = Modifier.weight(1f).height(60.dp)) { Icon(Icons.Filled.Close, contentDescription = null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.skip)) }
                             }
-                            Button(onClick = { vm.restartMatch() }, modifier = Modifier.fillMaxWidth()) { Text("Restart Match") }
+                            Button(onClick = { vm.restartMatch() }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.restart_match)) }
                         }
                         Column(Modifier.weight(1f), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
                             CardStack()
@@ -527,12 +574,12 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                                 onClick = onCorrect,
                                 enabled = !isProcessing,
                                 modifier = Modifier.fillMaxWidth().height(80.dp)
-                            ) { Icon(Icons.Filled.Check, contentDescription = null); Spacer(Modifier.width(8.dp)); Text("Correct") }
+                            ) { Icon(Icons.Filled.Check, contentDescription = null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.correct)) }
                             Button(
                                 onClick = onSkip,
                                 enabled = !isProcessing && s.skipsRemaining > 0,
                                 modifier = Modifier.fillMaxWidth().height(80.dp)
-                            ) { Icon(Icons.Filled.Close, contentDescription = null); Spacer(Modifier.width(8.dp)); Text("Skip") }
+                            ) { Icon(Icons.Filled.Close, contentDescription = null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.skip)) }
                         }
                     } else {
                         val onCorrect = {
@@ -556,15 +603,15 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                                 onClick = onCorrect,
                                 enabled = !isProcessing,
                                 modifier = Modifier.weight(1f).height(60.dp)
-                            ) { Icon(Icons.Filled.Check, contentDescription = null); Spacer(Modifier.width(8.dp)); Text("Correct") }
+                            ) { Icon(Icons.Filled.Check, contentDescription = null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.correct)) }
                             Button(
                                 onClick = onSkip,
                                 enabled = !isProcessing && s.skipsRemaining > 0,
                                 modifier = Modifier.weight(1f).height(60.dp)
-                            ) { Icon(Icons.Filled.Close, contentDescription = null); Spacer(Modifier.width(8.dp)); Text("Skip") }
+                            ) { Icon(Icons.Filled.Close, contentDescription = null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.skip)) }
                         }
                     }
-                    Button(onClick = { vm.restartMatch() }, modifier = Modifier.fillMaxWidth()) { Text("Restart Match") }
+                    Button(onClick = { vm.restartMatch() }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.restart_match)) }
                 }
             }
         }
@@ -591,6 +638,7 @@ private fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit)
     val decks by vm.decks.collectAsState()
     val enabled by vm.enabledDeckIds.collectAsState()
     val trusted by vm.trustedSources.collectAsState()
+    val settings by vm.settings.collectAsState()
     // Status snackbars are handled globally via vm.uiEvents
     var url by rememberSaveable { mutableStateOf("") }
     var sha by rememberSaveable { mutableStateOf("") }
@@ -609,15 +657,71 @@ private fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit)
         item {
             ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(stringResource(R.string.filters_label), style = MaterialTheme.typography.titleMedium)
+                    val available by vm.availableCategories.collectAsState()
+                    var selectedCats by rememberSaveable(settings) { mutableStateOf(settings.selectedCategories) }
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        var minDiff by rememberSaveable(settings) { mutableStateOf(settings.minDifficulty.toString()) }
+                        var maxDiff by rememberSaveable(settings) { mutableStateOf(settings.maxDifficulty.toString()) }
+
+                        OutlinedTextField(
+                            value = minDiff,
+                            onValueChange = { minDiff = it },
+                            label = { Text(stringResource(R.string.min_difficulty_label)) },
+                            modifier = Modifier.weight(1f),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                        )
+
+                        OutlinedTextField(
+                            value = maxDiff,
+                            onValueChange = { maxDiff = it },
+                            label = { Text(stringResource(R.string.max_difficulty_label)) },
+                            modifier = Modifier.weight(1f),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                        )
+
+                        Button(onClick = {
+                            val lo = minDiff.toIntOrNull() ?: settings.minDifficulty
+                            val hi = maxDiff.toIntOrNull() ?: settings.maxDifficulty
+                            vm.updateDifficultyFilter(lo, hi)
+                            vm.updateCategoriesFilter(selectedCats)
+                        }) {
+                            Text(stringResource(R.string.apply_label))
+                        }
+                    }
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(available) { cat ->
+                            val selected = selectedCats.contains(cat)
+                            FilterChip(
+                                selected = selected,
+                                onClick = {
+                                    selectedCats = selectedCats.toMutableSet().also {
+                                        if (selected) it.remove(cat) else it.add(cat)
+                                    }
+                                },
+                                label = { Text(cat) }
+                            )
+                        }
+                    }
+                    Text(stringResource(R.string.filters_hint))
+                }
+            }
+        }
+        item {
+            ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                        Text("Installed Decks", style = MaterialTheme.typography.titleMedium)
+                        Text(stringResource(R.string.installed_decks), style = MaterialTheme.typography.titleMedium)
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            TextButton(onClick = { vm.setAllDecksEnabled(true) }) { Text("Enable all") }
-                            TextButton(onClick = { vm.setAllDecksEnabled(false) }) { Text("Disable all") }
+                            TextButton(onClick = { vm.setAllDecksEnabled(true) }) { Text(stringResource(R.string.enable_all)) }
+                            TextButton(onClick = { vm.setAllDecksEnabled(false) }) { Text(stringResource(R.string.disable_all)) }
                         }
                     }
                     if (decks.isEmpty()) {
-                        Text("No decks installed")
+                        Text(stringResource(R.string.no_decks_installed))
                     } else {
                         decks.forEachIndexed { index, deck ->
                             val isEnabled = enabled.contains(deck.id)
@@ -643,20 +747,20 @@ private fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit)
         item {
             ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Import / Download", style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.import_download), style = MaterialTheme.typography.titleMedium)
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Button(onClick = { filePicker.launch(arrayOf("application/json")) }, modifier = Modifier.weight(1f)) { Text("Import file") }
+                        Button(onClick = { filePicker.launch(arrayOf("application/json")) }, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.import_file)) }
                         OutlinedButton(onClick = {
                             runCatching {
                                 val host = java.net.URI(url).host ?: ""
                                 if (host.isNotBlank()) vm.addTrustedSource(host)
                             }
-                        }) { Text("Trust host") }
+                        }) { Text(stringResource(R.string.trust_host)) }
                     }
-                    OutlinedTextField(value = url, onValueChange = { url = it }, label = { Text("HTTPS URL") }, modifier = Modifier.fillMaxWidth())
-                    OutlinedTextField(value = sha, onValueChange = { sha = it }, label = { Text("Expected SHA-256 (optional)") }, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(value = url, onValueChange = { url = it }, label = { Text(stringResource(R.string.https_url)) }, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(value = sha, onValueChange = { sha = it }, label = { Text(stringResource(R.string.expected_sha256_optional)) }, modifier = Modifier.fillMaxWidth())
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                        Button(onClick = { vm.downloadPackFromUrl(url, sha) }) { Text("Download & import") }
+                        Button(onClick = { vm.downloadPackFromUrl(url, sha) }) { Text(stringResource(R.string.download_and_import)) }
                     }
                 }
             }
@@ -664,9 +768,9 @@ private fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit)
         item {
             ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Trusted sources", style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.trusted_sources), style = MaterialTheme.typography.titleMedium)
                     if (trusted.isEmpty()) {
-                        Text("No trusted sources yet")
+                        Text(stringResource(R.string.no_trusted_sources_yet))
                     } else {
                         trusted.forEachIndexed { i, entry ->
                             ListItem(
@@ -679,9 +783,9 @@ private fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit)
                         }
                     }
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        OutlinedTextField(value = newTrusted, onValueChange = { newTrusted = it }, label = { Text("Add host/origin") }, modifier = Modifier.weight(1f))
+                        OutlinedTextField(value = newTrusted, onValueChange = { newTrusted = it }, label = { Text(stringResource(R.string.add_host_origin)) }, modifier = Modifier.weight(1f))
                         Spacer(Modifier.width(8.dp))
-                        OutlinedButton(onClick = { if (newTrusted.isNotBlank()) { vm.addTrustedSource(newTrusted.trim()); newTrusted = "" } }) { Text("Add") }
+                        OutlinedButton(onClick = { if (newTrusted.isNotBlank()) { vm.addTrustedSource(newTrusted.trim()); newTrusted = "" } }) { Text(stringResource(R.string.add)) }
                     }
                 }
             }
@@ -705,13 +809,14 @@ private fun DeckDetailScreen(vm: MainViewModel, deck: DeckEntity) {
             if (deck.isNSFW) AssistChip(onClick = {}, enabled = false, label = { Text("NSFW") })
         }
         val countText = count?.toString() ?: "…"
-        Text("Word count: ${'$'}countText")
+        Text(stringResource(R.string.deck_word_count, countText))
     }
 }
 
 @Composable
 private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () -> Unit) {
     val s by vm.settings.collectAsState()
+    val ctx = LocalContext.current
     var round by rememberSaveable(s) { mutableStateOf(s.roundSeconds.toString()) }
     var target by rememberSaveable(s) { mutableStateOf(s.targetWords.toString()) }
     var maxSkips by rememberSaveable(s) { mutableStateOf(s.maxSkips.toString()) }
@@ -720,14 +825,16 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () ->
     var punishSkips by rememberSaveable(s) { mutableStateOf(s.punishSkips) }
     var nsfw by rememberSaveable(s) { mutableStateOf(s.allowNSFW) }
     var haptics by rememberSaveable(s) { mutableStateOf(s.hapticsEnabled) }
+    var sound by rememberSaveable(s) { mutableStateOf(s.soundEnabled) }
     var oneHand by rememberSaveable(s) { mutableStateOf(s.oneHandedLayout) }
+    var verticalSwipes by rememberSaveable(s) { mutableStateOf(s.verticalSwipes) }
     var orientation by rememberSaveable(s) { mutableStateOf(s.orientation) }
     val scope = rememberCoroutineScope()
     var teams by rememberSaveable(s) { mutableStateOf(s.teams) }
 
 
     val canSave = teams.count { it.isNotBlank() } >= MIN_TEAMS
-    val applySettings = {
+    val applySettings: () -> kotlinx.coroutines.Job = {
         scope.launch {
             vm.updateSettings(
                 roundSeconds = round.toIntOrNull() ?: s.roundSeconds,
@@ -738,7 +845,9 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () ->
                 language = lang.ifBlank { s.languagePreference },
                 allowNSFW = nsfw,
                 haptics = haptics,
+                sound = sound,
                 oneHanded = oneHand,
+                verticalSwipes = verticalSwipes,
                 orientation = orientation,
                 teams = teams,
             )
@@ -754,22 +863,22 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () ->
         item {
             ElevatedCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Round & Goals", style = MaterialTheme.typography.titleMedium)
-                    OutlinedTextField(value = round, onValueChange = { round = it }, label = { Text("Round seconds") }, modifier = Modifier.fillMaxWidth())
-                    OutlinedTextField(value = target, onValueChange = { target = it }, label = { Text("Target words") }, modifier = Modifier.fillMaxWidth())
+                    Text(stringResource(R.string.round_and_goals), style = MaterialTheme.typography.titleMedium)
+                    OutlinedTextField(value = round, onValueChange = { round = it }, label = { Text(stringResource(R.string.round_seconds_label)) }, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(value = target, onValueChange = { target = it }, label = { Text(stringResource(R.string.target_words_label)) }, modifier = Modifier.fillMaxWidth())
                 }
             }
         }
         item {
             ElevatedCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Skips", style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.skips_section), style = MaterialTheme.typography.titleMedium)
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedTextField(value = maxSkips, onValueChange = { maxSkips = it }, label = { Text("Max skips") }, modifier = Modifier.weight(1f))
-                        OutlinedTextField(value = penalty, onValueChange = { penalty = it }, label = { Text("Penalty/skip") }, modifier = Modifier.weight(1f))
+                        OutlinedTextField(value = maxSkips, onValueChange = { maxSkips = it }, label = { Text(stringResource(R.string.max_skips_label)) }, modifier = Modifier.weight(1f))
+                        OutlinedTextField(value = penalty, onValueChange = { penalty = it }, label = { Text(stringResource(R.string.penalty_per_skip_label)) }, modifier = Modifier.weight(1f))
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("Punish skips", modifier = Modifier.weight(1f))
+                        Text(stringResource(R.string.punish_skips_label), modifier = Modifier.weight(1f))
                         Switch(checked = punishSkips, onCheckedChange = { punishSkips = it })
                     }
                 }
@@ -778,10 +887,10 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () ->
         item {
             ElevatedCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Language & Content", style = MaterialTheme.typography.titleMedium)
-                    OutlinedTextField(value = lang, onValueChange = { lang = it }, label = { Text("Language (e.g., en, ru)") }, modifier = Modifier.fillMaxWidth())
+                    Text(stringResource(R.string.language_and_content), style = MaterialTheme.typography.titleMedium)
+                    OutlinedTextField(value = lang, onValueChange = { lang = it }, label = { Text(stringResource(R.string.language_hint)) }, modifier = Modifier.fillMaxWidth())
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("Allow NSFW", modifier = Modifier.weight(1f))
+                        Text(stringResource(R.string.allow_nsfw_label), modifier = Modifier.weight(1f))
                         Switch(checked = nsfw, onCheckedChange = { nsfw = it })
                     }
                 }
@@ -790,35 +899,43 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () ->
         item {
             ElevatedCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Feedback & Layout", style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.feedback_and_layout), style = MaterialTheme.typography.titleMedium)
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("Haptics", modifier = Modifier.weight(1f))
+                        Text(stringResource(R.string.haptics_label), modifier = Modifier.weight(1f))
                         Switch(checked = haptics, onCheckedChange = { haptics = it })
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("One-hand layout", modifier = Modifier.weight(1f))
+                        Text(stringResource(R.string.sound_effects_label), modifier = Modifier.weight(1f))
+                        Switch(checked = sound, onCheckedChange = { sound = it })
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(stringResource(R.string.one_hand_layout_label), modifier = Modifier.weight(1f))
                         Switch(checked = oneHand, onCheckedChange = { oneHand = it })
                     }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(stringResource(R.string.vertical_swipes_label), modifier = Modifier.weight(1f))
+                        Switch(checked = verticalSwipes, onCheckedChange = { verticalSwipes = it })
+                    }
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Orientation")
+                        Text(stringResource(R.string.orientation_label))
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             val current = orientation
                             FilterChip(
                                 selected = current == "system",
                                 onClick = { orientation = "system"; vm.setOrientation("system") },
-                                label = { Text("Auto") },
+                                label = { Text(stringResource(R.string.auto_label)) },
                                 leadingIcon = { Icon(Icons.Filled.ScreenRotation, contentDescription = null) }
                             )
                             FilterChip(
                                 selected = current == "portrait",
                                 onClick = { orientation = "portrait"; vm.setOrientation("portrait") },
-                                label = { Text("Portrait") },
+                                label = { Text(stringResource(R.string.portrait_label)) },
                                 leadingIcon = { Icon(Icons.Filled.ScreenLockPortrait, contentDescription = null) }
                             )
                             FilterChip(
                                 selected = current == "landscape",
                                 onClick = { orientation = "landscape"; vm.setOrientation("landscape") },
-                                label = { Text("Landscape") },
+                                label = { Text(stringResource(R.string.landscape_label)) },
                                 leadingIcon = { Icon(Icons.Filled.ScreenLockLandscape, contentDescription = null) }
                             )
                         }
@@ -829,7 +946,7 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () ->
         item {
             ElevatedCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Teams", style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.teams_label), style = MaterialTheme.typography.titleMedium)
                     teams.forEachIndexed { index, name ->
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             OutlinedTextField(
@@ -846,22 +963,24 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () ->
                         if (index < teams.lastIndex) HorizontalDivider()
                     }
                     if (teams.size < MAX_TEAMS) {
-                        OutlinedButton(onClick = { teams = teams + "Team ${teams.size + 1}" }, modifier = Modifier.fillMaxWidth()) {
+                        OutlinedButton(onClick = { teams = teams + ctx.getString(R.string.team_default_name, teams.size + 1) }, modifier = Modifier.fillMaxWidth()) {
                             Icon(Icons.Filled.Add, contentDescription = null)
-                            Text("Add Team", modifier = Modifier.padding(start = 4.dp))
+                            Text(stringResource(R.string.add_team_label), modifier = Modifier.padding(start = 4.dp))
                         }
                     }
                 }
             }
         }
         item {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = { applySettings() }, enabled = canSave, modifier = Modifier.weight(1f)) { Text("Save") }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(onClick = { applySettings() }, enabled = canSave, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.save_label)) }
                 FilledTonalButton(onClick = {
-                    applySettings()
-                    vm.restartMatch()
-                    onBack()
-                }, enabled = canSave, modifier = Modifier.weight(1f)) { Text("Save & Restart") }
+                    scope.launch {
+                        applySettings().join()
+                        vm.restartMatch()
+                        onBack()
+                    }
+                }, enabled = canSave, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.save_and_restart_label)) }
             }
         }
         item {
@@ -871,6 +990,27 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () ->
             ) { Text(stringResource(R.string.show_tutorial_again)) }
         }
         item { OutlinedButton(onClick = onAbout, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.title_about)) } }
+        item {
+            var confirm by rememberSaveable { mutableStateOf(false) }
+            if (confirm) {
+                androidx.compose.ui.window.Dialog(onDismissRequest = { confirm = false }) {
+                    ElevatedCard {
+                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Text(stringResource(R.string.reset_confirm_title), style = MaterialTheme.typography.titleMedium)
+                            Text(stringResource(R.string.reset_confirm_message))
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                OutlinedButton(onClick = { confirm = false }, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.cancel)) }
+                                Button(onClick = {
+                                    confirm = false
+                                    vm.resetLocalData()
+                                }, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.confirm)) }
+                            }
+                        }
+                    }
+                }
+            }
+            OutlinedButton(onClick = { confirm = true }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.reset_local_data)) }
+        }
         item { OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.back)) } }
     }
 }
@@ -898,8 +1038,8 @@ private fun AboutScreen() {
                             Icon(Icons.Filled.Info, contentDescription = null, tint = colors.primary)
                         }
                         Column(Modifier.weight(1f)) {
-                            Text("Alias", style = MaterialTheme.typography.headlineSmall)
-                            Text("Version $version", style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
+                            Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineSmall)
+                            Text(stringResource(R.string.version_label, version), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
                         }
                     }
                 }
@@ -908,20 +1048,20 @@ private fun AboutScreen() {
         item {
             ElevatedCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text("Links", style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.links_label), style = MaterialTheme.typography.titleMedium)
                     ListItem(
                         leadingContent = { Icon(Icons.Filled.Code, contentDescription = null) },
-                        headlineContent = { Text("Source code") },
+                        headlineContent = { Text(stringResource(R.string.source_code_label)) },
                         supportingContent = { Text("github.com/ooodnakov/alias-game") },
-                        trailingContent = { Icon(Icons.Filled.OpenInNew, contentDescription = null) },
+                        trailingContent = { Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = null) },
                         modifier = Modifier.clickable { uriHandler.openUri("https://github.com/ooodnakov/alias-game") }
                     )
                     HorizontalDivider()
                     ListItem(
                         leadingContent = { Icon(Icons.Filled.BugReport, contentDescription = null) },
-                        headlineContent = { Text("Report an issue") },
-                        supportingContent = { Text("Open GitHub issues") },
-                        trailingContent = { Icon(Icons.Filled.OpenInNew, contentDescription = null) },
+                        headlineContent = { Text(stringResource(R.string.report_issue_label)) },
+                        supportingContent = { Text(stringResource(R.string.open_github_issues_label)) },
+                        trailingContent = { Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = null) },
                         modifier = Modifier.clickable { uriHandler.openUri("https://github.com/ooodnakov/alias-game/issues") }
                     )
                 }
@@ -931,8 +1071,8 @@ private fun AboutScreen() {
             ElevatedCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(stringResource(R.string.title_about), style = MaterialTheme.typography.titleMedium)
-                    Text("Author: Aleksandr Odnakov", style = MaterialTheme.typography.bodyMedium)
-                    Text("No telemetry, no ads, all offline.", style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
+                    Text(stringResource(R.string.author_line), style = MaterialTheme.typography.bodyMedium)
+                    Text(stringResource(R.string.privacy_line), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
                 }
             }
         }
@@ -987,7 +1127,7 @@ private fun Scoreboard(scores: Map<String, Int>) {
         val leaders = scores.filterValues { it == max }.keys
         scores.forEach { (team, score) ->
             val isLeader = leaders.contains(team)
-            val suffix = if (leaders.size > 1 && isLeader) " (tie)" else if (isLeader) " ←" else ""
+            val suffix = if (leaders.size > 1 && isLeader) stringResource(R.string.tie_suffix) else if (isLeader) " \u2190" else ""
             Text("$team: $score$suffix")
         }
     }
