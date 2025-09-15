@@ -51,6 +51,7 @@ interface SettingsRepository {
     companion object {
         const val MIN_TEAMS = 2
         const val MAX_TEAMS = 6
+        val SUPPORTED_UI_LANGUAGES = setOf("system", "en", "ru")
     }
 }
 
@@ -169,10 +170,8 @@ class SettingsRepositoryImpl(
     }
 
     override suspend fun updateUiLanguage(language: String) {
-        val norm = when (language.lowercase()) {
-            "system", "en", "ru" -> language.lowercase()
-            else -> "system"
-        }
+        val lowercased = language.lowercase()
+        val norm = if (SUPPORTED_UI_LANGUAGES.contains(lowercased)) lowercased else "system"
         dataStore.edit { it[Keys.UI_LANGUAGE] = norm }
     }
 

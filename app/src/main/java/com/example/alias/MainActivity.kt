@@ -1,7 +1,7 @@
 package com.example.alias
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -114,7 +114,7 @@ private const val HISTORY_LIMIT = 50
 
 
 @AndroidEntryPoint
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -903,21 +903,18 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () ->
                             Text(stringResource(R.string.language_and_content), style = MaterialTheme.typography.titleMedium)
                     Text(stringResource(R.string.ui_language_label))
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        FilterChip(
-                            selected = uiLang == "system",
-                            onClick = { uiLang = "system" },
-                            label = { Text(stringResource(R.string.system_default_label)) }
+                        val languageOptions = mapOf(
+                            "system" to R.string.system_default_label,
+                            "en" to R.string.english_label,
+                            "ru" to R.string.russian_label
                         )
-                        FilterChip(
-                            selected = uiLang == "en",
-                            onClick = { uiLang = "en" },
-                            label = { Text(stringResource(R.string.english_label)) }
-                        )
-                        FilterChip(
-                            selected = uiLang == "ru",
-                            onClick = { uiLang = "ru" },
-                            label = { Text(stringResource(R.string.russian_label)) }
-                        )
+                        languageOptions.forEach { (code, labelRes) ->
+                            FilterChip(
+                                selected = uiLang == code,
+                                onClick = { uiLang = code },
+                                label = { Text(stringResource(labelRes)) }
+                            )
+                        }
                     }
                     OutlinedTextField(value = lang, onValueChange = { lang = it }, label = { Text(stringResource(R.string.language_hint)) }, modifier = Modifier.fillMaxWidth())
                     Row(verticalAlignment = Alignment.CenterVertically) {
