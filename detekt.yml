@@ -1,0 +1,10 @@
+build:
+  maxIssues: 200
+
+config:
+  validation: true
+
+style:
+  MagicNumber:
+    active: false
+
