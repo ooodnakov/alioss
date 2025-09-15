@@ -11,16 +11,15 @@ plugins {
 
 subprojects {
     apply(plugin = "io.gitlab.arturbosch.detekt")
-
-    extensions.configure<io.gitlab.arturbosch.detekt.extensions.DetektExtension> {
-        config.setFrom(files("$rootDir/detekt.yml"))
-        buildUponDefaultConfig = true
-    }
 }
 
-extensions.configure<io.gitlab.arturbosch.detekt.extensions.DetektExtension> {
-    config.setFrom(files("$rootDir/detekt.yml"))
-    buildUponDefaultConfig = true
+allprojects {
+    plugins.withId("io.gitlab.arturbosch.detekt") {
+        configure<io.gitlab.arturbosch.detekt.extensions.DetektExtension> {
+            config.setFrom(files("$rootDir/detekt.yml"))
+            buildUponDefaultConfig = true
+        }
+    }
 }
 
 tasks.register("clean", Delete::class) {
