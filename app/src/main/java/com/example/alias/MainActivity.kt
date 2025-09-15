@@ -53,8 +53,11 @@ import com.example.alias.domain.GameState
 import com.example.alias.domain.TurnOutcome
 import dagger.hilt.android.AndroidEntryPoint
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import com.google.accompanist.navigation.animation.AnimatedNavHost
+import com.google.accompanist.navigation.animation.composable as animatedComposable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
@@ -114,6 +117,7 @@ private const val HISTORY_LIMIT = 50
 
 
 
+@OptIn(ExperimentalAnimationApi::class)
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -163,8 +167,12 @@ class MainActivity : ComponentActivity() {
                         showJob.join()
                     }
                 }
-                NavHost(navController = nav, startDestination = "home") {
-                    composable("home") {
+                AnimatedNavHost(navController = nav, startDestination = "home") {
+                    animatedComposable(
+                        "home",
+                        enterTransition = { slideInHorizontally() },
+                        exitTransition = { fadeOut() }
+                    ) {
                         AppScaffold(title = stringResource(R.string.app_name), snackbarHostState = snack) {
                             HomeScreen(
                                 onQuickPlay = { vm.restartMatch(); nav.navigate("game") },
@@ -174,7 +182,11 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                     }
-                    composable("game") {
+                    animatedComposable(
+                        "game",
+                        enterTransition = { slideInHorizontally() },
+                        exitTransition = { fadeOut() }
+                    ) {
                         val engine by vm.engine.collectAsState()
                         val settings by vm.settings.collectAsState()
                         AppScaffold(title = stringResource(R.string.title_game), onBack = { nav.popBackStack() }, snackbarHostState = snack) {
@@ -187,14 +199,20 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                     }
-                    composable("decks") {
+                    animatedComposable(
+                        "decks",
+                        enterTransition = { slideInHorizontally() },
+                        exitTransition = { fadeOut() }
+                    ) {
                         AppScaffold(title = stringResource(R.string.title_decks), onBack = { nav.popBackStack() }, snackbarHostState = snack) {
                             DecksScreen(vm = vm, onDeckSelected = { nav.navigate("deck/${'$'}{it.id}") })
                         }
                     }
-                    composable(
+                    animatedComposable(
                         route = "deck/{id}",
-                        arguments = listOf(navArgument("id") { type = NavType.StringType })
+                        arguments = listOf(navArgument("id") { type = NavType.StringType }),
+                        enterTransition = { slideInHorizontally() },
+                        exitTransition = { fadeOut() }
                     ) { backStackEntry ->
                         val id = requireNotNull(backStackEntry.arguments?.getString("id"))
                         val decks by vm.decks.collectAsState()
@@ -219,7 +237,11 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                     }
-                    composable("settings") {
+                    animatedComposable(
+                        "settings",
+                        enterTransition = { slideInHorizontally() },
+                        exitTransition = { fadeOut() }
+                    ) {
                         AppScaffold(title = stringResource(R.string.title_settings), onBack = { nav.popBackStack() }, snackbarHostState = snack) {
                             SettingsScreen(
                                 vm = vm,
@@ -228,14 +250,22 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                     }
-                    composable("history") {
+                    animatedComposable(
+                        "history",
+                        enterTransition = { slideInHorizontally() },
+                        exitTransition = { fadeOut() }
+                    ) {
                         AppScaffold(title = stringResource(R.string.title_history), onBack = { nav.popBackStack() }, snackbarHostState = snack) {
                             val historyFlow = remember { vm.recentHistory(HISTORY_LIMIT) }
                             val history by historyFlow.collectAsState(initial = emptyList())
                             HistoryScreen(history)
                         }
                     }
-                    composable("about") {
+                    animatedComposable(
+                        "about",
+                        enterTransition = { slideInHorizontally() },
+                        exitTransition = { fadeOut() }
+                    ) {
                         AppScaffold(title = stringResource(R.string.title_about), onBack = { nav.popBackStack() }, snackbarHostState = snack) {
                             AboutScreen()
                         }
