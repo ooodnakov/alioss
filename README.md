@@ -2,7 +2,7 @@
 
 A lean, privacy-first, local-only Alias-style party game for Android built with Kotlin + Jetpack Compose. No ads, no telemetry, no accounts, and no background networking. The only network feature planned is optional, manual deck pack downloads from user-allow‑listed URLs using open formats.
 
-Status: early skeleton wired end-to-end — sample deck import, Room schema, Hilt DI, and a minimal Compose UI that exercises the domain game engine.
+Status: playable MVP wired end-to-end — bundled deck import, Room schema, Hilt DI, and a growing Compose UI with animations, system UI control, placeholders, and sound effects.
 
 
 **What You Get Today**
@@ -11,6 +11,9 @@ Status: early skeleton wired end-to-end — sample deck import, Room schema, Hil
 - Settings screen to configure round seconds, target words, skip policy, and language.
 - Deterministic word order with a seed; no repeats during the target window.
 - Data layer with Room, JSON pack parser, and multiple bundled decks (EN/RU).
+- Animated navigation between screens with system UI bar control.
+- Placeholder displayed while loading game content.
+- Sound effects for correct and skip actions with toggle in Settings.
 
 
 **Non-Goals**
