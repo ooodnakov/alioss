@@ -71,6 +71,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Add
@@ -108,6 +109,7 @@ import com.example.alias.ui.TutorialOverlay
 import com.example.alias.data.settings.SettingsRepository
 import com.example.alias.data.db.DeckEntity
 import androidx.compose.ui.platform.LocalUriHandler
+import com.google.accompanist.placeholder.material3.placeholder
 private const val MIN_TEAMS = SettingsRepository.MIN_TEAMS
 private const val MAX_TEAMS = SettingsRepository.MAX_TEAMS
 private const val HISTORY_LIMIT = 50
@@ -179,9 +181,11 @@ class MainActivity : ComponentActivity() {
                         val settings by vm.settings.collectAsState()
                         AppScaffold(title = stringResource(R.string.title_game), onBack = { nav.popBackStack() }, snackbarHostState = snack) {
                             if (engine == null) {
-                                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                    Text(stringResource(R.string.loading))
-                                }
+                                Surface(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .placeholder(true)
+                                ) {}
                             } else {
                                 GameScreen(vm, engine!!, settings)
                             }
