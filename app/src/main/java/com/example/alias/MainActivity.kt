@@ -424,6 +424,7 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
     val vibrator = remember { context.getSystemService(android.os.Vibrator::class.java) }
     val tone = remember { android.media.ToneGenerator(android.media.AudioManager.STREAM_MUSIC, 80) }
     val state by engine.state.collectAsState()
+    val scope = rememberCoroutineScope()
     // Show tutorial overlay on first play (or when re-enabled via Settings)
     var showTutorial by rememberSaveable(settings.seenTutorial) { mutableStateOf(!settings.seenTutorial) }
     if (showTutorial) {
@@ -466,14 +467,15 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
             var isProcessing by remember { mutableStateOf(false) }
             var committing by remember { mutableStateOf(false) }
             var frozenNext by remember { mutableStateOf<String?>(null) }
+            var computedNext by remember { mutableStateOf<String?>(null) }
             LaunchedEffect(s.word) {
                 // Word advanced: re-enable actions and unfreeze preview
                 isProcessing = false
                 committing = false
                 frozenNext = null
+                computedNext = engine.peekNextWord()
             }
             val CardStack: @Composable () -> Unit = {
-                val computedNext = engine.peekNextWord()
                 val nextWord = frozenNext ?: computedNext
                 Box(Modifier.fillMaxWidth().height(200.dp)) {
                     if (nextWord != null) {
@@ -510,12 +512,12 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                             when (it) {
                                 WordCardAction.Correct -> {
                                     if (settings.soundEnabled) tone.startTone(android.media.ToneGenerator.TONE_PROP_ACK, 100)
-                                    engine.correct(); isProcessing = false
+                                    scope.launch { engine.correct(); isProcessing = false }
                                 }
                                 WordCardAction.Skip -> {
                                     if (s.skipsRemaining > 0) {
                                         if (settings.soundEnabled) tone.startTone(android.media.ToneGenerator.TONE_PROP_NACK, 100)
-                                        engine.skip(); isProcessing = false
+                                        scope.launch { engine.skip(); isProcessing = false }
                                     } else { isProcessing = false }
                                 }
                             }
@@ -553,11 +555,17 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                             Controls()
                             val onCorrect = {
-                                if (!isProcessing) { isProcessing = true; engine.correct() }
+                                if (!isProcessing) {
+                                    isProcessing = true
+                                    scope.launch { engine.correct() }
+                                }
                             }
                             val onSkip = {
                                 if (!isProcessing) {
-                                    if (s.skipsRemaining > 0) { isProcessing = true; engine.skip() }
+                                    if (s.skipsRemaining > 0) {
+                                        isProcessing = true
+                                        scope.launch { engine.skip() }
+                                    }
                                 }
                             }
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -584,14 +592,14 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                         val onCorrect = {
                             if (!isProcessing) {
                                 isProcessing = true
-                                engine.correct()
+                                scope.launch { engine.correct() }
                             }
                         }
                         val onSkip = {
                             if (!isProcessing) {
                                 if (s.skipsRemaining > 0) {
                                     isProcessing = true
-                                    engine.skip()
+                                    scope.launch { engine.skip() }
                                 } else {
                                     // No skips left; ignore without blocking input
                                 }
@@ -613,14 +621,14 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                         val onCorrect = {
                             if (!isProcessing) {
                                 isProcessing = true
-                                engine.correct()
+                                scope.launch { engine.correct() }
                             }
                         }
                         val onSkip = {
                             if (!isProcessing) {
                                 if (s.skipsRemaining > 0) {
                                     isProcessing = true
-                                    engine.skip()
+                                    scope.launch { engine.skip() }
                                 } else {
                                     // No skips left; ignore without blocking input
                                 }

@@ -9,7 +9,13 @@ plugins {
     alias(libs.plugins.hilt.android) apply false
     alias(libs.plugins.kotlin.kapt) apply false
     alias(libs.plugins.detekt)
-    alias(libs.plugins.spotless) apply false
+    alias(libs.plugins.spotless)
+}
+
+configure<SpotlessExtension> {
+    kotlinGradle {
+        ktlint()
+    }
 }
 
 subprojects {
@@ -33,4 +39,3 @@ allprojects {
         }
     }
 }
-

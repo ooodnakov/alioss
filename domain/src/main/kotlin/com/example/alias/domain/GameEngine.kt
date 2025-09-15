@@ -6,89 +6,89 @@ import kotlinx.coroutines.flow.StateFlow
  * Baseline interface for the game state machine.
  */
 interface GameEngine {
-  /** Current immutable state exposed to observers. */
-  val state: StateFlow<GameState>
+    /** Current immutable state exposed to observers. */
+    val state: StateFlow<GameState>
 
-  /** Start a new match with the provided [config], [teams], and random [seed]. */
-  fun startMatch(
-    config: MatchConfig,
-    teams: List<String>,
-    seed: Long,
-  )
+    /** Start a new match with the provided [config], [teams], and random [seed]. */
+    suspend fun startMatch(
+        config: MatchConfig,
+        teams: List<String>,
+        seed: Long,
+    )
 
-  /** Register that the current word was guessed correctly. */
-  fun correct()
+    /** Register that the current word was guessed correctly. */
+    suspend fun correct()
 
-  /** Register that the current word was skipped. */
-  fun skip()
+    /** Register that the current word was skipped. */
+    suspend fun skip()
 
-  /** Advance to the next team's turn after a finished turn. */
-  fun nextTurn()
+    /** Advance to the next team's turn after a finished turn. */
+    suspend fun nextTurn()
 
-  /** Begin the currently pending team's turn. */
-  fun startTurn()
+    /** Begin the currently pending team's turn. */
+    suspend fun startTurn()
 
-  /** Override the outcome of a word at [index] in the last turn. */
-  fun overrideOutcome(
-    index: Int,
-    correct: Boolean,
-  )
+    /** Override the outcome of a word at [index] in the last turn. */
+    suspend fun overrideOutcome(
+        index: Int,
+        correct: Boolean,
+    )
 
-  /** Optional hint for UI: preview the next word without advancing state. */
-  fun peekNextWord(): String?
+    /** Optional hint for UI: preview the next word without advancing state. */
+    suspend fun peekNextWord(): String?
 }
 
 /**
  * Representation of the game state.
  */
 sealed interface GameState {
-  /** Waiting to start a match. */
-  data object Idle : GameState
+    /** Waiting to start a match. */
+    data object Idle : GameState
 
-  /** A team's turn is ready to start. */
-  data class TurnPending(
-    val team: String,
-  ) : GameState
+    /** A team's turn is ready to start. */
+    data class TurnPending(
+        val team: String,
+    ) : GameState
 
-  /** A turn is active and [word] should be explained by [team]. */
-  data class TurnActive(
-    val team: String,
-    val word: String,
-    val remaining: Int,
-    val score: Int,
-    val skipsRemaining: Int,
-    val timeRemaining: Int,
-    val totalSeconds: Int,
-  ) : GameState
+    /** A turn is active and [word] should be explained by [team]. */
+    data class TurnActive(
+        val team: String,
+        val word: String,
+        val remaining: Int,
+        val score: Int,
+        val skipsRemaining: Int,
+        val timeRemaining: Int,
+        val totalSeconds: Int,
+    ) : GameState
 
-  /** A team's turn has ended and awaits the next team. */
-  data class TurnFinished(
-    val team: String,
-    val deltaScore: Int,
-    val scores: Map<String, Int>,
-    val outcomes: List<TurnOutcome>,
-    val matchOver: Boolean,
-  ) : GameState
+    /** A team's turn has ended and awaits the next team. */
+    data class TurnFinished(
+        val team: String,
+        val deltaScore: Int,
+        val scores: Map<String, Int>,
+        val outcomes: List<TurnOutcome>,
+        val matchOver: Boolean,
+    ) : GameState
 
-  /** The current match has finished. */
-  data class MatchFinished(
-    val scores: Map<String, Int>,
-  ) : GameState
+    /** The current match has finished. */
+    data class MatchFinished(
+        val scores: Map<String, Int>,
+    ) : GameState
 }
 
 /** Configuration options for starting a match. */
 data class MatchConfig(
-  // Target number of correctly guessed words to finish the match.
-  val targetWords: Int,
-  val maxSkips: Int,
-  val penaltyPerSkip: Int,
-  val roundSeconds: Int,
+    // Target number of correctly guessed words to finish the match.
+    val targetWords: Int,
+    val maxSkips: Int,
+    val penaltyPerSkip: Int,
+    val roundSeconds: Int,
 )
 
 /** Outcome of a single word during a turn. */
 data class TurnOutcome(
-  val word: String,
-  val correct: Boolean,
-  val timestamp: Long,
-  val skipped: Boolean = false,
+    val word: String,
+    val correct: Boolean,
+    val timestamp: Long,
+    val skipped: Boolean = false,
 )
