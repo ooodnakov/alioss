@@ -33,6 +33,9 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v3
 
+      - name: Run detekt
+        run: ./gradlew detekt --no-daemon --console=plain
+
       - name: Run unit tests (domain, data, app)
         run: ./gradlew --version :domain:test :data:test :app:testDebugUnitTest --no-daemon --console=plain
 
