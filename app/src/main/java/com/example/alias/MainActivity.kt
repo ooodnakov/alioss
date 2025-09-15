@@ -53,6 +53,9 @@ import com.example.alias.domain.GameState
 import com.example.alias.domain.TurnOutcome
 import dagger.hilt.android.AndroidEntryPoint
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -116,6 +119,7 @@ private const val HISTORY_LIMIT = 50
 
 
 
+@OptIn(ExperimentalAnimationApi::class)
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -165,7 +169,12 @@ class MainActivity : ComponentActivity() {
                         showJob.join()
                     }
                 }
-                NavHost(navController = nav, startDestination = "home") {
+                NavHost(
+                    navController = nav,
+                    startDestination = "home",
+                    enterTransition = { slideInHorizontally() },
+                    exitTransition = { fadeOut() }
+                ) {
                     composable("home") {
                         AppScaffold(title = stringResource(R.string.app_name), snackbarHostState = snack) {
                             HomeScreen(
