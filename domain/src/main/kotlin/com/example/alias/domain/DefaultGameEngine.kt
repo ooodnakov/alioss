@@ -8,7 +8,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.random.Random
@@ -20,7 +19,6 @@ class DefaultGameEngine(
     private val words: List<String>,
     private val scope: CoroutineScope,
 ) : GameEngine {
-
     private val _state = MutableStateFlow<GameState>(GameState.Idle)
     override val state: StateFlow<GameState> = _state.asStateFlow()
 
@@ -39,103 +37,93 @@ class DefaultGameEngine(
     private var matchOver: Boolean = false
     private val mutex = Mutex()
 
-    override fun startMatch(config: MatchConfig, teams: List<String>, seed: Long) {
-        runBlocking {
-            mutex.withLock {
-                this@DefaultGameEngine.config = config
-                this@DefaultGameEngine.teams = teams
-                queue = words.shuffled(Random(seed)).toMutableList()
-                scores.clear()
-                teams.forEach { scores[it] = 0 }
-                correctTotal = 0
-                currentTeam = 0
-                matchOver = false
+    override suspend fun startMatch(
+        config: MatchConfig,
+        teams: List<String>,
+        seed: Long,
+    ) {
+        mutex.withLock {
+            this@DefaultGameEngine.config = config
+            this@DefaultGameEngine.teams = teams
+            queue = words.shuffled(Random(seed)).toMutableList()
+            scores.clear()
+            teams.forEach { scores[it] = 0 }
+            correctTotal = 0
+            currentTeam = 0
+            matchOver = false
+            prepareTurnLocked()
+        }
+    }
+
+    override suspend fun correct() {
+        mutex.withLock {
+            if (_state.value !is GameState.TurnActive) return@withLock
+            turnScore++
+            correctTotal++
+            outcomes.add(TurnOutcome(currentWord, true, System.currentTimeMillis()))
+            advanceLocked()
+        }
+    }
+
+    override suspend fun skip() {
+        mutex.withLock {
+            if (_state.value !is GameState.TurnActive) return@withLock
+            if (skipsRemaining <= 0) return@withLock
+            skipsRemaining--
+            turnScore -= config.penaltyPerSkip
+            outcomes.add(TurnOutcome(currentWord, false, System.currentTimeMillis(), skipped = true))
+            advanceLocked()
+        }
+    }
+
+    override suspend fun nextTurn() {
+        mutex.withLock {
+            if (_state.value !is GameState.TurnFinished) return@withLock
+            if (matchOver) {
+                finishMatchLocked()
+            } else {
+                outcomes.clear()
+                currentTeam = (currentTeam + 1) % teams.size
                 prepareTurnLocked()
             }
         }
     }
 
-    override fun correct() {
-        runBlocking {
-            mutex.withLock {
-                if (_state.value !is GameState.TurnActive) return@withLock
-                turnScore++
-                correctTotal++
-                outcomes.add(TurnOutcome(currentWord, true, System.currentTimeMillis()))
-                advanceLocked()
-            }
+    override suspend fun startTurn() {
+        mutex.withLock {
+            if (_state.value !is GameState.TurnPending) return@withLock
+            startTurnLocked()
         }
     }
 
-    override fun skip() {
-        runBlocking {
-            mutex.withLock {
-                if (_state.value !is GameState.TurnActive) return@withLock
-                if (skipsRemaining <= 0) return@withLock
-                skipsRemaining--
-                turnScore -= config.penaltyPerSkip
-                outcomes.add(TurnOutcome(currentWord, false, System.currentTimeMillis(), skipped = true))
-                advanceLocked()
-            }
-        }
-    }
+    override suspend fun peekNextWord(): String? = mutex.withLock { queue.firstOrNull() }
 
-    override fun nextTurn() {
-        runBlocking {
-            mutex.withLock {
-                if (_state.value !is GameState.TurnFinished) return@withLock
-                if (matchOver) {
-                    finishMatchLocked()
-                } else {
-                    outcomes.clear()
-                    currentTeam = (currentTeam + 1) % teams.size
-                    prepareTurnLocked()
-                }
-            }
-        }
-    }
-
-    override fun startTurn() {
-        runBlocking {
-            mutex.withLock {
-                if (_state.value !is GameState.TurnPending) return@withLock
-                startTurnLocked()
-            }
-        }
-    }
-
-    override fun peekNextWord(): String? {
-        return runBlocking {
-            mutex.withLock {
-                queue.firstOrNull()
-            }
-        }
-    }
-
-    override fun overrideOutcome(index: Int, correct: Boolean) {
-        runBlocking {
-            mutex.withLock {
-                val current = _state.value
-                if (current !is GameState.TurnFinished) return@withLock
-                val item = outcomes.getOrNull(index) ?: return@withLock
-                if (item.correct == correct) return@withLock
-                val team = current.team
-                val change = if (correct) {
+    override suspend fun overrideOutcome(
+        index: Int,
+        correct: Boolean,
+    ) {
+        mutex.withLock {
+            val current = _state.value
+            if (current !is GameState.TurnFinished) return@withLock
+            val item = outcomes.getOrNull(index) ?: return@withLock
+            if (item.correct == correct) return@withLock
+            val team = current.team
+            val change =
+                if (correct) {
                     val penalty = if (!item.correct && item.skipped) config.penaltyPerSkip else 0
                     1 + penalty
                 } else {
                     -(1 + config.penaltyPerSkip)
                 }
-                turnScore += change
-                scores[team] = scores.getOrDefault(team, 0) + change
-                // Update total correct words across the match based on override
-                if (item.correct != correct) {
-                    if (correct) correctTotal++ else correctTotal--
-                }
-                outcomes[index] = item.copy(correct = correct, skipped = !correct)
-                val nowMatchOver = correctTotal >= config.targetWords
-                _state.update { GameState.TurnFinished(team, turnScore, scores.toMap(), outcomes.toList(), nowMatchOver) }
+            turnScore += change
+            scores[team] = scores.getOrDefault(team, 0) + change
+            // Update total correct words across the match based on override
+            if (item.correct != correct) {
+                if (correct) correctTotal++ else correctTotal--
             }
+            outcomes[index] = item.copy(correct = correct, skipped = !correct)
+            val nowMatchOver = correctTotal >= config.targetWords
+            _state.update { GameState.TurnFinished(team, turnScore, scores.toMap(), outcomes.toList(), nowMatchOver) }
         }
     }
 

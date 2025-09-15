@@ -435,11 +435,13 @@ class MainViewModel @Inject constructor(
     }
 
     fun startTurn() {
-        _engine.value?.startTurn()
+        val e = _engine.value ?: return
+        viewModelScope.launch { e.startTurn() }
     }
 
     fun overrideOutcome(index: Int, correct: Boolean) {
-        _engine.value?.overrideOutcome(index, correct)
+        val e = _engine.value ?: return
+        viewModelScope.launch { e.overrideOutcome(index, correct) }
     }
 
     fun setOrientation(value: String) {

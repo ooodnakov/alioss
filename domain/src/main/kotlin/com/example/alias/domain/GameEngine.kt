@@ -10,25 +10,32 @@ interface GameEngine {
     val state: StateFlow<GameState>
 
     /** Start a new match with the provided [config], [teams], and random [seed]. */
-    fun startMatch(config: MatchConfig, teams: List<String>, seed: Long)
+    suspend fun startMatch(
+        config: MatchConfig,
+        teams: List<String>,
+        seed: Long,
+    )
 
     /** Register that the current word was guessed correctly. */
-    fun correct()
+    suspend fun correct()
 
     /** Register that the current word was skipped. */
-    fun skip()
+    suspend fun skip()
 
     /** Advance to the next team's turn after a finished turn. */
-    fun nextTurn()
+    suspend fun nextTurn()
 
     /** Begin the currently pending team's turn. */
-    fun startTurn()
+    suspend fun startTurn()
 
     /** Override the outcome of a word at [index] in the last turn. */
-    fun overrideOutcome(index: Int, correct: Boolean)
+    suspend fun overrideOutcome(
+        index: Int,
+        correct: Boolean,
+    )
 
     /** Optional hint for UI: preview the next word without advancing state. */
-    fun peekNextWord(): String?
+    suspend fun peekNextWord(): String?
 }
 
 /**
