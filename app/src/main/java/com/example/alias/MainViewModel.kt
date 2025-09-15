@@ -434,6 +434,10 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    fun startTurn() {
+        _engine.value?.startTurn()
+    }
+
     fun overrideOutcome(index: Int, correct: Boolean) {
         _engine.value?.overrideOutcome(index, correct)
     }

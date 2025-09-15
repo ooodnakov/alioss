@@ -427,6 +427,16 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
     }
     when (val s = state) {
         GameState.Idle -> Text(stringResource(R.string.idle))
+        is GameState.TurnPending -> {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(stringResource(R.string.team_label, s.team))
+                Button(onClick = { vm.startTurn() }) { Text(stringResource(R.string.start_turn)) }
+            }
+        }
         is GameState.TurnActive -> {
             val configuration = LocalConfiguration.current
             val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
