@@ -12,7 +12,7 @@
  - Normalize trusted source input and surface invalid host/origin.
  - Surface language validation errors via snackbar.
  - Add Reset local data (clears DB + preferences) with confirmation.
-- Add indices for faster word queries; bump DB version.
+- Add indices for faster word queries, including composite language/NSFW index; bump DB version.
 - Auto-enable decks matching new language with Undo prompt in Settings.
 - Show last word after timer ends and allow marking it in the summary without over-penalizing.
 - Localize remaining visible literals (Home, Game chips, About).
@@ -28,7 +28,6 @@
 - Room migrations: implement proper migrations for DB version upgrades; remove destructive fallback in production builds.
 - Localization: complete pass for any residual literals (e.g., minor labels) to `strings.xml`.
 - Make sure that last shown word is also visible in screen after time ends and you can also mark last shown word.
-- Performance: add indices for `words(language, isNSFW)` to accelerate filtered queries.
 - Tests:
   - Repository: verify re-import of the same deck does not duplicate words (and that updated decks replace content).
   - App-layer: verify last-turn outcomes are persisted when match ends (target reached or timer with no words left).
