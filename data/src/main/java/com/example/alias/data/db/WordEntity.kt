@@ -16,7 +16,7 @@ import androidx.room.PrimaryKey
             onDelete = ForeignKey.CASCADE
         )
     ],
-    indices = [Index("deckId"), Index("language"), Index("isNSFW")]
+    indices = [Index("deckId"), Index(value = ["language", "isNSFW"])]
 )
 data class WordEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
