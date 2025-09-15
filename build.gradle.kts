@@ -1,4 +1,5 @@
 plugins {
+    id("io.gitlab.arturbosch.detekt") version "1.23.5"
     id("com.android.application") version "8.5.2" apply false
     id("com.android.library") version "8.5.2" apply false
     id("org.jetbrains.kotlin.android") version "1.9.23" apply false
@@ -10,4 +11,9 @@ plugins {
 
 tasks.register("clean", Delete::class) {
     delete(rootProject.buildDir)
+}
+
+detekt {
+    buildUponDefaultConfig = true
+    config.setFrom(files("$rootDir/detekt.yml"))
 }
