@@ -132,7 +132,10 @@ class MainActivity : ComponentActivity() {
                     }
                     if (AppCompatDelegate.getApplicationLocales() != locales) {
                         AppCompatDelegate.setApplicationLocales(locales)
-                        locales[0]?.let { Locale.setDefault(it) }
+                        val newLocale =
+                            if (locales.isEmpty) LocaleListCompat.getAdjustedDefault()[0]
+                            else locales[0]
+                        newLocale?.let { Locale.setDefault(it) }
                     }
                 }
 
