@@ -1,3 +1,5 @@
+import com.diffplug.gradle.spotless.SpotlessExtension
+
 plugins {
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.android.library) apply false
@@ -7,10 +9,20 @@ plugins {
     alias(libs.plugins.hilt.android) apply false
     alias(libs.plugins.kotlin.kapt) apply false
     alias(libs.plugins.detekt)
+    alias(libs.plugins.spotless) apply false
 }
 
 subprojects {
     apply(plugin = "io.gitlab.arturbosch.detekt")
+    apply(plugin = "com.diffplug.spotless")
+
+    plugins.withId("com.diffplug.spotless") {
+        configure<SpotlessExtension> {
+            kotlin {
+                ktlint()
+            }
+        }
+    }
 }
 
 allprojects {
@@ -22,6 +34,3 @@ allprojects {
     }
 }
 
-tasks.register("clean", Delete::class) {
-    delete(rootProject.buildDir)
-}
