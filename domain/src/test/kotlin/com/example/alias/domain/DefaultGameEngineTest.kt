@@ -31,6 +31,7 @@ class DefaultGameEngineTest {
             val seen = mutableListOf<String>()
             while (true) {
                 when (val s = engine.state.value) {
+                    is GameState.TurnPending -> engine.startTurn()
                     is GameState.TurnActive -> {
                         seen += s.word
                         engine.correct()
@@ -52,6 +53,7 @@ class DefaultGameEngineTest {
         val engine = DefaultGameEngine(listOf("a", "b", "c"), this)
         engine.startMatch(config, teams = listOf("t"), seed = 0L)
 
+        engine.startTurn()
         var s = assertIs<GameState.TurnActive>(engine.state.value)
         assertEquals(1, s.skipsRemaining)
 
@@ -76,6 +78,7 @@ class DefaultGameEngineTest {
         val shortConfig = config.copy(targetWords = 1, roundSeconds = 2)
         engine.startMatch(shortConfig, teams = listOf("t"), seed = 0L)
 
+        engine.startTurn()
         advanceTimeBy(2000)
         runCurrent()
         // Now emits TurnFinished(matchOver = true) first
@@ -91,6 +94,7 @@ class DefaultGameEngineTest {
         val cfg = config.copy(targetWords = 1, maxSkips = 1, penaltyPerSkip = 2, roundSeconds = 5)
         engine.startMatch(cfg, teams = listOf("t"), seed = 0L)
 
+        engine.startTurn()
         var s = assertIs<GameState.TurnActive>(engine.state.value)
         assertEquals("a", s.word)
         engine.skip()
@@ -112,6 +116,7 @@ class DefaultGameEngineTest {
         val cfg = config.copy(targetWords = 2, maxSkips = 1, penaltyPerSkip = 2, roundSeconds = 5)
         engine.startMatch(cfg, teams = listOf("t"), seed = 0L)
 
+        engine.startTurn()
         assertIs<GameState.TurnActive>(engine.state.value)
         engine.correct()
         val finished = assertIs<GameState.TurnFinished>(engine.state.value)
@@ -131,6 +136,7 @@ class DefaultGameEngineTest {
         val cfg = config.copy(targetWords = 2, maxSkips = 1, penaltyPerSkip = 1, roundSeconds = 1)
         engine.startMatch(cfg, teams = listOf("t"), seed = 0L)
 
+        engine.startTurn()
         advanceTimeBy(1000)
         runCurrent()
         val finished = assertIs<GameState.TurnFinished>(engine.state.value)
@@ -150,6 +156,7 @@ class DefaultGameEngineTest {
         val short = config.copy(targetWords = 2, roundSeconds = 1)
         engine.startMatch(short, teams = listOf("A", "B"), seed = 0L)
 
+        engine.startTurn()
         // let timer expire for first team
         advanceTimeBy(short.roundSeconds * 1000L)
         runCurrent()
@@ -159,6 +166,7 @@ class DefaultGameEngineTest {
         assertFalse(finished.matchOver)
 
         engine.nextTurn()
+        engine.startTurn()
         val active = assertIs<GameState.TurnActive>(engine.state.value)
         assertEquals("B", active.team)
 
@@ -174,6 +182,7 @@ class DefaultGameEngineTest {
         val short = config.copy(targetWords = 2, roundSeconds = 10)
         engine.startMatch(short, teams = listOf("Team"), seed = 0L)
 
+        engine.startTurn()
         var s = assertIs<GameState.TurnActive>(engine.state.value)
         assertEquals("apple", s.word)
         engine.correct()
