@@ -78,6 +78,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
+import java.util.Locale
 import androidx.compose.material.icons.automirrored.filled.LibraryBooks
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Code
@@ -129,7 +130,10 @@ class MainActivity : ComponentActivity() {
                         "system" -> LocaleListCompat.getEmptyLocaleList()
                         else -> LocaleListCompat.forLanguageTags(settings.uiLanguage)
                     }
-                    AppCompatDelegate.setApplicationLocales(locales)
+                    if (AppCompatDelegate.getApplicationLocales() != locales) {
+                        AppCompatDelegate.setApplicationLocales(locales)
+                        locales[0]?.let { Locale.setDefault(it) }
+                    }
                 }
 
                 // Collect general UI events and show snackbars

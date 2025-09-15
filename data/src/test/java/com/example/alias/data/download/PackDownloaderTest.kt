@@ -22,17 +22,25 @@ private class FakeSettingsRepo(origins: Set<String>) : SettingsRepository {
     override suspend fun updateRoundSeconds(value: Int) = Unit
     override suspend fun updateTargetWords(value: Int) = Unit
     override suspend fun updateSkipPolicy(maxSkips: Int, penaltyPerSkip: Int) = Unit
+    override suspend fun updatePunishSkips(value: Boolean) = Unit
     override suspend fun updateLanguagePreference(language: String) = Unit
     override suspend fun setEnabledDeckIds(ids: Set<String>) = Unit
     override suspend fun updateAllowNSFW(value: Boolean) = Unit
     override suspend fun updateStemmingEnabled(value: Boolean) = Unit
     override suspend fun updateHapticsEnabled(value: Boolean) = Unit
+    override suspend fun updateSoundEnabled(value: Boolean) = Unit
     override suspend fun updateOneHandedLayout(value: Boolean) = Unit
     override suspend fun updateOrientation(value: String) = Unit
     override suspend fun updateUiLanguage(language: String) = Unit
+    override suspend fun updateDifficultyFilter(min: Int, max: Int) = Unit
+    override suspend fun setCategoriesFilter(categories: Set<String>) = Unit
     override suspend fun setTeams(teams: List<String>) = Unit
-    override suspend fun updatePunishSkips(value: Boolean) = Unit
+    override suspend fun updateVerticalSwipes(value: Boolean) = Unit
     override suspend fun setTrustedSources(origins: Set<String>) { flow.value = flow.value.copy(trustedSources = origins) }
+    override suspend fun readBundledDeckHashes(): Set<String> = emptySet()
+    override suspend fun writeBundledDeckHashes(entries: Set<String>) = Unit
+    override suspend fun updateSeenTutorial(value: Boolean) = Unit
+    override suspend fun clearAll() = Unit
 }
 
 class PackDownloaderTest {
