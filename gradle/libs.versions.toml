@@ -54,3 +54,9 @@ kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 hilt-android = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 kotlin-kapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin" }
+
+[bundles]
+compose = ["androidx-compose-ui", "androidx-compose-material3", "androidx-compose-material-icons-extended", "androidx-compose-ui-tooling-preview"]
+room = ["androidx-room-runtime", "androidx-room-ktx"]
+test-unit = ["junit4", "androidx-test-core", "robolectric"]
+okhttp-test = ["okhttp-mockwebserver", "okhttp-tls"]

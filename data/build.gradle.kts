@@ -34,8 +34,7 @@ kapt {
 dependencies {
     implementation(project(":domain"))
 
-    implementation(libs.androidx.room.runtime)
-    implementation(libs.androidx.room.ktx)
+    implementation(libs.bundles.room)
     kapt(libs.androidx.room.compiler)
 
     implementation(libs.kotlinx.serialization.json)
@@ -52,6 +51,5 @@ dependencies {
     implementation(libs.okhttp)
 
     // Test utilities for HTTP
-    testImplementation(libs.okhttp.mockwebserver)
-    testImplementation(libs.okhttp.tls)
+    testImplementation(libs.bundles.okhttp.test)
 }
