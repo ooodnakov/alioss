@@ -64,6 +64,10 @@ Status: early skeleton wired end-to-end — sample deck import, Room schema, Hil
 - Requirements
   - JDK 21+, Android SDK 34, Gradle Wrapper included.
 
+- Dependency Versions
+  - Plugin and library versions live in `gradle/libs.versions.toml` (Gradle version catalog).
+  - Reference them in build scripts via the `libs` accessor (e.g., `implementation(libs.androidx.core.ktx)`).
+
 
 ## Gameplay (MVP)
 - Pass-and-play with 2+ teams.
