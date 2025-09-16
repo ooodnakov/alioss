@@ -445,7 +445,17 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(stringResource(R.string.team_label, s.team))
-                Button(onClick = { vm.startTurn() }) { Text(stringResource(R.string.start_turn)) }
+                Button(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(80.dp),
+                    onClick = { vm.startTurn() }
+                ) {
+                    Text(
+                        text = stringResource(R.string.start_turn),
+                        style = MaterialTheme.typography.headlineMedium
+                    )
+                }
             }
         }
         is GameState.TurnActive -> {
