@@ -2,6 +2,7 @@ package com.example.alias.data.pack
 
 import com.example.alias.data.db.DeckEntity
 import com.example.alias.data.db.WordEntity
+import com.example.alias.data.db.WordClassEntity
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -30,12 +31,17 @@ private data class WordDto(
     val text: String,
     val difficulty: Int = 1,
     val category: String? = null,
+    @SerialName("wordClasses") val wordClasses: List<String>? = null,
     @SerialName("isNSFW") val isNsfw: Boolean = false,
     val tabooStems: List<String>? = null
 )
 
 /** Result of parsing a pack: a [DeckEntity] and its [WordEntity] list. */
-data class ParsedPack(val deck: DeckEntity, val words: List<WordEntity>)
+data class ParsedPack(
+    val deck: DeckEntity,
+    val words: List<WordEntity>,
+    val wordClasses: List<WordClassEntity>,
+)
 
 /** Simple JSON pack parser based on kotlinx.serialization. */
 object PackParser {
@@ -62,14 +68,17 @@ object PackParser {
             version = dto.deck.version,
             updatedAt = dto.deck.updatedAt
         )
-        val wordEntities = dto.words.map { word ->
+        val wordEntities = mutableListOf<WordEntity>()
+        val classEntities = mutableListOf<WordClassEntity>()
+        dto.words.forEach { word ->
             PackValidator.validateWord(
                 text = word.text,
                 difficulty = word.difficulty,
                 category = word.category,
-                tabooStems = word.tabooStems
+                tabooStems = word.tabooStems,
+                wordClasses = word.wordClasses
             )
-            WordEntity(
+            wordEntities += WordEntity(
                 deckId = dto.deck.id,
                 text = word.text,
                 language = dto.deck.language,
@@ -79,7 +88,18 @@ object PackParser {
                 tabooStems = word.tabooStems?.joinToString(";"),
                 isNSFW = word.isNsfw
             )
+            word.wordClasses
+                ?.map { it.trim() }
+                ?.filter { it.isNotEmpty() }
+                ?.distinct()
+                ?.forEach { cls ->
+                    classEntities += WordClassEntity(
+                        deckId = dto.deck.id,
+                        wordText = word.text,
+                        wordClass = cls
+                    )
+                }
         }
-        return ParsedPack(deckEntity, wordEntities)
+        return ParsedPack(deckEntity, wordEntities, classEntities)
     }
 }

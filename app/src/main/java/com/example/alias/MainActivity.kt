@@ -633,6 +633,9 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                         meta.category?.takeIf { it.isNotBlank() }?.let { cat ->
                             AssistChip(onClick = {}, enabled = false, label = { Text(cat) })
                         }
+                        meta.classes.forEach { cls ->
+                            AssistChip(onClick = {}, enabled = false, label = { Text(cls) })
+                        }
                     }
                 }
                 Text(stringResource(R.string.summary_label, s.remaining, s.score, s.skipsRemaining))
@@ -869,8 +872,10 @@ private fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit)
             ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(stringResource(R.string.filters_label), style = MaterialTheme.typography.titleMedium)
-                    val available by vm.availableCategories.collectAsState()
+                    val availableCategories by vm.availableCategories.collectAsState()
+                    val availableWordClasses by vm.availableWordClasses.collectAsState()
                     var selectedCats by rememberSaveable(settings) { mutableStateOf(settings.selectedCategories) }
+                    var selectedClasses by rememberSaveable(settings) { mutableStateOf(settings.selectedWordClasses) }
                     Row(
                         Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -899,22 +904,43 @@ private fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit)
                             val hi = maxDiff.toIntOrNull() ?: settings.maxDifficulty
                             vm.updateDifficultyFilter(lo, hi)
                             vm.updateCategoriesFilter(selectedCats)
+                            vm.updateWordClassesFilter(selectedClasses)
                         }) {
                             Text(stringResource(R.string.apply_label))
                         }
                     }
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        items(available) { cat ->
-                            val selected = selectedCats.contains(cat)
-                            FilterChip(
-                                selected = selected,
-                                onClick = {
-                                    selectedCats = selectedCats.toMutableSet().also {
-                                        if (selected) it.remove(cat) else it.add(cat)
-                                    }
-                                },
-                                label = { Text(cat) }
-                            )
+                    if (availableCategories.isNotEmpty()) {
+                        Text(stringResource(R.string.categories_label))
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            items(availableCategories) { cat ->
+                                val selected = selectedCats.contains(cat)
+                                FilterChip(
+                                    selected = selected,
+                                    onClick = {
+                                        selectedCats = selectedCats.toMutableSet().also {
+                                            if (selected) it.remove(cat) else it.add(cat)
+                                        }
+                                    },
+                                    label = { Text(cat) }
+                                )
+                            }
+                        }
+                    }
+                    if (availableWordClasses.isNotEmpty()) {
+                        Text(stringResource(R.string.word_classes_label))
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            items(availableWordClasses) { cls ->
+                                val selected = selectedClasses.contains(cls)
+                                FilterChip(
+                                    selected = selected,
+                                    onClick = {
+                                        selectedClasses = selectedClasses.toMutableSet().also {
+                                            if (selected) it.remove(cls) else it.add(cls)
+                                        }
+                                    },
+                                    label = { Text(cls) }
+                                )
+                            }
                         }
                     }
                     Text(stringResource(R.string.filters_hint))

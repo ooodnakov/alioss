@@ -34,6 +34,7 @@ private class FakeSettingsRepo(origins: Set<String>) : SettingsRepository {
     override suspend fun updateUiLanguage(language: String) = Unit
     override suspend fun updateDifficultyFilter(min: Int, max: Int) = Unit
     override suspend fun setCategoriesFilter(categories: Set<String>) = Unit
+    override suspend fun setWordClassesFilter(classes: Set<String>) = Unit
     override suspend fun setTeams(teams: List<String>) = Unit
     override suspend fun updateVerticalSwipes(value: Boolean) = Unit
     override suspend fun setTrustedSources(origins: Set<String>) { flow.value = flow.value.copy(trustedSources = origins) }

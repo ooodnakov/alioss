@@ -43,6 +43,9 @@ class DeckRepositoryImpl(
             // Replace words for the deck to avoid duplicates on re-import
             wordDao.deleteByDeck(pack.deck.id)
             wordDao.insertWords(pack.words)
+            if (pack.wordClasses.isNotEmpty()) {
+                wordDao.insertWordClasses(pack.wordClasses)
+            }
         }
     }
 }

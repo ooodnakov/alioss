@@ -10,6 +10,9 @@ interface WordDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertWords(words: List<WordEntity>)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertWordClasses(entries: List<WordClassEntity>)
+
     @Query("SELECT text FROM words WHERE deckId = :deckId")
     suspend fun getWordTexts(deckId: String): List<String>
 
@@ -20,12 +23,16 @@ interface WordDao {
     suspend fun deleteByDeck(deckId: String)
 
     @Query(
-        "SELECT text FROM words " +
-            "WHERE deckId IN (:deckIds) " +
-            "AND language = :language " +
-            "AND (:allowNSFW = 1 OR isNSFW = 0) " +
-            "AND difficulty BETWEEN :minDifficulty AND :maxDifficulty " +
-            "AND (:hasCategories = 0 OR category IN (:categories))"
+        "SELECT DISTINCT w.text FROM words w " +
+            "WHERE w.deckId IN (:deckIds) " +
+            "AND w.language = :language " +
+            "AND (:allowNSFW = 1 OR w.isNSFW = 0) " +
+            "AND w.difficulty BETWEEN :minDifficulty AND :maxDifficulty " +
+            "AND (:hasCategories = 0 OR w.category IN (:categories)) " +
+            "AND (:hasClasses = 0 OR EXISTS (" +
+            "    SELECT 1 FROM word_classes wc " +
+            "    WHERE wc.deckId = w.deckId AND wc.wordText = w.text AND wc.wordClass IN (:classes)" +
+            "))"
     )
     suspend fun getWordTextsForDecks(
         deckIds: List<String>,
@@ -35,15 +42,24 @@ interface WordDao {
         maxDifficulty: Int,
         categories: List<String>,
         hasCategories: Int,
+        classes: List<String>,
+        hasClasses: Int,
     ): List<String>
 
     @Query(
-        "SELECT text, difficulty, category FROM words " +
-            "WHERE deckId IN (:deckIds) " +
-            "AND language = :language " +
-            "AND (:allowNSFW = 1 OR isNSFW = 0) " +
-            "AND difficulty BETWEEN :minDifficulty AND :maxDifficulty " +
-            "AND (:hasCategories = 0 OR category IN (:categories))"
+        "SELECT w.text, w.difficulty, w.category, GROUP_CONCAT(DISTINCT wc.wordClass) AS classes " +
+            "FROM words w " +
+            "LEFT JOIN word_classes wc ON wc.deckId = w.deckId AND wc.wordText = w.text " +
+            "WHERE w.deckId IN (:deckIds) " +
+            "AND w.language = :language " +
+            "AND (:allowNSFW = 1 OR w.isNSFW = 0) " +
+            "AND w.difficulty BETWEEN :minDifficulty AND :maxDifficulty " +
+            "AND (:hasCategories = 0 OR w.category IN (:categories)) " +
+            "AND (:hasClasses = 0 OR EXISTS (" +
+            "    SELECT 1 FROM word_classes wc2 " +
+            "    WHERE wc2.deckId = w.deckId AND wc2.wordText = w.text AND wc2.wordClass IN (:classes)" +
+            ")) " +
+            "GROUP BY w.text, w.difficulty, w.category"
     )
     suspend fun getWordBriefsForDecks(
         deckIds: List<String>,
@@ -53,6 +69,8 @@ interface WordDao {
         maxDifficulty: Int,
         categories: List<String>,
         hasCategories: Int,
+        classes: List<String>,
+        hasClasses: Int,
     ): List<WordBrief>
 
     @Query(
@@ -67,6 +85,19 @@ interface WordDao {
         language: String,
         allowNSFW: Boolean,
     ): List<String>
+
+    @Query(
+        "SELECT DISTINCT wc.wordClass FROM word_classes wc " +
+            "JOIN words w ON w.deckId = wc.deckId AND w.text = wc.wordText " +
+            "WHERE w.deckId IN (:deckIds) " +
+            "AND w.language = :language " +
+            "AND (:allowNSFW = 1 OR w.isNSFW = 0)"
+    )
+    suspend fun getAvailableWordClasses(
+        deckIds: List<String>,
+        language: String,
+        allowNSFW: Boolean,
+    ): List<String>
 }
 
 /** Lightweight projection for word metadata shown in UI. */
@@ -74,4 +105,5 @@ data class WordBrief(
     val text: String,
     val difficulty: Int,
     val category: String?,
+    val classes: String?,
 )

@@ -67,6 +67,8 @@
     <string name="tie_suffix"> (tie)</string>
     <string name="team_default_name">Team %1$d</string>
     <string name="filters_label">Filters</string>
+    <string name="categories_label">Categories</string>
+    <string name="word_classes_label">Word classes</string>
     <string name="min_difficulty_label">Min difficulty</string>
     <string name="max_difficulty_label">Max difficulty</string>
     <string name="apply_label">Apply</string>

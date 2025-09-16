@@ -24,7 +24,13 @@ object PackValidator {
         require(count in 1..MAX_WORDS) { "Invalid word count: $count" }
     }
 
-    fun validateWord(text: String, difficulty: Int, category: String?, tabooStems: List<String>?) {
+    fun validateWord(
+        text: String,
+        difficulty: Int,
+        category: String?,
+        tabooStems: List<String>?,
+        wordClasses: List<String>?,
+    ) {
         require(text.isNotBlank() && text.trim().length <= 120) { "Invalid word text" }
         require(difficulty in 1..5) { "Invalid difficulty: $difficulty" }
         if (category != null) {
@@ -34,6 +40,12 @@ object PackValidator {
             require(tabooStems.size <= 10) { "Too many taboo stems" }
             tabooStems.forEach { stem ->
                 require(stem.isNotBlank() && stem.length <= 32) { "Invalid taboo stem" }
+            }
+        }
+        if (wordClasses != null) {
+            require(wordClasses.size <= 10) { "Too many word classes" }
+            wordClasses.forEach { cls ->
+                require(cls.isNotBlank() && cls.trim().length <= 32) { "Invalid word class" }
             }
         }
     }
