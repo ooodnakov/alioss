@@ -14,15 +14,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -63,6 +64,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.example.alias.ui.AppScaffold
+import com.example.alias.ui.CountdownOverlay
 import com.example.alias.ui.HistoryScreen
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.FilledTonalButton
@@ -95,6 +97,7 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.ScreenRotation
 import androidx.compose.material.icons.filled.ScreenLockPortrait
 import androidx.compose.material.icons.filled.ScreenLockLandscape
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
@@ -105,6 +108,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.text.KeyboardOptions
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import com.example.alias.ui.WordCard
 import com.example.alias.ui.WordCardAction
@@ -114,9 +119,13 @@ import com.example.alias.data.db.DeckEntity
 import androidx.compose.ui.platform.LocalUriHandler
 import com.google.accompanist.placeholder.material3.placeholder
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.text.font.FontWeight
+
+private val LARGE_BUTTON_HEIGHT = 80.dp
 private const val MIN_TEAMS = SettingsRepository.MIN_TEAMS
 private const val MAX_TEAMS = SettingsRepository.MAX_TEAMS
 private const val HISTORY_LIMIT = 50
+private const val PRE_TURN_COUNTDOWN_SECONDS = 3
 
 
 
@@ -450,13 +459,32 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
     when (val s = state) {
         GameState.Idle -> Text(stringResource(R.string.idle))
         is GameState.TurnPending -> {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(stringResource(R.string.team_label, s.team))
-                Button(onClick = { vm.startTurn() }) { Text(stringResource(R.string.start_turn)) }
+
+            val countdownState = rememberCountdownState(scope)
+            DisposableEffect(Unit) {
+                onDispose { countdownState.cancel() }
+            }
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(stringResource(R.string.team_label, s.team))
+                    Button(
+                        onClick = {
+                            if (!countdownState.isRunning) {
+                                countdownState.start(onFinished = vm::startTurn)
+                            }
+                        },
+                        enabled = !countdownState.isRunning
+                    ) { Text(stringResource(R.string.start_turn)) }
+                }
+                countdownState.value?.let { value ->
+                    CountdownOverlay(
+                        value = value,
+                        modifier = Modifier.matchParentSize()
+                    )
+                }
             }
         }
         is GameState.TurnActive -> {
@@ -623,12 +651,12 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                             Button(
                                 onClick = onCorrect,
                                 enabled = !isProcessing,
-                                modifier = Modifier.fillMaxWidth().height(80.dp)
+                                modifier = Modifier.fillMaxWidth().height(LARGE_BUTTON_HEIGHT)
                             ) { Icon(Icons.Filled.Check, contentDescription = null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.correct)) }
                             Button(
                                 onClick = onSkip,
                                 enabled = !isProcessing && s.skipsRemaining > 0,
-                                modifier = Modifier.fillMaxWidth().height(80.dp)
+                                modifier = Modifier.fillMaxWidth().height(LARGE_BUTTON_HEIGHT)
                             ) { Icon(Icons.Filled.Close, contentDescription = null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.skip)) }
                         }
                     } else {
@@ -681,6 +709,54 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
         }
     }
 }
+}
+
+@Composable
+private fun rememberCountdownState(scope: CoroutineScope): CountdownState {
+    return remember(scope) { CountdownState(scope) }
+}
+
+@Stable
+private class CountdownState(
+    private val coroutineScope: CoroutineScope
+) {
+    var value by mutableStateOf<Int?>(null)
+        private set
+
+    var isRunning by mutableStateOf(false)
+        private set
+
+    private var job: Job? = null
+
+    fun start(
+        durationSeconds: Int = PRE_TURN_COUNTDOWN_SECONDS,
+        onFinished: () -> Unit
+    ) {
+        if (isRunning) return
+        isRunning = true
+        job = coroutineScope.launch {
+            try {
+                for (value in durationSeconds downTo 1) {
+                    this@CountdownState.value = value
+                    kotlinx.coroutines.delay(1000)
+                }
+                onFinished()
+            } finally {
+                reset()
+            }
+        }
+    }
+
+    fun cancel() {
+        job?.cancel()
+        reset()
+    }
+
+    private fun reset() {
+        job = null
+        value = null
+        isRunning = false
+    }
 }
 
 @Composable
@@ -1207,8 +1283,37 @@ private fun Scoreboard(scores: Map<String, Int>) {
         val leaders = scores.filterValues { it == max }.keys
         scores.forEach { (team, score) ->
             val isLeader = leaders.contains(team)
-            val suffix = if (leaders.size > 1 && isLeader) stringResource(R.string.tie_suffix) else if (isLeader) " \u2190" else ""
-            Text("$team: $score$suffix")
+            val suffix = if (leaders.size > 1 && isLeader) stringResource(R.string.tie_suffix) else ""
+            val textStyle = if (isLeader) {
+                MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
+            } else {
+                MaterialTheme.typography.bodyMedium
+            }
+            val textColor = if (isLeader) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (isLeader) {
+                    Icon(
+                        imageVector = Icons.Filled.Star,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier
+                            .size(20.dp)
+                            .padding(end = 8.dp)
+                    )
+                } else {
+                    Spacer(modifier = Modifier.width(28.dp))
+                }
+                Text(
+                    text = "$team: $score$suffix",
+                    style = textStyle,
+                    color = textColor
+                )
+            }
         }
     }
 }
