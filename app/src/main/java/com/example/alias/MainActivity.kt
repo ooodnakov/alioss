@@ -13,15 +13,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -106,6 +107,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.text.KeyboardOptions
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import com.example.alias.ui.WordCard
 import com.example.alias.ui.WordCardAction
@@ -117,6 +120,7 @@ import com.google.accompanist.placeholder.material3.placeholder
 private const val MIN_TEAMS = SettingsRepository.MIN_TEAMS
 private const val MAX_TEAMS = SettingsRepository.MAX_TEAMS
 private const val HISTORY_LIMIT = 50
+private const val PRE_TURN_COUNTDOWN_SECONDS = 3
 
 
 
@@ -440,21 +444,9 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
     when (val s = state) {
         GameState.Idle -> Text(stringResource(R.string.idle))
         is GameState.TurnPending -> {
-            var countdownValue by remember { mutableStateOf<Int?>(null) }
-            var countdownTrigger by remember { mutableStateOf(0) }
-            var countdownInProgress by remember { mutableStateOf(false) }
-            LaunchedEffect(countdownTrigger) {
-                if (countdownTrigger == 0) return@LaunchedEffect
-                try {
-                    for (value in 3 downTo 1) {
-                        countdownValue = value
-                        kotlinx.coroutines.delay(1000)
-                    }
-                    vm.startTurn()
-                } finally {
-                    countdownValue = null
-                    countdownInProgress = false
-                }
+            val countdownState = rememberCountdownState(scope)
+            DisposableEffect(Unit) {
+                onDispose { countdownState.cancel() }
             }
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(
@@ -464,15 +456,14 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                     Text(stringResource(R.string.team_label, s.team))
                     Button(
                         onClick = {
-                            if (!countdownInProgress) {
-                                countdownInProgress = true
-                                countdownTrigger++
+                            if (!countdownState.isRunning) {
+                                countdownState.start(onFinished = vm::startTurn)
                             }
                         },
-                        enabled = !countdownInProgress
+                        enabled = !countdownState.isRunning
                     ) { Text(stringResource(R.string.start_turn)) }
                 }
-                countdownValue?.let { value ->
+                countdownState.value?.let { value ->
                     CountdownOverlay(
                         value = value,
                         modifier = Modifier.matchParentSize()
@@ -702,6 +693,54 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
         }
     }
 }
+}
+
+@Composable
+private fun rememberCountdownState(scope: CoroutineScope): CountdownState {
+    return remember(scope) { CountdownState(scope) }
+}
+
+@Stable
+private class CountdownState(
+    private val coroutineScope: CoroutineScope
+) {
+    var value by mutableStateOf<Int?>(null)
+        private set
+
+    var isRunning by mutableStateOf(false)
+        private set
+
+    private var job: Job? = null
+
+    fun start(
+        durationSeconds: Int = PRE_TURN_COUNTDOWN_SECONDS,
+        onFinished: () -> Unit
+    ) {
+        if (isRunning) return
+        isRunning = true
+        job = coroutineScope.launch {
+            try {
+                for (value in durationSeconds downTo 1) {
+                    this@CountdownState.value = value
+                    kotlinx.coroutines.delay(1000)
+                }
+                onFinished()
+            } finally {
+                reset()
+            }
+        }
+    }
+
+    fun cancel() {
+        job?.cancel()
+        reset()
+    }
+
+    private fun reset() {
+        job = null
+        value = null
+        isRunning = false
+    }
 }
 
 @Composable
