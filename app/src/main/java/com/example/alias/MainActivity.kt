@@ -275,9 +275,7 @@ private fun HomeScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 horizontalAlignment = Alignment.Start
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    HomeLogo(size = 72.dp)
-                }
+                HomeLogo(size = 72.dp)
                 HomeActionCard(
                     icon = Icons.Filled.PlayArrow,
                     title = stringResource(R.string.quick_play),
@@ -376,7 +374,7 @@ private fun HomeLogo(size: Dp, modifier: Modifier = Modifier) {
         Box(contentAlignment = Alignment.Center) {
             Icon(
                 painter = painterResource(id = R.drawable.ic_launcher_foreground_asset),
-                contentDescription = null,
+                contentDescription = stringResource(R.string.app_name),
                 modifier = Modifier.fillMaxSize(0.6f)
             )
         }
