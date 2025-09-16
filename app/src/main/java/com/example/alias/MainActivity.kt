@@ -8,6 +8,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -103,7 +104,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.text.KeyboardOptions
 import kotlinx.coroutines.launch
 import com.example.alias.ui.WordCard
@@ -113,6 +113,7 @@ import com.example.alias.data.settings.SettingsRepository
 import com.example.alias.data.db.DeckEntity
 import androidx.compose.ui.platform.LocalUriHandler
 import com.google.accompanist.placeholder.material3.placeholder
+import androidx.compose.ui.unit.Dp
 private const val MIN_TEAMS = SettingsRepository.MIN_TEAMS
 private const val MAX_TEAMS = SettingsRepository.MAX_TEAMS
 private const val HISTORY_LIMIT = 50
@@ -275,8 +276,7 @@ private fun HomeScreen(
                 horizontalAlignment = Alignment.Start
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Image(painterResource(id = R.drawable.ic_launcher_foreground_asset), contentDescription = null, modifier = Modifier.size(48.dp))
-                    Text(text = stringResource(R.string.app_name), style = MaterialTheme.typography.displaySmall, color = colors.primary)
+                    HomeLogo(size = 72.dp)
                 }
                 HomeActionCard(
                     icon = Icons.Filled.PlayArrow,
@@ -327,12 +327,7 @@ private fun HomeScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // App title / branding
-            Image(painterResource(id = R.drawable.ic_launcher_foreground_asset), contentDescription = null, modifier = Modifier.size(56.dp))
-            Text(
-                text = stringResource(R.string.app_name),
-                style = MaterialTheme.typography.displaySmall,
-                color = colors.primary
-            )
+            HomeLogo(size = 96.dp)
             // Primary actions as sleek cards
             HomeActionCard(
                 icon = Icons.Filled.PlayArrow,
@@ -365,6 +360,24 @@ private fun HomeScreen(
                 onClick = onHistory,
                 containerColor = colors.tertiaryContainer,
                 contentColor = colors.onTertiaryContainer
+            )
+        }
+    }
+}
+
+@Composable
+private fun HomeLogo(size: Dp, modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier.size(size),
+        shape = CircleShape,
+        color = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.primary
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Icon(
+                painter = painterResource(id = R.drawable.ic_launcher_foreground_asset),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(0.6f)
             )
         }
     }
