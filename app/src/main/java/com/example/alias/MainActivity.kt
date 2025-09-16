@@ -909,40 +909,18 @@ private fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit)
                             Text(stringResource(R.string.apply_label))
                         }
                     }
-                    if (availableCategories.isNotEmpty()) {
-                        Text(stringResource(R.string.categories_label))
-                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            items(availableCategories) { cat ->
-                                val selected = selectedCats.contains(cat)
-                                FilterChip(
-                                    selected = selected,
-                                    onClick = {
-                                        selectedCats = selectedCats.toMutableSet().also {
-                                            if (selected) it.remove(cat) else it.add(cat)
-                                        }
-                                    },
-                                    label = { Text(cat) }
-                                )
-                            }
-                        }
-                    }
-                    if (availableWordClasses.isNotEmpty()) {
-                        Text(stringResource(R.string.word_classes_label))
-                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            items(availableWordClasses) { cls ->
-                                val selected = selectedClasses.contains(cls)
-                                FilterChip(
-                                    selected = selected,
-                                    onClick = {
-                                        selectedClasses = selectedClasses.toMutableSet().also {
-                                            if (selected) it.remove(cls) else it.add(cls)
-                                        }
-                                    },
-                                    label = { Text(cls) }
-                                )
-                            }
-                        }
-                    }
+                    FilterChipGroup(
+                        title = stringResource(R.string.categories_label),
+                        items = availableCategories,
+                        selectedItems = selectedCats,
+                        onSelectionChanged = { selectedCats = it }
+                    )
+                    FilterChipGroup(
+                        title = stringResource(R.string.word_classes_label),
+                        items = availableWordClasses,
+                        selectedItems = selectedClasses,
+                        onSelectionChanged = { selectedClasses = it }
+                    )
                     Text(stringResource(R.string.filters_hint))
                 }
             }
@@ -1026,6 +1004,30 @@ private fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit)
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun FilterChipGroup(
+    title: String,
+    items: List<String>,
+    selectedItems: Set<String>,
+    onSelectionChanged: (Set<String>) -> Unit,
+) {
+    if (items.isEmpty()) return
+    Text(title)
+    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        items(items) { item ->
+            val selected = selectedItems.contains(item)
+            FilterChip(
+                selected = selected,
+                onClick = {
+                    val updatedSelection = if (selected) selectedItems - item else selectedItems + item
+                    onSelectionChanged(updatedSelection)
+                },
+                label = { Text(item) }
+            )
         }
     }
 }
