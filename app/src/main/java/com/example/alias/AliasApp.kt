@@ -32,10 +32,11 @@ class AliasApp : Application() {
             val appLocales = AppCompatDelegate.getApplicationLocales()
             val defaultLocales = LocaleListCompat.getAdjustedDefault()
             val defaultTag = canonicalizeLanguageSetting(defaultLocales.toLanguageTags())
+            val canonicalAppTag = canonicalizeLanguageSetting(appLocales.toLanguageTags())
             val appTag = when {
                 appLocales.isEmpty -> "system"
-                canonicalizeLanguageSetting(appLocales.toLanguageTags()) == defaultTag -> "system"
-                else -> canonicalizeLanguageSetting(appLocales.toLanguageTags())
+                canonicalAppTag == defaultTag -> "system"
+                else -> canonicalAppTag
             }
 
             val tag = if (appTag != "system") appTag else stored
