@@ -113,6 +113,8 @@ import com.example.alias.data.settings.SettingsRepository
 import com.example.alias.data.db.DeckEntity
 import androidx.compose.ui.platform.LocalUriHandler
 import com.google.accompanist.placeholder.material3.placeholder
+
+private val LARGE_BUTTON_HEIGHT = 80.dp
 private const val MIN_TEAMS = SettingsRepository.MIN_TEAMS
 private const val MAX_TEAMS = SettingsRepository.MAX_TEAMS
 private const val HISTORY_LIMIT = 50
@@ -445,7 +447,17 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(stringResource(R.string.team_label, s.team))
-                Button(onClick = { vm.startTurn() }) { Text(stringResource(R.string.start_turn)) }
+                Button(
+                    onClick = { vm.startTurn() },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(LARGE_BUTTON_HEIGHT)
+                ) {
+                    Text(
+                        text = stringResource(R.string.start_turn),
+                        style = MaterialTheme.typography.headlineMedium
+                    )
+                }
             }
         }
         is GameState.TurnActive -> {
@@ -612,12 +624,12 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                             Button(
                                 onClick = onCorrect,
                                 enabled = !isProcessing,
-                                modifier = Modifier.fillMaxWidth().height(80.dp)
+                                modifier = Modifier.fillMaxWidth().height(LARGE_BUTTON_HEIGHT)
                             ) { Icon(Icons.Filled.Check, contentDescription = null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.correct)) }
                             Button(
                                 onClick = onSkip,
                                 enabled = !isProcessing && s.skipsRemaining > 0,
-                                modifier = Modifier.fillMaxWidth().height(80.dp)
+                                modifier = Modifier.fillMaxWidth().height(LARGE_BUTTON_HEIGHT)
                             ) { Icon(Icons.Filled.Close, contentDescription = null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.skip)) }
                         }
                     } else {
