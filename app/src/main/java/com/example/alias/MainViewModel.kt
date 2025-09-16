@@ -320,7 +320,7 @@ class MainViewModel @Inject constructor(
         settingsRepository.updateOneHandedLayout(oneHanded)
         settingsRepository.updateVerticalSwipes(verticalSwipes)
         settingsRepository.updateOrientation(orientation)
-        settingsRepository.updateUiLanguage(uiLanguage)
+        settingsRepository.updateUiLanguage(canonicalizeLocalePreference(uiLanguage))
         // Language validation may fail; keep others applied regardless
         val langResult = runCatching { settingsRepository.updateLanguagePreference(language) }
         if (langResult.isFailure) {

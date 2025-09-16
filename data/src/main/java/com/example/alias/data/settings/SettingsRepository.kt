@@ -1,6 +1,5 @@
 package com.example.alias.data.settings
 
-import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
@@ -11,7 +10,6 @@ import androidx.datastore.preferences.core.stringSetPreferencesKey
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.first
-import java.util.Locale
 
 private val DEFAULT_TEAMS = listOf("Red", "Blue")
 
@@ -170,8 +168,7 @@ class SettingsRepositoryImpl(
     }
 
     override suspend fun updateUiLanguage(language: String) {
-        val normalized = normalizeLanguageSetting(language)
-        dataStore.edit { it[Keys.UI_LANGUAGE] = normalized }
+        dataStore.edit { it[Keys.UI_LANGUAGE] = language }
     }
 
     override suspend fun updateDifficultyFilter(min: Int, max: Int) {
@@ -242,32 +239,4 @@ class SettingsRepositoryImpl(
         val SEEN_TUTORIAL = booleanPreferencesKey("seen_tutorial")
         val BUNDLED_DECK_HASHES = stringSetPreferencesKey("bundled_deck_hashes")
     }
-}
-
-private fun normalizeLanguageSetting(raw: String): String {
-    val trimmed = raw.trim()
-    if (trimmed.equals("system", ignoreCase = true) || trimmed.isEmpty()) {
-        return "system"
-    }
-
-    val tags = trimmed.split(',').map { it.trim() }.filter { it.isNotEmpty() }
-    if (tags.isEmpty()) {
-        return "system"
-    }
-
-    val canonical = tags.mapNotNull { token ->
-        val locale = Locale.forLanguageTag(token)
-        val language = locale.language
-        if (language.isNullOrEmpty()) {
-            null
-        } else {
-            locale.toLanguageTag()
-        }
-    }
-
-    if (canonical.isEmpty()) {
-        return "system"
-    }
-
-    return canonical.joinToString(separator = ",")
 }

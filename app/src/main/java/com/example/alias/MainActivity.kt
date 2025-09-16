@@ -39,8 +39,6 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
 import android.content.res.Configuration
-import androidx.appcompat.app.AppCompatDelegate
-import androidx.core.os.LocaleListCompat
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.zIndex
 import android.os.VibrationEffect
@@ -134,23 +132,7 @@ class MainActivity : ComponentActivity() {
                 val settings by vm.settings.collectAsState()
 
                 LaunchedEffect(settings.uiLanguage) {
-                    val locales = when (val tag = settings.uiLanguage) {
-                        "system" -> LocaleListCompat.getEmptyLocaleList()
-                        else -> {
-                            val parsed = LocaleListCompat.forLanguageTags(tag)
-                            if (parsed.isEmpty) LocaleListCompat.getEmptyLocaleList() else parsed
-                        }
-                    }
-                    val appLocales = AppCompatDelegate.getApplicationLocales()
-                    if (appLocales != locales) {
-                        AppCompatDelegate.setApplicationLocales(locales)
-                        val newLocale = if (locales.isEmpty) {
-                            LocaleListCompat.getAdjustedDefault().get(0)
-                        } else {
-                            locales.get(0)
-                        }
-                        newLocale?.let(Locale::setDefault)
-                    }
+                    applyLocalePreference(settings.uiLanguage)
                 }
 
                 // Collect general UI events and show snackbars
