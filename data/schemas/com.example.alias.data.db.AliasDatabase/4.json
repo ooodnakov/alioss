@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 4,
-    "identityHash": "fe09c224670300ff774f427db5060acf",
+    "identityHash": "c1810e0c52eb11ae1fd86bf7ed13e714",
     "entities": [
       {
         "tableName": "decks",
@@ -136,14 +136,14 @@
             "createSql": "CREATE INDEX IF NOT EXISTS `index_words_deckId` ON `${TABLE_NAME}` (`deckId`)"
           },
           {
-            "name": "index_words_language_isNSFW",
+            "name": "index_words_language_deckId",
             "unique": false,
             "columnNames": [
               "language",
-              "isNSFW"
+              "deckId"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_words_language_isNSFW` ON `${TABLE_NAME}` (`language`, `isNSFW`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_words_language_deckId` ON `${TABLE_NAME}` (`language`, `deckId`)"
           }
         ],
         "foreignKeys": [
@@ -208,7 +208,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'fe09c224670300ff774f427db5060acf')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'c1810e0c52eb11ae1fd86bf7ed13e714')"
     ]
   }
 }
