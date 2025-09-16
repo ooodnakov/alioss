@@ -38,4 +38,17 @@ fun applyLocalePreference(tag: String) {
     effectiveList.firstOrNull()?.let(Locale::setDefault)
 }
 
+fun resolveInitialLocalePreference(stored: String): String {
+    val appLocales = AppCompatDelegate.getApplicationLocales()
+    val defaultLocales = LocaleListCompat.getAdjustedDefault()
+    val defaultTag = canonicalizeLocalePreference(defaultLocales.toLanguageTags())
+    val canonicalAppTag = canonicalizeLocalePreference(appLocales.toLanguageTags())
+    val appTag = when {
+        appLocales.isEmpty -> "system"
+        canonicalAppTag == defaultTag -> "system"
+        else -> canonicalAppTag
+    }
+    return if (appTag != "system") appTag else stored
+}
+
 private fun LocaleListCompat.firstOrNull(): Locale? = if (size() > 0) get(0) else null
