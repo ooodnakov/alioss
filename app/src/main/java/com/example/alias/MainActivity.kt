@@ -62,6 +62,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.example.alias.ui.AppScaffold
+import com.example.alias.ui.CountdownOverlay
 import com.example.alias.ui.HistoryScreen
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.FilledTonalButton
@@ -439,13 +440,44 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
     when (val s = state) {
         GameState.Idle -> Text(stringResource(R.string.idle))
         is GameState.TurnPending -> {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(stringResource(R.string.team_label, s.team))
-                Button(onClick = { vm.startTurn() }) { Text(stringResource(R.string.start_turn)) }
+            var countdownValue by remember { mutableStateOf<Int?>(null) }
+            var countdownTrigger by remember { mutableStateOf(0) }
+            var countdownInProgress by remember { mutableStateOf(false) }
+            LaunchedEffect(countdownTrigger) {
+                if (countdownTrigger == 0) return@LaunchedEffect
+                try {
+                    for (value in 3 downTo 1) {
+                        countdownValue = value
+                        kotlinx.coroutines.delay(1000)
+                    }
+                    vm.startTurn()
+                } finally {
+                    countdownValue = null
+                    countdownInProgress = false
+                }
+            }
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(stringResource(R.string.team_label, s.team))
+                    Button(
+                        onClick = {
+                            if (!countdownInProgress) {
+                                countdownInProgress = true
+                                countdownTrigger++
+                            }
+                        },
+                        enabled = !countdownInProgress
+                    ) { Text(stringResource(R.string.start_turn)) }
+                }
+                countdownValue?.let { value ->
+                    CountdownOverlay(
+                        value = value,
+                        modifier = Modifier.matchParentSize()
+                    )
+                }
             }
         }
         is GameState.TurnActive -> {
