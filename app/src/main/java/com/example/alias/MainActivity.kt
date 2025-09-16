@@ -1198,7 +1198,7 @@ private fun Scoreboard(scores: Map<String, Int>) {
         val leaders = scores.filterValues { it == max }.keys
         scores.forEach { (team, score) ->
             val isLeader = leaders.contains(team)
-            val suffix = if (leaders.size > 1 && isLeader) stringResource(R.string.tie_suffix) else if (isLeader) " \u2190" else ""
+            val suffix = if (leaders.size > 1 && isLeader) stringResource(R.string.tie_suffix) else ""
             val textStyle = if (isLeader) {
                 MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
             } else {
@@ -1211,15 +1211,18 @@ private fun Scoreboard(scores: Map<String, Int>) {
                     .padding(vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = Icons.Filled.Star,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier
-                        .padding(end = 8.dp)
-                        .size(20.dp)
-                        .alpha(if (isLeader) 1f else 0f)
-                )
+                if (isLeader) {
+                    Icon(
+                        imageVector = Icons.Filled.Star,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier
+                            .size(20.dp)
+                            .padding(end = 8.dp)
+                    )
+                } else {
+                    Spacer(modifier = Modifier.width(28.dp))
+                }
                 Text(
                     text = "$team: $score$suffix",
                     style = textStyle,
