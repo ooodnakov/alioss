@@ -132,16 +132,22 @@ class MainActivity : ComponentActivity() {
                 val settings by vm.settings.collectAsState()
 
                 LaunchedEffect(settings.uiLanguage) {
-                    val locales = when (settings.uiLanguage) {
+                    val locales = when (val tag = settings.uiLanguage) {
                         "system" -> LocaleListCompat.getEmptyLocaleList()
-                        else -> LocaleListCompat.forLanguageTags(settings.uiLanguage)
+                        else -> {
+                            val parsed = LocaleListCompat.forLanguageTags(tag)
+                            if (parsed.isEmpty) LocaleListCompat.getEmptyLocaleList() else parsed
+                        }
                     }
-                    if (AppCompatDelegate.getApplicationLocales() != locales) {
+                    val appLocales = AppCompatDelegate.getApplicationLocales()
+                    if (appLocales != locales) {
                         AppCompatDelegate.setApplicationLocales(locales)
-                        val newLocale =
-                            if (locales.isEmpty) LocaleListCompat.getAdjustedDefault()[0]
-                            else locales[0]
-                        newLocale?.let { Locale.setDefault(it) }
+                        val newLocale = if (locales.isEmpty) {
+                            LocaleListCompat.getAdjustedDefault().get(0)
+                        } else {
+                            locales.get(0)
+                        }
+                        newLocale?.let(Locale::setDefault)
                     }
                 }
 
@@ -940,19 +946,20 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () ->
                         Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text(stringResource(R.string.language_and_content), style = MaterialTheme.typography.titleMedium)
                     Text(stringResource(R.string.ui_language_label))
+                    val selectedLanguage = remember(uiLang) { resolveUiLanguageSelection(uiLang) }
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         FilterChip(
-                            selected = uiLang == "system",
+                            selected = selectedLanguage == "system",
                             onClick = { uiLang = "system" },
                             label = { Text(stringResource(R.string.system_default_label)) }
                         )
                         FilterChip(
-                            selected = uiLang == "en",
+                            selected = selectedLanguage == "en",
                             onClick = { uiLang = "en" },
                             label = { Text(stringResource(R.string.english_label)) }
                         )
                         FilterChip(
-                            selected = uiLang == "ru",
+                            selected = selectedLanguage == "ru",
                             onClick = { uiLang = "ru" },
                             label = { Text(stringResource(R.string.russian_label)) }
                         )
@@ -1200,4 +1207,17 @@ private fun Scoreboard(scores: Map<String, Int>) {
             Text("$team: $score$suffix")
         }
     }
+}
+
+private fun resolveUiLanguageSelection(raw: String): String {
+    if (raw.equals("system", ignoreCase = true) || raw.isBlank()) {
+        return "system"
+    }
+    val firstTag = raw.split(',').firstOrNull()?.trim().orEmpty()
+    if (firstTag.isEmpty()) {
+        return raw
+    }
+    val locale = Locale.forLanguageTag(firstTag)
+    val language = locale.language
+    return if (language.isNullOrEmpty()) raw else language
 }
