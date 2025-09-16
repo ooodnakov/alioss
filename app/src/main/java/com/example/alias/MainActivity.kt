@@ -6,6 +6,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -220,7 +222,7 @@ class MainActivity : ComponentActivity() {
                         val deck = decks.find { it.id == id }
                         if (deck == null) {
                             AppScaffold(
-                                title = "Deck",
+                                title = stringResource(R.string.title_deck),
                                 onBack = { nav.popBackStack() },
                                 snackbarHostState = snack
                             ) {
@@ -868,6 +870,7 @@ private fun DeckDetailScreen(vm: MainViewModel, deck: DeckEntity) {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () -> Unit) {
     val s by vm.settings.collectAsState()
@@ -916,7 +919,7 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () ->
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        item { Text("Settings", style = MaterialTheme.typography.headlineSmall) }
+        item { Text(stringResource(R.string.title_settings), style = MaterialTheme.typography.headlineSmall) }
         item {
             ElevatedCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -947,7 +950,11 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () ->
                             Text(stringResource(R.string.language_and_content), style = MaterialTheme.typography.titleMedium)
                     Text(stringResource(R.string.ui_language_label))
                     val selectedLanguage = remember(uiLang) { resolveUiLanguageSelection(uiLang) }
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
                         FilterChip(
                             selected = selectedLanguage == "system",
                             onClick = { uiLang = "system" },
@@ -994,8 +1001,12 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () ->
                     }
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(stringResource(R.string.orientation_label))
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            val current = orientation
+                        val current = orientation
+                        FlowRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
                             FilterChip(
                                 selected = current == "system",
                                 onClick = { orientation = "system"; vm.setOrientation("system") },
@@ -1028,13 +1039,13 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () ->
                             OutlinedTextField(
                                 value = name,
                                 onValueChange = { new -> teams = teams.toMutableList().also { it[index] = new } },
-                                label = { Text("Team ${index + 1}") },
+                                label = { Text(stringResource(R.string.team_default_name, index + 1)) },
                                 modifier = Modifier.weight(1f)
                             )
                             IconButton(
                                 onClick = { teams = teams.toMutableList().also { it.removeAt(index) } },
                                 enabled = teams.size > MIN_TEAMS
-                            ) { Icon(Icons.Filled.Delete, contentDescription = "Remove team") }
+                            ) { Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.remove_team)) }
                         }
                         if (index < teams.lastIndex) HorizontalDivider()
                     }
