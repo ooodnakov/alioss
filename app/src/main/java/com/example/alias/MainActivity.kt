@@ -399,8 +399,13 @@ private fun HomeActionCard(
     containerColor: Color,
     contentColor: Color,
 ) {
+    val context = LocalContext.current
+    val vibrator = remember { context.getSystemService(android.os.Vibrator::class.java) }
     ElevatedCard(
-        onClick = onClick,
+        onClick = {
+            vibrator?.vibrate(android.os.VibrationEffect.createPredefined(android.os.VibrationEffect.EFFECT_CLICK))
+            onClick()
+        },
         colors = CardDefaults.elevatedCardColors(
             containerColor = containerColor,
             contentColor = contentColor
@@ -459,30 +464,73 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
     when (val s = state) {
         GameState.Idle -> Text(stringResource(R.string.idle))
         is GameState.TurnPending -> {
-
             val countdownState = rememberCountdownState(scope)
             DisposableEffect(Unit) {
                 onDispose { countdownState.cancel() }
             }
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
-                    horizontalAlignment = Alignment.CenterHorizontally
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                // Padded content box (lower z-index)
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(24.dp)
+                        .zIndex(0f),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text(stringResource(R.string.team_label, s.team))
-                    Button(
-                        onClick = {
-                            if (!countdownState.isRunning) {
-                                countdownState.start(onFinished = vm::startTurn)
+                    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                        Column(
+                            modifier = Modifier
+                                .padding(horizontal = 24.dp, vertical = 32.dp)
+                                .fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = stringResource(R.string.next_team),
+                                style = MaterialTheme.typography.titleLarge,
+                                textAlign = TextAlign.Center,
+                            )
+                            Text(
+                                text = s.team,
+                                style = MaterialTheme.typography.headlineLarge,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center,
+                            )
+                            Spacer(Modifier.height(16.dp))
+                            Button(
+                                onClick = {
+                                    if (settings.hapticsEnabled) {
+                                        val effect = VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK)
+                                        vibrator?.vibrate(effect)
+                                    }
+                                    if (!countdownState.isRunning) {
+                                        countdownState.start(onFinished = vm::startTurn)
+                                    }
+                                },
+                                enabled = !countdownState.isRunning,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(LARGE_BUTTON_HEIGHT)
+                            ) {
+                                Icon(Icons.Filled.PlayArrow, contentDescription = null)
+                                Spacer(Modifier.width(8.dp))
+                                Text(stringResource(R.string.start_turn), style = MaterialTheme.typography.titleMedium)
                             }
-                        },
-                        enabled = !countdownState.isRunning
-                    ) { Text(stringResource(R.string.start_turn)) }
+                        }
+                    }
                 }
+
+                // Full-screen overlay on top (higher z-index)
                 countdownState.value?.let { value ->
                     CountdownOverlay(
                         value = value,
-                        modifier = Modifier.matchParentSize()
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .zIndex(1f)
                     )
                 }
             }
@@ -597,12 +645,20 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                             Controls()
                             val onCorrect = {
+                                if (settings.hapticsEnabled) {
+                                    val effect = VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK)
+                                    vibrator?.vibrate(effect)
+                                }
                                 if (!isProcessing) {
                                     isProcessing = true
                                     scope.launch { engine.correct() }
                                 }
                             }
                             val onSkip = {
+                                if (settings.hapticsEnabled) {
+                                    val effect = VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK)
+                                    vibrator?.vibrate(effect)
+                                }
                                 if (!isProcessing) {
                                     if (s.skipsRemaining > 0) {
                                         isProcessing = true
@@ -632,12 +688,20 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                     CardStack()
                     if (settings.oneHandedLayout) {
                         val onCorrect = {
+                            if (settings.hapticsEnabled) {
+                                val effect = VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK)
+                                vibrator?.vibrate(effect)
+                            }
                             if (!isProcessing) {
                                 isProcessing = true
                                 scope.launch { engine.correct() }
                             }
                         }
                         val onSkip = {
+                            if (settings.hapticsEnabled) {
+                                val effect = VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK)
+                                vibrator?.vibrate(effect)
+                            }
                             if (!isProcessing) {
                                 if (s.skipsRemaining > 0) {
                                     isProcessing = true
@@ -661,12 +725,20 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                         }
                     } else {
                         val onCorrect = {
+                            if (settings.hapticsEnabled) {
+                                val effect = VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK)
+                                vibrator?.vibrate(effect)
+                            }
                             if (!isProcessing) {
                                 isProcessing = true
                                 scope.launch { engine.correct() }
                             }
                         }
                         val onSkip = {
+                            if (settings.hapticsEnabled) {
+                                val effect = VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK)
+                                vibrator?.vibrate(effect)
+                            }
                             if (!isProcessing) {
                                 if (s.skipsRemaining > 0) {
                                     isProcessing = true
@@ -678,18 +750,25 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                         }
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                             Button(
-                                onClick = onCorrect,
-                                enabled = !isProcessing,
-                                modifier = Modifier.weight(1f).height(60.dp)
-                            ) { Icon(Icons.Filled.Check, contentDescription = null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.correct)) }
-                            Button(
                                 onClick = onSkip,
                                 enabled = !isProcessing && s.skipsRemaining > 0,
                                 modifier = Modifier.weight(1f).height(60.dp)
                             ) { Icon(Icons.Filled.Close, contentDescription = null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.skip)) }
+                            Button(
+                                onClick = onCorrect,
+                                enabled = !isProcessing,
+                                modifier = Modifier.weight(1f).height(60.dp)
+                            ) { Icon(Icons.Filled.Check, contentDescription = null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.correct)) }
+                            
                         }
                     }
-                    Button(onClick = { vm.restartMatch() }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.restart_match)) }
+                    Button(onClick = {
+                        if (settings.hapticsEnabled) {
+                            val effect = VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK)
+                            vibrator?.vibrate(effect)
+                        }
+                        vm.restartMatch()
+                    }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.restart_match)) }
                 }
             }
         }
@@ -705,7 +784,13 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                 Text("🎉 Match over 🎉", style = MaterialTheme.typography.headlineSmall)
                 Scoreboard(s.scores)
                 Text(stringResource(R.string.start_new_match))
-                Button(onClick = { vm.restartMatch() }) { Text(stringResource(R.string.restart_match)) }
+                Button(onClick = {
+                    if (settings.hapticsEnabled) {
+                        val effect = VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK)
+                        vibrator?.vibrate(effect)
+                    }
+                    vm.restartMatch()
+                }) { Text(stringResource(R.string.restart_match)) }
         }
     }
 }
