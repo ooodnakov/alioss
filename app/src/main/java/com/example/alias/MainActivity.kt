@@ -96,6 +96,7 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.ScreenRotation
 import androidx.compose.material.icons.filled.ScreenLockPortrait
 import androidx.compose.material.icons.filled.ScreenLockLandscape
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
@@ -117,6 +118,9 @@ import com.example.alias.data.settings.SettingsRepository
 import com.example.alias.data.db.DeckEntity
 import androidx.compose.ui.platform.LocalUriHandler
 import com.google.accompanist.placeholder.material3.placeholder
+import androidx.compose.ui.text.font.FontWeight
+
+private val LARGE_BUTTON_HEIGHT = 80.dp
 private const val MIN_TEAMS = SettingsRepository.MIN_TEAMS
 private const val MAX_TEAMS = SettingsRepository.MAX_TEAMS
 private const val HISTORY_LIMIT = 50
@@ -444,6 +448,7 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
     when (val s = state) {
         GameState.Idle -> Text(stringResource(R.string.idle))
         is GameState.TurnPending -> {
+
             val countdownState = rememberCountdownState(scope)
             DisposableEffect(Unit) {
                 onDispose { countdownState.cancel() }
@@ -635,12 +640,12 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                             Button(
                                 onClick = onCorrect,
                                 enabled = !isProcessing,
-                                modifier = Modifier.fillMaxWidth().height(80.dp)
+                                modifier = Modifier.fillMaxWidth().height(LARGE_BUTTON_HEIGHT)
                             ) { Icon(Icons.Filled.Check, contentDescription = null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.correct)) }
                             Button(
                                 onClick = onSkip,
                                 enabled = !isProcessing && s.skipsRemaining > 0,
-                                modifier = Modifier.fillMaxWidth().height(80.dp)
+                                modifier = Modifier.fillMaxWidth().height(LARGE_BUTTON_HEIGHT)
                             ) { Icon(Icons.Filled.Close, contentDescription = null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.skip)) }
                         }
                     } else {
@@ -1267,8 +1272,37 @@ private fun Scoreboard(scores: Map<String, Int>) {
         val leaders = scores.filterValues { it == max }.keys
         scores.forEach { (team, score) ->
             val isLeader = leaders.contains(team)
-            val suffix = if (leaders.size > 1 && isLeader) stringResource(R.string.tie_suffix) else if (isLeader) " \u2190" else ""
-            Text("$team: $score$suffix")
+            val suffix = if (leaders.size > 1 && isLeader) stringResource(R.string.tie_suffix) else ""
+            val textStyle = if (isLeader) {
+                MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
+            } else {
+                MaterialTheme.typography.bodyMedium
+            }
+            val textColor = if (isLeader) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (isLeader) {
+                    Icon(
+                        imageVector = Icons.Filled.Star,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier
+                            .size(20.dp)
+                            .padding(end = 8.dp)
+                    )
+                } else {
+                    Spacer(modifier = Modifier.width(28.dp))
+                }
+                Text(
+                    text = "$team: $score$suffix",
+                    style = textStyle,
+                    color = textColor
+                )
+            }
         }
     }
 }
