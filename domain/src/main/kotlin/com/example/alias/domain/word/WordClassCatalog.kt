@@ -31,26 +31,16 @@ object WordClassCatalog {
      * Filter [values] down to the allowed set while preserving the provided order.
      */
     fun filterAllowed(values: Iterable<String>): List<String> {
-        val seen = LinkedHashSet<String>()
-        values.forEach { value ->
-            val normalized = normalizeOrNull(value)
-            if (normalized != null) {
-                seen.add(normalized)
-            }
-        }
-        return seen.toList()
+        return values
+            .mapNotNull { normalizeOrNull(it) }
+            .distinct()
     }
 
     /**
      * Return the subset of [values] that is supported, ordered according to [allowed].
      */
     fun order(values: Collection<String>): List<String> {
-        if (values.isEmpty()) return emptyList()
         val normalizedSet = filterAllowed(values).toSet()
-        return if (normalizedSet.isEmpty()) {
-            emptyList()
-        } else {
-            allowed.filter { normalizedSet.contains(it) }
-        }
+        return allowed.filter { it in normalizedSet }
     }
 }

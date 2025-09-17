@@ -419,12 +419,11 @@ class MainViewModel @Inject constructor(
     val availableWordClasses: StateFlow<List<String>> = _availableWordClasses.asStateFlow()
 
     private fun parseClass(raw: String?): String? {
-        if (raw == null) return null
         return raw
-            .split(',')
-            .asSequence()
-            .mapNotNull { WordClassCatalog.normalizeOrNull(it) }
-            .firstOrNull()
+            ?.split(',')
+            ?.asSequence()
+            ?.mapNotNull { WordClassCatalog.normalizeOrNull(it) }
+            ?.firstOrNull()
     }
 
     fun resetLocalData(onDone: (() -> Unit)? = null) {

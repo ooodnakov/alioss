@@ -38,22 +38,14 @@ private data class WordDto(
     val tabooStems: List<String>? = null
 ) {
     fun resolvedWordClass(): String? {
-        val explicit = wordClass?.let {
-            WordClassCatalog.normalizeOrNull(it)
+        wordClass?.let {
+            return WordClassCatalog.normalizeOrNull(it)
                 ?: throw IllegalArgumentException("Unsupported word class: $it")
         }
-        if (explicit != null) {
-            return explicit
-        }
-        var normalizedFromLegacy: String? = null
-        legacyWordClasses?.let { classes ->
-            for (candidate in classes) {
-                normalizedFromLegacy = WordClassCatalog.normalizeOrNull(candidate)
-                    ?: throw IllegalArgumentException("Unsupported word class: $candidate")
-                break
-            }
-        }
-        return normalizedFromLegacy
+        return legacyWordClasses
+            ?.asSequence()
+            ?.mapNotNull { WordClassCatalog.normalizeOrNull(it) }
+            ?.firstOrNull()
     }
 }
 
