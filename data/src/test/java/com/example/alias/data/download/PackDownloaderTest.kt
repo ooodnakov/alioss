@@ -6,10 +6,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
-import okhttp3.tls.HandshakeCertificates
-import okhttp3.tls.HeldCertificate
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import okhttp3.tls.HandshakeCertificates
+import okhttp3.tls.HeldCertificate
 import org.junit.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertFailsWith
@@ -18,6 +18,7 @@ private class FakeSettingsRepo(origins: Set<String>) : SettingsRepository {
     private val flow = MutableStateFlow(
         Settings(trustedSources = origins)
     )
+
     override val settings: Flow<Settings> = flow
     override suspend fun updateRoundSeconds(value: Int) = Unit
     override suspend fun updateTargetWords(value: Int) = Unit
@@ -45,55 +46,88 @@ private class FakeSettingsRepo(origins: Set<String>) : SettingsRepository {
 }
 
 class PackDownloaderTest {
+
     @Test
     fun downloads_and_verifies_checksum() {
         runBlocking {
-        val body = "hello world".toByteArray()
-        // TLS scaffolding
-        val localhostCert = HeldCertificate.Builder().addSubjectAlternativeName("localhost").build()
-        val serverCerts = HandshakeCertificates.Builder().heldCertificate(localhostCert).build()
-        val clientCerts = HandshakeCertificates.Builder().addTrustedCertificate(localhostCert.certificate).build()
-        MockWebServer().use { server ->
-            server.useHttps(serverCerts.sslSocketFactory(), false)
-            server.start()
-            val buf1 = okio.Buffer().write(body)
-            server.enqueue(MockResponse().setResponseCode(200).setBody(buf1))
-            val client = OkHttpClient.Builder()
-                .sslSocketFactory(clientCerts.sslSocketFactory(), clientCerts.trustManager)
-                .build()
-            val host = "localhost:${'$'}{server.port}"
-            val downloader = PackDownloader(client, FakeSettingsRepo(setOf("https://${'$'}host", "localhost")))
-            val url = server.url("/pack.json").toString().replace("http://", "https://")
-            val expected = sha256Hex(body)
-            val bytes = downloader.download(url, expected)
-            assertContentEquals(body, bytes)
+            val body = "hello world".toByteArray()
+            // TLS scaffolding
+            val localhostCert = HeldCertificate.Builder().addSubjectAlternativeName("localhost").build()
+            val serverCerts = HandshakeCertificates.Builder().heldCertificate(localhostCert).build()
+            val clientCerts = HandshakeCertificates.Builder().addTrustedCertificate(localhostCert.certificate).build()
+            MockWebServer().use { server ->
+                server.useHttps(serverCerts.sslSocketFactory(), false)
+                server.start()
+                val buf1 = okio.Buffer().write(body)
+                server.enqueue(MockResponse().setResponseCode(200).setBody(buf1))
+                val client = OkHttpClient.Builder()
+                    .sslSocketFactory(clientCerts.sslSocketFactory(), clientCerts.trustManager)
+                    .build()
+                val host = "localhost:${server.port}"
+                val downloader = PackDownloader(client, FakeSettingsRepo(setOf("https://$host", "localhost")))
+                val url = server.url("/pack.json").toString().replace("http://", "https://")
+                val expected = sha256Hex(body)
+                val bytes = downloader.download(url, expected)
+                assertContentEquals(body, bytes)
+            }
         }
-    }
     }
 
     @Test
     fun rejects_wrong_checksum() {
         runBlocking {
-        val body = "content".toByteArray()
-        val localhostCert = HeldCertificate.Builder().addSubjectAlternativeName("localhost").build()
-        val serverCerts = HandshakeCertificates.Builder().heldCertificate(localhostCert).build()
-        val clientCerts = HandshakeCertificates.Builder().addTrustedCertificate(localhostCert.certificate).build()
-        MockWebServer().use { server ->
-            server.useHttps(serverCerts.sslSocketFactory(), false)
-            server.start()
-            val buf2 = okio.Buffer().write(body)
-            server.enqueue(MockResponse().setResponseCode(200).setBody(buf2))
-            val client = OkHttpClient.Builder()
-                .sslSocketFactory(clientCerts.sslSocketFactory(), clientCerts.trustManager)
-                .build()
-            val host = "localhost:${'$'}{server.port}"
-            val downloader = PackDownloader(client, FakeSettingsRepo(setOf("https://${'$'}host", "localhost")))
-            val url = server.url("/pack.json").toString().replace("http://", "https://")
-            assertFailsWith<IllegalArgumentException> {
-                downloader.download(url, "deadbeef")
+            val body = "content".toByteArray()
+            val localhostCert = HeldCertificate.Builder().addSubjectAlternativeName("localhost").build()
+            val serverCerts = HandshakeCertificates.Builder().heldCertificate(localhostCert).build()
+            val clientCerts = HandshakeCertificates.Builder().addTrustedCertificate(localhostCert.certificate).build()
+            MockWebServer().use { server ->
+                server.useHttps(serverCerts.sslSocketFactory(), false)
+                server.start()
+                val buf2 = okio.Buffer().write(body)
+                server.enqueue(MockResponse().setResponseCode(200).setBody(buf2))
+                val client = OkHttpClient.Builder()
+                    .sslSocketFactory(clientCerts.sslSocketFactory(), clientCerts.trustManager)
+                    .build()
+                val host = "localhost:${server.port}"
+                val downloader = PackDownloader(client, FakeSettingsRepo(setOf("https://$host", "localhost")))
+                val url = server.url("/pack.json").toString().replace("http://", "https://")
+                assertFailsWith<IllegalArgumentException> {
+                    downloader.download(url, "deadbeef")
+                }
             }
         }
     }
+
+    @Test
+    fun rejects_body_exceeding_max_bytes() {
+        runBlocking {
+            val maxBytes = 40L * 1024 * 1024
+            val buffer = okio.Buffer()
+            val chunk = ByteArray(8 * 1024)
+            var remaining = maxBytes + 1
+            while (remaining > 0) {
+                val toWrite = minOf(remaining, chunk.size.toLong()).toInt()
+                buffer.write(chunk, 0, toWrite)
+                remaining -= toWrite
+            }
+            val localhostCert = HeldCertificate.Builder().addSubjectAlternativeName("localhost").build()
+            val serverCerts = HandshakeCertificates.Builder().heldCertificate(localhostCert).build()
+            val clientCerts = HandshakeCertificates.Builder().addTrustedCertificate(localhostCert.certificate).build()
+            MockWebServer().use { server ->
+                server.useHttps(serverCerts.sslSocketFactory(), false)
+                server.start()
+                server.enqueue(MockResponse().setResponseCode(200).setBody(buffer))
+                val client = OkHttpClient.Builder()
+                    .sslSocketFactory(clientCerts.sslSocketFactory(), clientCerts.trustManager)
+                    .build()
+                val host = "localhost:${server.port}"
+                val downloader = PackDownloader(client, FakeSettingsRepo(setOf("https://$host", "localhost")))
+                val url = server.url("/overflow.bin").toString().replace("http://", "https://")
+                assertFailsWith<IllegalArgumentException> {
+                    downloader.download(url, null)
+                }
+            }
+        }
     }
 
     @Test

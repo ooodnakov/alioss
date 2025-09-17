@@ -55,15 +55,14 @@ class PackDownloader(
                 val out = ByteArrayOutputStream()
                 val digest = MessageDigest.getInstance("SHA-256")
                 var total = 0L
-                val buffer = okio.Buffer()
+                val chunk = ByteArray(8 * 1024)
                 while (true) {
-                    val read = source.read(buffer, 8 * 1024)
-                    if (read == -1L) break
-                    val bytes = buffer.readByteArray()
-                    total += bytes.size
+                    val read = source.read(chunk)
+                    if (read == -1) break
+                    total += read
                     require(total <= MAX_BYTES) { "File too large" }
-                    out.write(bytes)
-                    digest.update(bytes)
+                    out.write(chunk, 0, read)
+                    digest.update(chunk, 0, read)
                 }
                 val bytes = out.toByteArray()
                 if (expectedSha256 != null) {
