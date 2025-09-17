@@ -22,7 +22,7 @@ class DefaultGameEngine(
     private val _state = MutableStateFlow<GameState>(GameState.Idle)
     override val state: StateFlow<GameState> = _state.asStateFlow()
 
-    private var queue: MutableList<String> = mutableListOf()
+    private var queue: ArrayDeque<String> = ArrayDeque()
     private lateinit var config: MatchConfig
     private lateinit var teams: List<String>
     private val scores: MutableMap<String, Int> = mutableMapOf()
@@ -45,7 +45,7 @@ class DefaultGameEngine(
         mutex.withLock {
             this@DefaultGameEngine.config = config
             this@DefaultGameEngine.teams = teams
-            queue = words.shuffled(Random(seed)).toMutableList()
+            queue = ArrayDeque(words.shuffled(Random(seed)))
             scores.clear()
             teams.forEach { scores[it] = 0 }
             correctTotal = 0
