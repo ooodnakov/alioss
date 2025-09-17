@@ -30,11 +30,13 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.alias.R
 
 /**
  * Fullscreen countdown overlay with animated ticks and accessibility announcements.
@@ -54,6 +56,8 @@ fun CountdownOverlay(
     performHaptics: Boolean = true,
 ) {
     if (value == null || value <= 0) return
+
+    val announcement = stringResource(R.string.countdown_announcement, value)
 
     val haptics = LocalHapticFeedback.current
     LaunchedEffect(value) {
@@ -87,7 +91,7 @@ fun CountdownOverlay(
             )
             // Screen reader announces each tick.
             .semantics {
-                contentDescription = "Countdown: $value"
+                contentDescription = announcement
                 liveRegion = LiveRegionMode.Assertive
             },
         contentAlignment = Alignment.Center
