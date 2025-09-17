@@ -19,7 +19,7 @@ class PackParserTest {
                 "isNSFW": false
               },
               "words": [
-                { "text": "Director", "difficulty": 2, "category": "movies", "wordClasses": ["noun"] },
+                { "text": "Director", "difficulty": 2, "category": "movies", "wordClass": "NOUN" },
                 { "text": "Actor", "difficulty": 1, "wordClasses": ["noun", "person"] }
               ]
             }
@@ -28,7 +28,8 @@ class PackParserTest {
         val parsed = PackParser.fromJson(json)
         assertEquals("movies_en_v1", parsed.deck.id)
         assertEquals(2, parsed.words.size)
-        assertEquals(3, parsed.wordClasses.size)
+        assertEquals(2, parsed.wordClasses.size)
+        assertEquals(setOf("NOUN"), parsed.wordClasses.map { it.wordClass }.toSet())
     }
 
     @Test
@@ -63,7 +64,7 @@ class PackParserTest {
             {
               "format": "alias-deck@1",
               "deck": {"id": "x", "name": "X", "language": "en", "version": 1},
-              "words": [{"text": "Ok", "difficulty": 1, "wordClasses": [""]}]
+              "words": [{"text": "Ok", "difficulty": 1, "wordClass": ""}]
             }
         """.trimIndent()
 

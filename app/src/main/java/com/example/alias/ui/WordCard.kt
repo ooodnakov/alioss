@@ -5,9 +5,13 @@ import android.os.Vibrator
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -15,10 +19,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,15 +30,14 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.foundation.layout.offset
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.res.stringResource
 import com.example.alias.R
 import kotlinx.coroutines.launch
 import kotlin.math.abs
@@ -49,6 +52,7 @@ private const val SWIPE_AWAY_MULTIPLIER = 4
 
 // No-op helper removed; handled inline with a coroutine
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun WordCard(
     word: String,
@@ -62,6 +66,9 @@ fun WordCard(
     allowSkip: Boolean = true,
     verticalMode: Boolean = false,
     testTag: String? = null,
+    wordDifficulty: Int? = null,
+    wordCategory: String? = null,
+    wordClass: String? = null,
 ) {
     val animX = remember { Animatable(0f) }
     val animY = remember { Animatable(0f) }
@@ -91,6 +98,12 @@ fun WordCard(
     val distance = if (verticalMode) abs(currentY) else abs(currentX)
     val fraction = (distance / commitPx).coerceIn(0f, 1f)
     val scale = 1f + fraction * 0.05f
+
+    val metadataItems = buildList {
+        wordDifficulty?.let { add(stringResource(R.string.word_difficulty_value, it) to true) }
+        wordCategory?.takeIf { it.isNotBlank() }?.let { add(it to false) }
+        wordClass?.takeIf { it.isNotBlank() }?.let { add(it to false) }
+    }
 
     Surface(
         modifier = modifier
@@ -183,7 +196,9 @@ fun WordCard(
         shadowElevation = 10.dp
     ) {
         Box(
-            modifier = Modifier.fillMaxWidth().height(200.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp),
             contentAlignment = Alignment.Center
         ) {
             Text(
@@ -226,6 +241,51 @@ fun WordCard(
                         .alpha(if (currentX < 0f) fraction else 0f)
                 )
             }
+            if (metadataItems.isNotEmpty()) {
+                FlowRow(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    metadataItems.forEach { (text, highlighted) ->
+                        WordMetadataChip(text = text, highlighted = highlighted)
+                    }
+                }
+            }
         }
+    }
+}
+
+@Composable
+private fun WordMetadataChip(
+    text: String,
+    highlighted: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(50),
+        color = if (highlighted) {
+            MaterialTheme.colorScheme.primaryContainer
+        } else {
+            MaterialTheme.colorScheme.surfaceVariant
+        },
+        contentColor = if (highlighted) {
+            MaterialTheme.colorScheme.onPrimaryContainer
+        } else {
+            MaterialTheme.colorScheme.onSurfaceVariant
+        },
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelMedium,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+        )
     }
 }

@@ -75,6 +75,7 @@
     <string name="word_classes_label">Классы слов</string>
     <string name="min_difficulty_label">Мин. сложность</string>
     <string name="max_difficulty_label">Макс. сложность</string>
+    <string name="word_difficulty_value">Сложность %1$d</string>
     <string name="apply_label">Применить</string>
     <string name="filters_hint">Фильтры сработают в следующем матче (Перезапуск).</string>
     <string name="round_and_goals">Раунд и цели</string>

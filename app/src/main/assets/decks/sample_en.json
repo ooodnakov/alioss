@@ -7,8 +7,20 @@
     "isNSFW": false
   },
   "words": [
-    { "text": "Director", "difficulty": 1 },
-    { "text": "Producer", "difficulty": 1 },
-    { "text": "Actor", "difficulty": 1 }
+    {
+      "text": "Director",
+      "difficulty": 1,
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Producer",
+      "difficulty": 1,
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Actor",
+      "difficulty": 1,
+      "wordClass": "NOUN"
+    }
   ]
 }

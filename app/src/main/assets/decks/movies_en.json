@@ -5,40 +5,192 @@
     "name": "Movies (EN)",
     "language": "en",
     "version": 1,
-    "categories": ["movies"],
+    "categories": [
+      "movies"
+    ],
     "isNSFW": false
   },
   "words": [
-    {"text": "Director", "difficulty": 2, "category": "movies", "wordClasses": ["noun", "person"]},
-    {"text": "Actor", "difficulty": 1, "category": "movies", "wordClasses": ["noun", "person"]},
-    {"text": "Scene", "difficulty": 1, "category": "movies", "wordClasses": ["noun"]},
-    {"text": "Script", "difficulty": 2, "category": "movies", "wordClasses": ["noun", "object"]},
-    {"text": "Camera", "difficulty": 1, "category": "movies", "wordClasses": ["noun", "object"]},
-    {"text": "Studio", "difficulty": 2, "category": "movies", "wordClasses": ["noun", "place"]},
-    {"text": "Trailer", "difficulty": 1, "category": "movies", "wordClasses": ["noun", "media"]},
-    {"text": "Premiere", "difficulty": 2, "category": "movies", "wordClasses": ["noun", "event"]},
-    {"text": "Sequel", "difficulty": 2, "category": "movies", "wordClasses": ["noun", "media"]},
-    {"text": "Villain", "difficulty": 2, "category": "movies", "wordClasses": ["noun", "person"]},
-    {"text": "Hero", "difficulty": 1, "category": "movies", "wordClasses": ["noun", "person"]},
-    {"text": "Soundtrack", "difficulty": 2, "category": "movies", "wordClasses": ["noun", "media"]},
-    {"text": "Credits", "difficulty": 1, "category": "movies", "wordClasses": ["noun", "media"]},
-    {"text": "Ticket", "difficulty": 1, "category": "movies", "wordClasses": ["noun", "object"]},
-    {"text": "Popcorn", "difficulty": 1, "category": "movies", "wordClasses": ["noun", "food"]},
-    {"text": "Stunt", "difficulty": 2, "category": "movies", "wordClasses": ["noun", "action"]},
-    {"text": "Costume", "difficulty": 1, "category": "movies", "wordClasses": ["noun", "object"]},
-    {"text": "Make-up", "difficulty": 2, "category": "movies", "wordClasses": ["noun", "process"]},
-    {"text": "Animation", "difficulty": 2, "category": "movies", "wordClasses": ["noun", "media"]},
-    {"text": "Documentary", "difficulty": 2, "category": "movies", "wordClasses": ["noun", "media"]},
-    {"text": "Comedy", "difficulty": 1, "category": "movies", "wordClasses": ["noun", "genre"]},
-    {"text": "Drama", "difficulty": 1, "category": "movies", "wordClasses": ["noun", "genre"]},
-    {"text": "Thriller", "difficulty": 2, "category": "movies", "wordClasses": ["noun", "genre"]},
-    {"text": "Horror", "difficulty": 2, "category": "movies", "wordClasses": ["noun", "genre"]},
-    {"text": "Romance", "difficulty": 1, "category": "movies", "wordClasses": ["noun", "genre"]},
-    {"text": "Blockbuster", "difficulty": 2, "category": "movies", "wordClasses": ["noun", "media"]},
-    {"text": "Cameo", "difficulty": 2, "category": "movies", "wordClasses": ["noun", "appearance"]},
-    {"text": "Spoiler", "difficulty": 1, "category": "movies", "wordClasses": ["noun", "media"]},
-    {"text": "Trilogy", "difficulty": 2, "category": "movies", "wordClasses": ["noun", "media"]},
-    {"text": "Box office", "difficulty": 2, "category": "movies", "wordClasses": ["noun", "place"]}
+    {
+      "text": "Director",
+      "difficulty": 2,
+      "category": "movies",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Actor",
+      "difficulty": 1,
+      "category": "movies",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Scene",
+      "difficulty": 1,
+      "category": "movies",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Script",
+      "difficulty": 2,
+      "category": "movies",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Camera",
+      "difficulty": 1,
+      "category": "movies",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Studio",
+      "difficulty": 2,
+      "category": "movies",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Trailer",
+      "difficulty": 1,
+      "category": "movies",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Premiere",
+      "difficulty": 2,
+      "category": "movies",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Sequel",
+      "difficulty": 2,
+      "category": "movies",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Villain",
+      "difficulty": 2,
+      "category": "movies",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Hero",
+      "difficulty": 1,
+      "category": "movies",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Soundtrack",
+      "difficulty": 2,
+      "category": "movies",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Credits",
+      "difficulty": 1,
+      "category": "movies",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Ticket",
+      "difficulty": 1,
+      "category": "movies",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Popcorn",
+      "difficulty": 1,
+      "category": "movies",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Stunt",
+      "difficulty": 2,
+      "category": "movies",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Costume",
+      "difficulty": 1,
+      "category": "movies",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Make-up",
+      "difficulty": 2,
+      "category": "movies",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Animation",
+      "difficulty": 2,
+      "category": "movies",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Documentary",
+      "difficulty": 2,
+      "category": "movies",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Comedy",
+      "difficulty": 1,
+      "category": "movies",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Drama",
+      "difficulty": 1,
+      "category": "movies",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Thriller",
+      "difficulty": 2,
+      "category": "movies",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Horror",
+      "difficulty": 2,
+      "category": "movies",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Romance",
+      "difficulty": 1,
+      "category": "movies",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Blockbuster",
+      "difficulty": 2,
+      "category": "movies",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Cameo",
+      "difficulty": 2,
+      "category": "movies",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Spoiler",
+      "difficulty": 1,
+      "category": "movies",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Trilogy",
+      "difficulty": 2,
+      "category": "movies",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Box office",
+      "difficulty": 2,
+      "category": "movies",
+      "wordClass": "NOUN"
+    }
   ],
   "meta": {
     "license": "CC0-1.0",
@@ -46,4 +198,3 @@
     "stemsProvided": false
   }
 }
-

@@ -11,6 +11,7 @@ import com.example.alias.data.db.TurnHistoryEntity
 import com.example.alias.domain.DefaultGameEngine
 import com.example.alias.domain.GameEngine
 import com.example.alias.domain.MatchConfig
+import com.example.alias.domain.word.WordClassCatalog
 import com.example.alias.data.settings.SettingsRepository
 import com.example.alias.data.settings.Settings
 import com.example.alias.data.pack.PackParser
@@ -94,7 +95,7 @@ class MainViewModel @Inject constructor(
     private fun Settings.toWordQueryFilters(deckIdsOverride: Set<String>? = null): WordQueryFilters {
         val deckIds = (deckIdsOverride ?: enabledDeckIds).toList()
         val categories = selectedCategories.toList()
-        val classes = selectedWordClasses.toList()
+        val classes = WordClassCatalog.order(selectedWordClasses)
         return WordQueryFilters(
             deckIds = deckIds,
             language = languagePreference,
@@ -189,7 +190,7 @@ class MainViewModel @Inject constructor(
                     filters.wordClassFilterEnabled
                 )
                 val map = briefs.associateBy({ it.text }) {
-                    WordInfo(it.difficulty, it.category, parseClasses(it.classes))
+                    WordInfo(it.difficulty, it.category, parseClass(it.wordClass))
                 }
                 _wordInfo.value = map
             }
@@ -206,8 +207,8 @@ class MainViewModel @Inject constructor(
                 val filters = settingsRepository.settings.first().toWordQueryFilters()
                 val list = if (filters.deckIds.isEmpty()) emptyList() else wordDao.getAvailableWordClasses(
                     filters.deckIds, filters.language, filters.allowNSFW
-                ).sorted()
-                _availableWordClasses.value = list
+                )
+                _availableWordClasses.value = WordClassCatalog.order(list)
             }
             val e = DefaultGameEngine(words, viewModelScope)
             _engine.value = e
@@ -409,7 +410,7 @@ class MainViewModel @Inject constructor(
         _uiEvents.tryEmit(UiEvent(message = "Settings updated", actionLabel = "Dismiss"))
     }
 
-    data class WordInfo(val difficulty: Int, val category: String?, val classes: List<String>)
+    data class WordInfo(val difficulty: Int, val category: String?, val wordClass: String?)
     private val _wordInfo = MutableStateFlow<Map<String, WordInfo>>(emptyMap())
     val wordInfoByText: StateFlow<Map<String, WordInfo>> = _wordInfo.asStateFlow()
     private val _availableCategories = MutableStateFlow<List<String>>(emptyList())
@@ -417,12 +418,13 @@ class MainViewModel @Inject constructor(
     private val _availableWordClasses = MutableStateFlow<List<String>>(emptyList())
     val availableWordClasses: StateFlow<List<String>> = _availableWordClasses.asStateFlow()
 
-    private fun parseClasses(raw: String?): List<String> = raw
-        ?.split(',')
-        ?.map { it.trim() }
-        ?.filter { it.isNotEmpty() }
-        ?.distinct()
-        ?: emptyList()
+    private fun parseClass(raw: String?): String? {
+        return raw
+            ?.split(',')
+            ?.asSequence()
+            ?.mapNotNull { WordClassCatalog.normalizeOrNull(it) }
+            ?.firstOrNull()
+    }
 
     fun resetLocalData(onDone: (() -> Unit)? = null) {
         viewModelScope.launch {
@@ -469,7 +471,7 @@ class MainViewModel @Inject constructor(
                     filters.wordClassFilterEnabled
                 )
                 val map = briefs.associateBy({ it.text }) {
-                    WordInfo(it.difficulty, it.category, parseClasses(it.classes))
+                    WordInfo(it.difficulty, it.category, parseClass(it.wordClass))
                 }
                 _wordInfo.value = map
             }
@@ -484,8 +486,8 @@ class MainViewModel @Inject constructor(
             viewModelScope.launch(Dispatchers.IO) {
                 val list = if (filters.deckIds.isEmpty()) emptyList() else wordDao.getAvailableWordClasses(
                     filters.deckIds, filters.language, filters.allowNSFW
-                ).sorted()
-                _availableWordClasses.value = list
+                )
+                _availableWordClasses.value = WordClassCatalog.order(list)
             }
             val e = DefaultGameEngine(words, viewModelScope)
             _engine.value = e

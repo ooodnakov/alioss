@@ -24,10 +24,9 @@
 - Replace Accompanist system UI controller and manage system UI bars.
 - Show placeholder while loading game content.
 - Add sound effects for word Correct and Skip with toggle in Settings.
+- Add word metadata storage (difficulty, category, classes), display chips on the word card, and provide deck filters for categories and word classes.
 
 ## Backlog
-- Add word info to db, like, difficulty, category, and word classes. Display it on card and make filters in deck menu to filter words out
-  - Partially done: uses existing difficulty/category; added difficulty filter. Consider category and word-class filters next.
 - Bundled assets change detection: implemented; consider per-deck id tracking and pruning removed assets.
 - Room migrations: implement proper migrations for DB version upgrades; remove destructive fallback in production builds.
 - Localization: complete pass for any residual literals (e.g., minor labels) to `strings.xml`.

@@ -104,7 +104,7 @@ Planned (post-MVP, still offline): challenge/override, high-contrast theme, hapt
       "text": "Director",
       "difficulty": 2,
       "category": "movies",
-      "wordClasses": ["noun"],
+      "wordClass": "NOUN",
       "tabooStems": ["direct", "direction"]
     }
   ],
@@ -116,10 +116,13 @@ Planned (post-MVP, still offline): challenge/override, high-contrast theme, hapt
 }
 ```
 
+`wordClass` accepts the configurable short codes defined in
+`WordClassCatalog` (default: `ADJ`, `VERB`, `NOUN`).
+
 - CSV (lightweight)
 ```
-text,language,difficulty,category,wordClasses,isNSFW,tabooStems
-Director,en,2,movies,"noun",false,"direct;direction"
+text,language,difficulty,category,wordClass,isNSFW,tabooStems
+Director,en,2,movies,NOUN,false,"direct;direction"
 ```
 
 - ZIP (optional)

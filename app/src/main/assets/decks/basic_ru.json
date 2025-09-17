@@ -5,39 +5,186 @@
     "name": "Базовый (RU)",
     "language": "ru",
     "version": 1,
-    "categories": ["общие"],
+    "categories": [
+      "общие"
+    ],
     "isNSFW": false
   },
   "words": [
-    {"text": "Яблоко", "difficulty": 1, "category": "общие", "wordClasses": ["noun"]},
-    {"text": "Река", "difficulty": 1, "category": "общие", "wordClasses": ["noun"]},
-    {"text": "Гора", "difficulty": 1, "category": "общие", "wordClasses": ["noun"]},
-    {"text": "Учитель", "difficulty": 1, "category": "общие", "wordClasses": ["noun", "person"]},
-    {"text": "Велосипед", "difficulty": 1, "category": "общие", "wordClasses": ["noun"]},
-    {"text": "Компьютер", "difficulty": 2, "category": "общие", "wordClasses": ["noun"]},
-    {"text": "Библиотека", "difficulty": 2, "category": "общие", "wordClasses": ["noun", "place"]},
-    {"text": "Музыка", "difficulty": 1, "category": "общие", "wordClasses": ["noun"]},
-    {"text": "Картина", "difficulty": 2, "category": "общие", "wordClasses": ["noun"]},
-    {"text": "Футбол", "difficulty": 1, "category": "общие", "wordClasses": ["noun"]},
-    {"text": "Самолёт", "difficulty": 2, "category": "общие", "wordClasses": ["noun"]},
-    {"text": "Больница", "difficulty": 2, "category": "общие", "wordClasses": ["noun", "place"]},
-    {"text": "Сад", "difficulty": 1, "category": "общие", "wordClasses": ["noun", "place"]},
-    {"text": "Океан", "difficulty": 2, "category": "общие", "wordClasses": ["noun"]},
-    {"text": "Камера", "difficulty": 2, "category": "общие", "wordClasses": ["noun", "object"]},
-    {"text": "Газета", "difficulty": 2, "category": "общие", "wordClasses": ["noun", "object"]},
-    {"text": "Ресторан", "difficulty": 2, "category": "общие", "wordClasses": ["noun", "place"]},
-    {"text": "Бутерброд", "difficulty": 1, "category": "общие", "wordClasses": ["noun", "food"]},
-    {"text": "Шоколад", "difficulty": 1, "category": "общие", "wordClasses": ["noun", "food"]},
-    {"text": "Зонт", "difficulty": 1, "category": "общие", "wordClasses": ["noun", "object"]},
-    {"text": "Чемодан", "difficulty": 2, "category": "общие", "wordClasses": ["noun", "object"]},
-    {"text": "Зеркало", "difficulty": 1, "category": "общие", "wordClasses": ["noun", "object"]},
-    {"text": "Лестница", "difficulty": 2, "category": "общие", "wordClasses": ["noun", "object"]},
-    {"text": "Подушка", "difficulty": 1, "category": "общие", "wordClasses": ["noun", "object"]},
-    {"text": "Бутылка", "difficulty": 1, "category": "общие", "wordClasses": ["noun", "object"]},
-    {"text": "Свеча", "difficulty": 1, "category": "общие", "wordClasses": ["noun", "object"]},
-    {"text": "Мост", "difficulty": 2, "category": "общие", "wordClasses": ["noun", "place"]},
-    {"text": "Лес", "difficulty": 1, "category": "общие", "wordClasses": ["noun", "place"]},
-    {"text": "Остров", "difficulty": 2, "category": "общие", "wordClasses": ["noun", "place"]}
+    {
+      "text": "Яблоко",
+      "difficulty": 1,
+      "category": "общие",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Река",
+      "difficulty": 1,
+      "category": "общие",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Гора",
+      "difficulty": 1,
+      "category": "общие",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Учитель",
+      "difficulty": 1,
+      "category": "общие",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Велосипед",
+      "difficulty": 1,
+      "category": "общие",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Компьютер",
+      "difficulty": 2,
+      "category": "общие",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Библиотека",
+      "difficulty": 2,
+      "category": "общие",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Музыка",
+      "difficulty": 1,
+      "category": "общие",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Картина",
+      "difficulty": 2,
+      "category": "общие",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Футбол",
+      "difficulty": 1,
+      "category": "общие",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Самолёт",
+      "difficulty": 2,
+      "category": "общие",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Больница",
+      "difficulty": 2,
+      "category": "общие",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Сад",
+      "difficulty": 1,
+      "category": "общие",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Океан",
+      "difficulty": 2,
+      "category": "общие",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Камера",
+      "difficulty": 2,
+      "category": "общие",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Газета",
+      "difficulty": 2,
+      "category": "общие",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Ресторан",
+      "difficulty": 2,
+      "category": "общие",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Бутерброд",
+      "difficulty": 1,
+      "category": "общие",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Шоколад",
+      "difficulty": 1,
+      "category": "общие",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Зонт",
+      "difficulty": 1,
+      "category": "общие",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Чемодан",
+      "difficulty": 2,
+      "category": "общие",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Зеркало",
+      "difficulty": 1,
+      "category": "общие",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Лестница",
+      "difficulty": 2,
+      "category": "общие",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Подушка",
+      "difficulty": 1,
+      "category": "общие",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Бутылка",
+      "difficulty": 1,
+      "category": "общие",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Свеча",
+      "difficulty": 1,
+      "category": "общие",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Мост",
+      "difficulty": 2,
+      "category": "общие",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Лес",
+      "difficulty": 1,
+      "category": "общие",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Остров",
+      "difficulty": 2,
+      "category": "общие",
+      "wordClass": "NOUN"
+    }
   ],
   "meta": {
     "license": "CC0-1.0",
@@ -45,4 +192,3 @@
     "stemsProvided": false
   }
 }
-
