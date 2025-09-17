@@ -44,6 +44,7 @@ import android.content.res.Configuration
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.zIndex
 import android.os.VibrationEffect
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.example.alias.data.settings.Settings
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.lazy.LazyColumn
@@ -133,6 +134,7 @@ private const val PRE_TURN_COUNTDOWN_SECONDS = 3
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         setContent {
             AliasAppTheme {
