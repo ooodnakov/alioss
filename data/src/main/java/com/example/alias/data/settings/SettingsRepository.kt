@@ -7,9 +7,10 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
+import com.example.alias.domain.word.WordClassCatalog
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 
 private val DEFAULT_TEAMS = listOf("Red", "Blue")
 
@@ -105,7 +106,9 @@ class SettingsRepositoryImpl(
             maxDifficulty = p[Keys.MAX_DIFFICULTY] ?: 5,
             verticalSwipes = p[Keys.VERTICAL_SWIPES] ?: false,
             selectedCategories = p[Keys.CATEGORIES_FILTER] ?: emptySet(),
-            selectedWordClasses = p[Keys.WORD_CLASSES_FILTER] ?: emptySet(),
+            selectedWordClasses = WordClassCatalog.filterAllowed(
+                p[Keys.WORD_CLASSES_FILTER] ?: emptySet()
+            ).toSet(),
             orientation = p[Keys.ORIENTATION] ?: "system",
             trustedSources = p[Keys.TRUSTED_SOURCES] ?: emptySet(),
             seenTutorial = p[Keys.SEEN_TUTORIAL] ?: false,
@@ -189,7 +192,8 @@ class SettingsRepositoryImpl(
     }
 
     override suspend fun setWordClassesFilter(classes: Set<String>) {
-        dataStore.edit { it[Keys.WORD_CLASSES_FILTER] = classes }
+        val normalized = WordClassCatalog.filterAllowed(classes).toSet()
+        dataStore.edit { it[Keys.WORD_CLASSES_FILTER] = normalized }
     }
 
     override suspend fun setTeams(teams: List<String>) {

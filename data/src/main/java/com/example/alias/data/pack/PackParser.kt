@@ -1,8 +1,9 @@
 package com.example.alias.data.pack
 
 import com.example.alias.data.db.DeckEntity
-import com.example.alias.data.db.WordEntity
 import com.example.alias.data.db.WordClassEntity
+import com.example.alias.data.db.WordEntity
+import com.example.alias.domain.word.WordClassCatalog
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -31,10 +32,30 @@ private data class WordDto(
     val text: String,
     val difficulty: Int = 1,
     val category: String? = null,
-    @SerialName("wordClasses") val wordClasses: List<String>? = null,
+    @SerialName("wordClass") val wordClass: String? = null,
+    @SerialName("wordClasses") val legacyWordClasses: List<String>? = null,
     @SerialName("isNSFW") val isNsfw: Boolean = false,
     val tabooStems: List<String>? = null
-)
+) {
+    fun resolvedWordClass(): String? {
+        val explicit = wordClass?.let {
+            WordClassCatalog.normalizeOrNull(it)
+                ?: throw IllegalArgumentException("Unsupported word class: $it")
+        }
+        if (explicit != null) {
+            return explicit
+        }
+        var normalizedFromLegacy: String? = null
+        legacyWordClasses?.let { classes ->
+            for (candidate in classes) {
+                normalizedFromLegacy = WordClassCatalog.normalizeOrNull(candidate)
+                    ?: throw IllegalArgumentException("Unsupported word class: $candidate")
+                break
+            }
+        }
+        return normalizedFromLegacy
+    }
+}
 
 /** Result of parsing a pack: a [DeckEntity] and its [WordEntity] list. */
 data class ParsedPack(
@@ -71,12 +92,13 @@ object PackParser {
         val wordEntities = mutableListOf<WordEntity>()
         val classEntities = mutableListOf<WordClassEntity>()
         dto.words.forEach { word ->
+            val normalizedClass = word.resolvedWordClass()
             PackValidator.validateWord(
                 text = word.text,
                 difficulty = word.difficulty,
                 category = word.category,
                 tabooStems = word.tabooStems,
-                wordClasses = word.wordClasses
+                wordClass = normalizedClass
             )
             wordEntities += WordEntity(
                 deckId = dto.deck.id,
@@ -88,17 +110,13 @@ object PackParser {
                 tabooStems = word.tabooStems?.joinToString(";"),
                 isNSFW = word.isNsfw
             )
-            word.wordClasses
-                ?.map { it.trim() }
-                ?.filter { it.isNotEmpty() }
-                ?.distinct()
-                ?.forEach { cls ->
-                    classEntities += WordClassEntity(
-                        deckId = dto.deck.id,
-                        wordText = word.text,
-                        wordClass = cls
-                    )
-                }
+            normalizedClass?.let { cls ->
+                classEntities += WordClassEntity(
+                    deckId = dto.deck.id,
+                    wordText = word.text,
+                    wordClass = cls
+                )
+            }
         }
         return ParsedPack(deckEntity, wordEntities, classEntities)
     }

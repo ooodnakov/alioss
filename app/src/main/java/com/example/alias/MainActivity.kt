@@ -565,8 +565,11 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                 frozenNext = null
                 computedNext = engine.peekNextWord()
             }
+            val infoMap by vm.wordInfoByText.collectAsState()
             val CardStack: @Composable () -> Unit = {
                 val nextWord = frozenNext ?: computedNext
+                val nextMeta = nextWord?.let { infoMap[it] }
+                val currentMeta = infoMap[s.word]
                 Box(Modifier.fillMaxWidth().height(200.dp)) {
                     if (nextWord != null) {
                         WordCard(
@@ -583,6 +586,9 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                             animateAppear = false,
                             allowSkip = s.skipsRemaining > 0,
                             verticalMode = settings.verticalSwipes,
+                            wordDifficulty = nextMeta?.difficulty,
+                            wordCategory = nextMeta?.category,
+                            wordClass = nextMeta?.wordClass,
                         )
                     }
                     WordCard(
@@ -615,11 +621,12 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                         allowSkip = s.skipsRemaining > 0,
                         verticalMode = settings.verticalSwipes,
                         animateAppear = false,
+                        wordDifficulty = currentMeta?.difficulty,
+                        wordCategory = currentMeta?.category,
+                        wordClass = currentMeta?.wordClass,
                     )
                 }
             }
-
-            val infoMap by vm.wordInfoByText.collectAsState()
             val Controls: @Composable () -> Unit = {
                 Text("${s.timeRemaining}s", style = MaterialTheme.typography.headlineLarge, textAlign = TextAlign.Center)
                 Text(stringResource(R.string.team_label, s.team), style = MaterialTheme.typography.titleMedium)
@@ -627,16 +634,6 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                     AssistChip(onClick = {}, enabled = false, label = { Text(stringResource(R.string.remaining_label, s.remaining)) })
                     AssistChip(onClick = {}, enabled = false, label = { Text(pluralStringResource(R.plurals.score_label, s.score, s.score)) })
                     AssistChip(onClick = {}, enabled = false, label = { Text(pluralStringResource(R.plurals.skips_label, s.skipsRemaining, s.skipsRemaining)) })
-                    val meta = infoMap[s.word]
-                    if (meta != null) {
-                        AssistChip(onClick = {}, enabled = false, label = { Text("D${meta.difficulty}") })
-                        meta.category?.takeIf { it.isNotBlank() }?.let { cat ->
-                            AssistChip(onClick = {}, enabled = false, label = { Text(cat) })
-                        }
-                        meta.classes.forEach { cls ->
-                            AssistChip(onClick = {}, enabled = false, label = { Text(cls) })
-                        }
-                    }
                 }
                 Text(stringResource(R.string.summary_label, s.remaining, s.score, s.skipsRemaining))
             }

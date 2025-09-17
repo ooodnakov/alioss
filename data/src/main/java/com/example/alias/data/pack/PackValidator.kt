@@ -1,5 +1,7 @@
 package com.example.alias.data.pack
 
+import com.example.alias.domain.word.WordClassCatalog
+
 /**
  * Validates pack metadata and words to enforce basic constraints.
  */
@@ -29,7 +31,7 @@ object PackValidator {
         difficulty: Int,
         category: String?,
         tabooStems: List<String>?,
-        wordClasses: List<String>?,
+        wordClass: String?,
     ) {
         require(text.isNotBlank() && text.trim().length <= 120) { "Invalid word text" }
         require(difficulty in 1..5) { "Invalid difficulty: $difficulty" }
@@ -42,11 +44,9 @@ object PackValidator {
                 require(stem.isNotBlank() && stem.length <= 32) { "Invalid taboo stem" }
             }
         }
-        if (wordClasses != null) {
-            require(wordClasses.size <= 10) { "Too many word classes" }
-            wordClasses.forEach { cls ->
-                require(cls.isNotBlank() && cls.trim().length <= 32) { "Invalid word class" }
-            }
+        if (wordClass != null) {
+            val normalized = WordClassCatalog.normalizeOrNull(wordClass)
+            require(normalized != null) { "Unsupported word class: $wordClass" }
         }
     }
 }

@@ -31,7 +31,7 @@ interface WordDao {
             "AND (:hasCategories = 0 OR w.category IN (:categories)) " +
             "AND (:hasClasses = 0 OR EXISTS (" +
             "    SELECT 1 FROM word_classes wc " +
-            "    WHERE wc.deckId = w.deckId AND wc.wordText = w.text AND wc.wordClass IN (:classes)" +
+            "    WHERE wc.deckId = w.deckId AND wc.wordText = w.text AND UPPER(wc.wordClass) IN (:classes)" +
             "))"
     )
     suspend fun getWordTextsForDecks(
@@ -47,7 +47,7 @@ interface WordDao {
     ): List<String>
 
     @Query(
-        "SELECT w.text, w.difficulty, w.category, GROUP_CONCAT(DISTINCT wc.wordClass) AS classes " +
+        "SELECT w.text, w.difficulty, w.category, GROUP_CONCAT(DISTINCT UPPER(wc.wordClass)) AS wordClass " +
             "FROM words w " +
             "LEFT JOIN word_classes wc ON wc.deckId = w.deckId AND wc.wordText = w.text " +
             "WHERE w.deckId IN (:deckIds) " +
@@ -57,7 +57,7 @@ interface WordDao {
             "AND (:hasCategories = 0 OR w.category IN (:categories)) " +
             "AND (:hasClasses = 0 OR EXISTS (" +
             "    SELECT 1 FROM word_classes wc2 " +
-            "    WHERE wc2.deckId = w.deckId AND wc2.wordText = w.text AND wc2.wordClass IN (:classes)" +
+            "    WHERE wc2.deckId = w.deckId AND wc2.wordText = w.text AND UPPER(wc2.wordClass) IN (:classes)" +
             ")) " +
             "GROUP BY w.text, w.difficulty, w.category"
     )
@@ -87,7 +87,7 @@ interface WordDao {
     ): List<String>
 
     @Query(
-        "SELECT DISTINCT wc.wordClass FROM word_classes wc " +
+        "SELECT DISTINCT UPPER(wc.wordClass) FROM word_classes wc " +
             "JOIN words w ON w.deckId = wc.deckId AND w.text = wc.wordText " +
             "WHERE w.deckId IN (:deckIds) " +
             "AND w.language = :language " +
@@ -105,5 +105,5 @@ data class WordBrief(
     val text: String,
     val difficulty: Int,
     val category: String?,
-    val classes: String?,
+    val wordClass: String?,
 )

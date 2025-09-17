@@ -5,40 +5,192 @@
     "name": "General (EN)",
     "language": "en",
     "version": 1,
-    "categories": ["general"],
+    "categories": [
+      "general"
+    ],
     "isNSFW": false
   },
   "words": [
-    {"text": "Apple", "difficulty": 1, "category": "general", "wordClasses": ["noun"]},
-    {"text": "River", "difficulty": 1, "category": "general", "wordClasses": ["noun"]},
-    {"text": "Mountain", "difficulty": 1, "category": "general", "wordClasses": ["noun"]},
-    {"text": "Teacher", "difficulty": 1, "category": "general", "wordClasses": ["noun", "person"]},
-    {"text": "Bicycle", "difficulty": 1, "category": "general", "wordClasses": ["noun"]},
-    {"text": "Computer", "difficulty": 2, "category": "general", "wordClasses": ["noun"]},
-    {"text": "Library", "difficulty": 2, "category": "general", "wordClasses": ["noun", "place"]},
-    {"text": "Music", "difficulty": 1, "category": "general", "wordClasses": ["noun"]},
-    {"text": "Painting", "difficulty": 2, "category": "general", "wordClasses": ["noun"]},
-    {"text": "Football", "difficulty": 1, "category": "general", "wordClasses": ["noun"]},
-    {"text": "Airplane", "difficulty": 2, "category": "general", "wordClasses": ["noun"]},
-    {"text": "Hospital", "difficulty": 2, "category": "general", "wordClasses": ["noun", "place"]},
-    {"text": "Garden", "difficulty": 1, "category": "general", "wordClasses": ["noun", "place"]},
-    {"text": "Ocean", "difficulty": 2, "category": "general", "wordClasses": ["noun"]},
-    {"text": "Camera", "difficulty": 2, "category": "general", "wordClasses": ["noun", "object"]},
-    {"text": "Newspaper", "difficulty": 2, "category": "general", "wordClasses": ["noun", "object"]},
-    {"text": "Restaurant", "difficulty": 2, "category": "general", "wordClasses": ["noun", "place"]},
-    {"text": "Sandwich", "difficulty": 1, "category": "general", "wordClasses": ["noun", "food"]},
-    {"text": "Chocolate", "difficulty": 1, "category": "general", "wordClasses": ["noun", "food"]},
-    {"text": "Umbrella", "difficulty": 1, "category": "general", "wordClasses": ["noun", "object"]},
-    {"text": "Suitcase", "difficulty": 2, "category": "general", "wordClasses": ["noun", "object"]},
-    {"text": "Mirror", "difficulty": 1, "category": "general", "wordClasses": ["noun", "object"]},
-    {"text": "Ladder", "difficulty": 2, "category": "general", "wordClasses": ["noun", "object"]},
-    {"text": "Pillow", "difficulty": 1, "category": "general", "wordClasses": ["noun", "object"]},
-    {"text": "Bottle", "difficulty": 1, "category": "general", "wordClasses": ["noun", "object"]},
-    {"text": "Candle", "difficulty": 1, "category": "general", "wordClasses": ["noun", "object"]},
-    {"text": "Bridge", "difficulty": 2, "category": "general", "wordClasses": ["noun", "place"]},
-    {"text": "Forest", "difficulty": 1, "category": "general", "wordClasses": ["noun", "place"]},
-    {"text": "Island", "difficulty": 2, "category": "general", "wordClasses": ["noun", "place"]},
-    {"text": "Robot", "difficulty": 2, "category": "general", "wordClasses": ["noun", "object"]}
+    {
+      "text": "Apple",
+      "difficulty": 1,
+      "category": "general",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "River",
+      "difficulty": 1,
+      "category": "general",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Mountain",
+      "difficulty": 1,
+      "category": "general",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Teacher",
+      "difficulty": 1,
+      "category": "general",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Bicycle",
+      "difficulty": 1,
+      "category": "general",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Computer",
+      "difficulty": 2,
+      "category": "general",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Library",
+      "difficulty": 2,
+      "category": "general",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Music",
+      "difficulty": 1,
+      "category": "general",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Painting",
+      "difficulty": 2,
+      "category": "general",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Football",
+      "difficulty": 1,
+      "category": "general",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Airplane",
+      "difficulty": 2,
+      "category": "general",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Hospital",
+      "difficulty": 2,
+      "category": "general",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Garden",
+      "difficulty": 1,
+      "category": "general",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Ocean",
+      "difficulty": 2,
+      "category": "general",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Camera",
+      "difficulty": 2,
+      "category": "general",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Newspaper",
+      "difficulty": 2,
+      "category": "general",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Restaurant",
+      "difficulty": 2,
+      "category": "general",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Sandwich",
+      "difficulty": 1,
+      "category": "general",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Chocolate",
+      "difficulty": 1,
+      "category": "general",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Umbrella",
+      "difficulty": 1,
+      "category": "general",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Suitcase",
+      "difficulty": 2,
+      "category": "general",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Mirror",
+      "difficulty": 1,
+      "category": "general",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Ladder",
+      "difficulty": 2,
+      "category": "general",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Pillow",
+      "difficulty": 1,
+      "category": "general",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Bottle",
+      "difficulty": 1,
+      "category": "general",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Candle",
+      "difficulty": 1,
+      "category": "general",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Bridge",
+      "difficulty": 2,
+      "category": "general",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Forest",
+      "difficulty": 1,
+      "category": "general",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Island",
+      "difficulty": 2,
+      "category": "general",
+      "wordClass": "NOUN"
+    },
+    {
+      "text": "Robot",
+      "difficulty": 2,
+      "category": "general",
+      "wordClass": "NOUN"
+    }
   ],
   "meta": {
     "license": "CC0-1.0",
@@ -46,4 +198,3 @@
     "stemsProvided": false
   }
 }
-
