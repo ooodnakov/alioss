@@ -59,7 +59,7 @@ fun AppScaffold(
                             IconButton(onClick = onBack) {
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                    contentDescription = ""
+                                    contentDescription = stringResource(R.string.back)
                                 )
                             }
                         }
