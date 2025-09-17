@@ -630,7 +630,15 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                 }
             }
             val Controls: @Composable () -> Unit = {
-                Text("${s.timeRemaining}s", style = MaterialTheme.typography.headlineLarge, textAlign = TextAlign.Center)
+                Text(
+                    pluralStringResource(
+                        R.plurals.time_remaining_seconds,
+                        s.timeRemaining,
+                        s.timeRemaining
+                    ),
+                    style = MaterialTheme.typography.headlineLarge,
+                    textAlign = TextAlign.Center
+                )
                 Text(stringResource(R.string.team_label, s.team), style = MaterialTheme.typography.titleMedium)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     AssistChip(onClick = {}, enabled = false, label = { Text(stringResource(R.string.remaining_label, s.remaining)) })
