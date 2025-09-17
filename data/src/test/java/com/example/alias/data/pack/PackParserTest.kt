@@ -19,8 +19,8 @@ class PackParserTest {
                 "isNSFW": false
               },
               "words": [
-                { "text": "Director", "difficulty": 2, "category": "movies" },
-                { "text": "Actor", "difficulty": 1 }
+                { "text": "Director", "difficulty": 2, "category": "movies", "wordClasses": ["noun"] },
+                { "text": "Actor", "difficulty": 1, "wordClasses": ["noun", "person"] }
               ]
             }
         """.trimIndent()
@@ -28,6 +28,7 @@ class PackParserTest {
         val parsed = PackParser.fromJson(json)
         assertEquals("movies_en_v1", parsed.deck.id)
         assertEquals(2, parsed.words.size)
+        assertEquals(3, parsed.wordClasses.size)
     }
 
     @Test
@@ -50,6 +51,19 @@ class PackParserTest {
               "format": "alias-deck@2",
               "deck": {"id": "x", "name": "X", "language": "en", "version": 1},
               "words": [{"text": "Ok", "difficulty": 1}]
+            }
+        """.trimIndent()
+
+        assertFailsWith<IllegalArgumentException> { PackParser.fromJson(json) }
+    }
+
+    @Test
+    fun rejects_invalid_word_class() {
+        val json = """
+            {
+              "format": "alias-deck@1",
+              "deck": {"id": "x", "name": "X", "language": "en", "version": 1},
+              "words": [{"text": "Ok", "difficulty": 1, "wordClasses": [""]}]
             }
         """.trimIndent()
 

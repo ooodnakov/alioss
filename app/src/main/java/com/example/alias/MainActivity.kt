@@ -633,6 +633,9 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                         meta.category?.takeIf { it.isNotBlank() }?.let { cat ->
                             AssistChip(onClick = {}, enabled = false, label = { Text(cat) })
                         }
+                        meta.classes.forEach { cls ->
+                            AssistChip(onClick = {}, enabled = false, label = { Text(cls) })
+                        }
                     }
                 }
                 Text(stringResource(R.string.summary_label, s.remaining, s.score, s.skipsRemaining))
@@ -869,8 +872,10 @@ private fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit)
             ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(stringResource(R.string.filters_label), style = MaterialTheme.typography.titleMedium)
-                    val available by vm.availableCategories.collectAsState()
+                    val availableCategories by vm.availableCategories.collectAsState()
+                    val availableWordClasses by vm.availableWordClasses.collectAsState()
                     var selectedCats by rememberSaveable(settings) { mutableStateOf(settings.selectedCategories) }
+                    var selectedClasses by rememberSaveable(settings) { mutableStateOf(settings.selectedWordClasses) }
                     Row(
                         Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -899,24 +904,23 @@ private fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit)
                             val hi = maxDiff.toIntOrNull() ?: settings.maxDifficulty
                             vm.updateDifficultyFilter(lo, hi)
                             vm.updateCategoriesFilter(selectedCats)
+                            vm.updateWordClassesFilter(selectedClasses)
                         }) {
                             Text(stringResource(R.string.apply_label))
                         }
                     }
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        items(available) { cat ->
-                            val selected = selectedCats.contains(cat)
-                            FilterChip(
-                                selected = selected,
-                                onClick = {
-                                    selectedCats = selectedCats.toMutableSet().also {
-                                        if (selected) it.remove(cat) else it.add(cat)
-                                    }
-                                },
-                                label = { Text(cat) }
-                            )
-                        }
-                    }
+                    FilterChipGroup(
+                        title = stringResource(R.string.categories_label),
+                        items = availableCategories,
+                        selectedItems = selectedCats,
+                        onSelectionChanged = { selectedCats = it }
+                    )
+                    FilterChipGroup(
+                        title = stringResource(R.string.word_classes_label),
+                        items = availableWordClasses,
+                        selectedItems = selectedClasses,
+                        onSelectionChanged = { selectedClasses = it }
+                    )
                     Text(stringResource(R.string.filters_hint))
                 }
             }
@@ -1000,6 +1004,30 @@ private fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit)
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun FilterChipGroup(
+    title: String,
+    items: List<String>,
+    selectedItems: Set<String>,
+    onSelectionChanged: (Set<String>) -> Unit,
+) {
+    if (items.isEmpty()) return
+    Text(title)
+    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        items(items) { item ->
+            val selected = selectedItems.contains(item)
+            FilterChip(
+                selected = selected,
+                onClick = {
+                    val updatedSelection = if (selected) selectedItems - item else selectedItems + item
+                    onSelectionChanged(updatedSelection)
+                },
+                label = { Text(item) }
+            )
         }
     }
 }

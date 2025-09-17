@@ -79,6 +79,35 @@ class MainViewModel @Inject constructor(
     )
     val uiEvents: SharedFlow<UiEvent> = _uiEvents
 
+    private data class WordQueryFilters(
+        val deckIds: List<String>,
+        val language: String,
+        val allowNSFW: Boolean,
+        val minDifficulty: Int,
+        val maxDifficulty: Int,
+        val categories: List<String>,
+        val categoryFilterEnabled: Int,
+        val wordClasses: List<String>,
+        val wordClassFilterEnabled: Int,
+    )
+
+    private fun Settings.toWordQueryFilters(deckIdsOverride: Set<String>? = null): WordQueryFilters {
+        val deckIds = (deckIdsOverride ?: enabledDeckIds).toList()
+        val categories = selectedCategories.toList()
+        val classes = selectedWordClasses.toList()
+        return WordQueryFilters(
+            deckIds = deckIds,
+            language = languagePreference,
+            allowNSFW = allowNSFW,
+            minDifficulty = minDifficulty,
+            maxDifficulty = maxDifficulty,
+            categories = categories,
+            categoryFilterEnabled = if (categories.isEmpty()) 0 else 1,
+            wordClasses = classes,
+            wordClassFilterEnabled = if (classes.isEmpty()) 0 else 1,
+        )
+    }
+
     init {
         viewModelScope.launch {
             val words = withContext(Dispatchers.IO) {
@@ -107,6 +136,11 @@ class MainViewModel @Inject constructor(
                     toImport.clear()
                     toImport.addAll(assetFiles)
                 }
+                val hadDecks = deckRepository.getDecks().first().isNotEmpty()
+                if (!hadDecks && assetFiles.isNotEmpty()) {
+                    toImport.clear()
+                    toImport.addAll(assetFiles)
+                }
                 for (f in toImport) {
                     runCatching {
                         val content = context.assets.open("decks/$f").bufferedReader().use { it.readText() }
@@ -127,34 +161,53 @@ class MainViewModel @Inject constructor(
                     try { settingsRepository.setEnabledDeckIds(initialEnabled) } catch (_: Throwable) {}
                 }
                 // Fetch words for enabled decks in preferred language
-                val language = s0.languagePreference
-                val allowNSFW = s0.allowNSFW
-                val cats = s0.selectedCategories.toList()
-                val hasCats = if (cats.isEmpty()) 0 else 1
-                if (initialEnabled.isEmpty()) emptyList() else wordDao.getWordTextsForDecks(
-                    initialEnabled.toList(), language, allowNSFW, s0.minDifficulty, s0.maxDifficulty, cats, hasCats
+                val filters = s0.toWordQueryFilters(initialEnabled)
+                if (filters.deckIds.isEmpty()) emptyList() else wordDao.getWordTextsForDecks(
+                    filters.deckIds,
+                    filters.language,
+                    filters.allowNSFW,
+                    filters.minDifficulty,
+                    filters.maxDifficulty,
+                    filters.categories,
+                    filters.categoryFilterEnabled,
+                    filters.wordClasses,
+                    filters.wordClassFilterEnabled
                 )
             }
             // Also prepare word metadata for the same filtered set
             viewModelScope.launch(Dispatchers.IO) {
-                val s = settingsRepository.settings.first()
-                val enabled = s.enabledDeckIds
-                val cats = s.selectedCategories.toList()
-                val hasCats = if (cats.isEmpty()) 0 else 1
-                val briefs = if (enabled.isEmpty()) emptyList() else wordDao.getWordBriefsForDecks(
-                    enabled.toList(), s.languagePreference, s.allowNSFW, s.minDifficulty, s.maxDifficulty, cats, hasCats
+                val filters = settingsRepository.settings.first().toWordQueryFilters()
+                val briefs = if (filters.deckIds.isEmpty()) emptyList() else wordDao.getWordBriefsForDecks(
+                    filters.deckIds,
+                    filters.language,
+                    filters.allowNSFW,
+                    filters.minDifficulty,
+                    filters.maxDifficulty,
+                    filters.categories,
+                    filters.categoryFilterEnabled,
+                    filters.wordClasses,
+                    filters.wordClassFilterEnabled
                 )
-                val map = briefs.associateBy({ it.text }) { WordInfo(it.difficulty, it.category) }
+                val map = briefs.associateBy({ it.text }) {
+                    WordInfo(it.difficulty, it.category, parseClasses(it.classes))
+                }
                 _wordInfo.value = map
             }
             // Load available categories for enabled decks
             viewModelScope.launch(Dispatchers.IO) {
-                val s = settingsRepository.settings.first()
-                val enabled = s.enabledDeckIds
-                val list = if (enabled.isEmpty()) emptyList() else wordDao.getAvailableCategories(
-                    enabled.toList(), s.languagePreference, s.allowNSFW
+                val filters = settingsRepository.settings.first().toWordQueryFilters()
+                val list = if (filters.deckIds.isEmpty()) emptyList() else wordDao.getAvailableCategories(
+                    filters.deckIds, filters.language, filters.allowNSFW
                 ).sorted()
                 _availableCategories.value = list
+            }
+            // Load available word classes
+            viewModelScope.launch(Dispatchers.IO) {
+                val filters = settingsRepository.settings.first().toWordQueryFilters()
+                val list = if (filters.deckIds.isEmpty()) emptyList() else wordDao.getAvailableWordClasses(
+                    filters.deckIds, filters.language, filters.allowNSFW
+                ).sorted()
+                _availableWordClasses.value = list
             }
             val e = DefaultGameEngine(words, viewModelScope)
             _engine.value = e
@@ -227,6 +280,12 @@ class MainViewModel @Inject constructor(
     fun updateCategoriesFilter(categories: Set<String>) {
         viewModelScope.launch {
             settingsRepository.setCategoriesFilter(categories)
+        }
+    }
+
+    fun updateWordClassesFilter(classes: Set<String>) {
+        viewModelScope.launch {
+            settingsRepository.setWordClassesFilter(classes)
         }
     }
 
@@ -350,11 +409,20 @@ class MainViewModel @Inject constructor(
         _uiEvents.tryEmit(UiEvent(message = "Settings updated", actionLabel = "Dismiss"))
     }
 
-    data class WordInfo(val difficulty: Int, val category: String?)
+    data class WordInfo(val difficulty: Int, val category: String?, val classes: List<String>)
     private val _wordInfo = MutableStateFlow<Map<String, WordInfo>>(emptyMap())
     val wordInfoByText: StateFlow<Map<String, WordInfo>> = _wordInfo.asStateFlow()
     private val _availableCategories = MutableStateFlow<List<String>>(emptyList())
     val availableCategories: StateFlow<List<String>> = _availableCategories.asStateFlow()
+    private val _availableWordClasses = MutableStateFlow<List<String>>(emptyList())
+    val availableWordClasses: StateFlow<List<String>> = _availableWordClasses.asStateFlow()
+
+    private fun parseClasses(raw: String?): List<String> = raw
+        ?.split(',')
+        ?.map { it.trim() }
+        ?.filter { it.isNotEmpty() }
+        ?.distinct()
+        ?: emptyList()
 
     fun resetLocalData(onDone: (() -> Unit)? = null) {
         viewModelScope.launch {
@@ -373,32 +441,51 @@ class MainViewModel @Inject constructor(
     fun restartMatch() {
         viewModelScope.launch {
             val s = settingsRepository.settings.first()
+            val filters = s.toWordQueryFilters()
             val words = withContext(Dispatchers.IO) {
-                val enabled = s.enabledDeckIds
-                val cats = s.selectedCategories.toList()
-                val hasCats = if (cats.isEmpty()) 0 else 1
-                if (enabled.isEmpty()) emptyList() else wordDao.getWordTextsForDecks(
-                    enabled.toList(), s.languagePreference, s.allowNSFW, s.minDifficulty, s.maxDifficulty, cats, hasCats
+                if (filters.deckIds.isEmpty()) emptyList() else wordDao.getWordTextsForDecks(
+                    filters.deckIds,
+                    filters.language,
+                    filters.allowNSFW,
+                    filters.minDifficulty,
+                    filters.maxDifficulty,
+                    filters.categories,
+                    filters.categoryFilterEnabled,
+                    filters.wordClasses,
+                    filters.wordClassFilterEnabled
                 )
             }
             // Update word info cache for current filters
             viewModelScope.launch(Dispatchers.IO) {
-                val enabled = s.enabledDeckIds
-                val cats = s.selectedCategories.toList()
-                val hasCats = if (cats.isEmpty()) 0 else 1
-                val briefs = if (enabled.isEmpty()) emptyList() else wordDao.getWordBriefsForDecks(
-                    enabled.toList(), s.languagePreference, s.allowNSFW, s.minDifficulty, s.maxDifficulty, cats, hasCats
+                val briefs = if (filters.deckIds.isEmpty()) emptyList() else wordDao.getWordBriefsForDecks(
+                    filters.deckIds,
+                    filters.language,
+                    filters.allowNSFW,
+                    filters.minDifficulty,
+                    filters.maxDifficulty,
+                    filters.categories,
+                    filters.categoryFilterEnabled,
+                    filters.wordClasses,
+                    filters.wordClassFilterEnabled
                 )
-                val map = briefs.associateBy({ it.text }) { WordInfo(it.difficulty, it.category) }
+                val map = briefs.associateBy({ it.text }) {
+                    WordInfo(it.difficulty, it.category, parseClasses(it.classes))
+                }
                 _wordInfo.value = map
             }
             // Update available categories
             viewModelScope.launch(Dispatchers.IO) {
-                val enabled = s.enabledDeckIds
-                val list = if (enabled.isEmpty()) emptyList() else wordDao.getAvailableCategories(
-                    enabled.toList(), s.languagePreference, s.allowNSFW
+                val list = if (filters.deckIds.isEmpty()) emptyList() else wordDao.getAvailableCategories(
+                    filters.deckIds, filters.language, filters.allowNSFW
                 ).sorted()
                 _availableCategories.value = list
+            }
+            // Update available word classes
+            viewModelScope.launch(Dispatchers.IO) {
+                val list = if (filters.deckIds.isEmpty()) emptyList() else wordDao.getAvailableWordClasses(
+                    filters.deckIds, filters.language, filters.allowNSFW
+                ).sorted()
+                _availableWordClasses.value = list
             }
             val e = DefaultGameEngine(words, viewModelScope)
             _engine.value = e

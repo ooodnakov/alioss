@@ -104,6 +104,7 @@ Planned (post-MVP, still offline): challenge/override, high-contrast theme, hapt
       "text": "Director",
       "difficulty": 2,
       "category": "movies",
+      "wordClasses": ["noun"],
       "tabooStems": ["direct", "direction"]
     }
   ],
@@ -117,8 +118,8 @@ Planned (post-MVP, still offline): challenge/override, high-contrast theme, hapt
 
 - CSV (lightweight)
 ```
-text,language,difficulty,category,isNSFW,tabooStems
-Director,en,2,movies,false,"direct;direction"
+text,language,difficulty,category,wordClasses,isNSFW,tabooStems
+Director,en,2,movies,"noun",false,"direct;direction"
 ```
 
 - ZIP (optional)

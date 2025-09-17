@@ -71,6 +71,8 @@
     <string name="tie_suffix"> (ничья)</string>
     <string name="team_default_name">Команда %1$d</string>
     <string name="filters_label">Фильтры</string>
+    <string name="categories_label">Категории</string>
+    <string name="word_classes_label">Классы слов</string>
     <string name="min_difficulty_label">Мин. сложность</string>
     <string name="max_difficulty_label">Макс. сложность</string>
     <string name="apply_label">Применить</string>

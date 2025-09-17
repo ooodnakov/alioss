@@ -34,6 +34,7 @@ interface SettingsRepository {
     suspend fun updateUiLanguage(language: String)
     suspend fun updateDifficultyFilter(min: Int, max: Int)
     suspend fun setCategoriesFilter(categories: Set<String>)
+    suspend fun setWordClassesFilter(classes: Set<String>)
     suspend fun setTeams(teams: List<String>)
     suspend fun updateVerticalSwipes(value: Boolean)
 
@@ -72,6 +73,7 @@ data class Settings(
     val maxDifficulty: Int = 5,
     val verticalSwipes: Boolean = false,
     val selectedCategories: Set<String> = emptySet(),
+    val selectedWordClasses: Set<String> = emptySet(),
     val orientation: String = "system",
     val trustedSources: Set<String> = emptySet(),
     val seenTutorial: Boolean = false,
@@ -103,6 +105,7 @@ class SettingsRepositoryImpl(
             maxDifficulty = p[Keys.MAX_DIFFICULTY] ?: 5,
             verticalSwipes = p[Keys.VERTICAL_SWIPES] ?: false,
             selectedCategories = p[Keys.CATEGORIES_FILTER] ?: emptySet(),
+            selectedWordClasses = p[Keys.WORD_CLASSES_FILTER] ?: emptySet(),
             orientation = p[Keys.ORIENTATION] ?: "system",
             trustedSources = p[Keys.TRUSTED_SOURCES] ?: emptySet(),
             seenTutorial = p[Keys.SEEN_TUTORIAL] ?: false,
@@ -185,6 +188,10 @@ class SettingsRepositoryImpl(
         dataStore.edit { it[Keys.CATEGORIES_FILTER] = categories }
     }
 
+    override suspend fun setWordClassesFilter(classes: Set<String>) {
+        dataStore.edit { it[Keys.WORD_CLASSES_FILTER] = classes }
+    }
+
     override suspend fun setTeams(teams: List<String>) {
         val norm = teams.map { it.trim() }.filter { it.isNotEmpty() }.take(SettingsRepository.MAX_TEAMS)
         require(norm.size in SettingsRepository.MIN_TEAMS..SettingsRepository.MAX_TEAMS)
@@ -233,6 +240,7 @@ class SettingsRepositoryImpl(
         val MAX_DIFFICULTY = intPreferencesKey("max_difficulty")
         val VERTICAL_SWIPES = booleanPreferencesKey("vertical_swipes")
         val CATEGORIES_FILTER = stringSetPreferencesKey("categories_filter")
+        val WORD_CLASSES_FILTER = stringSetPreferencesKey("word_classes_filter")
         val ORIENTATION = stringPreferencesKey("orientation_mode")
         val TEAMS = stringPreferencesKey("teams")
         val TRUSTED_SOURCES = stringSetPreferencesKey("trusted_sources")
