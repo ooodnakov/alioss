@@ -8,10 +8,13 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -87,6 +90,8 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import java.util.Locale
+import java.text.DateFormat
+import java.util.Date
 import androidx.compose.material.icons.automirrored.filled.LibraryBooks
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Code
@@ -1070,23 +1075,121 @@ private fun FilterChipGroup(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun DeckDetailScreen(vm: MainViewModel, deck: DeckEntity) {
     var count by remember { mutableStateOf<Int?>(null) }
-    LaunchedEffect(deck.id) { count = vm.getWordCount(deck.id) }
+    var categories by remember { mutableStateOf<List<String>?>(null) }
+    var wordExamples by remember { mutableStateOf<List<String>>(emptyList()) }
+    var examplesLoading by remember { mutableStateOf(false) }
+    var examplesError by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
+    suspend fun refreshExamples() {
+        examplesLoading = true
+        examplesError = false
+        val result = runCatching { vm.getDeckWordSamples(deck.id) }
+        wordExamples = result.getOrDefault(emptyList())
+        examplesError = result.isFailure
+        examplesLoading = false
+    }
+
+    LaunchedEffect(deck.id) {
+        launch { count = vm.getWordCount(deck.id) }
+        launch { categories = runCatching { vm.getDeckCategories(deck.id) }.getOrElse { emptyList() } }
+        launch { refreshExamples() }
+    }
+
+    val configuration = LocalConfiguration.current
+    val downloadDateText = remember(deck.updatedAt, configuration) {
+        val timestamp = deck.updatedAt
+        if (timestamp <= 0L) {
+            null
+        } else {
+            val millis = if (timestamp < 10_000_000_000L) timestamp * 1000 else timestamp
+            DateFormat.getDateInstance(DateFormat.MEDIUM).format(Date(millis))
+        }
+    }
+
+    val scrollState = rememberScrollState()
+
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(scrollState)
             .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(deck.name, style = MaterialTheme.typography.headlineSmall)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             AssistChip(onClick = {}, enabled = false, label = { Text(deck.language.uppercase()) })
-            if (deck.isNSFW) AssistChip(onClick = {}, enabled = false, label = { Text("NSFW") })
+            if (deck.isOfficial) {
+                AssistChip(onClick = {}, enabled = false, label = { Text(stringResource(R.string.deck_official_label)) })
+            }
+            if (deck.isNSFW) {
+                AssistChip(onClick = {}, enabled = false, label = { Text(stringResource(R.string.deck_nsfw_label)) })
+            }
         }
-        val countText = count?.toString() ?: "…"
-        Text(stringResource(R.string.deck_word_count, countText))
+
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            val countText = count?.toString() ?: "…"
+            Text(stringResource(R.string.deck_word_count, countText))
+            Text(stringResource(R.string.deck_version_label, deck.version))
+            Text(
+                downloadDateText?.let { stringResource(R.string.deck_downloaded_label, it) }
+                    ?: stringResource(R.string.deck_downloaded_unknown)
+            )
+        }
+
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(stringResource(R.string.deck_categories_title), style = MaterialTheme.typography.titleMedium)
+            when (val currentCategories = categories) {
+                null -> {
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                }
+                else -> {
+                    if (currentCategories.isEmpty()) {
+                        Text(stringResource(R.string.deck_categories_empty))
+                    } else {
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            currentCategories.forEach { category ->
+                                AssistChip(onClick = {}, enabled = false, label = { Text(category) })
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        ElevatedCard(Modifier.fillMaxWidth()) {
+            Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(stringResource(R.string.deck_examples_title), style = MaterialTheme.typography.titleMedium)
+                when {
+                    examplesLoading -> {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                            Text(stringResource(R.string.deck_examples_loading))
+                        }
+                    }
+                    examplesError -> {
+                        Text(stringResource(R.string.deck_examples_error), color = MaterialTheme.colorScheme.error)
+                    }
+                    wordExamples.isEmpty() -> {
+                        Text(stringResource(R.string.deck_examples_empty))
+                    }
+                    else -> {
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            wordExamples.forEach { example ->
+                                Text("• ${example}")
+                            }
+                        }
+                    }
+                }
+                TextButton(onClick = { scope.launch { refreshExamples() } }, enabled = !examplesLoading) {
+                    Text(stringResource(R.string.deck_examples_reload))
+                }
+            }
+        }
     }
 }
 

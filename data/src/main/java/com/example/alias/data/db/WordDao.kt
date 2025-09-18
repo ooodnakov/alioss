@@ -98,6 +98,22 @@ interface WordDao {
         language: String,
         allowNSFW: Boolean,
     ): List<String>
+
+    @Query(
+        "SELECT DISTINCT category FROM words " +
+            "WHERE deckId = :deckId " +
+            "AND category IS NOT NULL AND TRIM(category) != '' " +
+            "ORDER BY category COLLATE NOCASE"
+    )
+    suspend fun getDeckCategories(deckId: String): List<String>
+
+    @Query(
+        "SELECT text FROM words " +
+            "WHERE deckId = :deckId " +
+            "ORDER BY RANDOM() " +
+            "LIMIT :limit"
+    )
+    suspend fun getRandomWordSamples(deckId: String, limit: Int): List<String>
 }
 
 /** Lightweight projection for word metadata shown in UI. */
