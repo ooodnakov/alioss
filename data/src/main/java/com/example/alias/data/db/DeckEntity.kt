@@ -12,5 +12,6 @@ data class DeckEntity(
     val isOfficial: Boolean,
     val isNSFW: Boolean,
     val version: Int,
-    val updatedAt: Long
+    val updatedAt: Long,
+    val coverImageBase64: String? = null,
 )
