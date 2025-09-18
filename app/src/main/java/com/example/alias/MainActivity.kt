@@ -1,27 +1,87 @@
 package com.example.alias
 
+import android.content.res.Configuration
 import android.os.Bundle
-import androidx.activity.compose.setContent
-import androidx.appcompat.app.AppCompatActivity
+import android.os.VibrationEffect
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.StringRes
+import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.LibraryBooks
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.BugReport
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Code
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DragHandle
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.filled.ScreenLockLandscape
+import androidx.compose.material.icons.filled.ScreenLockPortrait
+import androidx.compose.material.icons.filled.ScreenRotation
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -29,104 +89,55 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.Switch
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.lerp
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalConfiguration
-import android.content.res.Configuration
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.zIndex
-import android.os.VibrationEffect
-import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import com.example.alias.data.settings.Settings
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringArrayResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
-import com.example.alias.domain.GameEngine
-import com.example.alias.domain.GameState
-import com.example.alias.domain.TurnOutcome
-import dagger.hilt.android.AndroidEntryPoint
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.NavType
 import androidx.navigation.navArgument
+import com.example.alias.MainViewModel.UiEvent
+import com.example.alias.data.db.DeckEntity
+import com.example.alias.data.settings.Settings
+import com.example.alias.data.settings.SettingsRepository
+import com.example.alias.domain.GameEngine
+import com.example.alias.domain.GameState
+import com.example.alias.domain.TurnOutcome
 import com.example.alias.ui.AppScaffold
 import com.example.alias.ui.CountdownOverlay
 import com.example.alias.ui.HistoryScreen
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SnackbarHostState
-import com.example.alias.MainViewModel.UiEvent
-import androidx.compose.material3.SnackbarResult
-import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.AssistChipDefaults
-import androidx.compose.material3.Surface
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Settings
-import java.util.Locale
-import java.text.DateFormat
-import java.util.Date
-import androidx.compose.material.icons.automirrored.filled.LibraryBooks
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Code
-import androidx.compose.material.icons.automirrored.filled.OpenInNew
-import androidx.compose.material.icons.filled.BugReport
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Public
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.ScreenRotation
-import androidx.compose.material.icons.filled.ScreenLockPortrait
-import androidx.compose.material.icons.filled.ScreenLockLandscape
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilterChip
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.pluralStringResource
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.text.KeyboardOptions
+import com.example.alias.ui.TutorialOverlay
+import com.example.alias.ui.WordCard
+import com.example.alias.ui.WordCardAction
+import com.google.accompanist.placeholder.material3.placeholder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import com.example.alias.ui.WordCard
-import com.example.alias.ui.WordCardAction
-import com.example.alias.ui.TutorialOverlay
-import com.example.alias.data.settings.SettingsRepository
-import com.example.alias.data.db.DeckEntity
-import androidx.compose.ui.platform.LocalUriHandler
+import java.text.DateFormat
+import java.util.Date
+import java.util.Locale
 import kotlin.math.roundToInt
-import com.google.accompanist.placeholder.material3.placeholder
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.text.font.FontWeight
+import dagger.hilt.android.AndroidEntryPoint
 
 private val LARGE_BUTTON_HEIGHT = 80.dp
 private const val MIN_TEAMS = SettingsRepository.MIN_TEAMS
@@ -1193,11 +1204,20 @@ private fun DeckDetailScreen(vm: MainViewModel, deck: DeckEntity) {
     }
 }
 
+private enum class SettingsTab(@StringRes val titleRes: Int) {
+    MATCH_RULES(R.string.match_rules_tab),
+    INPUT_FEEDBACK(R.string.input_feedback_tab),
+    TEAMS(R.string.teams_tab),
+    ADVANCED(R.string.advanced_tab)
+}
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () -> Unit) {
     val s by vm.settings.collectAsState()
     val ctx = LocalContext.current
+    val scope = rememberCoroutineScope()
+
     var round by rememberSaveable(s) { mutableStateOf(s.roundSeconds.toString()) }
     var target by rememberSaveable(s) { mutableStateOf(s.targetWords.toString()) }
     var maxSkips by rememberSaveable(s) { mutableStateOf(s.maxSkips.toString()) }
@@ -1211,12 +1231,14 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () ->
     var oneHand by rememberSaveable(s) { mutableStateOf(s.oneHandedLayout) }
     var verticalSwipes by rememberSaveable(s) { mutableStateOf(s.verticalSwipes) }
     var orientation by rememberSaveable(s) { mutableStateOf(s.orientation) }
-    val scope = rememberCoroutineScope()
     var teams by rememberSaveable(s) { mutableStateOf(s.teams) }
+    var selectedTab by rememberSaveable { mutableStateOf(SettingsTab.MATCH_RULES) }
+    var showResetDialog by rememberSaveable { mutableStateOf(false) }
 
+    val teamSuggestions = stringArrayResource(R.array.team_name_suggestions).toList()
 
     val canSave = teams.count { it.isNotBlank() } >= MIN_TEAMS
-    val applySettings: () -> kotlinx.coroutines.Job = {
+    val applySettings: () -> Job = {
         scope.launch {
             vm.updateSettings(
                 roundSeconds = round.toIntOrNull() ?: s.roundSeconds,
@@ -1237,42 +1259,527 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () ->
         }
     }
 
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
+    if (showResetDialog) {
+        androidx.compose.ui.window.Dialog(onDismissRequest = { showResetDialog = false }) {
+            ElevatedCard {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(stringResource(R.string.reset_confirm_title), style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.reset_confirm_message))
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(onClick = { showResetDialog = false }, modifier = Modifier.weight(1f)) {
+                            Text(stringResource(R.string.cancel))
+                        }
+                        Button(onClick = {
+                            showResetDialog = false
+                            vm.resetLocalData()
+                        }, modifier = Modifier.weight(1f)) {
+                            Text(stringResource(R.string.confirm))
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        item { Text(stringResource(R.string.title_settings), style = MaterialTheme.typography.headlineSmall) }
+        Text(stringResource(R.string.title_settings), style = MaterialTheme.typography.headlineSmall)
+        TabRow(selectedTabIndex = selectedTab.ordinal) {
+            SettingsTab.values().forEach { tab ->
+                Tab(
+                    selected = selectedTab == tab,
+                    onClick = { selectedTab = tab },
+                    text = { Text(stringResource(tab.titleRes)) }
+                )
+            }
+        }
+        Box(modifier = Modifier.weight(1f)) {
+            AnimatedContent(targetState = selectedTab, label = "settings_tabs") { tab ->
+                when (tab) {
+                    SettingsTab.MATCH_RULES -> MatchRulesTab(
+                        round = round,
+                        onRoundChange = { round = it },
+                        target = target,
+                        onTargetChange = { target = it },
+                        maxSkips = maxSkips,
+                        onMaxSkipsChange = { maxSkips = it },
+                        penalty = penalty,
+                        onPenaltyChange = { penalty = it },
+                        punishSkips = punishSkips,
+                        onPunishSkipsChange = { punishSkips = it }
+                    )
+
+                    SettingsTab.INPUT_FEEDBACK -> InputFeedbackTab(
+                        haptics = haptics,
+                        onHapticsChange = { haptics = it },
+                        sound = sound,
+                        onSoundChange = { sound = it },
+                        oneHand = oneHand,
+                        onOneHandChange = { oneHand = it },
+                        verticalSwipes = verticalSwipes,
+                        onVerticalSwipesChange = { verticalSwipes = it },
+                        orientation = orientation,
+                        onOrientationChange = {
+                            orientation = it
+                            vm.setOrientation(it)
+                        }
+                    )
+
+                    SettingsTab.TEAMS -> TeamsTab(
+                        teams = teams,
+                        canRemoveTeam = teams.size > MIN_TEAMS,
+                        canAddTeam = teams.size < MAX_TEAMS,
+                        onTeamNameChange = { index, value ->
+                            teams = teams.toMutableList().also { list -> list[index] = value }
+                        },
+                        onTeamRemove = { index ->
+                            teams = teams.toMutableList().also { list -> list.removeAt(index) }
+                        },
+                        onTeamAdd = {
+                            teams = teams + ctx.getString(R.string.team_default_name, teams.size + 1)
+                        },
+                        onTeamMove = { from, to ->
+                            if (from == to) return@TeamsTab
+                            if (from !in teams.indices || to !in 0..teams.size) return@TeamsTab
+                            val updated = teams.toMutableList()
+                            val item = updated.removeAt(from)
+                            val targetIndex = to.coerceIn(0, updated.size)
+                            updated.add(targetIndex, item)
+                            teams = updated
+                        },
+                        suggestions = teamSuggestions,
+                        onApplySuggestion = { suggestion ->
+                            if (teams.any { it.equals(suggestion, ignoreCase = true) }) {
+                                return@TeamsTab
+                            }
+                            val targetIndex = teams.indexOfFirst { it.isBlank() }
+                            teams = teams.toMutableList().also { list ->
+                                when {
+                                    targetIndex >= 0 -> list[targetIndex] = suggestion
+                                    list.size < MAX_TEAMS -> list.add(suggestion)
+                                }
+                            }
+                        }
+                    )
+
+                    SettingsTab.ADVANCED -> AdvancedTab(
+                        uiLanguage = uiLang,
+                        onUiLanguageChange = { uiLang = it },
+                        language = lang,
+                        onLanguageChange = { lang = it },
+                        allowNsfw = nsfw,
+                        onAllowNsfwChange = { nsfw = it },
+                        onShowTutorialAgain = { vm.updateSeenTutorial(false) },
+                        onAbout = onAbout,
+                        onReset = { showResetDialog = true }
+                    )
+                }
+            }
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Button(onClick = { applySettings() }, enabled = canSave, modifier = Modifier.weight(1f)) {
+                Text(stringResource(R.string.save_label))
+            }
+            FilledTonalButton(
+                onClick = {
+                    scope.launch {
+                        applySettings().join()
+                        vm.restartMatch()
+                        onBack()
+                    }
+                },
+                enabled = canSave,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(stringResource(R.string.save_and_restart_label))
+            }
+        }
+        OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
+            Text(stringResource(R.string.back))
+        }
+    }
+}
+
+@Composable
+private fun MatchRulesTab(
+    round: String,
+    onRoundChange: (String) -> Unit,
+    target: String,
+    onTargetChange: (String) -> Unit,
+    maxSkips: String,
+    onMaxSkipsChange: (String) -> Unit,
+    penalty: String,
+    onPenaltyChange: (String) -> Unit,
+    punishSkips: Boolean,
+    onPunishSkipsChange: (Boolean) -> Unit,
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        contentPadding = PaddingValues(bottom = 16.dp)
+    ) {
         item {
             ElevatedCard(Modifier.fillMaxWidth()) {
-                Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(stringResource(R.string.round_and_goals), style = MaterialTheme.typography.titleMedium)
-                    OutlinedTextField(value = round, onValueChange = { round = it }, label = { Text(stringResource(R.string.round_seconds_label)) }, modifier = Modifier.fillMaxWidth())
-                    OutlinedTextField(value = target, onValueChange = { target = it }, label = { Text(stringResource(R.string.target_words_label)) }, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(
+                        value = round,
+                        onValueChange = onRoundChange,
+                        label = { Text(stringResource(R.string.round_seconds_label)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    )
+                    OutlinedTextField(
+                        value = target,
+                        onValueChange = onTargetChange,
+                        label = { Text(stringResource(R.string.target_words_label)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    )
                 }
             }
         }
         item {
             ElevatedCard(Modifier.fillMaxWidth()) {
-                Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(stringResource(R.string.skips_section), style = MaterialTheme.typography.titleMedium)
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedTextField(value = maxSkips, onValueChange = { maxSkips = it }, label = { Text(stringResource(R.string.max_skips_label)) }, modifier = Modifier.weight(1f))
-                        OutlinedTextField(value = penalty, onValueChange = { penalty = it }, label = { Text(stringResource(R.string.penalty_per_skip_label)) }, modifier = Modifier.weight(1f))
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        OutlinedTextField(
+                            value = maxSkips,
+                            onValueChange = onMaxSkipsChange,
+                            label = { Text(stringResource(R.string.max_skips_label)) },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                        )
+                        OutlinedTextField(
+                            value = penalty,
+                            onValueChange = onPenaltyChange,
+                            label = { Text(stringResource(R.string.penalty_per_skip_label)) },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                        )
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(stringResource(R.string.punish_skips_label), modifier = Modifier.weight(1f))
-                        Switch(checked = punishSkips, onCheckedChange = { punishSkips = it })
+                        Switch(checked = punishSkips, onCheckedChange = onPunishSkipsChange)
                     }
                 }
             }
         }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun InputFeedbackTab(
+    haptics: Boolean,
+    onHapticsChange: (Boolean) -> Unit,
+    sound: Boolean,
+    onSoundChange: (Boolean) -> Unit,
+    oneHand: Boolean,
+    onOneHandChange: (Boolean) -> Unit,
+    verticalSwipes: Boolean,
+    onVerticalSwipesChange: (Boolean) -> Unit,
+    orientation: String,
+    onOrientationChange: (String) -> Unit,
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        contentPadding = PaddingValues(bottom = 16.dp)
+    ) {
         item {
-                    ElevatedCard(Modifier.fillMaxWidth()) {
-                        Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(stringResource(R.string.language_and_content), style = MaterialTheme.typography.titleMedium)
+            ElevatedCard(Modifier.fillMaxWidth()) {
+                Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(stringResource(R.string.feedback_and_layout), style = MaterialTheme.typography.titleMedium)
+                    SettingsToggleRow(
+                        label = stringResource(R.string.haptics_label),
+                        checked = haptics,
+                        onCheckedChange = onHapticsChange
+                    )
+                    SettingsToggleRow(
+                        label = stringResource(R.string.sound_effects_label),
+                        checked = sound,
+                        onCheckedChange = onSoundChange
+                    )
+                    SettingsToggleRow(
+                        label = stringResource(R.string.one_hand_layout_label),
+                        checked = oneHand,
+                        onCheckedChange = onOneHandChange
+                    )
+                    SettingsToggleRow(
+                        label = stringResource(R.string.vertical_swipes_label),
+                        checked = verticalSwipes,
+                        onCheckedChange = onVerticalSwipesChange
+                    )
+                }
+            }
+        }
+        item {
+            ElevatedCard(Modifier.fillMaxWidth()) {
+                Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(stringResource(R.string.orientation_label), style = MaterialTheme.typography.titleMedium)
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OrientationChip(
+                            selected = orientation == "system",
+                            label = stringResource(R.string.auto_label),
+                            icon = Icons.Filled.ScreenRotation,
+                            onClick = { onOrientationChange("system") }
+                        )
+                        OrientationChip(
+                            selected = orientation == "portrait",
+                            label = stringResource(R.string.portrait_label),
+                            icon = Icons.Filled.ScreenLockPortrait,
+                            onClick = { onOrientationChange("portrait") }
+                        )
+                        OrientationChip(
+                            selected = orientation == "landscape",
+                            label = stringResource(R.string.landscape_label),
+                            icon = Icons.Filled.ScreenLockLandscape,
+                            onClick = { onOrientationChange("landscape") }
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SettingsToggleRow(
+    label: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(label, modifier = Modifier.weight(1f))
+        Switch(checked = checked, onCheckedChange = onCheckedChange)
+    }
+}
+
+@Composable
+private fun OrientationChip(
+    selected: Boolean,
+    label: String,
+    icon: ImageVector,
+    onClick: () -> Unit,
+) {
+    FilterChip(
+        selected = selected,
+        onClick = onClick,
+        label = { Text(label) },
+        leadingIcon = { Icon(icon, contentDescription = null) }
+    )
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun TeamsTab(
+    teams: List<String>,
+    canRemoveTeam: Boolean,
+    canAddTeam: Boolean,
+    onTeamNameChange: (Int, String) -> Unit,
+    onTeamRemove: (Int) -> Unit,
+    onTeamAdd: () -> Unit,
+    onTeamMove: (Int, Int) -> Unit,
+    suggestions: List<String>,
+    onApplySuggestion: (String) -> Unit,
+) {
+    val itemHeights = remember { mutableStateMapOf<Int, Int>() }
+    var draggingIndex by remember { mutableStateOf<Int?>(null) }
+    var dragOffset by remember { mutableStateOf(0f) }
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        contentPadding = PaddingValues(bottom = 16.dp)
+    ) {
+        item {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(stringResource(R.string.teams_label), style = MaterialTheme.typography.titleMedium)
+                Text(
+                    text = stringResource(R.string.drag_to_reorder_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        itemsIndexed(teams, key = { index, name -> "$index-$name" }) { index, name ->
+            val isDragging = draggingIndex == index
+            TeamEditorCard(
+                index = index,
+                name = name,
+                canRemove = canRemoveTeam,
+                onNameChange = onTeamNameChange,
+                onRemove = onTeamRemove,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onGloballyPositioned { coords -> itemHeights[index] = coords.size.height }
+                    .graphicsLayer { translationY = if (isDragging) dragOffset else 0f },
+                handleModifier = Modifier.pointerInput(teams) {
+                    detectDragGesturesAfterLongPress(
+                        onDragStart = {
+                            draggingIndex = index
+                            dragOffset = 0f
+                        },
+                        onDrag = { change, dragAmount ->
+                            change.consume()
+                            val current = draggingIndex ?: return@detectDragGesturesAfterLongPress
+                            dragOffset += dragAmount.y
+                            if (dragOffset > 0 && current < teams.lastIndex) {
+                                val height = itemHeights[current] ?: return@detectDragGesturesAfterLongPress
+                                if (dragOffset > height * 0.6f) {
+                                    onTeamMove(current, current + 1)
+                                    draggingIndex = current + 1
+                                    dragOffset = 0f
+                                }
+                            } else if (dragOffset < 0 && current > 0) {
+                                val height = itemHeights[current - 1] ?: return@detectDragGesturesAfterLongPress
+                                if (dragOffset < -height * 0.6f) {
+                                    onTeamMove(current, current - 1)
+                                    draggingIndex = current - 1
+                                    dragOffset = 0f
+                                }
+                            }
+                        },
+                        onDragEnd = {
+                            draggingIndex = null
+                            dragOffset = 0f
+                        },
+                        onDragCancel = {
+                            draggingIndex = null
+                            dragOffset = 0f
+                        }
+                    )
+                },
+                isDragging = isDragging
+            )
+        }
+        item {
+            if (canAddTeam) {
+                OutlinedButton(onClick = onTeamAdd, modifier = Modifier.fillMaxWidth()) {
+                    Icon(Icons.Filled.Add, contentDescription = null)
+                    Text(stringResource(R.string.add_team_label), modifier = Modifier.padding(start = 8.dp))
+                }
+            }
+        }
+        if (suggestions.isNotEmpty()) {
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(stringResource(R.string.team_suggestions_label), style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        text = stringResource(R.string.team_suggestions_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        suggestions.forEach { suggestion ->
+                            SuggestionChip(onClick = { onApplySuggestion(suggestion) }, label = { Text(suggestion) })
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TeamEditorCard(
+    index: Int,
+    name: String,
+    canRemove: Boolean,
+    onNameChange: (Int, String) -> Unit,
+    onRemove: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+    handleModifier: Modifier = Modifier,
+    isDragging: Boolean,
+) {
+    val elevation = if (isDragging) 8.dp else 2.dp
+    ElevatedCard(
+        modifier = modifier,
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = elevation)
+    ) {
+        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                val initial = name.firstOrNull()?.uppercaseChar()?.toString() ?: (index + 1).toString()
+                Surface(
+                    modifier = Modifier.size(48.dp),
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.secondaryContainer
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(initial, style = MaterialTheme.typography.titleMedium)
+                    }
+                }
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { onNameChange(index, it) },
+                    label = { Text(stringResource(R.string.team_default_name, index + 1)) },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true
+                )
+                IconButton(onClick = { onRemove(index) }, enabled = canRemove) {
+                    Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.remove_team))
+                }
+                Box(
+                    modifier = handleModifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Filled.DragHandle, contentDescription = stringResource(R.string.team_drag_handle_description))
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun AdvancedTab(
+    uiLanguage: String,
+    onUiLanguageChange: (String) -> Unit,
+    language: String,
+    onLanguageChange: (String) -> Unit,
+    allowNsfw: Boolean,
+    onAllowNsfwChange: (Boolean) -> Unit,
+    onShowTutorialAgain: () -> Unit,
+    onAbout: () -> Unit,
+    onReset: () -> Unit,
+) {
+    val selectedLanguage = remember(uiLanguage) { resolveUiLanguageSelection(uiLanguage) }
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        contentPadding = PaddingValues(bottom = 16.dp)
+    ) {
+        item {
+            ElevatedCard(Modifier.fillMaxWidth()) {
+                Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(stringResource(R.string.language_and_content), style = MaterialTheme.typography.titleMedium)
                     Text(stringResource(R.string.ui_language_label))
-                    val selectedLanguage = remember(uiLang) { resolveUiLanguageSelection(uiLang) }
                     FlowRow(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -1280,148 +1787,58 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () ->
                     ) {
                         FilterChip(
                             selected = selectedLanguage == "system",
-                            onClick = { uiLang = "system" },
+                            onClick = { onUiLanguageChange("system") },
                             label = { Text(stringResource(R.string.system_default_label)) }
                         )
                         FilterChip(
                             selected = selectedLanguage == "en",
-                            onClick = { uiLang = "en" },
+                            onClick = { onUiLanguageChange("en") },
                             label = { Text(stringResource(R.string.english_label)) }
                         )
                         FilterChip(
                             selected = selectedLanguage == "ru",
-                            onClick = { uiLang = "ru" },
+                            onClick = { onUiLanguageChange("ru") },
                             label = { Text(stringResource(R.string.russian_label)) }
                         )
                     }
-                    OutlinedTextField(value = lang, onValueChange = { lang = it }, label = { Text(stringResource(R.string.language_hint)) }, modifier = Modifier.fillMaxWidth())
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(stringResource(R.string.allow_nsfw_label), modifier = Modifier.weight(1f))
-                        Switch(checked = nsfw, onCheckedChange = { nsfw = it })
-                    }
+                    OutlinedTextField(
+                        value = language,
+                        onValueChange = onLanguageChange,
+                        label = { Text(stringResource(R.string.language_hint)) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    SettingsToggleRow(
+                        label = stringResource(R.string.allow_nsfw_label),
+                        checked = allowNsfw,
+                        onCheckedChange = onAllowNsfwChange
+                    )
                 }
             }
         }
         item {
             ElevatedCard(Modifier.fillMaxWidth()) {
-                Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(stringResource(R.string.feedback_and_layout), style = MaterialTheme.typography.titleMedium)
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(stringResource(R.string.haptics_label), modifier = Modifier.weight(1f))
-                        Switch(checked = haptics, onCheckedChange = { haptics = it })
-                    }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(stringResource(R.string.sound_effects_label), modifier = Modifier.weight(1f))
-                        Switch(checked = sound, onCheckedChange = { sound = it })
-                    }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(stringResource(R.string.one_hand_layout_label), modifier = Modifier.weight(1f))
-                        Switch(checked = oneHand, onCheckedChange = { oneHand = it })
-                    }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(stringResource(R.string.vertical_swipes_label), modifier = Modifier.weight(1f))
-                        Switch(checked = verticalSwipes, onCheckedChange = { verticalSwipes = it })
-                    }
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(stringResource(R.string.orientation_label))
-                        val current = orientation
-                        FlowRow(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            FilterChip(
-                                selected = current == "system",
-                                onClick = { orientation = "system"; vm.setOrientation("system") },
-                                label = { Text(stringResource(R.string.auto_label)) },
-                                leadingIcon = { Icon(Icons.Filled.ScreenRotation, contentDescription = null) }
-                            )
-                            FilterChip(
-                                selected = current == "portrait",
-                                onClick = { orientation = "portrait"; vm.setOrientation("portrait") },
-                                label = { Text(stringResource(R.string.portrait_label)) },
-                                leadingIcon = { Icon(Icons.Filled.ScreenLockPortrait, contentDescription = null) }
-                            )
-                            FilterChip(
-                                selected = current == "landscape",
-                                onClick = { orientation = "landscape"; vm.setOrientation("landscape") },
-                                label = { Text(stringResource(R.string.landscape_label)) },
-                                leadingIcon = { Icon(Icons.Filled.ScreenLockLandscape, contentDescription = null) }
-                            )
-                        }
-                    }
+                Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(stringResource(R.string.support_and_data_label), style = MaterialTheme.typography.titleMedium)
+                    ListItem(
+                        leadingContent = { Icon(Icons.Filled.History, contentDescription = null) },
+                        headlineContent = { Text(stringResource(R.string.show_tutorial_again)) },
+                        modifier = Modifier.clickable { onShowTutorialAgain() }
+                    )
+                    HorizontalDivider()
+                    ListItem(
+                        leadingContent = { Icon(Icons.Filled.Info, contentDescription = null) },
+                        headlineContent = { Text(stringResource(R.string.title_about)) },
+                        modifier = Modifier.clickable(onClick = onAbout)
+                    )
+                    HorizontalDivider()
+                    ListItem(
+                        leadingContent = { Icon(Icons.Filled.Delete, contentDescription = null) },
+                        headlineContent = { Text(stringResource(R.string.reset_local_data)) },
+                        modifier = Modifier.clickable { onReset() }
+                    )
                 }
             }
         }
-        item {
-            ElevatedCard(Modifier.fillMaxWidth()) {
-                Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(stringResource(R.string.teams_label), style = MaterialTheme.typography.titleMedium)
-                    teams.forEachIndexed { index, name ->
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            OutlinedTextField(
-                                value = name,
-                                onValueChange = { new -> teams = teams.toMutableList().also { it[index] = new } },
-                                label = { Text(stringResource(R.string.team_default_name, index + 1)) },
-                                modifier = Modifier.weight(1f)
-                            )
-                            IconButton(
-                                onClick = { teams = teams.toMutableList().also { it.removeAt(index) } },
-                                enabled = teams.size > MIN_TEAMS
-                            ) { Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.remove_team)) }
-                        }
-                        if (index < teams.lastIndex) HorizontalDivider()
-                    }
-                    if (teams.size < MAX_TEAMS) {
-                        OutlinedButton(onClick = { teams = teams + ctx.getString(R.string.team_default_name, teams.size + 1) }, modifier = Modifier.fillMaxWidth()) {
-                            Icon(Icons.Filled.Add, contentDescription = null)
-                            Text(stringResource(R.string.add_team_label), modifier = Modifier.padding(start = 4.dp))
-                        }
-                    }
-                }
-            }
-        }
-        item {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = { applySettings() }, enabled = canSave, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.save_label)) }
-                FilledTonalButton(onClick = {
-                    scope.launch {
-                        applySettings().join()
-                        vm.restartMatch()
-                        onBack()
-                    }
-                }, enabled = canSave, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.save_and_restart_label)) }
-            }
-        }
-        item {
-            OutlinedButton(
-                onClick = { vm.updateSeenTutorial(false) },
-                modifier = Modifier.fillMaxWidth()
-            ) { Text(stringResource(R.string.show_tutorial_again)) }
-        }
-        item { OutlinedButton(onClick = onAbout, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.title_about)) } }
-        item {
-            var confirm by rememberSaveable { mutableStateOf(false) }
-            if (confirm) {
-                androidx.compose.ui.window.Dialog(onDismissRequest = { confirm = false }) {
-                    ElevatedCard {
-                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            Text(stringResource(R.string.reset_confirm_title), style = MaterialTheme.typography.titleMedium)
-                            Text(stringResource(R.string.reset_confirm_message))
-                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                OutlinedButton(onClick = { confirm = false }, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.cancel)) }
-                                Button(onClick = {
-                                    confirm = false
-                                    vm.resetLocalData()
-                                }, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.confirm)) }
-                            }
-                        }
-                    }
-                }
-            }
-            OutlinedButton(onClick = { confirm = true }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.reset_local_data)) }
-        }
-        item { OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.back)) } }
     }
 }
 
