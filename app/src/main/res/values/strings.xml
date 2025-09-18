@@ -25,6 +25,10 @@
         <item quantity="one">%d skip</item>
         <item quantity="other">%d skips</item>
     </plurals>
+    <plurals name="time_remaining_seconds">
+        <item quantity="one">%d second</item>
+        <item quantity="other">%d seconds</item>
+    </plurals>
     <string name="summary_label">Remaining: %1$d • Score: %2$d • Skips: %3$d</string>
     <string name="correct">Correct</string>
     <string name="skip">Skip</string>
