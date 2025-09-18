@@ -46,6 +46,7 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
 
     testImplementation(kotlin("test"))
+    testImplementation(libs.bundles.test.unit)
 
     // HTTP client for manual pack downloads
     implementation(libs.okhttp)
