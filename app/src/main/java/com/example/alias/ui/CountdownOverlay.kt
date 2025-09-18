@@ -93,6 +93,7 @@ fun CountdownOverlay(
             .semantics {
                 contentDescription = announcement
                 liveRegion = LiveRegionMode.Assertive
+                mergeDescendants = true
             },
         contentAlignment = Alignment.Center
     ) {
