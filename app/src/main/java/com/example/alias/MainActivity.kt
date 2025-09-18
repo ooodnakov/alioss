@@ -150,6 +150,8 @@ import com.example.alias.ui.WordCardAction
 import com.google.accompanist.placeholder.material3.placeholder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import java.text.DateFormat
 import java.util.Date
@@ -195,26 +197,37 @@ class MainActivity : AppCompatActivity() {
 
                 // Collect general UI events and show snackbars
                 LaunchedEffect(Unit) {
+                    var currentSnackbarJob: Job? = null
                     vm.uiEvents.collect { ev: UiEvent ->
                         if (ev.dismissCurrent) {
                             snack.currentSnackbarData?.dismiss()
+                            currentSnackbarJob?.cancelAndJoin()
+                            currentSnackbarJob = null
+                        }
+                        if (ev.message.isBlank()) {
+                            return@collect
                         }
                         val duration = if (ev.actionLabel != null && ev.duration == SnackbarDuration.Short) {
                             SnackbarDuration.Long
                         } else {
                             ev.duration
                         }
-                        if (ev.message.isBlank()) {
-                            return@collect
+                        val job = launch {
+                            val result = snack.showSnackbar(
+                                message = ev.message,
+                                actionLabel = ev.actionLabel,
+                                withDismissAction = ev.actionLabel == null,
+                                duration = duration
+                            )
+                            if (result == SnackbarResult.ActionPerformed) {
+                                ev.onAction?.invoke()
+                            }
                         }
-                        val result = snack.showSnackbar(
-                            message = ev.message,
-                            actionLabel = ev.actionLabel,
-                            withDismissAction = ev.actionLabel == null,
-                            duration = duration
-                        )
-                        if (result == SnackbarResult.ActionPerformed) {
-                            ev.onAction?.invoke()
+                        currentSnackbarJob = job
+                        job.invokeOnCompletion {
+                            if (currentSnackbarJob === job) {
+                                currentSnackbarJob = null
+                            }
                         }
                     }
                 }
