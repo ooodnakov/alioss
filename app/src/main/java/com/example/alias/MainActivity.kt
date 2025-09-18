@@ -1692,7 +1692,7 @@ private fun adjustDifficultyRange(current: Pair<Int, Int>, level: Int): Pair<Int
 }
 
 private fun toggleDifficultyLevel(current: IntRange, level: Int): IntRange {
-    val (min, max) = normalizeDifficultyRange(current.first, current.last)
+    val (min, max) = current.first to current.last
     val clampedLevel = level.coerceIn(DEFAULT_DIFFICULTY_RANGE.first, DEFAULT_DIFFICULTY_RANGE.last)
     val (newMin, newMax) = when {
         clampedLevel < min -> clampedLevel to max
@@ -1702,8 +1702,7 @@ private fun toggleDifficultyLevel(current: IntRange, level: Int): IntRange {
         clampedLevel == max -> min to (max - 1).coerceAtLeast(min)
         else -> clampedLevel to clampedLevel
     }
-    val (normalizedMin, normalizedMax) = normalizeDifficultyRange(newMin, newMax)
-    return normalizedMin..normalizedMax
+    return newMin..newMax
 }
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -1752,7 +1751,7 @@ private fun DifficultyFilterRow(
     onLevelToggle: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val normalizedSelection = if (selectedLevels.isEmpty()) DEFAULT_DIFFICULTY_RANGE.toSet() else selectedLevels
+    val normalizedSelection = selectedLevels
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(stringResource(R.string.difficulty_filter_label))
         FlowRow(
