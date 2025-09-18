@@ -63,6 +63,7 @@
     <string name="score_change">Score change: %+d</string>
     <string name="turn_timeline_title">Turn timeline</string>
     <string name="timeline_score_breakdown">See how the team built this round\'s score.</string>
+    <string name="timeline_score_graph_label">Score over time</string>
     <string name="timeline_no_events">No words were recorded this turn.</string>
     <string name="timeline_bonus_label">Bonus</string>
     <string name="timeline_change">%1$+d</string>

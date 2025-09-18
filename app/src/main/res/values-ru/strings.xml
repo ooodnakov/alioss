@@ -66,7 +66,40 @@
     <string name="end_match">Завершить матч</string>
     <string name="next_team">Следующая команда</string>
     <string name="turn_summary">Ход: %s</string>
-    <string name="score_change">Изменение: %d</string>
+    <string name="score_change">Изменение счёта: %+d</string>
+    <string name="turn_timeline_title">Хронология хода</string>
+    <string name="timeline_score_breakdown">Посмотрите, как команда набрала очки в этом раунде.</string>
+    <string name="timeline_score_graph_label">Очки по времени</string>
+    <string name="timeline_no_events">В этом ходу слова не записывались.</string>
+    <string name="timeline_bonus_label">Бонус</string>
+    <string name="timeline_change">%1$+d</string>
+    <string name="timeline_running_total">Текущий итог %1$+d</string>
+    <string name="timeline_elapsed_time">Прошло %1$.1f с от начала хода</string>
+    <string name="timeline_elapsed_time_start">Начало хода</string>
+    <string name="timeline_header_correct_subtitle">%1$+d за серию</string>
+    <string name="timeline_header_penalty_subtitle">Влияние %1$+d</string>
+    <string name="timeline_header_pending_subtitle">Счёт пока без изменений</string>
+    <string name="timeline_header_skip_no_penalty">Штраф не применён</string>
+    <string name="timeline_mark_correct">Отметить как верное</string>
+    <string name="timeline_mark_incorrect">Отметить как неверное</string>
+    <plurals name="timeline_correct">
+        <item quantity="one">Верное слово</item>
+        <item quantity="few">Серия верных ×%d</item>
+        <item quantity="many">Серия верных ×%d</item>
+        <item quantity="other">Серия верных ×%d</item>
+    </plurals>
+    <plurals name="timeline_skipped">
+        <item quantity="one">Пропущенное слово</item>
+        <item quantity="few">Пропущенные слова ×%d</item>
+        <item quantity="many">Пропущенные слова ×%d</item>
+        <item quantity="other">Пропущенные слова ×%d</item>
+    </plurals>
+    <plurals name="timeline_pending">
+        <item quantity="one">Ожидающее слово</item>
+        <item quantity="few">Ожидающие слова ×%d</item>
+        <item quantity="many">Ожидающие слова ×%d</item>
+        <item quantity="other">Ожидающие слова ×%d</item>
+    </plurals>
     <string name="tutorial_instructions">Вправо — верно, влево — пропуск.</string>
     <string name="tutorial_instructions_vertical">Вверх — верно, вниз — пропуск.</string>
     <string name="tutorial_step_swipe_title">Жесты для очков</string>
