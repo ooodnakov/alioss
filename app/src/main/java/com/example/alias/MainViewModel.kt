@@ -12,8 +12,6 @@ import com.example.alias.data.db.DifficultyBucket
 import com.example.alias.data.download.PackDownloader
 import com.example.alias.data.TurnHistoryRepository
 import com.example.alias.data.db.TurnHistoryEntity
-import com.example.alias.data.db.WordDao
-import com.example.alias.data.download.PackDownloader
 import com.example.alias.data.pack.PackParser
 import com.example.alias.data.settings.Settings
 import com.example.alias.data.settings.SettingsRepository
