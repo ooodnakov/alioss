@@ -114,6 +114,22 @@ interface WordDao {
             "LIMIT :limit"
     )
     suspend fun getRandomWordSamples(deckId: String, limit: Int): List<String>
+
+    @Query(
+        "SELECT difficulty AS difficulty, COUNT(*) AS count FROM words " +
+            "WHERE deckId = :deckId " +
+            "GROUP BY difficulty " +
+            "ORDER BY difficulty"
+    )
+    suspend fun getDifficultyHistogram(deckId: String): List<DifficultyBucket>
+
+    @Query(
+        "SELECT text FROM words " +
+            "WHERE deckId = :deckId " +
+            "ORDER BY id DESC " +
+            "LIMIT :limit"
+    )
+    suspend fun getRecentWords(deckId: String, limit: Int): List<String>
 }
 
 /** Lightweight projection for word metadata shown in UI. */
@@ -122,4 +138,10 @@ data class WordBrief(
     val difficulty: Int,
     val category: String?,
     val wordClass: String?,
+)
+
+/** Aggregated difficulty bucket for deck analytics. */
+data class DifficultyBucket(
+    val difficulty: Int,
+    val count: Int,
 )

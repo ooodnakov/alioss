@@ -13,6 +13,27 @@
     <string name="decks_subtitle">Manage and import word decks</string>
     <string name="settings_subtitle">Time, teams, language and more</string>
     <string name="history_subtitle">Review recent turns</string>
+    <string name="home_hero_title_idle">Welcome to Alias</string>
+    <string name="home_hero_title_playing">Match in progress</string>
+    <string name="home_hero_title_ready">Ready for the next round?</string>
+    <string name="home_hero_title_victory">Match complete</string>
+    <string name="home_hero_idle_subtitle">Start a new match for %1$d teams or tweak the setup first.</string>
+    <string name="home_hero_pending_subtitle">Next up: %1$s is waiting to play.</string>
+    <string name="home_hero_active_subtitle">%1$s is on the clock — %2$d seconds left.</string>
+    <string name="home_hero_finished_subtitle">%1$s just wrapped their turn for %2$+d.</string>
+    <string name="home_match_point">Match point! %1$s just closed a round.</string>
+    <string name="home_match_finished_winner">Last match: %1$s won with %2$d points.</string>
+    <string name="home_match_finished_tie">Last match ended in a %1$d-point tie.</string>
+    <string name="home_scoreboard_placeholder">Scores appear after the first round.</string>
+    <string name="home_favorite_decks">Favorite decks</string>
+    <string name="home_empty_favorites">Enable decks to feature them here.</string>
+    <string name="home_recent_highlight">Recent highlight</string>
+    <string name="home_highlight_correct">%1$s nailed “%2$s”.</string>
+    <string name="home_highlight_skip">%1$s passed on “%2$s”.</string>
+    <string name="home_highlight_empty">Play a round to build your highlight reel.</string>
+    <string name="resume_match">Resume match</string>
+    <string name="start_new_game">Start new game</string>
+    <string name="view_history">View history</string>
     <string name="idle">Idle</string>
     <string name="team_label">Team: %s</string>
     <string name="remaining_label">Remaining %d</string>
@@ -68,6 +89,15 @@
     </plurals>
     <string name="tutorial_instructions">Swipe right for Correct, left for Skip.</string>
     <string name="tutorial_instructions_vertical">Swipe up for Correct, down for Skip.</string>
+    <string name="tutorial_step_swipe_title">Swipe to score</string>
+    <string name="tutorial_step_status_title">Watch the countdown</string>
+    <string name="tutorial_step_status_body">Timer, team, score, and skips update here.</string>
+    <string name="tutorial_step_actions_title">Fallback controls</string>
+    <string name="tutorial_step_actions_body">Tap when swiping isn’t possible or to restart the match.</string>
+    <string name="tutorial_next">Next</string>
+    <string name="tutorial_back">Back</string>
+    <string name="tutorial_skip">Skip tour</string>
+    <string name="tutorial_finish">Let’s play</string>
     <string name="vertical_swipes_label">Vertical swipes (up/down)</string>
     <string name="deck_word_count">Word count: %1$s</string>
     <string name="deck_official_label">Official</string>
@@ -82,6 +112,25 @@
     <string name="deck_examples_error">Unable to load examples.</string>
     <string name="deck_examples_empty">No words available.</string>
     <string name="deck_examples_reload">Show different words</string>
+    <string name="deck_active_summary">%1$d of %2$d decks enabled</string>
+    <string name="deck_languages_summary">Languages in rotation: %1$s</string>
+    <string name="deck_languages_none">Enable a deck to add it to rotation.</string>
+    <string name="open_filters">Filters</string>
+    <string name="manage_trusted_sources">Trusted hosts</string>
+    <string name="import_decks_action">Import decks</string>
+    <string name="no_decks_call_to_action">Import a deck to start playing.</string>
+    <string name="deck_filters_description">Choose which words appear in the next match.</string>
+    <string name="import_sheet_title">Import decks</string>
+    <string name="import_sheet_hint">Install decks from files or a trusted link.</string>
+    <string name="trusted_sources_sheet_hint">Only downloads from trusted hosts are allowed.</string>
+    <string name="deck_cover_language">%1$s deck</string>
+    <string name="deck_card_enabled">Enabled</string>
+    <string name="deck_card_disabled">Disabled</string>
+    <string name="deck_card_view_details">View details</string>
+    <string name="deck_difficulty_title">Difficulty spread</string>
+    <string name="deck_difficulty_empty">Difficulty data unavailable.</string>
+    <string name="deck_recent_words_title">Recent words</string>
+    <string name="deck_recent_words_empty">No recent words yet.</string>
     <string name="tutorial_dismiss">Got it</string>
     <string name="show_tutorial_again">Show tutorial again</string>
     <string name="no_history">No history yet</string>
@@ -142,6 +191,10 @@
     <string name="max_skips_label">Max skips</string>
     <string name="penalty_per_skip_label">Penalty/skip</string>
     <string name="punish_skips_label">Punish skips</string>
+    <string name="match_rules_tab">Match rules</string>
+    <string name="input_feedback_tab">Input &amp; feedback</string>
+    <string name="teams_tab">Teams</string>
+    <string name="advanced_tab">Advanced</string>
     <string name="language_and_content">Language &amp; Content</string>
     <string name="language_hint">Language (e.g., en, ru)</string>
     <string name="allow_nsfw_label">Allow NSFW</string>
@@ -160,12 +213,25 @@
     <string name="teams_label">Teams</string>
     <string name="add_team_label">Add Team</string>
     <string name="remove_team">Remove team</string>
+    <string name="team_drag_handle_description">Reorder team</string>
+    <string name="drag_to_reorder_hint">Press and drag the handle to reorder your lineup.</string>
+    <string name="team_suggestions_label">Need inspiration?</string>
+    <string name="team_suggestions_hint">Tap a suggestion to auto-fill the next open slot.</string>
     <string name="save_label">Save</string>
     <string name="save_and_restart_label">Save &amp; Restart</string>
-    
+
     <string name="reset_local_data">Reset local data</string>
     <string name="reset_confirm_title">Reset local data?</string>
     <string name="reset_confirm_message">This clears decks, words, history, and settings. This cannot be undone.</string>
     <string name="cancel">Cancel</string>
     <string name="confirm">Confirm</string>
+    <string name="support_and_data_label">Support &amp; data</string>
+
+    <string-array name="team_name_suggestions">
+        <item>Word Wizards</item>
+        <item>Lightning Bolts</item>
+        <item>Brain Trust</item>
+        <item>Trailblazers</item>
+        <item>Quick Thinkers</item>
+    </string-array>
 </resources>
