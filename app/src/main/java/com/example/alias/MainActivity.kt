@@ -118,6 +118,7 @@ import com.example.alias.ui.TutorialOverlay
 import com.example.alias.data.settings.SettingsRepository
 import com.example.alias.data.db.DeckEntity
 import androidx.compose.ui.platform.LocalUriHandler
+import kotlin.math.roundToInt
 import com.google.accompanist.placeholder.material3.placeholder
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.text.font.FontWeight
@@ -150,10 +151,16 @@ class MainActivity : AppCompatActivity() {
                 // Collect general UI events and show snackbars
                 LaunchedEffect(Unit) {
                     vm.uiEvents.collect { ev: UiEvent ->
+                        if (ev.dismissCurrent) {
+                            snack.currentSnackbarData?.dismiss()
+                        }
                         val duration = if (ev.actionLabel != null && ev.duration == SnackbarDuration.Short) {
                             SnackbarDuration.Long
                         } else {
                             ev.duration
+                        }
+                        if (ev.message.isBlank()) {
+                            return@collect
                         }
                         val result = snack.showSnackbar(
                             message = ev.message,
@@ -851,6 +858,7 @@ private fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit)
     val enabled by vm.enabledDeckIds.collectAsState()
     val trusted by vm.trustedSources.collectAsState()
     val settings by vm.settings.collectAsState()
+    val downloadProgress by vm.deckDownloadProgress.collectAsState()
     // Status snackbars are handled globally via vm.uiEvents
     var url by rememberSaveable { mutableStateOf("") }
     var sha by rememberSaveable { mutableStateOf("") }
@@ -933,6 +941,12 @@ private fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit)
                             TextButton(onClick = { vm.setAllDecksEnabled(false) }) { Text(stringResource(R.string.disable_all)) }
                         }
                     }
+                    downloadProgress?.let {
+                        DeckDownloadProgressIndicator(progress = it)
+                        if (decks.isNotEmpty()) {
+                            HorizontalDivider()
+                        }
+                    }
                     if (decks.isEmpty()) {
                         Text(stringResource(R.string.no_decks_installed))
                     } else {
@@ -1002,6 +1016,32 @@ private fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit)
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun DeckDownloadProgressIndicator(progress: MainViewModel.DeckDownloadProgress) {
+    val totalBytes = progress.totalBytes?.takeIf { it > 0L }
+    val fraction = totalBytes?.let { bytesTotal ->
+        val clamped = progress.bytesRead.coerceAtMost(bytesTotal)
+        (clamped.toFloat() / bytesTotal.toFloat()).coerceIn(0f, 1f)
+    }
+    val statusText = when (progress.step) {
+        MainViewModel.DeckDownloadStep.DOWNLOADING -> fraction?.let {
+            stringResource(R.string.deck_download_percent, (it * 100).roundToInt())
+        } ?: stringResource(R.string.deck_download_downloading)
+
+        MainViewModel.DeckDownloadStep.IMPORTING -> stringResource(R.string.deck_download_importing)
+    }
+
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(statusText, style = MaterialTheme.typography.bodyMedium)
+        val indicatorModifier = Modifier.fillMaxWidth()
+        if (fraction != null && progress.step == MainViewModel.DeckDownloadStep.DOWNLOADING) {
+            LinearProgressIndicator(progress = { fraction }, modifier = indicatorModifier)
+        } else {
+            LinearProgressIndicator(modifier = indicatorModifier)
         }
     }
 }

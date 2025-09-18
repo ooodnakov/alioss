@@ -49,6 +49,17 @@ class MainViewModel @Inject constructor(
     private val _engine = MutableStateFlow<GameEngine?>(null)
     val engine: StateFlow<GameEngine?> = _engine.asStateFlow()
 
+    enum class DeckDownloadStep { DOWNLOADING, IMPORTING }
+
+    data class DeckDownloadProgress(
+        val step: DeckDownloadStep,
+        val bytesRead: Long = 0L,
+        val totalBytes: Long? = null,
+    )
+
+    private val _deckDownloadProgress = MutableStateFlow<DeckDownloadProgress?>(null)
+    val deckDownloadProgress: StateFlow<DeckDownloadProgress?> = _deckDownloadProgress.asStateFlow()
+
     // Expose decks and enabled ids for Decks screen
     val decks = deckRepository.getDecks()
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
@@ -72,6 +83,7 @@ class MainViewModel @Inject constructor(
         val actionLabel: String? = null,
         val duration: SnackbarDuration = SnackbarDuration.Short,
         val isError: Boolean = false,
+        val dismissCurrent: Boolean = false,
         val onAction: (suspend () -> Unit)? = null,
     )
     private val _uiEvents = MutableSharedFlow<UiEvent>(
@@ -306,15 +318,56 @@ class MainViewModel @Inject constructor(
 
     fun downloadPackFromUrl(url: String, expectedSha256: String?) {
         viewModelScope.launch {
-            _uiEvents.tryEmit(UiEvent(message = "Downloading…", duration = SnackbarDuration.Indefinite))
+            _deckDownloadProgress.value = DeckDownloadProgress(step = DeckDownloadStep.DOWNLOADING)
+            _uiEvents.tryEmit(
+                UiEvent(
+                    message = "Downloading…",
+                    duration = SnackbarDuration.Short,
+                    dismissCurrent = true
+                )
+            )
             try {
-                val bytes = withContext(Dispatchers.IO) { downloader.download(url.trim(), expectedSha256?.trim().takeUnless { it.isNullOrEmpty() }) }
+                val bytes = withContext(Dispatchers.IO) {
+                    var lastUpdate = 0L
+                    downloader.download(
+                        url.trim(),
+                        expectedSha256?.trim().takeUnless { it.isNullOrEmpty() }
+                    ) { bytesRead, totalBytes ->
+                        val now = System.currentTimeMillis()
+                        if (now - lastUpdate > 100 || (totalBytes != null && bytesRead == totalBytes)) {
+                            _deckDownloadProgress.value = DeckDownloadProgress(
+                                step = DeckDownloadStep.DOWNLOADING,
+                                bytesRead = bytesRead,
+                                totalBytes = totalBytes
+                            )
+                            lastUpdate = now
+                        }
+                    }
+                }
                 // Try JSON first
                 val text = bytes.toString(Charsets.UTF_8)
+                _deckDownloadProgress.value = DeckDownloadProgress(step = DeckDownloadStep.IMPORTING)
                 withContext(Dispatchers.IO) { deckRepository.importJson(text) }
-                _uiEvents.tryEmit(UiEvent(message = "Imported deck from URL", actionLabel = "OK", duration = SnackbarDuration.Short))
+                _uiEvents.tryEmit(
+                    UiEvent(
+                        message = "Imported deck from URL",
+                        actionLabel = "OK",
+                        duration = SnackbarDuration.Short,
+                        dismissCurrent = true
+                    )
+                )
             } catch (t: Throwable) {
-                _uiEvents.tryEmit(UiEvent(message = "Failed: ${t.message}", actionLabel = "Dismiss", duration = SnackbarDuration.Long, isError = true))
+                _uiEvents.tryEmit(
+                    UiEvent(
+                        message = "Failed: ${t.message}",
+                        actionLabel = "Dismiss",
+                        duration = SnackbarDuration.Long,
+                        isError = true,
+                        dismissCurrent = true
+                    )
+                )
+            } finally {
+                _deckDownloadProgress.value = null
             }
         }
     }
