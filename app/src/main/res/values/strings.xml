@@ -179,8 +179,7 @@
     <string name="filters_label">Filters</string>
     <string name="categories_label">Categories</string>
     <string name="word_classes_label">Word classes</string>
-    <string name="min_difficulty_label">Min difficulty</string>
-    <string name="max_difficulty_label">Max difficulty</string>
+    <string name="difficulty_filter_label">Difficulty</string>
     <string name="word_difficulty_value">Difficulty %1$d</string>
     <string name="apply_label">Apply</string>
     <string name="filters_hint">Filters apply to the next match (Restart).</string>

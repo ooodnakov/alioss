@@ -1281,8 +1281,11 @@ private fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit)
     var sha by rememberSaveable { mutableStateOf("") }
     var newTrusted by rememberSaveable { mutableStateOf("") }
 
-    var minDifficulty by rememberSaveable(settings) { mutableStateOf(settings.minDifficulty.toString()) }
-    var maxDifficulty by rememberSaveable(settings) { mutableStateOf(settings.maxDifficulty.toString()) }
+    var difficultyRange by rememberSaveable(settings) {
+        mutableStateOf(
+            normalizeDifficultyRange(settings.minDifficulty, settings.maxDifficulty)
+        )
+    }
     var selectedCategories by rememberSaveable(settings) { mutableStateOf(settings.selectedCategories) }
     var selectedWordClasses by rememberSaveable(settings) { mutableStateOf(settings.selectedWordClasses) }
 
@@ -1303,8 +1306,7 @@ private fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit)
                 DeckSheet.FILTERS -> DeckFiltersSheet(
                     state = DeckFiltersSheetState(
                         difficulty = DifficultyFilterState(
-                            minDifficulty = minDifficulty,
-                            maxDifficulty = maxDifficulty
+                            selectedLevels = difficultyRange.toDifficultyRange().toSet()
                         ),
                         categories = FilterSelectionState(
                             available = availableCategories,
@@ -1316,14 +1318,14 @@ private fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit)
                         )
                     ),
                     callbacks = DeckFiltersSheetCallbacks(
-                        onMinDifficultyChange = { minDifficulty = it },
-                        onMaxDifficultyChange = { maxDifficulty = it },
+                        onDifficultyToggle = { level ->
+                            difficultyRange = adjustDifficultyRange(difficultyRange, level)
+                        },
                         onCategoriesChange = { selectedCategories = it },
                         onWordClassesChange = { selectedWordClasses = it },
                         onApply = {
-                            val lo = minDifficulty.toIntOrNull() ?: settings.minDifficulty
-                            val hi = maxDifficulty.toIntOrNull() ?: settings.maxDifficulty
-                            vm.updateDifficultyFilter(lo, hi)
+                            val range = difficultyRange.toDifficultyRange()
+                            vm.updateDifficultyFilter(range.first, range.last)
                             vm.updateCategoriesFilter(selectedCategories)
                             vm.updateWordClassesFilter(selectedWordClasses)
                             activeSheet = null
@@ -1655,8 +1657,7 @@ private data class DeckFiltersSheetState(
 )
 
 private data class DifficultyFilterState(
-    val minDifficulty: String,
-    val maxDifficulty: String,
+    val selectedLevels: Set<Int>,
 )
 
 private data class FilterSelectionState(
@@ -1665,12 +1666,45 @@ private data class FilterSelectionState(
 )
 
 private class DeckFiltersSheetCallbacks(
-    val onMinDifficultyChange: (String) -> Unit,
-    val onMaxDifficultyChange: (String) -> Unit,
+    val onDifficultyToggle: (Int) -> Unit,
     val onCategoriesChange: (Set<String>) -> Unit,
     val onWordClassesChange: (Set<String>) -> Unit,
     val onApply: () -> Unit,
 )
+
+private val DIFFICULTY_LEVELS = listOf(1, 2, 3, 4, 5)
+private val DEFAULT_DIFFICULTY_RANGE = DIFFICULTY_LEVELS.first()..DIFFICULTY_LEVELS.last()
+
+private fun normalizeDifficultyRange(min: Int, max: Int): Pair<Int, Int> {
+    val clampedMin = min.coerceIn(DEFAULT_DIFFICULTY_RANGE.first, DEFAULT_DIFFICULTY_RANGE.last)
+    val clampedMax = max.coerceIn(DEFAULT_DIFFICULTY_RANGE.first, DEFAULT_DIFFICULTY_RANGE.last)
+    return if (clampedMin <= clampedMax) clampedMin to clampedMax else clampedMax to clampedMin
+}
+
+private fun Pair<Int, Int>.toDifficultyRange(): IntRange {
+    val (min, max) = normalizeDifficultyRange(first, second)
+    return min..max
+}
+
+private fun adjustDifficultyRange(current: Pair<Int, Int>, level: Int): Pair<Int, Int> {
+    val updated = toggleDifficultyLevel(current.toDifficultyRange(), level)
+    return updated.first to updated.last
+}
+
+private fun toggleDifficultyLevel(current: IntRange, level: Int): IntRange {
+    val (min, max) = normalizeDifficultyRange(current.first, current.last)
+    val clampedLevel = level.coerceIn(DEFAULT_DIFFICULTY_RANGE.first, DEFAULT_DIFFICULTY_RANGE.last)
+    val (newMin, newMax) = when {
+        clampedLevel < min -> clampedLevel to max
+        clampedLevel > max -> min to clampedLevel
+        min == max && clampedLevel == min -> DEFAULT_DIFFICULTY_RANGE.first to DEFAULT_DIFFICULTY_RANGE.last
+        clampedLevel == min -> (min + 1).coerceAtMost(max) to max
+        clampedLevel == max -> min to (max - 1).coerceAtLeast(min)
+        else -> clampedLevel to clampedLevel
+    }
+    val (normalizedMin, normalizedMax) = normalizeDifficultyRange(newMin, newMax)
+    return normalizedMin..normalizedMax
+}
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -1687,25 +1721,10 @@ private fun DeckFiltersSheet(
     ) {
         Text(stringResource(R.string.filters_label), style = MaterialTheme.typography.titleLarge)
         Text(stringResource(R.string.deck_filters_description), style = MaterialTheme.typography.bodyMedium)
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            OutlinedTextField(
-                value = state.difficulty.minDifficulty,
-                onValueChange = callbacks.onMinDifficultyChange,
-                label = { Text(stringResource(R.string.min_difficulty_label)) },
-                modifier = Modifier.weight(1f),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-            )
-            OutlinedTextField(
-                value = state.difficulty.maxDifficulty,
-                onValueChange = callbacks.onMaxDifficultyChange,
-                label = { Text(stringResource(R.string.max_difficulty_label)) },
-                modifier = Modifier.weight(1f),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-            )
-        }
+        DifficultyFilterRow(
+            selectedLevels = state.difficulty.selectedLevels,
+            onLevelToggle = callbacks.onDifficultyToggle,
+        )
         FilterChipGroup(
             title = stringResource(R.string.categories_label),
             items = state.categories.available,
@@ -1723,6 +1742,32 @@ private fun DeckFiltersSheet(
             onClick = callbacks.onApply,
             modifier = Modifier.align(Alignment.End)
         ) { Text(stringResource(R.string.apply_label)) }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun DifficultyFilterRow(
+    selectedLevels: Set<Int>,
+    onLevelToggle: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val normalizedSelection = if (selectedLevels.isEmpty()) DEFAULT_DIFFICULTY_RANGE.toSet() else selectedLevels
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(stringResource(R.string.difficulty_filter_label))
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            DIFFICULTY_LEVELS.forEach { level ->
+                val selected = normalizedSelection.contains(level)
+                FilterChip(
+                    selected = selected,
+                    onClick = { onLevelToggle(level) },
+                    label = { Text(level.toString()) }
+                )
+            }
+        }
     }
 }
 
