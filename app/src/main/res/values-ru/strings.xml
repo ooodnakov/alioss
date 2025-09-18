@@ -32,7 +32,7 @@
         <item quantity="one">%d секунда</item>
         <item quantity="few">%d секунды</item>
         <item quantity="many">%d секунд</item>
-        <item quantity="other">%d секунды</item>
+        <item quantity="other">%d секунд</item>
     </plurals>
     <string name="summary_label">Осталось: %1$d • Очки: %2$d • Пропуски: %3$d</string>
     <string name="correct">Правильно</string>
