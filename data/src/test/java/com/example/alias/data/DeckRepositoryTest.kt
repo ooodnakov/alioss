@@ -281,6 +281,16 @@ class DeckRepositoryTest {
                 .map { it.wordClass.uppercase() }
                 .distinct()
         }
+
+        override suspend fun getDeckCategories(deckId: String): List<String> =
+            words.filter { it.deckId == deckId }
+                .mapNotNull { it.category?.takeIf { category -> category.isNotBlank() } }
+                .distinct()
+
+        override suspend fun getRandomWordSamples(deckId: String, limit: Int): List<String> =
+            words.filter { it.deckId == deckId }
+                .map { it.text }
+                .take(limit)
     }
 
 }
