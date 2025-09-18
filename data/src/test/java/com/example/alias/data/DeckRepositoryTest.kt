@@ -156,11 +156,31 @@ class DeckRepositoryTest {
         private val wordClassEntries = mutableListOf<WordClassEntity>()
 
         override suspend fun insertWords(words: List<WordEntity>) {
-            this.words += words
+            words.forEach { newWord ->
+                val index = this.words.indexOfFirst {
+                    it.deckId == newWord.deckId && it.text == newWord.text
+                }
+                if (index != -1) {
+                    this.words[index] = newWord
+                } else {
+                    this.words.add(newWord)
+                }
+            }
         }
 
         override suspend fun insertWordClasses(entries: List<WordClassEntity>) {
-            wordClassEntries += entries
+            entries.forEach { newEntry ->
+                val index = wordClassEntries.indexOfFirst {
+                    it.deckId == newEntry.deckId &&
+                        it.wordText == newEntry.wordText &&
+                        it.wordClass == newEntry.wordClass
+                }
+                if (index != -1) {
+                    wordClassEntries[index] = newEntry
+                } else {
+                    wordClassEntries.add(newEntry)
+                }
+            }
         }
 
         override suspend fun getWordTexts(deckId: String): List<String> =
@@ -231,6 +251,7 @@ class DeckRepositoryTest {
         private fun classesForWord(word: WordEntity): List<String> =
             wordClassEntries.filter { it.deckId == word.deckId && it.wordText == word.text }
                 .map { it.wordClass.uppercase() }
+                .distinct()
 
         override suspend fun getAvailableCategories(
             deckIds: List<String>,
@@ -245,17 +266,21 @@ class DeckRepositoryTest {
             deckIds: List<String>,
             language: String,
             allowNSFW: Boolean
-        ): List<String> =
-            wordClassEntries.filter { entry ->
-                deckIds.contains(entry.deckId) &&
-                    words.any { word ->
-                        word.deckId == entry.deckId &&
-                            word.text == entry.wordText &&
-                            word.language == language &&
-                            (allowNSFW || !word.isNSFW)
-                    }
-            }.map { it.wordClass.uppercase() }
+        ): List<String> {
+            val relevantWords = words
+                .filter {
+                    deckIds.contains(it.deckId) &&
+                        it.language == language &&
+                        (allowNSFW || !it.isNSFW)
+                }
+                .map { it.deckId to it.text }
+                .toSet()
+
+            return wordClassEntries
+                .filter { (it.deckId to it.wordText) in relevantWords }
+                .map { it.wordClass.uppercase() }
                 .distinct()
+        }
     }
 
 }
