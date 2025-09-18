@@ -1,31 +1,34 @@
 package com.example.alias
 
 import android.content.res.Configuration
+import android.graphics.BitmapFactory
 import android.os.Bundle
-import androidx.activity.compose.setContent
 import android.os.VibrationEffect
+import android.util.Base64
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.*
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
-import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.annotation.StringRes
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -106,12 +109,14 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
@@ -1587,6 +1592,18 @@ private fun DeckCard(
 @Composable
 private fun DeckCoverArt(deck: DeckEntity, modifier: Modifier = Modifier) {
     val gradient = rememberDeckCoverBrush(deck.id)
+    val coverImage = remember(deck.coverImageBase64) {
+        deck.coverImageBase64?.let { encoded ->
+            runCatching {
+                val bytes = Base64.decode(encoded, Base64.DEFAULT)
+                if (bytes.isEmpty()) {
+                    null
+                } else {
+                    BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap()
+                }
+            }.getOrNull()
+        }
+    }
     val initial = remember(deck.id, deck.name) {
         deck.name.firstOrNull()?.uppercaseChar()?.toString()
             ?: deck.language.uppercase(Locale.getDefault())
@@ -1598,12 +1615,26 @@ private fun DeckCoverArt(deck: DeckEntity, modifier: Modifier = Modifier) {
             .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
             .background(gradient)
     ) {
-        Text(
-            text = initial,
-            style = MaterialTheme.typography.displayLarge,
-            color = Color.White.copy(alpha = 0.25f),
-            modifier = Modifier.align(Alignment.Center)
-        )
+        if (coverImage != null) {
+            Image(
+                bitmap = coverImage,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.matchParentSize()
+            )
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .background(Color.Black.copy(alpha = 0.25f))
+            )
+        } else {
+            Text(
+                text = initial,
+                style = MaterialTheme.typography.displayLarge,
+                color = Color.White.copy(alpha = 0.25f),
+                modifier = Modifier.align(Alignment.Center)
+            )
+        }
         Text(
             text = stringResource(R.string.deck_cover_language, deck.language.uppercase(Locale.getDefault())),
             style = MaterialTheme.typography.labelLarge,

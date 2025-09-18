@@ -24,7 +24,8 @@ private data class DeckDto(
     @SerialName("isNSFW") val isNsfw: Boolean = false,
     val version: Int = 1,
     val updatedAt: Long = 0L,
-    val isOfficial: Boolean = false
+    val isOfficial: Boolean = false,
+    @SerialName("coverImage") val coverImageBase64: String? = null,
 )
 
 @Serializable
@@ -77,12 +78,13 @@ object PackParser {
         val dto = json.decodeFromString<PackDto>(content)
         // Basic input validation to avoid malformed or oversized packs.
         PackValidator.validateFormat(dto.format)
-        PackValidator.validateDeck(
+        val coverImageBase64 = PackValidator.validateDeck(
             id = dto.deck.id,
             language = dto.deck.language,
             name = dto.deck.name,
             version = dto.deck.version,
-            isNSFW = dto.deck.isNsfw
+            isNSFW = dto.deck.isNsfw,
+            coverImageBase64 = dto.deck.coverImageBase64,
         )
         PackValidator.validateWordCount(dto.words.size)
         val deckEntity = DeckEntity(
@@ -92,7 +94,8 @@ object PackParser {
             isOfficial = dto.deck.isOfficial,
             isNSFW = dto.deck.isNsfw,
             version = dto.deck.version,
-            updatedAt = dto.deck.updatedAt
+            updatedAt = dto.deck.updatedAt,
+            coverImageBase64 = coverImageBase64,
         )
         val wordEntities = mutableListOf<WordEntity>()
         val classEntities = mutableListOf<WordClassEntity>()
