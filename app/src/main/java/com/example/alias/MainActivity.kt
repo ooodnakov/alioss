@@ -106,14 +106,18 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -1639,6 +1643,8 @@ private fun DeckCoverArt(deck: DeckEntity, modifier: Modifier = Modifier) {
             .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
             .background(gradient)
     ) {
+
+        val image = coverImage
         if (image != null) {
             Image(
                 bitmap = image,
@@ -3048,7 +3054,7 @@ private fun RoundSummaryScreen(vm: MainViewModel, s: GameState.TurnFinished, set
 
     Column(
         modifier = Modifier.fillMaxSize().padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.Top),
+        verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.Top),
     ) {
         Text(stringResource(R.string.turn_summary, s.team), style = MaterialTheme.typography.headlineSmall)
         Text(
@@ -3072,19 +3078,23 @@ private fun RoundSummaryScreen(vm: MainViewModel, s: GameState.TurnFinished, set
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(vertical = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    contentPadding = PaddingValues(vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     item {
                         Column(
                             modifier = Modifier.padding(horizontal = 20.dp),
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Text(stringResource(R.string.turn_timeline_title), style = MaterialTheme.typography.titleMedium)
                             Text(
                                 text = stringResource(R.string.timeline_score_breakdown),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = colors.onSurfaceVariant
+                            )
+                            ScoreProgressGraph(
+                                events = timeline.events,
+                                modifier = Modifier.fillMaxWidth()
                             )
                         }
                     }
@@ -3146,6 +3156,8 @@ private data class TimelineData(
     val segments: List<TimelineSegment>,
 )
 
+private data class ScoreTimelinePoint(val time: Float, val score: Float)
+
 private fun buildTimelineData(outcomes: List<TurnOutcome>, penaltyPerSkip: Int): TimelineData {
     if (outcomes.isEmpty()) return TimelineData(emptyList(), emptyList())
     val events = mutableListOf<TimelineEvent>()
@@ -3195,6 +3207,112 @@ private fun buildTimelineData(outcomes: List<TurnOutcome>, penaltyPerSkip: Int):
     return TimelineData(events = events, segments = segments)
 }
 
+private fun buildScoreProgressPoints(events: List<TimelineEvent>): List<ScoreTimelinePoint> {
+    if (events.isEmpty()) return emptyList()
+    val hasElapsed = events.any { it.elapsedMillis > 0L }
+    return buildList {
+        add(ScoreTimelinePoint(0f, 0f))
+        events.forEachIndexed { index, event ->
+            val time = if (hasElapsed) event.elapsedMillis.toFloat() else (index + 1).toFloat()
+            add(ScoreTimelinePoint(time, event.cumulative.toFloat()))
+        }
+    }
+}
+
+@Composable
+private fun ScoreProgressGraph(events: List<TimelineEvent>, modifier: Modifier = Modifier) {
+    val points = remember(events) { buildScoreProgressPoints(events) }
+    if (points.size <= 1) return
+    val colors = MaterialTheme.colorScheme
+    val strokeColor = if (events.lastOrNull()?.cumulative ?: 0 >= 0) colors.tertiary else colors.error
+    val fillColor = strokeColor.copy(alpha = 0.2f)
+    val baselineColor = colors.outline.copy(alpha = 0.5f)
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(
+            text = stringResource(R.string.timeline_score_graph_label),
+            style = MaterialTheme.typography.labelLarge,
+            color = colors.onSurfaceVariant
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(64.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(colors.surfaceVariant.copy(alpha = 0.6f))
+                .padding(horizontal = 12.dp, vertical = 8.dp)
+        ) {
+            Canvas(Modifier.fillMaxSize()) {
+                val xMin = points.minOf { it.time }
+                val xMax = points.maxOf { it.time }
+                val xRange = (xMax - xMin)
+                val useIndex = xRange <= 0f
+                val yMin = points.minOf { it.score }
+                val yMax = points.maxOf { it.score }
+                val yRange = (yMax - yMin)
+                val offsets = points.mapIndexed { index, point ->
+                    val xFraction = if (useIndex) {
+                        index.toFloat() / points.lastIndex.toFloat()
+                    } else {
+                        (point.time - xMin) / xRange
+                    }
+                    val yFraction = if (yRange > 0f) {
+                        (point.score - yMin) / yRange
+                    } else {
+                        0.5f
+                    }
+                    Offset(
+                        x = xFraction.coerceIn(0f, 1f) * size.width,
+                        y = size.height - yFraction.coerceIn(0f, 1f) * size.height
+                    )
+                }
+                val zeroLineY = when {
+                    yRange > 0f && yMin <= 0f && yMax >= 0f -> {
+                        val zeroFraction = (0f - yMin) / yRange
+                        size.height - zeroFraction * size.height
+                    }
+                    yRange == 0f && yMin == 0f -> size.height * 0.5f
+                    else -> null
+                }
+                if (zeroLineY != null) {
+                    drawLine(
+                        color = baselineColor,
+                        start = Offset(0f, zeroLineY),
+                        end = Offset(size.width, zeroLineY),
+                        strokeWidth = 1.dp.toPx()
+                    )
+                }
+                if (offsets.size >= 2) {
+                    val fillPath = Path().apply {
+                        moveTo(offsets.first().x, size.height)
+                        offsets.forEach { lineTo(it.x, it.y) }
+                        lineTo(offsets.last().x, size.height)
+                        close()
+                    }
+                    drawPath(
+                        path = fillPath,
+                        brush = Brush.verticalGradient(
+                            colors = listOf(fillColor, fillColor.copy(alpha = 0f)),
+                            startY = 0f,
+                            endY = size.height
+                        )
+                    )
+                    val strokePath = Path().apply {
+                        offsets.forEachIndexed { index, offset ->
+                            if (index == 0) moveTo(offset.x, offset.y) else lineTo(offset.x, offset.y)
+                        }
+                    }
+                    drawPath(
+                        path = strokePath,
+                        color = strokeColor,
+                        style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
+                    )
+                    drawCircle(color = strokeColor, radius = 4.dp.toPx(), center = offsets.last())
+                }
+            }
+        }
+    }
+}
+
 @Composable
 private fun TimelineSegmentHeader(
     segment: TimelineSegment,
@@ -3227,7 +3345,7 @@ private fun TimelineSegmentHeader(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -3236,7 +3354,7 @@ private fun TimelineSegmentHeader(
                 TimelineSegmentType.SKIP -> Icons.Filled.Close
                 TimelineSegmentType.PENDING -> Icons.Filled.Schedule
             }
-            Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(24.dp))
+            Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(20.dp))
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -3287,9 +3405,9 @@ private fun TimelineEventRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(top = 8.dp)
+            .padding(top = 4.dp)
             .height(IntrinsicSize.Min),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.Top
     ) {
         TimelineIndicator(
@@ -3299,13 +3417,19 @@ private fun TimelineEventRow(
         )
         Column(
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Text(event.outcome.word, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Text(
+                    event.outcome.word,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
                 if (event.isBonus) {
                     AssistChip(
                         onClick = {},
@@ -3321,7 +3445,7 @@ private fun TimelineEventRow(
                     )
                 }
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = stringResource(R.string.timeline_change, event.change),
                     style = MaterialTheme.typography.bodyMedium,
@@ -3351,7 +3475,7 @@ private fun TimelineEventRow(
 private fun TimelineIndicator(color: Color, showTopConnector: Boolean, showBottomConnector: Boolean) {
     Box(
         modifier = Modifier
-            .width(28.dp)
+            .width(24.dp)
             .fillMaxHeight(),
         contentAlignment = Alignment.TopCenter
     ) {
