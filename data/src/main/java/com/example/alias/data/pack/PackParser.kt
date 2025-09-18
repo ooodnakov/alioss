@@ -97,11 +97,13 @@ object PackParser {
         val wordEntities = mutableListOf<WordEntity>()
         val classEntities = mutableListOf<WordClassEntity>()
         dto.words.forEach { word ->
+            val difficulty = word.normalizedDifficulty()
+            val category = word.normalizedCategory()
             val normalizedClass = word.resolvedWordClass()
             PackValidator.validateWord(
                 text = word.text,
-                difficulty = word.difficulty,
-                category = word.category,
+                difficulty = difficulty,
+                category = category,
                 tabooStems = word.tabooStems,
                 wordClass = normalizedClass
             )
@@ -110,8 +112,8 @@ object PackParser {
                 text = word.text,
                 language = dto.deck.language,
                 stems = null,
-                category = word.category,
-                difficulty = word.difficulty,
+                category = category,
+                difficulty = difficulty,
                 tabooStems = word.tabooStems?.joinToString(";"),
                 isNSFW = word.isNsfw
             )
