@@ -134,6 +134,22 @@ class MainViewModel @Inject constructor(
         )
     }
 
+    private suspend fun loadWords(filters: WordQueryFilters): List<String> {
+        if (filters.deckIds.isEmpty()) return emptyList()
+        val words = wordDao.getWordTextsForDecks(
+            filters.deckIds,
+            filters.language,
+            filters.allowNSFW,
+            filters.minDifficulty,
+            filters.maxDifficulty,
+            filters.categories,
+            filters.categoryFilterEnabled,
+            filters.wordClasses,
+            filters.wordClassFilterEnabled,
+        )
+        return words
+    }
+
     init {
         viewModelScope.launch {
             val initial = withContext(Dispatchers.IO) {
@@ -192,17 +208,7 @@ class MainViewModel @Inject constructor(
                 }
                 // Fetch words for enabled decks in preferred language
                 val filters = baseSettings.toWordQueryFilters(resolvedEnabled)
-                val words = if (filters.deckIds.isEmpty()) emptyList() else wordDao.getWordTextsForDecks(
-                    filters.deckIds,
-                    filters.language,
-                    filters.allowNSFW,
-                    filters.minDifficulty,
-                    filters.maxDifficulty,
-                    filters.categories,
-                    filters.categoryFilterEnabled,
-                    filters.wordClasses,
-                    filters.wordClassFilterEnabled
-                )
+                val words = loadWords(filters)
                 InitialLoadResult(
                     words = words,
                     settings = baseSettings.copy(enabledDeckIds = resolvedEnabled)
@@ -535,19 +541,7 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             val s = settingsRepository.settings.first()
             val filters = s.toWordQueryFilters()
-            val words = withContext(Dispatchers.IO) {
-                if (filters.deckIds.isEmpty()) emptyList() else wordDao.getWordTextsForDecks(
-                    filters.deckIds,
-                    filters.language,
-                    filters.allowNSFW,
-                    filters.minDifficulty,
-                    filters.maxDifficulty,
-                    filters.categories,
-                    filters.categoryFilterEnabled,
-                    filters.wordClasses,
-                    filters.wordClassFilterEnabled
-                )
-            }
+            val words = withContext(Dispatchers.IO) { loadWords(filters) }
             // Update word info cache for current filters
             viewModelScope.launch(Dispatchers.IO) {
                 val briefs = if (filters.deckIds.isEmpty()) emptyList() else wordDao.getWordBriefsForDecks(
