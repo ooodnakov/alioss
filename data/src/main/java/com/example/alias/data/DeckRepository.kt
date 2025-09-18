@@ -25,10 +25,20 @@ interface DeckRepository {
 }
 
 class DeckRepositoryImpl(
-    private val db: AliasDatabase,
     private val deckDao: DeckDao,
-    private val wordDao: WordDao
+    private val wordDao: WordDao,
+    private val transactionRunner: suspend (suspend () -> Unit) -> Unit
 ) : DeckRepository {
+
+    constructor(
+        db: AliasDatabase,
+        deckDao: DeckDao,
+        wordDao: WordDao
+    ) : this(
+        deckDao = deckDao,
+        wordDao = wordDao,
+        transactionRunner = { action -> db.withTransaction { action() } }
+    )
     override fun getDecks(): Flow<List<DeckEntity>> = deckDao.getDecks()
 
     override suspend fun getWordCount(deckId: String): Int = wordDao.getWordCount(deckId)
@@ -38,7 +48,7 @@ class DeckRepositoryImpl(
     }
 
     override suspend fun importPack(pack: ParsedPack) {
-        db.withTransaction {
+        transactionRunner {
             deckDao.insertDecks(listOf(pack.deck))
             // Replace words for the deck to avoid duplicates on re-import
             wordDao.deleteByDeck(pack.deck.id)
