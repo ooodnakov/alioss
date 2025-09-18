@@ -100,6 +100,13 @@ interface WordDao {
     ): List<String>
 
     @Query(
+        "SELECT UPPER(wordClass) AS wordClass, COUNT(*) AS count FROM word_classes " +
+            "WHERE deckId = :deckId " +
+            "GROUP BY UPPER(wordClass)"
+    )
+    suspend fun getWordClassCounts(deckId: String): List<WordClassCount>
+
+    @Query(
         "SELECT DISTINCT category FROM words " +
             "WHERE deckId = :deckId " +
             "AND category IS NOT NULL AND TRIM(category) != '' " +
@@ -143,5 +150,10 @@ data class WordBrief(
 /** Aggregated difficulty bucket for deck analytics. */
 data class DifficultyBucket(
     val difficulty: Int,
+    val count: Int,
+)
+
+data class WordClassCount(
+    val wordClass: String,
     val count: Int,
 )

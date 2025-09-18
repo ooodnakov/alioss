@@ -1,18 +1,22 @@
 package com.example.alias
 
 import android.content.Context
+import android.graphics.BitmapFactory
 import android.net.Uri
+import android.util.Base64
 import android.util.Log
 import androidx.compose.material3.SnackbarDuration
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.alias.data.DeckRepository
-import com.example.alias.data.db.WordDao
 import com.example.alias.data.db.DifficultyBucket
+import com.example.alias.data.db.WordClassCount
+import com.example.alias.data.db.WordDao
 import com.example.alias.data.download.PackDownloader
 import com.example.alias.data.TurnHistoryRepository
 import com.example.alias.data.db.TurnHistoryEntity
 import com.example.alias.data.pack.PackParser
+import com.example.alias.data.pack.ParsedPack
 import com.example.alias.data.settings.Settings
 import com.example.alias.data.settings.SettingsRepository
 import com.example.alias.domain.DefaultGameEngine
@@ -22,6 +26,7 @@ import com.example.alias.domain.word.WordClassCatalog
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
@@ -31,6 +36,8 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -38,6 +45,8 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.Locale
+import org.json.JSONObject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
@@ -100,6 +109,17 @@ class MainViewModel @Inject constructor(
     )
     val uiEvents: SharedFlow<UiEvent> = _uiEvents
 
+    private fun showCoverImageErrorSnackbar() {
+        _uiEvents.tryEmit(
+            UiEvent(
+                message = "Deck cover image couldn't be processed",
+                actionLabel = "Dismiss",
+                duration = SnackbarDuration.Long,
+                isError = true,
+            )
+        )
+    }
+
     private data class WordQueryFilters(
         val deckIds: List<String>,
         val language: String,
@@ -117,10 +137,108 @@ class MainViewModel @Inject constructor(
         val settings: Settings,
     )
 
+    private data class WordClassAvailabilityKey(
+        val deckIds: Set<String>,
+        val language: String,
+        val allowNSFW: Boolean,
+    )
+
+    private data class SanitizedPack(
+        val pack: ParsedPack,
+        val coverImageError: Throwable?,
+    )
+
+    private fun canonicalizeWordClassFilters(raw: Collection<String>): List<String> {
+        val normalized = raw
+            .asSequence()
+            .mapNotNull { value ->
+                val trimmed = value.trim()
+                if (trimmed.isEmpty()) {
+                    null
+                } else {
+                    trimmed.uppercase(Locale.ROOT)
+                }
+            }
+            .toList()
+        if (normalized.isEmpty()) return emptyList()
+        val orderedKnown = WordClassCatalog.order(normalized)
+        val knownSet = orderedKnown.toSet()
+        val extras = normalized
+            .asSequence()
+            .filterNot { knownSet.contains(it) }
+            .distinct()
+            .sorted()
+            .toList()
+        return orderedKnown + extras
+    }
+
+    private suspend fun sanitizeCoverImage(pack: ParsedPack): SanitizedPack {
+        val coverError = withContext(Dispatchers.IO) {
+            pack.deck.coverImageBase64?.let { encoded ->
+                try {
+                    val decoded = Base64.decode(encoded, Base64.DEFAULT)
+                    require(decoded.isNotEmpty()) { "Cover image is empty" }
+                    val opts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                    BitmapFactory.decodeByteArray(decoded, 0, decoded.size, opts)
+                    require(opts.outWidth > 0 && opts.outHeight > 0) { "Cover image has invalid dimensions" }
+                    null
+                } catch (c: CancellationException) {
+                    throw c
+                } catch (t: Throwable) {
+                    Log.e(TAG, "Failed to decode deck cover image for ${pack.deck.id}", t)
+                    t
+                }
+            }
+        }
+        val sanitized = if (coverError != null) {
+            pack.copy(deck = pack.deck.copy(coverImageBase64 = null))
+        } else {
+            pack
+        }
+        return SanitizedPack(sanitized, coverError)
+    }
+
+    private suspend fun parseAndSanitizePack(content: String): SanitizedPack {
+        return try {
+            val parsed = PackParser.fromJson(content)
+            sanitizeCoverImage(parsed)
+        } catch (error: Throwable) {
+            if (error is CancellationException) throw error
+            if (!error.isCoverImageError()) throw error
+            val sanitizedJson = removeCoverImageField(content) ?: throw error
+            val parsed = PackParser.fromJson(sanitizedJson)
+            val sanitized = sanitizeCoverImage(parsed)
+            sanitized.copy(coverImageError = sanitized.coverImageError ?: error)
+        }
+    }
+
+    private fun removeCoverImageField(content: String): String? {
+        return try {
+            val root = JSONObject(content)
+            val deck = root.optJSONObject("deck") ?: return null
+            if (!deck.has("coverImage")) {
+                null
+            } else {
+                deck.remove("coverImage")
+                root.toString()
+            }
+        } catch (error: Exception) {
+            null
+        }
+    }
+
+    private fun Throwable.isCoverImageError(): Boolean {
+        if (this is IllegalArgumentException && message?.contains("cover image", ignoreCase = true) == true) {
+            return true
+        }
+        val cause = cause
+        return cause != null && cause !== this && cause.isCoverImageError()
+    }
+
     private fun Settings.toWordQueryFilters(deckIdsOverride: Set<String>? = null): WordQueryFilters {
         val deckIds = (deckIdsOverride ?: enabledDeckIds).toList()
         val categories = selectedCategories.toList()
-        val classes = WordClassCatalog.order(selectedWordClasses)
+        val classes = canonicalizeWordClassFilters(selectedWordClasses)
         return WordQueryFilters(
             deckIds = deckIds,
             language = languagePreference,
@@ -184,9 +302,15 @@ class MainViewModel @Inject constructor(
                     toImport.addAll(assetFiles)
                 }
                 for (f in toImport) {
-                    runCatching {
+                    try {
                         val content = context.assets.open("decks/$f").bufferedReader().use { it.readText() }
-                        deckRepository.importJson(content)
+                        val (sanitizedPack, coverError) = parseAndSanitizePack(content)
+                        deckRepository.importPack(sanitizedPack)
+                        if (coverError != null) {
+                            Log.w(TAG, "Bundled deck $f cover art discarded due to decode failure", coverError)
+                        }
+                    } catch (t: Throwable) {
+                        Log.e(TAG, "Failed to import bundled deck $f", t)
                     }
                 }
                 // Persist current checksums if any
@@ -250,7 +374,7 @@ class MainViewModel @Inject constructor(
                         }
                         _wordInfo.value = map
                         _availableCategories.value = categories
-                        _availableWordClasses.value = WordClassCatalog.order(classes)
+                        _availableWordClasses.value = canonicalizeWordClassFilters(classes)
                     }
                 }
             }
@@ -264,6 +388,29 @@ class MainViewModel @Inject constructor(
             )
             val seed = java.security.SecureRandom().nextLong()
             e.startMatch(config, teams = initial.settings.teams, seed = seed)
+        }
+
+        viewModelScope.launch {
+            settingsRepository.settings
+                .map { settings ->
+                    WordClassAvailabilityKey(
+                        deckIds = settings.enabledDeckIds,
+                        language = settings.languagePreference,
+                        allowNSFW = settings.allowNSFW,
+                    )
+                }
+                .distinctUntilChanged()
+                .collectLatest { key ->
+                    val ids = key.deckIds.toList()
+                    val classes = if (ids.isEmpty()) {
+                        emptyList()
+                    } else {
+                        withContext(Dispatchers.IO) {
+                            wordDao.getAvailableWordClasses(ids, key.language, key.allowNSFW)
+                        }
+                    }
+                    _availableWordClasses.value = canonicalizeWordClassFilters(classes)
+                }
         }
     }
 
@@ -356,6 +503,18 @@ class MainViewModel @Inject constructor(
     suspend fun getDeckRecentWords(deckId: String, limit: Int = 8): List<String> =
         withContext(Dispatchers.IO) { deckRepository.getRecentWords(deckId, limit) }
 
+    suspend fun getDeckWordClassCounts(deckId: String): List<WordClassCount> =
+        withContext(Dispatchers.IO) {
+            val counts = wordDao.getWordClassCounts(deckId)
+            val knownOrder = WordClassCatalog.allowed.withIndex().associate { it.value to it.index }
+            counts.sortedWith(
+                compareBy(
+                    { knownOrder[it.wordClass] ?: Int.MAX_VALUE },
+                    { it.wordClass }
+                )
+            )
+        }
+
     fun updateSeenTutorial(value: Boolean) {
         viewModelScope.launch { settingsRepository.updateSeenTutorial(value) }
     }
@@ -391,7 +550,8 @@ class MainViewModel @Inject constructor(
                 // Try JSON first
                 val text = bytes.toString(Charsets.UTF_8)
                 _deckDownloadProgress.value = DeckDownloadProgress(step = DeckDownloadStep.IMPORTING)
-                withContext(Dispatchers.IO) { deckRepository.importJson(text) }
+                val (sanitizedPack, imageError) = withContext(Dispatchers.IO) { parseAndSanitizePack(text) }
+                withContext(Dispatchers.IO) { deckRepository.importPack(sanitizedPack) }
                 _uiEvents.tryEmit(
                     UiEvent(
                         message = "Imported deck from URL",
@@ -400,6 +560,9 @@ class MainViewModel @Inject constructor(
                         dismissCurrent = true
                     )
                 )
+                if (imageError != null) {
+                    showCoverImageErrorSnackbar()
+                }
             } catch (t: Throwable) {
                 _uiEvents.tryEmit(
                     UiEvent(
@@ -423,18 +586,21 @@ class MainViewModel @Inject constructor(
                     context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
                         ?: throw IllegalStateException("Empty file")
                 }
-                val pack = withContext(Dispatchers.IO) { PackParser.fromJson(text) }
-                withContext(Dispatchers.IO) { deckRepository.importPack(pack) }
+                val (sanitizedPack, imageError) = withContext(Dispatchers.IO) { parseAndSanitizePack(text) }
+                withContext(Dispatchers.IO) { deckRepository.importPack(sanitizedPack) }
                 runCatching {
                     val s = settingsRepository.settings.first()
-                    if (pack.deck.language == s.languagePreference) {
+                    if (sanitizedPack.deck.language == s.languagePreference) {
                         val ids = s.enabledDeckIds.toMutableSet()
-                        if (ids.add(pack.deck.id)) {
+                        if (ids.add(sanitizedPack.deck.id)) {
                             settingsRepository.setEnabledDeckIds(ids)
                         }
                     }
                 }
                 _uiEvents.tryEmit(UiEvent(message = "Imported deck", actionLabel = "OK", duration = SnackbarDuration.Short))
+                if (imageError != null) {
+                    showCoverImageErrorSnackbar()
+                }
             } catch (t: Throwable) {
                 _uiEvents.tryEmit(
                     UiEvent(
@@ -572,7 +738,7 @@ class MainViewModel @Inject constructor(
                 val list = if (filters.deckIds.isEmpty()) emptyList() else wordDao.getAvailableWordClasses(
                     filters.deckIds, filters.language, filters.allowNSFW
                 )
-                _availableWordClasses.value = WordClassCatalog.order(list)
+                _availableWordClasses.value = canonicalizeWordClassFilters(list)
             }
             val e = DefaultGameEngine(words, viewModelScope)
             _engine.value = e

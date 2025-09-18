@@ -7,12 +7,25 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
-import com.example.alias.domain.word.WordClassCatalog
+import java.util.Locale
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 private val DEFAULT_TEAMS = listOf("Red", "Blue")
+
+private fun normalizeWordClasses(values: Set<String>): Set<String> {
+    return values
+        .mapNotNull { value ->
+            val trimmed = value.trim()
+            if (trimmed.isEmpty()) {
+                null
+            } else {
+                trimmed.uppercase(Locale.ROOT)
+            }
+        }
+        .toSet()
+}
 
 /**
  * Local settings persisted via Preferences DataStore.
@@ -106,9 +119,7 @@ class SettingsRepositoryImpl(
             maxDifficulty = p[Keys.MAX_DIFFICULTY] ?: 5,
             verticalSwipes = p[Keys.VERTICAL_SWIPES] ?: false,
             selectedCategories = p[Keys.CATEGORIES_FILTER] ?: emptySet(),
-            selectedWordClasses = WordClassCatalog.filterAllowed(
-                p[Keys.WORD_CLASSES_FILTER] ?: emptySet()
-            ).toSet(),
+            selectedWordClasses = normalizeWordClasses(p[Keys.WORD_CLASSES_FILTER] ?: emptySet()),
             orientation = p[Keys.ORIENTATION] ?: "system",
             trustedSources = p[Keys.TRUSTED_SOURCES] ?: emptySet(),
             seenTutorial = p[Keys.SEEN_TUTORIAL] ?: false,
@@ -192,7 +203,7 @@ class SettingsRepositoryImpl(
     }
 
     override suspend fun setWordClassesFilter(classes: Set<String>) {
-        val normalized = WordClassCatalog.filterAllowed(classes).toSet()
+        val normalized = normalizeWordClasses(classes)
         dataStore.edit { it[Keys.WORD_CLASSES_FILTER] = normalized }
     }
 
