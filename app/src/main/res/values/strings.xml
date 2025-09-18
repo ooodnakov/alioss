@@ -16,6 +16,7 @@
     <string name="idle">Idle</string>
     <string name="team_label">Team: %s</string>
     <string name="remaining_label">Remaining %d</string>
+    <string name="countdown_announcement">Countdown: %1$d</string>
     <plurals name="score_label">
         <item quantity="one">%d point</item>
         <item quantity="other">%d points</item>
@@ -23,6 +24,10 @@
     <plurals name="skips_label">
         <item quantity="one">%d skip</item>
         <item quantity="other">%d skips</item>
+    </plurals>
+    <plurals name="time_remaining_seconds">
+        <item quantity="one">%d second</item>
+        <item quantity="other">%d seconds</item>
     </plurals>
     <string name="summary_label">Remaining: %1$d • Score: %2$d • Skips: %3$d</string>
     <string name="correct">Correct</string>
