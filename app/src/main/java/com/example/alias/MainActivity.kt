@@ -1,8 +1,11 @@
 package com.example.alias
 
+import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.compose.setContent
+import android.os.VibrationEffect
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.background
@@ -13,11 +16,79 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.annotation.StringRes
+import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.LibraryBooks
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.BugReport
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Code
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DragHandle
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.filled.ScreenLockLandscape
+import androidx.compose.material.icons.filled.ScreenLockPortrait
+import androidx.compose.material.icons.filled.ScreenRotation
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -25,9 +96,11 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.Saver
@@ -46,19 +119,41 @@ import androidx.compose.material3.TextButton
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import android.content.res.Configuration
 import android.os.VibrationEffect
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringArrayResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.navigation.NavType
 import com.example.alias.data.settings.Settings
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import com.example.alias.domain.GameEngine
@@ -72,15 +167,35 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.NavType
 import androidx.navigation.navArgument
+import com.example.alias.MainViewModel.UiEvent
+import com.example.alias.data.db.DeckEntity
+import com.example.alias.data.settings.Settings
+import com.example.alias.data.settings.SettingsRepository
+import com.example.alias.domain.GameEngine
+import com.example.alias.domain.GameState
+import com.example.alias.domain.TurnOutcome
 import com.example.alias.ui.AppScaffold
 import com.example.alias.ui.CountdownOverlay
 import com.example.alias.ui.HistoryScreen
+import com.example.alias.ui.TutorialOverlay
+import com.example.alias.ui.WordCard
+import com.example.alias.ui.WordCardAction
+import com.google.accompanist.placeholder.material3.placeholder
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import java.text.DateFormat
+import java.util.Date
+import java.util.Locale
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.rememberModalBottomSheetState
 import com.example.alias.MainViewModel.UiEvent
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
@@ -94,8 +209,11 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.Verified
 import java.util.Locale
 import java.text.DateFormat
 import java.util.Date
@@ -114,10 +232,12 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.text.KeyboardOptions
@@ -130,11 +250,12 @@ import com.example.alias.ui.TutorialOverlay
 import com.example.alias.data.settings.SettingsRepository
 import com.example.alias.data.db.DeckEntity
 import com.example.alias.data.db.TurnHistoryEntity
+import com.example.alias.data.db.DifficultyBucket
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.graphics.Brush
+import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
-import com.google.accompanist.placeholder.material3.placeholder
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.text.font.FontWeight
+import dagger.hilt.android.AndroidEntryPoint
 
 private val LARGE_BUTTON_HEIGHT = 80.dp
 private const val MIN_TEAMS = SettingsRepository.MIN_TEAMS
@@ -1218,6 +1339,7 @@ private class CountdownState(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 private fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
     val decks by vm.decks.collectAsState()
@@ -1225,169 +1347,569 @@ private fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit)
     val trusted by vm.trustedSources.collectAsState()
     val settings by vm.settings.collectAsState()
     val downloadProgress by vm.deckDownloadProgress.collectAsState()
-    // Status snackbars are handled globally via vm.uiEvents
+    val availableCategories by vm.availableCategories.collectAsState()
+    val availableWordClasses by vm.availableWordClasses.collectAsState()
+
     var url by rememberSaveable { mutableStateOf("") }
     var sha by rememberSaveable { mutableStateOf("") }
     var newTrusted by rememberSaveable { mutableStateOf("") }
+
+    var minDifficulty by rememberSaveable(settings) { mutableStateOf(settings.minDifficulty.toString()) }
+    var maxDifficulty by rememberSaveable(settings) { mutableStateOf(settings.maxDifficulty.toString()) }
+    var selectedCategories by rememberSaveable(settings) { mutableStateOf(settings.selectedCategories) }
+    var selectedWordClasses by rememberSaveable(settings) { mutableStateOf(settings.selectedWordClasses) }
+
     val filePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let { vm.importDeckFromFile(it) }
     }
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        item {
-            Text(stringResource(R.string.title_decks), style = MaterialTheme.typography.headlineSmall)
-        }
-        item {
-            ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-                Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(stringResource(R.string.filters_label), style = MaterialTheme.typography.titleMedium)
-                    val availableCategories by vm.availableCategories.collectAsState()
-                    val availableWordClasses by vm.availableWordClasses.collectAsState()
-                    var selectedCats by rememberSaveable(settings) { mutableStateOf(settings.selectedCategories) }
-                    var selectedClasses by rememberSaveable(settings) { mutableStateOf(settings.selectedWordClasses) }
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        var minDiff by rememberSaveable(settings) { mutableStateOf(settings.minDifficulty.toString()) }
-                        var maxDiff by rememberSaveable(settings) { mutableStateOf(settings.maxDifficulty.toString()) }
 
-                        OutlinedTextField(
-                            value = minDiff,
-                            onValueChange = { minDiff = it },
-                            label = { Text(stringResource(R.string.min_difficulty_label)) },
-                            modifier = Modifier.weight(1f),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+    var activeSheet by rememberSaveable { mutableStateOf<DeckSheet?>(null) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    val sheet = activeSheet
+    if (sheet != null) {
+        ModalBottomSheet(
+            onDismissRequest = { activeSheet = null },
+            sheetState = sheetState
+        ) {
+            when (sheet) {
+                DeckSheet.FILTERS -> DeckFiltersSheet(
+                    state = DeckFiltersSheetState(
+                        difficulty = DifficultyFilterState(
+                            minDifficulty = minDifficulty,
+                            maxDifficulty = maxDifficulty
+                        ),
+                        categories = FilterSelectionState(
+                            available = availableCategories,
+                            selected = selectedCategories
+                        ),
+                        wordClasses = FilterSelectionState(
+                            available = availableWordClasses,
+                            selected = selectedWordClasses
                         )
-
-                        OutlinedTextField(
-                            value = maxDiff,
-                            onValueChange = { maxDiff = it },
-                            label = { Text(stringResource(R.string.max_difficulty_label)) },
-                            modifier = Modifier.weight(1f),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                        )
-
-                        Button(onClick = {
-                            val lo = minDiff.toIntOrNull() ?: settings.minDifficulty
-                            val hi = maxDiff.toIntOrNull() ?: settings.maxDifficulty
+                    ),
+                    callbacks = DeckFiltersSheetCallbacks(
+                        onMinDifficultyChange = { minDifficulty = it },
+                        onMaxDifficultyChange = { maxDifficulty = it },
+                        onCategoriesChange = { selectedCategories = it },
+                        onWordClassesChange = { selectedWordClasses = it },
+                        onApply = {
+                            val lo = minDifficulty.toIntOrNull() ?: settings.minDifficulty
+                            val hi = maxDifficulty.toIntOrNull() ?: settings.maxDifficulty
                             vm.updateDifficultyFilter(lo, hi)
-                            vm.updateCategoriesFilter(selectedCats)
-                            vm.updateWordClassesFilter(selectedClasses)
-                        }) {
-                            Text(stringResource(R.string.apply_label))
+                            vm.updateCategoriesFilter(selectedCategories)
+                            vm.updateWordClassesFilter(selectedWordClasses)
+                            activeSheet = null
                         }
-                    }
-                    FilterChipGroup(
-                        title = stringResource(R.string.categories_label),
-                        items = availableCategories,
-                        selectedItems = selectedCats,
-                        onSelectionChanged = { selectedCats = it }
                     )
-                    FilterChipGroup(
-                        title = stringResource(R.string.word_classes_label),
-                        items = availableWordClasses,
-                        selectedItems = selectedClasses,
-                        onSelectionChanged = { selectedClasses = it }
+                )
+
+                DeckSheet.IMPORT -> DeckImportSheet(
+                    state = DeckImportSheetState(
+                        url = url,
+                        sha256 = sha
+                    ),
+                    callbacks = DeckImportSheetCallbacks(
+                        onUrlChange = { url = it },
+                        onShaChange = { sha = it },
+                        onPickFile = { filePicker.launch(arrayOf("application/json")) },
+                        onDownload = {
+                            vm.downloadPackFromUrl(url, sha)
+                            activeSheet = null
+                        },
+                        onOpenTrusted = { activeSheet = DeckSheet.TRUSTED }
                     )
-                    Text(stringResource(R.string.filters_hint))
-                }
+                )
+
+                DeckSheet.TRUSTED -> DeckTrustedSourcesSheet(
+                    trustedSources = trusted.toList(),
+                    newSource = newTrusted,
+                    onNewSourceChange = { newTrusted = it },
+                    onRemove = { vm.removeTrustedSource(it) },
+                    onAdd = {
+                        val trimmed = newTrusted.trim()
+                        if (trimmed.isNotEmpty()) {
+                            vm.addTrustedSource(trimmed)
+                            newTrusted = ""
+                        }
+                    }
+                )
             }
         }
-        item {
-            ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-                Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                        Text(stringResource(R.string.installed_decks), style = MaterialTheme.typography.titleMedium)
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            TextButton(onClick = { vm.setAllDecksEnabled(true) }) { Text(stringResource(R.string.enable_all)) }
-                            TextButton(onClick = { vm.setAllDecksEnabled(false) }) { Text(stringResource(R.string.disable_all)) }
-                        }
-                    }
-                    downloadProgress?.let {
-                        DeckDownloadProgressIndicator(progress = it)
-                        if (decks.isNotEmpty()) {
-                            HorizontalDivider()
-                        }
-                    }
-                    if (decks.isEmpty()) {
-                        Text(stringResource(R.string.no_decks_installed))
-                    } else {
-                        decks.forEachIndexed { index, deck ->
-                            val isEnabled = enabled.contains(deck.id)
-                            ListItem(
-                                headlineContent = { Text(deck.name) },
-                                supportingContent = {
-                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                        AssistChip(onClick = {}, enabled = false, label = { Text(deck.language.uppercase()) })
-                                        if (deck.isNSFW) AssistChip(onClick = {}, enabled = false, label = { Text("NSFW") })
-                                    }
-                                },
-                                trailingContent = {
-                                    Switch(checked = isEnabled, onCheckedChange = { vm.setDeckEnabled(deck.id, it) })
-                                },
-                                modifier = Modifier.clickable { onDeckSelected(deck) }
-                            )
-                            if (index < decks.lastIndex) HorizontalDivider()
-                        }
-                    }
-                }
+    }
+
+    Box(Modifier.fillMaxSize()) {
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(minSize = 240.dp),
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(
+                start = 16.dp,
+                top = 16.dp,
+                end = 16.dp,
+                bottom = 96.dp
+            ),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                DecksHeroSummary(
+                    state = DecksHeroSummaryState(
+                        decks = decks,
+                        enabledDeckIds = enabled
+                    ),
+                    actions = DecksHeroSummaryActions(
+                        onFiltersClick = { activeSheet = DeckSheet.FILTERS },
+                        onEnableAll = { vm.setAllDecksEnabled(true) },
+                        onDisableAll = { vm.setAllDecksEnabled(false) },
+                        onManageSources = { activeSheet = DeckSheet.TRUSTED }
+                    )
+                )
             }
-        }
-        item {
-            ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-                Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(stringResource(R.string.import_download), style = MaterialTheme.typography.titleMedium)
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Button(onClick = { filePicker.launch(arrayOf("application/json")) }, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.import_file)) }
-                        OutlinedButton(onClick = {
-                            runCatching {
-                                val host = java.net.URI(url).host ?: ""
-                                if (host.isNotBlank()) vm.addTrustedSource(host)
-                            }
-                        }) { Text(stringResource(R.string.trust_host)) }
-                    }
-                    OutlinedTextField(value = url, onValueChange = { url = it }, label = { Text(stringResource(R.string.https_url)) }, modifier = Modifier.fillMaxWidth())
-                    OutlinedTextField(value = sha, onValueChange = { sha = it }, label = { Text(stringResource(R.string.expected_sha256_optional)) }, modifier = Modifier.fillMaxWidth())
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                        Button(onClick = { vm.downloadPackFromUrl(url, sha) }) { Text(stringResource(R.string.download_and_import)) }
+            val progress = downloadProgress
+            if (progress != null) {
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                        DeckDownloadProgressIndicator(
+                            progress = progress,
+                            modifier = Modifier.padding(16.dp)
+                        )
                     }
                 }
             }
+            if (decks.isEmpty()) {
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    EmptyDecksState(onImportClick = { activeSheet = DeckSheet.IMPORT })
+                }
+            } else {
+                items(decks, key = { it.id }) { deck ->
+                    DeckCard(
+                        deck = deck,
+                        enabled = enabled.contains(deck.id),
+                        onToggle = { vm.setDeckEnabled(deck.id, it) },
+                        onClick = { onDeckSelected(deck) }
+                    )
+                }
+            }
         }
-        item {
-            ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-                Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(stringResource(R.string.trusted_sources), style = MaterialTheme.typography.titleMedium)
-                    if (trusted.isEmpty()) {
-                        Text(stringResource(R.string.no_trusted_sources_yet))
-                    } else {
-                        trusted.forEachIndexed { i, entry ->
-                            ListItem(
-                                headlineContent = { Text(entry) },
-                                trailingContent = {
-                                    IconButton(onClick = { vm.removeTrustedSource(entry) }) { Icon(Icons.Filled.Delete, contentDescription = "Remove") }
-                                }
-                            )
-                            if (i < trusted.size - 1) HorizontalDivider()
-                        }
+
+        ExtendedFloatingActionButton(
+            onClick = { activeSheet = DeckSheet.IMPORT },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp),
+            icon = { Icon(Icons.Filled.Download, contentDescription = null) },
+            text = { Text(stringResource(R.string.import_decks_action)) }
+        )
+    }
+}
+
+private enum class DeckSheet { FILTERS, IMPORT, TRUSTED }
+
+private data class DecksHeroSummaryState(
+    val decks: List<DeckEntity>,
+    val enabledDeckIds: Set<String>,
+)
+
+private class DecksHeroSummaryActions(
+    val onFiltersClick: () -> Unit,
+    val onEnableAll: () -> Unit,
+    val onDisableAll: () -> Unit,
+    val onManageSources: () -> Unit,
+)
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun DecksHeroSummary(
+    state: DecksHeroSummaryState,
+    actions: DecksHeroSummaryActions,
+    modifier: Modifier = Modifier,
+) {
+    val enabledDecks = remember(state.decks, state.enabledDeckIds) {
+        state.decks.filter { state.enabledDeckIds.contains(it.id) }
+    }
+    val activeCount = enabledDecks.size
+    val languages = remember(enabledDecks) {
+        enabledDecks.map { it.language.uppercase(Locale.getDefault()) }.distinct()
+    }
+    ElevatedCard(modifier = modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.title_decks),
+                style = MaterialTheme.typography.headlineSmall
+            )
+            Text(
+                text = stringResource(R.string.deck_active_summary, activeCount, state.decks.size),
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium
+            )
+            DeckLanguagesSummary(languages = languages)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                FilledTonalButton(onClick = actions.onFiltersClick) {
+                    Icon(Icons.Filled.Tune, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text(stringResource(R.string.open_filters))
+                }
+                OutlinedButton(onClick = actions.onManageSources) {
+                    Icon(Icons.Filled.Verified, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text(stringResource(R.string.manage_trusted_sources))
+                }
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                TextButton(onClick = actions.onEnableAll) { Text(stringResource(R.string.enable_all)) }
+                TextButton(onClick = actions.onDisableAll) { Text(stringResource(R.string.disable_all)) }
+            }
+            Text(
+                text = stringResource(R.string.filters_hint),
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun DeckLanguagesSummary(languages: List<String>, modifier: Modifier = Modifier) {
+    if (languages.isNotEmpty()) {
+        Text(
+            text = stringResource(R.string.deck_languages_summary, languages.joinToString(" • ")),
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = modifier
+        )
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            languages.forEach { language ->
+                AssistChip(onClick = {}, enabled = false, label = { Text(language) })
+            }
+        }
+    } else {
+        Text(
+            text = stringResource(R.string.deck_languages_none),
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = modifier
+        )
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun DeckCard(
+    deck: DeckEntity,
+    enabled: Boolean,
+    onToggle: (Boolean) -> Unit,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    ElevatedCard(
+        onClick = onClick,
+        modifier = modifier.fillMaxWidth()
+    ) {
+        Column {
+            DeckCoverArt(deck = deck)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = deck.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    AssistChip(onClick = {}, enabled = false, label = { Text(deck.language.uppercase(Locale.getDefault())) })
+                    if (deck.isOfficial) {
+                        AssistChip(onClick = {}, enabled = false, label = { Text(stringResource(R.string.deck_official_label)) })
                     }
-                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        OutlinedTextField(value = newTrusted, onValueChange = { newTrusted = it }, label = { Text(stringResource(R.string.add_host_origin)) }, modifier = Modifier.weight(1f))
-                        Spacer(Modifier.width(8.dp))
-                        OutlinedButton(onClick = { if (newTrusted.isNotBlank()) { vm.addTrustedSource(newTrusted.trim()); newTrusted = "" } }) { Text(stringResource(R.string.add)) }
+                    if (deck.isNSFW) {
+                        AssistChip(onClick = {}, enabled = false, label = { Text(stringResource(R.string.deck_nsfw_label)) })
                     }
                 }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = if (enabled) stringResource(R.string.deck_card_enabled) else stringResource(R.string.deck_card_disabled),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Switch(checked = enabled, onCheckedChange = onToggle)
+                }
+                Text(
+                    text = stringResource(R.string.deck_card_view_details),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
             }
         }
     }
 }
 
 @Composable
-private fun DeckDownloadProgressIndicator(progress: MainViewModel.DeckDownloadProgress) {
+private fun DeckCoverArt(deck: DeckEntity, modifier: Modifier = Modifier) {
+    val gradient = rememberDeckCoverBrush(deck.id)
+    val initial = remember(deck.id, deck.name) {
+        deck.name.firstOrNull()?.uppercaseChar()?.toString()
+            ?: deck.language.uppercase(Locale.getDefault())
+    }
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .aspectRatio(4f / 3f)
+            .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
+            .background(gradient)
+    ) {
+        Text(
+            text = initial,
+            style = MaterialTheme.typography.displayLarge,
+            color = Color.White.copy(alpha = 0.25f),
+            modifier = Modifier.align(Alignment.Center)
+        )
+        Text(
+            text = stringResource(R.string.deck_cover_language, deck.language.uppercase(Locale.getDefault())),
+            style = MaterialTheme.typography.labelLarge,
+            color = Color.White,
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(16.dp)
+        )
+    }
+}
+
+private val DeckCoverPalette = listOf(
+    Color(0xFF6C63FF),
+    Color(0xFF00BFA5),
+    Color(0xFFFF7043),
+    Color(0xFF7E57C2),
+    Color(0xFF26C6DA),
+    Color(0xFFF06292),
+)
+
+@Composable
+private fun rememberDeckCoverBrush(deckId: String): Brush {
+    val colors = remember(deckId) {
+        val baseIndex = deckId.hashCode().absoluteValue % DeckCoverPalette.size
+        val nextIndex = (baseIndex + 1) % DeckCoverPalette.size
+        listOf(DeckCoverPalette[baseIndex], DeckCoverPalette[nextIndex])
+    }
+    return remember(colors) { Brush.linearGradient(colors) }
+}
+
+@Composable
+private fun EmptyDecksState(onImportClick: () -> Unit, modifier: Modifier = Modifier) {
+    ElevatedCard(modifier = modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(stringResource(R.string.no_decks_installed), style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.no_decks_call_to_action), style = MaterialTheme.typography.bodyMedium)
+            Button(onClick = onImportClick) { Text(stringResource(R.string.import_decks_action)) }
+        }
+    }
+}
+
+private data class DeckFiltersSheetState(
+    val difficulty: DifficultyFilterState,
+    val categories: FilterSelectionState,
+    val wordClasses: FilterSelectionState,
+)
+
+private data class DifficultyFilterState(
+    val minDifficulty: String,
+    val maxDifficulty: String,
+)
+
+private data class FilterSelectionState(
+    val available: List<String>,
+    val selected: Set<String>,
+)
+
+private class DeckFiltersSheetCallbacks(
+    val onMinDifficultyChange: (String) -> Unit,
+    val onMaxDifficultyChange: (String) -> Unit,
+    val onCategoriesChange: (Set<String>) -> Unit,
+    val onWordClassesChange: (Set<String>) -> Unit,
+    val onApply: () -> Unit,
+)
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun DeckFiltersSheet(
+    state: DeckFiltersSheetState,
+    callbacks: DeckFiltersSheetCallbacks,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(24.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Text(stringResource(R.string.filters_label), style = MaterialTheme.typography.titleLarge)
+        Text(stringResource(R.string.deck_filters_description), style = MaterialTheme.typography.bodyMedium)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            OutlinedTextField(
+                value = state.difficulty.minDifficulty,
+                onValueChange = callbacks.onMinDifficultyChange,
+                label = { Text(stringResource(R.string.min_difficulty_label)) },
+                modifier = Modifier.weight(1f),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            )
+            OutlinedTextField(
+                value = state.difficulty.maxDifficulty,
+                onValueChange = callbacks.onMaxDifficultyChange,
+                label = { Text(stringResource(R.string.max_difficulty_label)) },
+                modifier = Modifier.weight(1f),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            )
+        }
+        FilterChipGroup(
+            title = stringResource(R.string.categories_label),
+            items = state.categories.available,
+            selectedItems = state.categories.selected,
+            onSelectionChanged = callbacks.onCategoriesChange,
+        )
+        FilterChipGroup(
+            title = stringResource(R.string.word_classes_label),
+            items = state.wordClasses.available,
+            selectedItems = state.wordClasses.selected,
+            onSelectionChanged = callbacks.onWordClassesChange,
+        )
+        Text(stringResource(R.string.filters_hint), style = MaterialTheme.typography.bodySmall)
+        Button(
+            onClick = callbacks.onApply,
+            modifier = Modifier.align(Alignment.End)
+        ) { Text(stringResource(R.string.apply_label)) }
+    }
+}
+
+private data class DeckImportSheetState(
+    val url: String,
+    val sha256: String,
+)
+
+private class DeckImportSheetCallbacks(
+    val onUrlChange: (String) -> Unit,
+    val onShaChange: (String) -> Unit,
+    val onPickFile: () -> Unit,
+    val onDownload: () -> Unit,
+    val onOpenTrusted: () -> Unit,
+)
+
+@Composable
+private fun DeckImportSheet(
+    state: DeckImportSheetState,
+    callbacks: DeckImportSheetCallbacks,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(24.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Text(stringResource(R.string.import_sheet_title), style = MaterialTheme.typography.titleLarge)
+        Text(stringResource(R.string.import_sheet_hint), style = MaterialTheme.typography.bodyMedium)
+        Button(onClick = callbacks.onPickFile, modifier = Modifier.fillMaxWidth()) {
+            Text(stringResource(R.string.import_file))
+        }
+        OutlinedTextField(
+            value = state.url,
+            onValueChange = callbacks.onUrlChange,
+            label = { Text(stringResource(R.string.https_url)) },
+            modifier = Modifier.fillMaxWidth()
+        )
+        OutlinedTextField(
+            value = state.sha256,
+            onValueChange = callbacks.onShaChange,
+            label = { Text(stringResource(R.string.expected_sha256_optional)) },
+            modifier = Modifier.fillMaxWidth()
+        )
+        FilledTonalButton(
+            onClick = callbacks.onDownload,
+            modifier = Modifier.align(Alignment.End),
+            enabled = state.url.isNotBlank()
+        ) { Text(stringResource(R.string.download_and_import)) }
+        TextButton(onClick = callbacks.onOpenTrusted, modifier = Modifier.align(Alignment.End)) {
+            Icon(Icons.Filled.Verified, contentDescription = null)
+            Spacer(Modifier.width(8.dp))
+            Text(stringResource(R.string.manage_trusted_sources))
+        }
+    }
+}
+
+@Composable
+private fun DeckTrustedSourcesSheet(
+    trustedSources: List<String>,
+    newSource: String,
+    onNewSourceChange: (String) -> Unit,
+    onRemove: (String) -> Unit,
+    onAdd: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(24.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Text(stringResource(R.string.trusted_sources), style = MaterialTheme.typography.titleLarge)
+        Text(stringResource(R.string.trusted_sources_sheet_hint), style = MaterialTheme.typography.bodyMedium)
+        if (trustedSources.isEmpty()) {
+            Text(stringResource(R.string.no_trusted_sources_yet))
+        } else {
+            trustedSources.forEachIndexed { index, entry ->
+                ListItem(
+                    headlineContent = { Text(entry) },
+                    trailingContent = {
+                        IconButton(onClick = { onRemove(entry) }) {
+                            Icon(Icons.Filled.Delete, contentDescription = null)
+                        }
+                    }
+                )
+                if (index < trustedSources.lastIndex) {
+                    HorizontalDivider()
+                }
+            }
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            OutlinedTextField(
+                value = newSource,
+                onValueChange = onNewSourceChange,
+                label = { Text(stringResource(R.string.add_host_origin)) },
+                modifier = Modifier.weight(1f)
+            )
+            FilledTonalButton(onClick = onAdd, enabled = newSource.isNotBlank()) {
+                Text(stringResource(R.string.add))
+            }
+        }
+    }
+}
+
+@Composable
+private fun DeckDownloadProgressIndicator(
+    progress: MainViewModel.DeckDownloadProgress,
+    modifier: Modifier = Modifier,
+) {
     val totalBytes = progress.totalBytes?.takeIf { it > 0L }
     val fraction = totalBytes?.let { bytesTotal ->
         val clamped = progress.bytesRead.coerceAtMost(bytesTotal)
@@ -1401,7 +1923,7 @@ private fun DeckDownloadProgressIndicator(progress: MainViewModel.DeckDownloadPr
         MainViewModel.DeckDownloadStep.IMPORTING -> stringResource(R.string.deck_download_importing)
     }
 
-    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(statusText, style = MaterialTheme.typography.bodyMedium)
         val indicatorModifier = Modifier.fillMaxWidth()
         if (fraction != null && progress.step == MainViewModel.DeckDownloadStep.DOWNLOADING) {
@@ -1412,26 +1934,33 @@ private fun DeckDownloadProgressIndicator(progress: MainViewModel.DeckDownloadPr
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun FilterChipGroup(
     title: String,
     items: List<String>,
     selectedItems: Set<String>,
     onSelectionChanged: (Set<String>) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     if (items.isEmpty()) return
-    Text(title)
-    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        items(items) { item ->
-            val selected = selectedItems.contains(item)
-            FilterChip(
-                selected = selected,
-                onClick = {
-                    val updatedSelection = if (selected) selectedItems - item else selectedItems + item
-                    onSelectionChanged(updatedSelection)
-                },
-                label = { Text(item) }
-            )
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(title)
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items.forEach { item ->
+                val selected = selectedItems.contains(item)
+                FilterChip(
+                    selected = selected,
+                    onClick = {
+                        val updatedSelection = if (selected) selectedItems - item else selectedItems + item
+                        onSelectionChanged(updatedSelection)
+                    },
+                    label = { Text(item) }
+                )
+            }
         }
     }
 }
@@ -1441,6 +1970,10 @@ private fun FilterChipGroup(
 private fun DeckDetailScreen(vm: MainViewModel, deck: DeckEntity) {
     var count by remember { mutableStateOf<Int?>(null) }
     var categories by remember { mutableStateOf<List<String>?>(null) }
+    var histogram by remember { mutableStateOf<List<DifficultyBucket>>(emptyList()) }
+    var histogramLoading by remember { mutableStateOf(true) }
+    var recentWords by remember { mutableStateOf<List<String>>(emptyList()) }
+    var recentWordsLoading by remember { mutableStateOf(true) }
     var wordExamples by remember { mutableStateOf<List<String>>(emptyList()) }
     var examplesLoading by remember { mutableStateOf(false) }
     var examplesError by remember { mutableStateOf(false) }
@@ -1458,6 +1991,22 @@ private fun DeckDetailScreen(vm: MainViewModel, deck: DeckEntity) {
     LaunchedEffect(deck.id) {
         launch { count = vm.getWordCount(deck.id) }
         launch { categories = runCatching { vm.getDeckCategories(deck.id) }.getOrElse { emptyList() } }
+        launch {
+            histogramLoading = true
+            try {
+                histogram = runCatching { vm.getDeckDifficultyHistogram(deck.id) }.getOrElse { emptyList() }
+            } finally {
+                histogramLoading = false
+            }
+        }
+        launch {
+            recentWordsLoading = true
+            try {
+                recentWords = runCatching { vm.getDeckRecentWords(deck.id) }.getOrElse { emptyList() }
+            } finally {
+                recentWordsLoading = false
+            }
+        }
         launch { refreshExamples() }
     }
 
@@ -1481,38 +2030,34 @@ private fun DeckDetailScreen(vm: MainViewModel, deck: DeckEntity) {
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text(deck.name, style = MaterialTheme.typography.headlineSmall)
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            AssistChip(onClick = {}, enabled = false, label = { Text(deck.language.uppercase()) })
-            if (deck.isOfficial) {
-                AssistChip(onClick = {}, enabled = false, label = { Text(stringResource(R.string.deck_official_label)) })
-            }
-            if (deck.isNSFW) {
-                AssistChip(onClick = {}, enabled = false, label = { Text(stringResource(R.string.deck_nsfw_label)) })
-            }
-        }
+        DeckDetailHero(deck = deck, count = count, downloadDateText = downloadDateText)
 
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        ElevatedCard(Modifier.fillMaxWidth()) {
             val countText = count?.toString() ?: "…"
-            Text(stringResource(R.string.deck_word_count, countText))
-            Text(stringResource(R.string.deck_version_label, deck.version))
-            Text(
-                downloadDateText?.let { stringResource(R.string.deck_downloaded_label, it) }
-                    ?: stringResource(R.string.deck_downloaded_unknown)
-            )
+            Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(stringResource(R.string.deck_word_count, countText), style = MaterialTheme.typography.bodyLarge)
+                Text(stringResource(R.string.deck_version_label, deck.version))
+                Text(
+                    downloadDateText?.let { stringResource(R.string.deck_downloaded_label, it) }
+                        ?: stringResource(R.string.deck_downloaded_unknown)
+                )
+            }
         }
 
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(stringResource(R.string.deck_categories_title), style = MaterialTheme.typography.titleMedium)
+        DetailCard(title = stringResource(R.string.deck_categories_title)) {
             when (val currentCategories = categories) {
                 null -> {
-                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
                 }
+
                 else -> {
                     if (currentCategories.isEmpty()) {
                         Text(stringResource(R.string.deck_categories_empty))
                     } else {
-                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
                             currentCategories.forEach { category ->
                                 AssistChip(onClick = {}, enabled = false, label = { Text(category) })
                             }
@@ -1522,43 +2067,210 @@ private fun DeckDetailScreen(vm: MainViewModel, deck: DeckEntity) {
             }
         }
 
-        ElevatedCard(Modifier.fillMaxWidth()) {
-            Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(stringResource(R.string.deck_examples_title), style = MaterialTheme.typography.titleMedium)
-                when {
-                    examplesLoading -> {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            CircularProgressIndicator(modifier = Modifier.size(24.dp))
-                            Text(stringResource(R.string.deck_examples_loading))
-                        }
-                    }
-                    examplesError -> {
-                        Text(stringResource(R.string.deck_examples_error), color = MaterialTheme.colorScheme.error)
-                    }
-                    wordExamples.isEmpty() -> {
-                        Text(stringResource(R.string.deck_examples_empty))
-                    }
-                    else -> {
-                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            wordExamples.forEach { example ->
-                                Text("• ${example}")
-                            }
-                        }
-                    }
+        DetailCard(title = stringResource(R.string.deck_difficulty_title)) {
+            if (histogramLoading) {
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            } else {
+                DeckDifficultyHistogram(buckets = histogram)
+            }
+        }
+
+        DetailCard(title = stringResource(R.string.deck_recent_words_title)) {
+            when {
+                recentWordsLoading -> {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
                 }
-                TextButton(onClick = { scope.launch { refreshExamples() } }, enabled = !examplesLoading) {
-                    Text(stringResource(R.string.deck_examples_reload))
+
+                recentWords.isEmpty() -> {
+                    Text(stringResource(R.string.deck_recent_words_empty))
+                }
+
+                else -> {
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        recentWords.forEach { word ->
+                            AssistChip(onClick = {}, enabled = false, label = { Text(word) })
+                        }
+                    }
                 }
             }
+        }
+
+        DetailCard(title = stringResource(R.string.deck_examples_title)) {
+            when {
+                examplesLoading -> {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+                }
+
+                examplesError -> {
+                    Text(stringResource(R.string.deck_examples_error), color = MaterialTheme.colorScheme.error)
+                }
+
+                wordExamples.isEmpty() -> {
+                    Text(stringResource(R.string.deck_examples_empty))
+                }
+
+                else -> {
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        wordExamples.forEach { example ->
+                            AssistChip(onClick = {}, enabled = false, label = { Text(example) })
+                        }
+                    }
+                }
+            }
+            TextButton(
+                onClick = { scope.launch { refreshExamples() } },
+                enabled = !examplesLoading,
+                modifier = Modifier.align(Alignment.End)
+            ) {
+                Text(stringResource(R.string.deck_examples_reload))
+            }
+        }
+    }
+}
+
+@Composable
+private fun DetailCard(
+    title: String,
+    modifier: Modifier = Modifier,
+    contentSpacing: Dp = 12.dp,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    ElevatedCard(modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(contentSpacing)
+        ) {
+            Text(title, style = MaterialTheme.typography.titleMedium)
+            content()
         }
     }
 }
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
+private fun DeckDetailHero(deck: DeckEntity, count: Int?, downloadDateText: String?) {
+    val gradient = rememberDeckCoverBrush(deck.id)
+    val countText = count?.toString() ?: "…"
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(220.dp)
+            .clip(RoundedCornerShape(28.dp))
+            .background(gradient)
+    ) {
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(deck.name, style = MaterialTheme.typography.headlineSmall, color = Color.White)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                DeckTag(deck.language.uppercase(Locale.getDefault()))
+                if (deck.isOfficial) {
+                    DeckTag(stringResource(R.string.deck_official_label))
+                }
+                if (deck.isNSFW) {
+                    DeckTag(stringResource(R.string.deck_nsfw_label))
+                }
+            }
+            Text(
+                text = stringResource(R.string.deck_word_count, countText),
+                style = MaterialTheme.typography.bodyLarge,
+                color = Color.White
+            )
+            Text(
+                text = downloadDateText?.let { stringResource(R.string.deck_downloaded_label, it) }
+                    ?: stringResource(R.string.deck_downloaded_unknown),
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.White.copy(alpha = 0.85f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun DeckTag(text: String, modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier,
+        shape = CircleShape,
+        color = Color.White.copy(alpha = 0.2f),
+        contentColor = Color.White
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Medium
+        )
+    }
+}
+
+@Composable
+private fun DeckDifficultyHistogram(
+    buckets: List<DifficultyBucket>,
+    modifier: Modifier = Modifier,
+) {
+    if (buckets.isEmpty()) {
+        Text(stringResource(R.string.deck_difficulty_empty), modifier = modifier)
+        return
+    }
+
+    val maxCount = buckets.maxOf { it.count }.coerceAtLeast(1)
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        buckets.forEach { bucket ->
+            val fraction = bucket.count.toFloat() / maxCount.toFloat()
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(stringResource(R.string.word_difficulty_value, bucket.difficulty))
+                    Text(bucket.count.toString(), style = MaterialTheme.typography.labelMedium)
+                }
+                LinearProgressIndicator(progress = { fraction }, modifier = Modifier.fillMaxWidth())
+            }
+        }
+    }
+}
+
+private enum class SettingsTab(@StringRes val titleRes: Int) {
+    MATCH_RULES(R.string.match_rules_tab),
+    INPUT_FEEDBACK(R.string.input_feedback_tab),
+    TEAMS(R.string.teams_tab),
+    ADVANCED(R.string.advanced_tab)
+}
+
+private data class TeamEditorEntry(val id: Long, val name: String)
+
+private val TeamEditorEntryStateSaver = listSaver<MutableState<List<TeamEditorEntry>>, Any?>(
+    save = { state -> state.value.flatMap { entry -> listOf(entry.id, entry.name) } },
+    restore = { restored ->
+        val entries = restored.chunked(2).mapNotNull { chunk ->
+            val id = (chunk.getOrNull(0) as? Number)?.toLong() ?: return@mapNotNull null
+            val name = chunk.getOrNull(1) as? String ?: ""
+            TeamEditorEntry(id, name)
+        }
+        mutableStateOf(entries)
+    }
+)
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
 private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () -> Unit) {
     val s by vm.settings.collectAsState()
     val ctx = LocalContext.current
+    val scope = rememberCoroutineScope()
+
     var round by rememberSaveable(s) { mutableStateOf(s.roundSeconds.toString()) }
     var target by rememberSaveable(s) { mutableStateOf(s.targetWords.toString()) }
     var maxSkips by rememberSaveable(s) { mutableStateOf(s.maxSkips.toString()) }
@@ -1572,12 +2284,17 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () ->
     var oneHand by rememberSaveable(s) { mutableStateOf(s.oneHandedLayout) }
     var verticalSwipes by rememberSaveable(s) { mutableStateOf(s.verticalSwipes) }
     var orientation by rememberSaveable(s) { mutableStateOf(s.orientation) }
-    val scope = rememberCoroutineScope()
-    var teams by rememberSaveable(s) { mutableStateOf(s.teams) }
+    var teams by rememberSaveable(s, saver = TeamEditorEntryStateSaver) {
+        mutableStateOf(s.teams.mapIndexed { index, name -> TeamEditorEntry(index.toLong(), name) })
+    }
+    var nextTeamId by rememberSaveable(s) { mutableStateOf(s.teams.size.toLong()) }
+    var selectedTab by rememberSaveable { mutableStateOf(SettingsTab.MATCH_RULES) }
+    var showResetDialog by rememberSaveable { mutableStateOf(false) }
 
+    val teamSuggestions = stringArrayResource(R.array.team_name_suggestions).toList()
 
-    val canSave = teams.count { it.isNotBlank() } >= MIN_TEAMS
-    val applySettings: () -> kotlinx.coroutines.Job = {
+    val canSave = teams.count { it.name.isNotBlank() } >= MIN_TEAMS
+    val applySettings: () -> Job = {
         scope.launch {
             vm.updateSettings(
                 roundSeconds = round.toIntOrNull() ?: s.roundSeconds,
@@ -1593,47 +2310,536 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () ->
                 oneHanded = oneHand,
                 verticalSwipes = verticalSwipes,
                 orientation = orientation,
-                teams = teams,
+                teams = teams.map { it.name },
             )
         }
     }
 
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
+    if (showResetDialog) {
+        androidx.compose.ui.window.Dialog(onDismissRequest = { showResetDialog = false }) {
+            ElevatedCard {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(stringResource(R.string.reset_confirm_title), style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.reset_confirm_message))
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(onClick = { showResetDialog = false }, modifier = Modifier.weight(1f)) {
+                            Text(stringResource(R.string.cancel))
+                        }
+                        Button(onClick = {
+                            showResetDialog = false
+                            vm.resetLocalData()
+                        }, modifier = Modifier.weight(1f)) {
+                            Text(stringResource(R.string.confirm))
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        item { Text(stringResource(R.string.title_settings), style = MaterialTheme.typography.headlineSmall) }
+        Text(stringResource(R.string.title_settings), style = MaterialTheme.typography.headlineSmall)
+        TabRow(selectedTabIndex = selectedTab.ordinal) {
+            SettingsTab.values().forEach { tab ->
+                Tab(
+                    selected = selectedTab == tab,
+                    onClick = { selectedTab = tab },
+                    text = { Text(stringResource(tab.titleRes)) }
+                )
+            }
+        }
+        Box(modifier = Modifier.weight(1f)) {
+            AnimatedContent(targetState = selectedTab, label = "settings_tabs") { tab ->
+                when (tab) {
+                    SettingsTab.MATCH_RULES -> MatchRulesTab(
+                        round = round,
+                        onRoundChange = { round = it },
+                        target = target,
+                        onTargetChange = { target = it },
+                        maxSkips = maxSkips,
+                        onMaxSkipsChange = { maxSkips = it },
+                        penalty = penalty,
+                        onPenaltyChange = { penalty = it },
+                        punishSkips = punishSkips,
+                        onPunishSkipsChange = { punishSkips = it }
+                    )
+
+                    SettingsTab.INPUT_FEEDBACK -> InputFeedbackTab(
+                        haptics = haptics,
+                        onHapticsChange = { haptics = it },
+                        sound = sound,
+                        onSoundChange = { sound = it },
+                        oneHand = oneHand,
+                        onOneHandChange = { oneHand = it },
+                        verticalSwipes = verticalSwipes,
+                        onVerticalSwipesChange = { verticalSwipes = it },
+                        orientation = orientation,
+                        onOrientationChange = { orientation = it }
+                    )
+
+                    SettingsTab.TEAMS -> TeamsTab(
+                        teams = teams,
+                        canRemoveTeam = teams.size > MIN_TEAMS,
+                        canAddTeam = teams.size < MAX_TEAMS,
+                        onTeamNameChange = { index, value ->
+                            teams = teams.toMutableList().also { list ->
+                                list[index] = list[index].copy(name = value)
+                            }
+                        },
+                        onTeamRemove = { index ->
+                            teams = teams.toMutableList().also { list -> list.removeAt(index) }
+                        },
+                        onTeamAdd = {
+                            val defaultName = ctx.getString(R.string.team_default_name, teams.size + 1)
+                            teams = teams + TeamEditorEntry(nextTeamId, defaultName)
+                            nextTeamId += 1
+                        },
+                        onTeamMove = { from, to ->
+                            if (from == to) return@TeamsTab
+                            if (from !in teams.indices || to !in 0..teams.size) return@TeamsTab
+                            val updated = teams.toMutableList()
+                            val item = updated.removeAt(from)
+                            val targetIndex = to.coerceIn(0, updated.size)
+                            updated.add(targetIndex, item)
+                            teams = updated
+                        },
+                        suggestions = teamSuggestions,
+                        onApplySuggestion = { suggestion ->
+                            if (teams.any { it.name.equals(suggestion, ignoreCase = true) }) {
+                                return@TeamsTab
+                            }
+                            val targetIndex = teams.indexOfFirst { it.name.isBlank() }
+                            teams = teams.toMutableList().also { list ->
+                                when {
+                                    targetIndex >= 0 -> list[targetIndex] = list[targetIndex].copy(name = suggestion)
+                                    list.size < MAX_TEAMS -> {
+                                        list += TeamEditorEntry(nextTeamId, suggestion)
+                                        nextTeamId += 1
+                                    }
+                                }
+                            }
+                        }
+                    )
+
+                    SettingsTab.ADVANCED -> AdvancedTab(
+                        uiLanguage = uiLang,
+                        onUiLanguageChange = { uiLang = it },
+                        language = lang,
+                        onLanguageChange = { lang = it },
+                        allowNsfw = nsfw,
+                        onAllowNsfwChange = { nsfw = it },
+                        onShowTutorialAgain = { vm.updateSeenTutorial(false) },
+                        onAbout = onAbout,
+                        onReset = { showResetDialog = true }
+                    )
+                }
+            }
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Button(onClick = { applySettings() }, enabled = canSave, modifier = Modifier.weight(1f)) {
+                Text(stringResource(R.string.save_label))
+            }
+            FilledTonalButton(
+                onClick = {
+                    scope.launch {
+                        applySettings().join()
+                        vm.restartMatch()
+                        onBack()
+                    }
+                },
+                enabled = canSave,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(stringResource(R.string.save_and_restart_label))
+            }
+        }
+        OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
+            Text(stringResource(R.string.back))
+        }
+    }
+}
+
+@Composable
+private fun MatchRulesTab(
+    round: String,
+    onRoundChange: (String) -> Unit,
+    target: String,
+    onTargetChange: (String) -> Unit,
+    maxSkips: String,
+    onMaxSkipsChange: (String) -> Unit,
+    penalty: String,
+    onPenaltyChange: (String) -> Unit,
+    punishSkips: Boolean,
+    onPunishSkipsChange: (Boolean) -> Unit,
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        contentPadding = PaddingValues(bottom = 16.dp)
+    ) {
         item {
             ElevatedCard(Modifier.fillMaxWidth()) {
-                Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(stringResource(R.string.round_and_goals), style = MaterialTheme.typography.titleMedium)
-                    OutlinedTextField(value = round, onValueChange = { round = it }, label = { Text(stringResource(R.string.round_seconds_label)) }, modifier = Modifier.fillMaxWidth())
-                    OutlinedTextField(value = target, onValueChange = { target = it }, label = { Text(stringResource(R.string.target_words_label)) }, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(
+                        value = round,
+                        onValueChange = onRoundChange,
+                        label = { Text(stringResource(R.string.round_seconds_label)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    )
+                    OutlinedTextField(
+                        value = target,
+                        onValueChange = onTargetChange,
+                        label = { Text(stringResource(R.string.target_words_label)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    )
                 }
             }
         }
         item {
             ElevatedCard(Modifier.fillMaxWidth()) {
-                Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(stringResource(R.string.skips_section), style = MaterialTheme.typography.titleMedium)
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedTextField(value = maxSkips, onValueChange = { maxSkips = it }, label = { Text(stringResource(R.string.max_skips_label)) }, modifier = Modifier.weight(1f))
-                        OutlinedTextField(value = penalty, onValueChange = { penalty = it }, label = { Text(stringResource(R.string.penalty_per_skip_label)) }, modifier = Modifier.weight(1f))
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        OutlinedTextField(
+                            value = maxSkips,
+                            onValueChange = onMaxSkipsChange,
+                            label = { Text(stringResource(R.string.max_skips_label)) },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                        )
+                        OutlinedTextField(
+                            value = penalty,
+                            onValueChange = onPenaltyChange,
+                            label = { Text(stringResource(R.string.penalty_per_skip_label)) },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                        )
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(stringResource(R.string.punish_skips_label), modifier = Modifier.weight(1f))
-                        Switch(checked = punishSkips, onCheckedChange = { punishSkips = it })
+                        Switch(checked = punishSkips, onCheckedChange = onPunishSkipsChange)
                     }
                 }
             }
         }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun InputFeedbackTab(
+    haptics: Boolean,
+    onHapticsChange: (Boolean) -> Unit,
+    sound: Boolean,
+    onSoundChange: (Boolean) -> Unit,
+    oneHand: Boolean,
+    onOneHandChange: (Boolean) -> Unit,
+    verticalSwipes: Boolean,
+    onVerticalSwipesChange: (Boolean) -> Unit,
+    orientation: String,
+    onOrientationChange: (String) -> Unit,
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        contentPadding = PaddingValues(bottom = 16.dp)
+    ) {
         item {
-                    ElevatedCard(Modifier.fillMaxWidth()) {
-                        Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(stringResource(R.string.language_and_content), style = MaterialTheme.typography.titleMedium)
+            ElevatedCard(Modifier.fillMaxWidth()) {
+                Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(stringResource(R.string.feedback_and_layout), style = MaterialTheme.typography.titleMedium)
+                    SettingsToggleRow(
+                        label = stringResource(R.string.haptics_label),
+                        checked = haptics,
+                        onCheckedChange = onHapticsChange
+                    )
+                    SettingsToggleRow(
+                        label = stringResource(R.string.sound_effects_label),
+                        checked = sound,
+                        onCheckedChange = onSoundChange
+                    )
+                    SettingsToggleRow(
+                        label = stringResource(R.string.one_hand_layout_label),
+                        checked = oneHand,
+                        onCheckedChange = onOneHandChange
+                    )
+                    SettingsToggleRow(
+                        label = stringResource(R.string.vertical_swipes_label),
+                        checked = verticalSwipes,
+                        onCheckedChange = onVerticalSwipesChange
+                    )
+                }
+            }
+        }
+        item {
+            ElevatedCard(Modifier.fillMaxWidth()) {
+                Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(stringResource(R.string.orientation_label), style = MaterialTheme.typography.titleMedium)
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OrientationChip(
+                            selected = orientation == "system",
+                            label = stringResource(R.string.auto_label),
+                            icon = Icons.Filled.ScreenRotation,
+                            onClick = { onOrientationChange("system") }
+                        )
+                        OrientationChip(
+                            selected = orientation == "portrait",
+                            label = stringResource(R.string.portrait_label),
+                            icon = Icons.Filled.ScreenLockPortrait,
+                            onClick = { onOrientationChange("portrait") }
+                        )
+                        OrientationChip(
+                            selected = orientation == "landscape",
+                            label = stringResource(R.string.landscape_label),
+                            icon = Icons.Filled.ScreenLockLandscape,
+                            onClick = { onOrientationChange("landscape") }
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SettingsToggleRow(
+    label: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(label, modifier = Modifier.weight(1f))
+        Switch(checked = checked, onCheckedChange = onCheckedChange)
+    }
+}
+
+@Composable
+private fun OrientationChip(
+    selected: Boolean,
+    label: String,
+    icon: ImageVector,
+    onClick: () -> Unit,
+) {
+    FilterChip(
+        selected = selected,
+        onClick = onClick,
+        label = { Text(label) },
+        leadingIcon = { Icon(icon, contentDescription = null) }
+    )
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun TeamsTab(
+    teams: List<TeamEditorEntry>,
+    canRemoveTeam: Boolean,
+    canAddTeam: Boolean,
+    onTeamNameChange: (Int, String) -> Unit,
+    onTeamRemove: (Int) -> Unit,
+    onTeamAdd: () -> Unit,
+    onTeamMove: (Int, Int) -> Unit,
+    suggestions: List<String>,
+    onApplySuggestion: (String) -> Unit,
+) {
+    val itemHeights = remember { mutableStateMapOf<Int, Int>() }
+    var draggingIndex by remember { mutableStateOf<Int?>(null) }
+    var dragOffset by remember { mutableStateOf(0f) }
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        contentPadding = PaddingValues(bottom = 16.dp)
+    ) {
+        item {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(stringResource(R.string.teams_label), style = MaterialTheme.typography.titleMedium)
+                Text(
+                    text = stringResource(R.string.drag_to_reorder_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        itemsIndexed(teams, key = { _, team -> team.id }) { index, team ->
+            val isDragging = draggingIndex == index
+            TeamEditorCard(
+                index = index,
+                name = team.name,
+                canRemove = canRemoveTeam,
+                onNameChange = onTeamNameChange,
+                onRemove = onTeamRemove,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onGloballyPositioned { coords -> itemHeights[index] = coords.size.height }
+                    .graphicsLayer { translationY = if (isDragging) dragOffset else 0f },
+                handleModifier = Modifier.pointerInput(teams) {
+                    detectDragGesturesAfterLongPress(
+                        onDragStart = {
+                            draggingIndex = index
+                            dragOffset = 0f
+                        },
+                        onDrag = { change, dragAmount ->
+                            change.consume()
+                            val current = draggingIndex ?: return@detectDragGesturesAfterLongPress
+                            dragOffset += dragAmount.y
+                            if (dragOffset > 0 && current < teams.lastIndex) {
+                                val height = itemHeights[current + 1] ?: return@detectDragGesturesAfterLongPress
+                                if (dragOffset > height * 0.6f) {
+                                    onTeamMove(current, current + 1)
+                                    draggingIndex = current + 1
+                                    dragOffset = 0f
+                                }
+                            } else if (dragOffset < 0 && current > 0) {
+                                val height = itemHeights[current - 1] ?: return@detectDragGesturesAfterLongPress
+                                if (dragOffset < -height * 0.6f) {
+                                    onTeamMove(current, current - 1)
+                                    draggingIndex = current - 1
+                                    dragOffset = 0f
+                                }
+                            }
+                        },
+                        onDragEnd = {
+                            draggingIndex = null
+                            dragOffset = 0f
+                        },
+                        onDragCancel = {
+                            draggingIndex = null
+                            dragOffset = 0f
+                        }
+                    )
+                },
+                isDragging = isDragging
+            )
+        }
+        item {
+            if (canAddTeam) {
+                OutlinedButton(onClick = onTeamAdd, modifier = Modifier.fillMaxWidth()) {
+                    Icon(Icons.Filled.Add, contentDescription = null)
+                    Text(stringResource(R.string.add_team_label), modifier = Modifier.padding(start = 8.dp))
+                }
+            }
+        }
+        if (suggestions.isNotEmpty()) {
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(stringResource(R.string.team_suggestions_label), style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        text = stringResource(R.string.team_suggestions_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        suggestions.forEach { suggestion ->
+                            SuggestionChip(onClick = { onApplySuggestion(suggestion) }, label = { Text(suggestion) })
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TeamEditorCard(
+    index: Int,
+    name: String,
+    canRemove: Boolean,
+    onNameChange: (Int, String) -> Unit,
+    onRemove: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+    handleModifier: Modifier = Modifier,
+    isDragging: Boolean,
+) {
+    val elevation = if (isDragging) 8.dp else 2.dp
+    ElevatedCard(
+        modifier = modifier,
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = elevation)
+    ) {
+        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                val initial = name.firstOrNull()?.uppercaseChar()?.toString() ?: (index + 1).toString()
+                Surface(
+                    modifier = Modifier.size(48.dp),
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.secondaryContainer
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(initial, style = MaterialTheme.typography.titleMedium)
+                    }
+                }
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { onNameChange(index, it) },
+                    label = { Text(stringResource(R.string.team_default_name, index + 1)) },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true
+                )
+                IconButton(onClick = { onRemove(index) }, enabled = canRemove) {
+                    Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.remove_team))
+                }
+                Box(
+                    modifier = handleModifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Filled.DragHandle, contentDescription = stringResource(R.string.team_drag_handle_description))
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun AdvancedTab(
+    uiLanguage: String,
+    onUiLanguageChange: (String) -> Unit,
+    language: String,
+    onLanguageChange: (String) -> Unit,
+    allowNsfw: Boolean,
+    onAllowNsfwChange: (Boolean) -> Unit,
+    onShowTutorialAgain: () -> Unit,
+    onAbout: () -> Unit,
+    onReset: () -> Unit,
+) {
+    val selectedLanguage = remember(uiLanguage) { resolveUiLanguageSelection(uiLanguage) }
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        contentPadding = PaddingValues(bottom = 16.dp)
+    ) {
+        item {
+            ElevatedCard(Modifier.fillMaxWidth()) {
+                Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(stringResource(R.string.language_and_content), style = MaterialTheme.typography.titleMedium)
                     Text(stringResource(R.string.ui_language_label))
-                    val selectedLanguage = remember(uiLang) { resolveUiLanguageSelection(uiLang) }
                     FlowRow(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -1641,148 +2847,58 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () ->
                     ) {
                         FilterChip(
                             selected = selectedLanguage == "system",
-                            onClick = { uiLang = "system" },
+                            onClick = { onUiLanguageChange("system") },
                             label = { Text(stringResource(R.string.system_default_label)) }
                         )
                         FilterChip(
                             selected = selectedLanguage == "en",
-                            onClick = { uiLang = "en" },
+                            onClick = { onUiLanguageChange("en") },
                             label = { Text(stringResource(R.string.english_label)) }
                         )
                         FilterChip(
                             selected = selectedLanguage == "ru",
-                            onClick = { uiLang = "ru" },
+                            onClick = { onUiLanguageChange("ru") },
                             label = { Text(stringResource(R.string.russian_label)) }
                         )
                     }
-                    OutlinedTextField(value = lang, onValueChange = { lang = it }, label = { Text(stringResource(R.string.language_hint)) }, modifier = Modifier.fillMaxWidth())
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(stringResource(R.string.allow_nsfw_label), modifier = Modifier.weight(1f))
-                        Switch(checked = nsfw, onCheckedChange = { nsfw = it })
-                    }
+                    OutlinedTextField(
+                        value = language,
+                        onValueChange = onLanguageChange,
+                        label = { Text(stringResource(R.string.language_hint)) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    SettingsToggleRow(
+                        label = stringResource(R.string.allow_nsfw_label),
+                        checked = allowNsfw,
+                        onCheckedChange = onAllowNsfwChange
+                    )
                 }
             }
         }
         item {
             ElevatedCard(Modifier.fillMaxWidth()) {
-                Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(stringResource(R.string.feedback_and_layout), style = MaterialTheme.typography.titleMedium)
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(stringResource(R.string.haptics_label), modifier = Modifier.weight(1f))
-                        Switch(checked = haptics, onCheckedChange = { haptics = it })
-                    }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(stringResource(R.string.sound_effects_label), modifier = Modifier.weight(1f))
-                        Switch(checked = sound, onCheckedChange = { sound = it })
-                    }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(stringResource(R.string.one_hand_layout_label), modifier = Modifier.weight(1f))
-                        Switch(checked = oneHand, onCheckedChange = { oneHand = it })
-                    }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(stringResource(R.string.vertical_swipes_label), modifier = Modifier.weight(1f))
-                        Switch(checked = verticalSwipes, onCheckedChange = { verticalSwipes = it })
-                    }
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(stringResource(R.string.orientation_label))
-                        val current = orientation
-                        FlowRow(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            FilterChip(
-                                selected = current == "system",
-                                onClick = { orientation = "system"; vm.setOrientation("system") },
-                                label = { Text(stringResource(R.string.auto_label)) },
-                                leadingIcon = { Icon(Icons.Filled.ScreenRotation, contentDescription = null) }
-                            )
-                            FilterChip(
-                                selected = current == "portrait",
-                                onClick = { orientation = "portrait"; vm.setOrientation("portrait") },
-                                label = { Text(stringResource(R.string.portrait_label)) },
-                                leadingIcon = { Icon(Icons.Filled.ScreenLockPortrait, contentDescription = null) }
-                            )
-                            FilterChip(
-                                selected = current == "landscape",
-                                onClick = { orientation = "landscape"; vm.setOrientation("landscape") },
-                                label = { Text(stringResource(R.string.landscape_label)) },
-                                leadingIcon = { Icon(Icons.Filled.ScreenLockLandscape, contentDescription = null) }
-                            )
-                        }
-                    }
+                Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(stringResource(R.string.support_and_data_label), style = MaterialTheme.typography.titleMedium)
+                    ListItem(
+                        leadingContent = { Icon(Icons.Filled.History, contentDescription = null) },
+                        headlineContent = { Text(stringResource(R.string.show_tutorial_again)) },
+                        modifier = Modifier.clickable { onShowTutorialAgain() }
+                    )
+                    HorizontalDivider()
+                    ListItem(
+                        leadingContent = { Icon(Icons.Filled.Info, contentDescription = null) },
+                        headlineContent = { Text(stringResource(R.string.title_about)) },
+                        modifier = Modifier.clickable(onClick = onAbout)
+                    )
+                    HorizontalDivider()
+                    ListItem(
+                        leadingContent = { Icon(Icons.Filled.Delete, contentDescription = null) },
+                        headlineContent = { Text(stringResource(R.string.reset_local_data)) },
+                        modifier = Modifier.clickable { onReset() }
+                    )
                 }
             }
         }
-        item {
-            ElevatedCard(Modifier.fillMaxWidth()) {
-                Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(stringResource(R.string.teams_label), style = MaterialTheme.typography.titleMedium)
-                    teams.forEachIndexed { index, name ->
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            OutlinedTextField(
-                                value = name,
-                                onValueChange = { new -> teams = teams.toMutableList().also { it[index] = new } },
-                                label = { Text(stringResource(R.string.team_default_name, index + 1)) },
-                                modifier = Modifier.weight(1f)
-                            )
-                            IconButton(
-                                onClick = { teams = teams.toMutableList().also { it.removeAt(index) } },
-                                enabled = teams.size > MIN_TEAMS
-                            ) { Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.remove_team)) }
-                        }
-                        if (index < teams.lastIndex) HorizontalDivider()
-                    }
-                    if (teams.size < MAX_TEAMS) {
-                        OutlinedButton(onClick = { teams = teams + ctx.getString(R.string.team_default_name, teams.size + 1) }, modifier = Modifier.fillMaxWidth()) {
-                            Icon(Icons.Filled.Add, contentDescription = null)
-                            Text(stringResource(R.string.add_team_label), modifier = Modifier.padding(start = 4.dp))
-                        }
-                    }
-                }
-            }
-        }
-        item {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = { applySettings() }, enabled = canSave, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.save_label)) }
-                FilledTonalButton(onClick = {
-                    scope.launch {
-                        applySettings().join()
-                        vm.restartMatch()
-                        onBack()
-                    }
-                }, enabled = canSave, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.save_and_restart_label)) }
-            }
-        }
-        item {
-            OutlinedButton(
-                onClick = { vm.updateSeenTutorial(false) },
-                modifier = Modifier.fillMaxWidth()
-            ) { Text(stringResource(R.string.show_tutorial_again)) }
-        }
-        item { OutlinedButton(onClick = onAbout, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.title_about)) } }
-        item {
-            var confirm by rememberSaveable { mutableStateOf(false) }
-            if (confirm) {
-                androidx.compose.ui.window.Dialog(onDismissRequest = { confirm = false }) {
-                    ElevatedCard {
-                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            Text(stringResource(R.string.reset_confirm_title), style = MaterialTheme.typography.titleMedium)
-                            Text(stringResource(R.string.reset_confirm_message))
-                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                OutlinedButton(onClick = { confirm = false }, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.cancel)) }
-                                Button(onClick = {
-                                    confirm = false
-                                    vm.resetLocalData()
-                                }, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.confirm)) }
-                            }
-                        }
-                    }
-                }
-            }
-            OutlinedButton(onClick = { confirm = true }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.reset_local_data)) }
-        }
-        item { OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.back)) } }
     }
 }
 

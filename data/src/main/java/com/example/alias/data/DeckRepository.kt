@@ -4,6 +4,7 @@ import androidx.room.withTransaction
 import com.example.alias.data.db.AliasDatabase
 import com.example.alias.data.db.DeckDao
 import com.example.alias.data.db.DeckEntity
+import com.example.alias.data.db.DifficultyBucket
 import com.example.alias.data.db.WordDao
 import com.example.alias.data.pack.PackParser
 import com.example.alias.data.pack.ParsedPack
@@ -16,6 +17,12 @@ interface DeckRepository {
 
     /** Get number of words in a deck. */
     suspend fun getWordCount(deckId: String): Int
+
+    /** Distribution of word difficulties for a deck. */
+    suspend fun getDifficultyHistogram(deckId: String): List<DifficultyBucket>
+
+    /** Recent words imported into a deck. */
+    suspend fun getRecentWords(deckId: String, limit: Int): List<String>
 
     /** Parse [content] as a JSON pack and store it. */
     suspend fun importJson(content: String)
@@ -42,6 +49,12 @@ class DeckRepositoryImpl(
     override fun getDecks(): Flow<List<DeckEntity>> = deckDao.getDecks()
 
     override suspend fun getWordCount(deckId: String): Int = wordDao.getWordCount(deckId)
+
+    override suspend fun getDifficultyHistogram(deckId: String): List<DifficultyBucket> =
+        wordDao.getDifficultyHistogram(deckId)
+
+    override suspend fun getRecentWords(deckId: String, limit: Int): List<String> =
+        wordDao.getRecentWords(deckId, limit)
 
     override suspend fun importJson(content: String) {
         importPack(PackParser.fromJson(content))
