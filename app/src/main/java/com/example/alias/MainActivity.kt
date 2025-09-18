@@ -150,6 +150,7 @@ import com.example.alias.ui.WordCardAction
 import com.google.accompanist.placeholder.material3.placeholder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.text.DateFormat
 import java.util.Date
@@ -195,17 +196,17 @@ class MainActivity : AppCompatActivity() {
 
                 // Collect general UI events and show snackbars
                 LaunchedEffect(Unit) {
-                    vm.uiEvents.collect { ev: UiEvent ->
+                    vm.uiEvents.collectLatest { ev: UiEvent ->
                         if (ev.dismissCurrent) {
                             snack.currentSnackbarData?.dismiss()
+                        }
+                        if (ev.message.isBlank()) {
+                            return@collectLatest
                         }
                         val duration = if (ev.actionLabel != null && ev.duration == SnackbarDuration.Short) {
                             SnackbarDuration.Long
                         } else {
                             ev.duration
-                        }
-                        if (ev.message.isBlank()) {
-                            return@collect
                         }
                         val result = snack.showSnackbar(
                             message = ev.message,
