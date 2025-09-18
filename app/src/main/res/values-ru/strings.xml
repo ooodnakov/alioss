@@ -57,6 +57,9 @@
     <string name="enable_all">Вкл. все</string>
     <string name="disable_all">Выкл. все</string>
     <string name="no_decks_installed">Нет установленных колод</string>
+    <string name="deck_download_downloading">Скачивание колоды…</string>
+    <string name="deck_download_percent">Скачивание колоды… %1$d%%</string>
+    <string name="deck_download_importing">Импорт колоды…</string>
     <string name="import_download">Импорт и загрузка</string>
     <string name="import_file">Импорт файла</string>
     <string name="trust_host">Доверять хосту</string>

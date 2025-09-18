@@ -28,7 +28,11 @@ class PackDownloader(
     /**
      * Download the given [url] if it passes policy checks. Optionally verify [expectedSha256] (hex).
      */
-    suspend fun download(url: String, expectedSha256: String? = null): ByteArray {
+    suspend fun download(
+        url: String,
+        expectedSha256: String? = null,
+        onProgress: (bytesRead: Long, totalBytes: Long?) -> Unit = { _, _ -> }
+    ): ByteArray {
         val httpUrl = url.toHttpUrlOrNull() ?: error("Invalid URL")
         require(httpUrl.isHttps) { "TLS required" }
 
@@ -51,12 +55,14 @@ class PackDownloader(
                 require(resp.isSuccessful) { "HTTP ${'$'}{resp.code()}" }
                 val body = resp.body ?: error("Empty body")
                 val contentLength = body.contentLength()
+                val totalBytes = contentLength.takeUnless { it == -1L }
                 if (contentLength != -1L) require(contentLength <= MAX_BYTES) { "File too large" }
                 val source = body.source()
                 val out = ByteArrayOutputStream()
                 val digest = MessageDigest.getInstance("SHA-256")
                 var total = 0L
                 val chunk = ByteArray(CHUNK_SIZE)
+                onProgress(0L, totalBytes)
                 while (true) {
                     val read = source.read(chunk)
                     if (read == -1) break
@@ -64,6 +70,7 @@ class PackDownloader(
                     require(total <= MAX_BYTES) { "File too large" }
                     out.write(chunk, 0, read)
                     digest.update(chunk, 0, read)
+                    onProgress(total, totalBytes)
                 }
                 val bytes = out.toByteArray()
                 if (expectedSha256 != null) {
