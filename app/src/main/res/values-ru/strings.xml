@@ -87,6 +87,12 @@
     <string name="deck_downloaded_unknown">Загружено: нет данных</string>
     <string name="deck_categories_title">Категории</string>
     <string name="deck_categories_empty">Категории отсутствуют</string>
+    <string name="deck_word_classes_empty">Классы слов отсутствуют.</string>
+    <string name="deck_word_classes_summary">Классы слов: %1$d, помечено %2$d слов</string>
+    <string name="deck_word_classes_chip">%1$s · %2$d</string>
+    <string name="word_class_label_adj">Прилагательные</string>
+    <string name="word_class_label_verb">Глаголы</string>
+    <string name="word_class_label_noun">Существительные</string>
     <string name="deck_examples_title">Примеры слов</string>
     <string name="deck_examples_loading">Загрузка примеров…</string>
     <string name="deck_examples_error">Не удалось загрузить примеры.</string>

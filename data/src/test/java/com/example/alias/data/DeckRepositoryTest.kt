@@ -3,6 +3,7 @@ package com.example.alias.data
 import com.example.alias.data.db.DeckDao
 import com.example.alias.data.db.DeckEntity
 import com.example.alias.data.db.WordClassEntity
+import com.example.alias.data.db.WordClassCount
 import com.example.alias.data.db.WordDao
 import com.example.alias.data.db.WordBrief
 import com.example.alias.data.db.WordEntity
@@ -298,6 +299,16 @@ class DeckRepositoryTest {
                 .filter { (it.deckId to it.wordText) in relevantWords }
                 .map { it.wordClass.uppercase() }
                 .distinct()
+        }
+
+        override suspend fun getWordClassCounts(deckId: String): List<WordClassCount> {
+            return wordClassEntries
+                .filter { it.deckId == deckId }
+                .groupBy { it.wordClass.uppercase() }
+                .map { (wordClass, entries) ->
+                    WordClassCount(wordClass = wordClass, count = entries.size)
+                }
+                .sortedBy { it.wordClass }
         }
 
         override suspend fun getDeckCategories(deckId: String): List<String> {

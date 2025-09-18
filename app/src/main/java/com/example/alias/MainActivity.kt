@@ -176,6 +176,8 @@ import androidx.compose.material.icons.filled.Verified
 import androidx.compose.ui.text.style.TextOverflow
 import com.example.alias.data.db.TurnHistoryEntity
 import com.example.alias.data.db.DifficultyBucket
+import com.example.alias.data.db.WordClassCount
+import com.example.alias.domain.word.WordClassCatalog
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
 
@@ -1629,6 +1631,7 @@ private fun DeckCoverArt(deck: DeckEntity, modifier: Modifier = Modifier) {
         deck.name.firstOrNull()?.uppercaseChar()?.toString()
             ?: deck.language.uppercase(Locale.getDefault())
     }
+    val image = coverImage
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -1636,9 +1639,9 @@ private fun DeckCoverArt(deck: DeckEntity, modifier: Modifier = Modifier) {
             .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
             .background(gradient)
     ) {
-        if (coverImage != null) {
+        if (image != null) {
             Image(
-                bitmap = coverImage,
+                bitmap = image,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.matchParentSize()
@@ -1991,6 +1994,7 @@ private fun FilterChipGroup(
 private fun DeckDetailScreen(vm: MainViewModel, deck: DeckEntity) {
     var count by remember { mutableStateOf<Int?>(null) }
     var categories by remember { mutableStateOf<List<String>?>(null) }
+    var wordClassCounts by remember { mutableStateOf<List<WordClassCount>?>(null) }
     var histogram by remember { mutableStateOf<List<DifficultyBucket>>(emptyList()) }
     var histogramLoading by remember { mutableStateOf(true) }
     var recentWords by remember { mutableStateOf<List<String>>(emptyList()) }
@@ -2010,8 +2014,10 @@ private fun DeckDetailScreen(vm: MainViewModel, deck: DeckEntity) {
     }
 
     LaunchedEffect(deck.id) {
+        wordClassCounts = null
         launch { count = vm.getWordCount(deck.id) }
         launch { categories = runCatching { vm.getDeckCategories(deck.id) }.getOrElse { emptyList() } }
+        launch { wordClassCounts = runCatching { vm.getDeckWordClassCounts(deck.id) }.getOrElse { emptyList() } }
         launch {
             histogramLoading = true
             try {
@@ -2081,6 +2087,50 @@ private fun DeckDetailScreen(vm: MainViewModel, deck: DeckEntity) {
                         ) {
                             currentCategories.forEach { category ->
                                 AssistChip(onClick = {}, enabled = false, label = { Text(category) })
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        DetailCard(title = stringResource(R.string.word_classes_label)) {
+            when (val counts = wordClassCounts) {
+                null -> {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+                }
+
+                else -> {
+                    if (counts.isEmpty()) {
+                        Text(stringResource(R.string.deck_word_classes_empty))
+                    } else {
+                        val totalTagged = counts.sumOf { it.count }
+                        Text(
+                            stringResource(
+                                R.string.deck_word_classes_summary,
+                                counts.size,
+                                totalTagged
+                            ),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            counts.forEach { entry ->
+                                val label = when (entry.wordClass) {
+                                    WordClassCatalog.NOUN -> stringResource(R.string.word_class_label_noun)
+                                    WordClassCatalog.VERB -> stringResource(R.string.word_class_label_verb)
+                                    WordClassCatalog.ADJECTIVE -> stringResource(R.string.word_class_label_adj)
+                                    else -> entry.wordClass
+                                }
+                                AssistChip(
+                                    onClick = {},
+                                    enabled = false,
+                                    label = {
+                                        Text(stringResource(R.string.deck_word_classes_chip, label, entry.count))
+                                    }
+                                )
                             }
                         }
                     }

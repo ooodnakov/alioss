@@ -107,6 +107,12 @@
     <string name="deck_downloaded_unknown">Downloaded: Not available</string>
     <string name="deck_categories_title">Categories</string>
     <string name="deck_categories_empty">No categories</string>
+    <string name="deck_word_classes_empty">No word classes tagged.</string>
+    <string name="deck_word_classes_summary">%1$d classes covering %2$d words</string>
+    <string name="deck_word_classes_chip">%1$s · %2$d</string>
+    <string name="word_class_label_adj">Adjectives</string>
+    <string name="word_class_label_verb">Verbs</string>
+    <string name="word_class_label_noun">Nouns</string>
     <string name="deck_examples_title">Word examples</string>
     <string name="deck_examples_loading">Loading examples…</string>
     <string name="deck_examples_error">Unable to load examples.</string>
