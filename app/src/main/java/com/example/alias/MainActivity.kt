@@ -211,7 +211,7 @@ class MainActivity : AppCompatActivity() {
                     }
                     composable("decks") {
                         AppScaffold(snackbarHostState = snack) {
-                            DecksScreen(vm = vm, onDeckSelected = { nav.navigate("deck/${'$'}{it.id}") })
+                            DecksScreen(vm = vm, onDeckSelected = { nav.navigate("deck/${it.id}") })
                         }
                     }
                     composable(
