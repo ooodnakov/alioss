@@ -825,9 +825,25 @@ private fun HomeActionCard(
     }
 }
 
-private val ScoreboardSaver: Saver<SnapshotStateMap<String, Int>, Map<String, Int>> = Saver(
-    save = { it.toMap() },
-    restore = { restored -> mutableStateMapOf<String, Int>().apply { putAll(restored) } }
+private const val SCOREBOARD_TEAMS_KEY = "teams"
+private const val SCOREBOARD_SCORES_KEY = "scores"
+
+private val ScoreboardSaver: Saver<SnapshotStateMap<String, Int>, Bundle> = Saver(
+    save = { state ->
+        Bundle().apply {
+            putStringArrayList(SCOREBOARD_TEAMS_KEY, ArrayList(state.keys))
+            putIntegerArrayList(SCOREBOARD_SCORES_KEY, ArrayList(state.values))
+        }
+    },
+    restore = { bundle ->
+        val teams = bundle.getStringArrayList(SCOREBOARD_TEAMS_KEY).orEmpty()
+        val scores = bundle.getIntegerArrayList(SCOREBOARD_SCORES_KEY).orEmpty()
+        mutableStateMapOf<String, Int>().apply {
+            teams.forEachIndexed { index, team ->
+                this[team] = scores.getOrNull(index) ?: 0
+            }
+        }
+    }
 )
 
 @Composable
