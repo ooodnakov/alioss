@@ -82,9 +82,11 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -1211,6 +1213,20 @@ private enum class SettingsTab(@StringRes val titleRes: Int) {
     ADVANCED(R.string.advanced_tab)
 }
 
+private data class TeamEditorEntry(val id: Long, val name: String)
+
+private val TeamEditorEntryStateSaver = listSaver<MutableState<List<TeamEditorEntry>>, Any?>(
+    save = { state -> state.value.flatMap { entry -> listOf(entry.id, entry.name) } },
+    restore = { restored ->
+        val entries = restored.chunked(2).mapNotNull { chunk ->
+            val id = (chunk.getOrNull(0) as? Number)?.toLong() ?: return@mapNotNull null
+            val name = chunk.getOrNull(1) as? String ?: ""
+            TeamEditorEntry(id, name)
+        }
+        mutableStateOf(entries)
+    }
+)
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () -> Unit) {
@@ -1231,13 +1247,16 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () ->
     var oneHand by rememberSaveable(s) { mutableStateOf(s.oneHandedLayout) }
     var verticalSwipes by rememberSaveable(s) { mutableStateOf(s.verticalSwipes) }
     var orientation by rememberSaveable(s) { mutableStateOf(s.orientation) }
-    var teams by rememberSaveable(s) { mutableStateOf(s.teams) }
+    var teams by rememberSaveable(s, saver = TeamEditorEntryStateSaver) {
+        mutableStateOf(s.teams.mapIndexed { index, name -> TeamEditorEntry(index.toLong(), name) })
+    }
+    var nextTeamId by rememberSaveable(s) { mutableStateOf(s.teams.size.toLong()) }
     var selectedTab by rememberSaveable { mutableStateOf(SettingsTab.MATCH_RULES) }
     var showResetDialog by rememberSaveable { mutableStateOf(false) }
 
     val teamSuggestions = stringArrayResource(R.array.team_name_suggestions).toList()
 
-    val canSave = teams.count { it.isNotBlank() } >= MIN_TEAMS
+    val canSave = teams.count { it.name.isNotBlank() } >= MIN_TEAMS
     val applySettings: () -> Job = {
         scope.launch {
             vm.updateSettings(
@@ -1254,7 +1273,7 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () ->
                 oneHanded = oneHand,
                 verticalSwipes = verticalSwipes,
                 orientation = orientation,
-                teams = teams,
+                teams = teams.map { it.name },
             )
         }
     }
@@ -1323,10 +1342,7 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () ->
                         verticalSwipes = verticalSwipes,
                         onVerticalSwipesChange = { verticalSwipes = it },
                         orientation = orientation,
-                        onOrientationChange = {
-                            orientation = it
-                            vm.setOrientation(it)
-                        }
+                        onOrientationChange = { orientation = it }
                     )
 
                     SettingsTab.TEAMS -> TeamsTab(
@@ -1334,13 +1350,17 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () ->
                         canRemoveTeam = teams.size > MIN_TEAMS,
                         canAddTeam = teams.size < MAX_TEAMS,
                         onTeamNameChange = { index, value ->
-                            teams = teams.toMutableList().also { list -> list[index] = value }
+                            teams = teams.toMutableList().also { list ->
+                                list[index] = list[index].copy(name = value)
+                            }
                         },
                         onTeamRemove = { index ->
                             teams = teams.toMutableList().also { list -> list.removeAt(index) }
                         },
                         onTeamAdd = {
-                            teams = teams + ctx.getString(R.string.team_default_name, teams.size + 1)
+                            val defaultName = ctx.getString(R.string.team_default_name, teams.size + 1)
+                            teams = teams + TeamEditorEntry(nextTeamId, defaultName)
+                            nextTeamId += 1
                         },
                         onTeamMove = { from, to ->
                             if (from == to) return@TeamsTab
@@ -1353,14 +1373,17 @@ private fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () ->
                         },
                         suggestions = teamSuggestions,
                         onApplySuggestion = { suggestion ->
-                            if (teams.any { it.equals(suggestion, ignoreCase = true) }) {
+                            if (teams.any { it.name.equals(suggestion, ignoreCase = true) }) {
                                 return@TeamsTab
                             }
-                            val targetIndex = teams.indexOfFirst { it.isBlank() }
+                            val targetIndex = teams.indexOfFirst { it.name.isBlank() }
                             teams = teams.toMutableList().also { list ->
                                 when {
-                                    targetIndex >= 0 -> list[targetIndex] = suggestion
-                                    list.size < MAX_TEAMS -> list.add(suggestion)
+                                    targetIndex >= 0 -> list[targetIndex] = list[targetIndex].copy(name = suggestion)
+                                    list.size < MAX_TEAMS -> {
+                                        list += TeamEditorEntry(nextTeamId, suggestion)
+                                        nextTeamId += 1
+                                    }
                                 }
                             }
                         }
@@ -1590,7 +1613,7 @@ private fun OrientationChip(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun TeamsTab(
-    teams: List<String>,
+    teams: List<TeamEditorEntry>,
     canRemoveTeam: Boolean,
     canAddTeam: Boolean,
     onTeamNameChange: (Int, String) -> Unit,
@@ -1619,11 +1642,11 @@ private fun TeamsTab(
                 )
             }
         }
-        itemsIndexed(teams, key = { index, name -> "$index-$name" }) { index, name ->
+        itemsIndexed(teams, key = { _, team -> team.id }) { index, team ->
             val isDragging = draggingIndex == index
             TeamEditorCard(
                 index = index,
-                name = name,
+                name = team.name,
                 canRemove = canRemoveTeam,
                 onNameChange = onTeamNameChange,
                 onRemove = onTeamRemove,
@@ -1642,7 +1665,7 @@ private fun TeamsTab(
                             val current = draggingIndex ?: return@detectDragGesturesAfterLongPress
                             dragOffset += dragAmount.y
                             if (dragOffset > 0 && current < teams.lastIndex) {
-                                val height = itemHeights[current] ?: return@detectDragGesturesAfterLongPress
+                                val height = itemHeights[current + 1] ?: return@detectDragGesturesAfterLongPress
                                 if (dragOffset > height * 0.6f) {
                                     onTeamMove(current, current + 1)
                                     draggingIndex = current + 1
