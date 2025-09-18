@@ -601,12 +601,15 @@ class MainViewModel @Inject constructor(
         val current = e.state.value
         if (current is com.example.alias.domain.GameState.TurnFinished) {
             viewModelScope.launch {
+                val infoByWord = _wordInfo.value
                 val entries = current.outcomes.map {
                     com.example.alias.data.db.TurnHistoryEntity(
                         0L,
                         current.team,
                         it.word,
                         it.correct,
+                        it.skipped,
+                        infoByWord[it.word]?.difficulty,
                         it.timestamp
                     )
                 }

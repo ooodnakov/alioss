@@ -192,10 +192,20 @@ class DeckRepositoryTest {
         override suspend fun getWordCount(deckId: String): Int =
             words.count { it.deckId == deckId }
 
+        override suspend fun getDeckCategories(deckId: String): List<String> =
+            words.filter { it.deckId == deckId }
+                .mapNotNull { it.category }
+                .distinct()
+
         override suspend fun deleteByDeck(deckId: String) {
             words.removeAll { it.deckId == deckId }
             wordClassEntries.removeAll { it.deckId == deckId }
         }
+
+        override suspend fun getRandomWordSamples(deckId: String, limit: Int): List<String> =
+            words.filter { it.deckId == deckId }
+                .map { it.text }
+                .take(limit)
 
         override suspend fun getDifficultyHistogram(deckId: String): List<DifficultyBucket> =
             words.filter { it.deckId == deckId }
