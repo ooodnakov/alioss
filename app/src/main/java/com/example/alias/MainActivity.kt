@@ -150,25 +150,20 @@ class MainActivity : AppCompatActivity() {
                 // Collect general UI events and show snackbars
                 LaunchedEffect(Unit) {
                     vm.uiEvents.collect { ev: UiEvent ->
-                        // Always show, but enforce a 1s auto-dismiss for non-indefinite events.
-                        val showJob = launch {
-                            val result = snack.showSnackbar(
-                                message = ev.message,
-                                actionLabel = ev.actionLabel,
-                                withDismissAction = ev.actionLabel == null,
-                                duration = ev.duration
-                            )
-                            if (result == SnackbarResult.ActionPerformed) {
-                                ev.onAction?.invoke()
-                            }
+                        val duration = if (ev.actionLabel != null && ev.duration == SnackbarDuration.Short) {
+                            SnackbarDuration.Long
+                        } else {
+                            ev.duration
                         }
-                        if (ev.duration != SnackbarDuration.Indefinite) {
-                            launch {
-                                kotlinx.coroutines.delay(1000)
-                                snack.currentSnackbarData?.dismiss()
-                            }
+                        val result = snack.showSnackbar(
+                            message = ev.message,
+                            actionLabel = ev.actionLabel,
+                            withDismissAction = ev.actionLabel == null,
+                            duration = duration
+                        )
+                        if (result == SnackbarResult.ActionPerformed) {
+                            ev.onAction?.invoke()
                         }
-                        showJob.join()
                     }
                 }
                 NavHost(

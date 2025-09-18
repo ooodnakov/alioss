@@ -25,6 +25,7 @@
 - Show placeholder while loading game content.
 - Add sound effects for word Correct and Skip with toggle in Settings.
 - Add word metadata storage (difficulty, category, classes), display chips on the word card, and provide deck filters for categories and word classes.
+- Snackbar UX: replace manual 1s autohide with built-in durations for non-indefinite events.
 
 ## Backlog
 - Bundled assets change detection: implemented; consider per-deck id tracking and pruning removed assets.
@@ -34,4 +35,3 @@
   - Repository: verify re-import of the same deck does not duplicate words (and that updated decks replace content).
   - App-layer: verify last-turn outcomes are persisted when match ends (target reached or timer with no words left).
   - Engine: property-like tests for multi-team rotation and cumulative scoring across many turns.
-- Snackbar UX: replace manual 1s autohide with appropriate built-in durations for non-indefinite events.
