@@ -30,22 +30,35 @@ private data class DeckDto(
 @Serializable
 private data class WordDto(
     val text: String,
-    val difficulty: Int = 1,
+    val difficulty: Int? = null,
     val category: String? = null,
     @SerialName("wordClass") val wordClass: String? = null,
     @SerialName("wordClasses") val legacyWordClasses: List<String>? = null,
     @SerialName("isNSFW") val isNsfw: Boolean = false,
     val tabooStems: List<String>? = null
 ) {
+    fun normalizedDifficulty(): Int = difficulty ?: DEFAULT_DIFFICULTY
+
+    fun normalizedCategory(): String? {
+        return category?.takeIf { it.isNotBlank() }
+    }
+
     fun resolvedWordClass(): String? {
-        wordClass?.let {
-            return WordClassCatalog.normalizeOrNull(it)
-                ?: throw IllegalArgumentException("Unsupported word class: $it")
+        val normalized = wordClass?.let { WordClassCatalog.normalizeOrNull(it) }
+        if (normalized != null) {
+            return normalized
+        }
+        if (wordClass != null && wordClass.isNotBlank()) {
+            throw IllegalArgumentException("Unsupported word class: $wordClass")
         }
         return legacyWordClasses
             ?.asSequence()
             ?.mapNotNull { WordClassCatalog.normalizeOrNull(it) }
             ?.firstOrNull()
+    }
+
+    companion object {
+        private const val DEFAULT_DIFFICULTY = 1
     }
 }
 
