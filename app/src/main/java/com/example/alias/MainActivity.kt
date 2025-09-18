@@ -150,10 +150,10 @@ class MainActivity : AppCompatActivity() {
                 // Collect general UI events and show snackbars
                 LaunchedEffect(Unit) {
                     vm.uiEvents.collect { ev: UiEvent ->
-                        val duration = when {
-                            ev.duration == SnackbarDuration.Indefinite -> SnackbarDuration.Indefinite
-                            ev.actionLabel != null && ev.duration == SnackbarDuration.Short -> SnackbarDuration.Long
-                            else -> ev.duration
+                        val duration = if (ev.actionLabel != null && ev.duration == SnackbarDuration.Short) {
+                            SnackbarDuration.Long
+                        } else {
+                            ev.duration
                         }
                         val result = snack.showSnackbar(
                             message = ev.message,
