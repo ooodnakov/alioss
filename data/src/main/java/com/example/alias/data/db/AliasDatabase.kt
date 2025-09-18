@@ -5,7 +5,7 @@ import androidx.room.RoomDatabase
 
 @Database(
     entities = [DeckEntity::class, WordEntity::class, WordClassEntity::class, TurnHistoryEntity::class],
-    version = 5,
+    version = 6,
     exportSchema = true,
 )
 abstract class AliasDatabase : RoomDatabase() {

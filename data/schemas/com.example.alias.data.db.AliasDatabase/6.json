@@ -1,0 +1,304 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 6,
+    "identityHash": "699a69bef5e4df73e080e2b346b89718",
+    "entities": [
+      {
+        "tableName": "decks",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `language` TEXT NOT NULL, `isOfficial` INTEGER NOT NULL, `isNSFW` INTEGER NOT NULL, `version` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "language",
+            "columnName": "language",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isOfficial",
+            "columnName": "isOfficial",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isNSFW",
+            "columnName": "isNSFW",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "version",
+            "columnName": "version",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "words",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `deckId` TEXT NOT NULL, `text` TEXT NOT NULL, `language` TEXT NOT NULL, `stems` TEXT, `category` TEXT, `difficulty` INTEGER NOT NULL, `tabooStems` TEXT, `isNSFW` INTEGER NOT NULL, FOREIGN KEY(`deckId`) REFERENCES `decks`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deckId",
+            "columnName": "deckId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "text",
+            "columnName": "text",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "language",
+            "columnName": "language",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "stems",
+            "columnName": "stems",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "category",
+            "columnName": "category",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "difficulty",
+            "columnName": "difficulty",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tabooStems",
+            "columnName": "tabooStems",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "isNSFW",
+            "columnName": "isNSFW",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_words_deckId",
+            "unique": false,
+            "columnNames": [
+              "deckId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_words_deckId` ON `${TABLE_NAME}` (`deckId`)"
+          },
+          {
+            "name": "index_words_language_deckId",
+            "unique": false,
+            "columnNames": [
+              "language",
+              "deckId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_words_language_deckId` ON `${TABLE_NAME}` (`language`, `deckId`)"
+          },
+          {
+            "name": "index_words_deckId_text",
+            "unique": true,
+            "columnNames": [
+              "deckId",
+              "text"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_words_deckId_text` ON `${TABLE_NAME}` (`deckId`, `text`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "decks",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "deckId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "word_classes",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`deckId` TEXT NOT NULL, `wordText` TEXT NOT NULL, `wordClass` TEXT NOT NULL, PRIMARY KEY(`deckId`, `wordText`, `wordClass`), FOREIGN KEY(`deckId`, `wordText`) REFERENCES `words`(`deckId`, `text`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "deckId",
+            "columnName": "deckId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "wordText",
+            "columnName": "wordText",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "wordClass",
+            "columnName": "wordClass",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "deckId",
+            "wordText",
+            "wordClass"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_word_classes_wordClass",
+            "unique": false,
+            "columnNames": [
+              "wordClass"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_word_classes_wordClass` ON `${TABLE_NAME}` (`wordClass`)"
+          },
+          {
+            "name": "index_word_classes_deckId_wordText",
+            "unique": false,
+            "columnNames": [
+              "deckId",
+              "wordText"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_word_classes_deckId_wordText` ON `${TABLE_NAME}` (`deckId`, `wordText`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "words",
+            "onDelete": "CASCADE",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "deckId",
+              "wordText"
+            ],
+            "referencedColumns": [
+              "deckId",
+              "text"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "turn_history",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `team` TEXT NOT NULL, `word` TEXT NOT NULL, `correct` INTEGER NOT NULL, `skipped` INTEGER NOT NULL, `difficulty` INTEGER, `timestamp` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "team",
+            "columnName": "team",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "word",
+            "columnName": "word",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "correct",
+            "columnName": "correct",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "skipped",
+            "columnName": "skipped",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "difficulty",
+            "columnName": "difficulty",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "timestamp",
+            "columnName": "timestamp",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      }
+    ],
+    "views": [],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '699a69bef5e4df73e080e2b346b89718')"
+    ]
+  }
+}

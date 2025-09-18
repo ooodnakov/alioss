@@ -39,7 +39,33 @@
     <string name="end_match">End Match</string>
     <string name="next_team">Next Team</string>
     <string name="turn_summary">Turn summary for %s</string>
-    <string name="score_change">Score change: %d</string>
+    <string name="score_change">Score change: %+d</string>
+    <string name="turn_timeline_title">Turn timeline</string>
+    <string name="timeline_score_breakdown">See how the team built this round\'s score.</string>
+    <string name="timeline_no_events">No words were recorded this turn.</string>
+    <string name="timeline_bonus_label">Bonus</string>
+    <string name="timeline_change">%1$+d</string>
+    <string name="timeline_running_total">Running total %1$+d</string>
+    <string name="timeline_elapsed_time">%1$.1fs into turn</string>
+    <string name="timeline_elapsed_time_start">Start of turn</string>
+    <string name="timeline_header_correct_subtitle">%1$+d this streak</string>
+    <string name="timeline_header_penalty_subtitle">%1$+d impact</string>
+    <string name="timeline_header_pending_subtitle">No score change yet</string>
+    <string name="timeline_header_skip_no_penalty">No penalty applied</string>
+    <string name="timeline_mark_correct">Mark correct</string>
+    <string name="timeline_mark_incorrect">Mark incorrect</string>
+    <plurals name="timeline_correct">
+        <item quantity="one">Correct word</item>
+        <item quantity="other">Correct streak ×%d</item>
+    </plurals>
+    <plurals name="timeline_skipped">
+        <item quantity="one">Skipped word</item>
+        <item quantity="other">Skipped words ×%d</item>
+    </plurals>
+    <plurals name="timeline_pending">
+        <item quantity="one">Pending word</item>
+        <item quantity="other">Pending words ×%d</item>
+    </plurals>
     <string name="tutorial_instructions">Swipe right for Correct, left for Skip.</string>
     <string name="tutorial_instructions_vertical">Swipe up for Correct, down for Skip.</string>
     <string name="vertical_swipes_label">Vertical swipes (up/down)</string>
@@ -59,6 +85,21 @@
     <string name="tutorial_dismiss">Got it</string>
     <string name="show_tutorial_again">Show tutorial again</string>
     <string name="no_history">No history yet</string>
+    <string name="history_filter_team">Team</string>
+    <string name="history_filter_all_teams">All teams</string>
+    <string name="history_filter_difficulty">Difficulty</string>
+    <string name="history_filter_all_difficulties">All difficulties</string>
+    <string name="history_filter_unknown_difficulty">Unknown difficulty</string>
+    <string name="history_filter_result">Result</string>
+    <string name="history_filter_all_results">All results</string>
+    <string name="history_result_correct">Correct</string>
+    <string name="history_result_skipped">Skipped</string>
+    <string name="history_result_missed">Pending</string>
+    <string name="history_section_performance">Performance</string>
+    <string name="history_section_recent_turns">Recent turns</string>
+    <string name="history_recent_count">%1$d of %2$d turns</string>
+    <string name="history_no_entries_for_filters">No turns match your filters yet.</string>
+    <string name="history_performance_summary">%1$d/%2$d correct (%3$d%%)</string>
     <string name="installed_decks">Installed Decks</string>
     <string name="enable_all">Enable all</string>
     <string name="disable_all">Disable all</string>

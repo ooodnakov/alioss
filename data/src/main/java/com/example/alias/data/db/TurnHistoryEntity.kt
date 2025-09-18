@@ -9,6 +9,8 @@ data class TurnHistoryEntity(
     val team: String,
     val word: String,
     val correct: Boolean,
+    val skipped: Boolean,
+    val difficulty: Int?,
     val timestamp: Long,
 )
 

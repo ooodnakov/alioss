@@ -5,6 +5,7 @@ import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -39,6 +40,7 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalContext
@@ -88,6 +90,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Settings
 import java.util.Locale
 import java.text.DateFormat
@@ -786,7 +789,7 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
             }
         }
         is GameState.TurnFinished -> {
-            RoundSummaryScreen(vm = vm, s = s)
+            RoundSummaryScreen(vm = vm, s = s, settings = settings)
         }
         is GameState.MatchFinished -> {
             Column(
@@ -1490,42 +1493,351 @@ private fun AboutScreen() {
 }
 
 @Composable
-private fun RoundSummaryScreen(vm: MainViewModel, s: GameState.TurnFinished) {
+private fun RoundSummaryScreen(vm: MainViewModel, s: GameState.TurnFinished, settings: Settings) {
+    val penaltyPerSkip = remember(settings.punishSkips, settings.penaltyPerSkip) {
+        if (settings.punishSkips) settings.penaltyPerSkip else 0
+    }
+    val timeline = remember(s.outcomes, penaltyPerSkip) { buildTimelineData(s.outcomes, penaltyPerSkip) }
+    val colors = MaterialTheme.colorScheme
+    val deltaColor = if (s.deltaScore >= 0) colors.tertiary else colors.error
+
     Column(
         modifier = Modifier.fillMaxSize().padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.Top),
+        verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.Top),
     ) {
         Text(stringResource(R.string.turn_summary, s.team), style = MaterialTheme.typography.headlineSmall)
-        Text(stringResource(R.string.score_change, s.deltaScore))
-        LazyColumn(Modifier.weight(1f)) {
-            itemsIndexed(s.outcomes) { index, o ->
-                ListItem(
-                    leadingContent = {
-                        Icon(
-                            if (o.correct) Icons.Filled.Check else Icons.Filled.Close,
-                            contentDescription = null,
-                            tint = if (o.correct) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.error
-                        )
-                    },
-                    headlineContent = { Text(o.word) },
-                    trailingContent = {
-                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            IconButton(onClick = { vm.overrideOutcome(index, true) }) {
-                                Icon(Icons.Filled.Check, contentDescription = "Mark correct")
-                            }
-                            IconButton(onClick = { vm.overrideOutcome(index, false) }) {
-                                Icon(Icons.Filled.Close, contentDescription = "Mark incorrect")
-                            }
+        Text(
+            text = stringResource(R.string.score_change, s.deltaScore),
+            style = MaterialTheme.typography.titleMedium,
+            color = deltaColor
+        )
+        ElevatedCard(modifier = Modifier.weight(1f)) {
+            if (timeline.events.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize().padding(24.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = stringResource(R.string.timeline_no_events),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colors.onSurfaceVariant,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(vertical = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    item {
+                        Column(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text(stringResource(R.string.turn_timeline_title), style = MaterialTheme.typography.titleMedium)
+                            Text(
+                                text = stringResource(R.string.timeline_score_breakdown),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = colors.onSurfaceVariant
+                            )
                         }
                     }
-                )
-                if (index < s.outcomes.lastIndex) HorizontalDivider()
+                    timeline.segments.forEachIndexed { segmentIndex, segment ->
+                        item {
+                            TimelineSegmentHeader(
+                                segment = segment,
+                                modifier = Modifier.padding(horizontal = 20.dp),
+                                penaltyPerSkip = penaltyPerSkip
+                            )
+                        }
+                        itemsIndexed(segment.events) { eventIndex, event ->
+                            val hasPrev = segmentIndex > 0 || eventIndex > 0
+                            val hasNext = !(segmentIndex == timeline.segments.lastIndex && eventIndex == segment.events.lastIndex)
+                            TimelineEventRow(
+                                event = event,
+                                hasPrev = hasPrev,
+                                hasNext = hasNext,
+                                onOverride = { vm.overrideOutcome(event.index, it) },
+                                modifier = Modifier.padding(horizontal = 20.dp)
+                            )
+                        }
+                    }
+                }
             }
         }
         Scoreboard(s.scores)
         Button(onClick = { vm.nextTurn() }, modifier = Modifier.fillMaxWidth()) {
             Text(if (s.matchOver) stringResource(R.string.end_match) else stringResource(R.string.next_team))
         }
+    }
+}
+
+private const val BONUS_STREAK_THRESHOLD = 3
+
+private enum class TimelineSegmentType { CORRECT, SKIP, PENDING }
+
+private data class TimelineEvent(
+    val index: Int,
+    val outcome: TurnOutcome,
+    val type: TimelineSegmentType,
+    val change: Int,
+    val cumulative: Int,
+    val isBonus: Boolean,
+    val elapsedMillis: Long,
+)
+
+private data class TimelineSegment(
+    val type: TimelineSegmentType,
+    val events: List<TimelineEvent>,
+)
+
+private data class TimelineData(
+    val events: List<TimelineEvent>,
+    val segments: List<TimelineSegment>,
+)
+
+private fun buildTimelineData(outcomes: List<TurnOutcome>, penaltyPerSkip: Int): TimelineData {
+    if (outcomes.isEmpty()) return TimelineData(emptyList(), emptyList())
+    val events = mutableListOf<TimelineEvent>()
+    val start = outcomes.first().timestamp
+    var cumulative = 0
+    var streak = 0
+    outcomes.forEachIndexed { index, outcome ->
+        val type = when {
+            outcome.correct -> TimelineSegmentType.CORRECT
+            outcome.skipped -> TimelineSegmentType.SKIP
+            else -> TimelineSegmentType.PENDING
+        }
+        val nextStreak = if (type == TimelineSegmentType.CORRECT) streak + 1 else 0
+        val isBonus = type == TimelineSegmentType.CORRECT && nextStreak >= BONUS_STREAK_THRESHOLD
+        val change = when (type) {
+            TimelineSegmentType.CORRECT -> 1
+            TimelineSegmentType.SKIP -> -penaltyPerSkip
+            TimelineSegmentType.PENDING -> 0
+        }
+        cumulative += change
+        val elapsed = if (index == 0) 0L else (outcome.timestamp - start).coerceAtLeast(0L)
+        events += TimelineEvent(
+            index = index,
+            outcome = outcome,
+            type = type,
+            change = change,
+            cumulative = cumulative,
+            isBonus = isBonus,
+            elapsedMillis = elapsed
+        )
+        streak = if (type == TimelineSegmentType.CORRECT) nextStreak else 0
+    }
+    val segments = mutableListOf<TimelineSegment>()
+    var currentType = events.first().type
+    var bucket = mutableListOf<TimelineEvent>()
+    events.forEach { event ->
+        if (event.type != currentType) {
+            if (bucket.isNotEmpty()) {
+                segments += TimelineSegment(currentType, bucket.toList())
+            }
+            bucket = mutableListOf()
+            currentType = event.type
+        }
+        bucket += event
+    }
+    if (bucket.isNotEmpty()) {
+        segments += TimelineSegment(currentType, bucket.toList())
+    }
+    return TimelineData(events = events, segments = segments)
+}
+
+@Composable
+private fun TimelineSegmentHeader(
+    segment: TimelineSegment,
+    modifier: Modifier = Modifier,
+    penaltyPerSkip: Int,
+) {
+    val color = timelineColor(segment.type)
+    val title = when (segment.type) {
+        TimelineSegmentType.CORRECT -> pluralStringResource(R.plurals.timeline_correct, segment.events.size, segment.events.size)
+        TimelineSegmentType.SKIP -> pluralStringResource(R.plurals.timeline_skipped, segment.events.size, segment.events.size)
+        TimelineSegmentType.PENDING -> pluralStringResource(R.plurals.timeline_pending, segment.events.size, segment.events.size)
+    }
+    val delta = segment.events.sumOf { it.change }
+    val subtitle = when (segment.type) {
+        TimelineSegmentType.CORRECT -> stringResource(R.string.timeline_header_correct_subtitle, delta)
+        TimelineSegmentType.SKIP -> if (penaltyPerSkip == 0 || delta == 0) {
+            stringResource(R.string.timeline_header_skip_no_penalty)
+        } else {
+            stringResource(R.string.timeline_header_penalty_subtitle, delta)
+        }
+        TimelineSegmentType.PENDING -> stringResource(R.string.timeline_header_pending_subtitle)
+    }
+    val showBonus = segment.events.any { it.isBonus }
+
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        contentColor = MaterialTheme.colorScheme.onSurface
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            val icon = when (segment.type) {
+                TimelineSegmentType.CORRECT -> Icons.Filled.Check
+                TimelineSegmentType.SKIP -> Icons.Filled.Close
+                TimelineSegmentType.PENDING -> Icons.Filled.Schedule
+            }
+            Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(24.dp))
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (showBonus) {
+                    AssistChip(
+                        onClick = {},
+                        enabled = false,
+                        leadingIcon = {
+                            Icon(Icons.Filled.Star, contentDescription = null, modifier = Modifier.size(16.dp))
+                        },
+                        label = { Text(stringResource(R.string.timeline_bonus_label)) },
+                        colors = AssistChipDefaults.assistChipColors(
+                            disabledContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                            disabledLabelColor = MaterialTheme.colorScheme.onTertiaryContainer
+                        )
+                    )
+                }
+            }
+            Text(
+                text = stringResource(R.string.timeline_change, delta),
+                style = MaterialTheme.typography.titleMedium,
+                color = color,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
+
+@Composable
+private fun TimelineEventRow(
+    event: TimelineEvent,
+    hasPrev: Boolean,
+    hasNext: Boolean,
+    onOverride: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val color = timelineColor(event.type)
+    val timeLabel = if (event.elapsedMillis <= 0L) {
+        stringResource(R.string.timeline_elapsed_time_start)
+    } else {
+        val seconds = event.elapsedMillis / 1000f
+        stringResource(R.string.timeline_elapsed_time, seconds)
+    }
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp)
+            .height(IntrinsicSize.Min),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.Top
+    ) {
+        TimelineIndicator(
+            color = color,
+            showTopConnector = hasPrev,
+            showBottomConnector = hasNext
+        )
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(event.outcome.word, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                if (event.isBonus) {
+                    AssistChip(
+                        onClick = {},
+                        enabled = false,
+                        leadingIcon = {
+                            Icon(Icons.Filled.Star, contentDescription = null, modifier = Modifier.size(14.dp))
+                        },
+                        label = { Text(stringResource(R.string.timeline_bonus_label)) },
+                        colors = AssistChipDefaults.assistChipColors(
+                            disabledContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                            disabledLabelColor = MaterialTheme.colorScheme.onTertiaryContainer
+                        )
+                    )
+                }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                Text(
+                    text = stringResource(R.string.timeline_change, event.change),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = color,
+                    fontWeight = FontWeight.Medium
+                )
+                Text(
+                    text = stringResource(R.string.timeline_running_total, event.cumulative),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Text(timeLabel, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            IconButton(onClick = { onOverride(true) }) {
+                Icon(Icons.Filled.Check, contentDescription = stringResource(R.string.timeline_mark_correct))
+            }
+            IconButton(onClick = { onOverride(false) }) {
+                Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.timeline_mark_incorrect))
+            }
+        }
+    }
+}
+
+@Composable
+private fun TimelineIndicator(color: Color, showTopConnector: Boolean, showBottomConnector: Boolean) {
+    Box(
+        modifier = Modifier
+            .width(28.dp)
+            .fillMaxHeight(),
+        contentAlignment = Alignment.TopCenter
+    ) {
+        Canvas(modifier = Modifier.fillMaxHeight().width(12.dp)) {
+            val centerX = size.width / 2f
+            val circleRadius = 6.dp.toPx()
+            val centerY = circleRadius + 4.dp.toPx()
+            if (showTopConnector) {
+                drawLine(
+                    color = color.copy(alpha = 0.35f),
+                    start = Offset(centerX, 0f),
+                    end = Offset(centerX, centerY - circleRadius)
+                )
+            }
+            drawCircle(color = color, radius = circleRadius, center = Offset(centerX, centerY))
+            if (showBottomConnector) {
+                drawLine(
+                    color = color.copy(alpha = 0.35f),
+                    start = Offset(centerX, centerY + circleRadius),
+                    end = Offset(centerX, size.height)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun timelineColor(type: TimelineSegmentType): Color {
+    val colors = MaterialTheme.colorScheme
+    return when (type) {
+        TimelineSegmentType.CORRECT -> colors.tertiary
+        TimelineSegmentType.SKIP -> colors.error
+        TimelineSegmentType.PENDING -> colors.outline
     }
 }
 
