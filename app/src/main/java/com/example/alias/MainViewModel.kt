@@ -1,37 +1,38 @@
 package com.example.alias
 
 import android.content.Context
+import android.net.Uri
+import android.util.Log
+import androidx.compose.material3.SnackbarDuration
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.alias.data.DeckRepository
-import com.example.alias.data.db.WordDao
-import com.example.alias.data.download.PackDownloader
 import com.example.alias.data.TurnHistoryRepository
 import com.example.alias.data.db.TurnHistoryEntity
+import com.example.alias.data.db.WordDao
+import com.example.alias.data.download.PackDownloader
+import com.example.alias.data.pack.PackParser
+import com.example.alias.data.settings.Settings
+import com.example.alias.data.settings.SettingsRepository
 import com.example.alias.domain.DefaultGameEngine
 import com.example.alias.domain.GameEngine
 import com.example.alias.domain.MatchConfig
 import com.example.alias.domain.word.WordClassCatalog
-import com.example.alias.data.settings.SettingsRepository
-import com.example.alias.data.settings.Settings
-import com.example.alias.data.pack.PackParser
-import android.net.Uri
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
-import androidx.compose.material3.SnackbarDuration
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -48,6 +49,10 @@ class MainViewModel @Inject constructor(
     private val downloader: PackDownloader,
     private val historyRepository: TurnHistoryRepository,
 ) : ViewModel() {
+    companion object {
+        private const val TAG = "MainViewModel"
+    }
+
     private val _engine = MutableStateFlow<GameEngine?>(null)
     val engine: StateFlow<GameEngine?> = _engine.asStateFlow()
 
@@ -180,7 +185,8 @@ class MainViewModel @Inject constructor(
                 if (baseSettings.enabledDeckIds.isEmpty()) {
                     try {
                         settingsRepository.setEnabledDeckIds(resolvedEnabled)
-                    } catch (_: Throwable) {
+                    } catch (t: Throwable) {
+                        Log.e(TAG, "Failed to persist enabled deck ids", t)
                     }
                 }
                 // Fetch words for enabled decks in preferred language
@@ -202,7 +208,7 @@ class MainViewModel @Inject constructor(
                 )
             }
             // Also prepare word metadata and supporting filters for the same snapshot
-            viewModelScope.launch(Dispatchers.IO) {
+            withContext(Dispatchers.IO) {
                 val filters = initial.settings.toWordQueryFilters()
                 if (filters.deckIds.isEmpty()) {
                     _wordInfo.value = emptyMap()
