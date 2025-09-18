@@ -900,12 +900,13 @@ private fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit)
     var activeSheet by rememberSaveable { mutableStateOf<DeckSheet?>(null) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    if (activeSheet != null) {
+    val sheet = activeSheet
+    if (sheet != null) {
         ModalBottomSheet(
             onDismissRequest = { activeSheet = null },
             sheetState = sheetState
         ) {
-            when (activeSheet) {
+            when (sheet) {
                 DeckSheet.FILTERS -> DeckFiltersSheet(
                     state = DeckFiltersSheetState(
                         difficulty = DifficultyFilterState(
@@ -967,8 +968,6 @@ private fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit)
                         }
                     }
                 )
-
-                null -> Unit
             }
         }
     }
@@ -1239,7 +1238,7 @@ private fun rememberDeckCoverBrush(deckId: String): Brush {
         val nextIndex = (baseIndex + 1) % DeckCoverPalette.size
         listOf(DeckCoverPalette[baseIndex], DeckCoverPalette[nextIndex])
     }
-    return remember(deckId, colors) { Brush.linearGradient(colors) }
+    return remember(colors) { Brush.linearGradient(colors) }
 }
 
 @Composable
@@ -1528,13 +1527,19 @@ private fun DeckDetailScreen(vm: MainViewModel, deck: DeckEntity) {
         launch { categories = runCatching { vm.getDeckCategories(deck.id) }.getOrElse { emptyList() } }
         launch {
             histogramLoading = true
-            histogram = runCatching { vm.getDeckDifficultyHistogram(deck.id) }.getOrElse { emptyList() }
-            histogramLoading = false
+            try {
+                histogram = runCatching { vm.getDeckDifficultyHistogram(deck.id) }.getOrElse { emptyList() }
+            } finally {
+                histogramLoading = false
+            }
         }
         launch {
             recentWordsLoading = true
-            recentWords = runCatching { vm.getDeckRecentWords(deck.id) }.getOrElse { emptyList() }
-            recentWordsLoading = false
+            try {
+                recentWords = runCatching { vm.getDeckRecentWords(deck.id) }.getOrElse { emptyList() }
+            } finally {
+                recentWordsLoading = false
+            }
         }
         launch { refreshExamples() }
     }
@@ -1573,62 +1578,22 @@ private fun DeckDetailScreen(vm: MainViewModel, deck: DeckEntity) {
             }
         }
 
-        ElevatedCard(Modifier.fillMaxWidth()) {
-            Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(stringResource(R.string.deck_categories_title), style = MaterialTheme.typography.titleMedium)
-                when (val currentCategories = categories) {
-                    null -> {
-                        CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
-                    }
-
-                    else -> {
-                        if (currentCategories.isEmpty()) {
-                            Text(stringResource(R.string.deck_categories_empty))
-                        } else {
-                            FlowRow(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                currentCategories.forEach { category ->
-                                    AssistChip(onClick = {}, enabled = false, label = { Text(category) })
-                                }
-                            }
-                        }
-                    }
+        DetailCard(title = stringResource(R.string.deck_categories_title)) {
+            when (val currentCategories = categories) {
+                null -> {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
                 }
-            }
-        }
 
-        ElevatedCard(Modifier.fillMaxWidth()) {
-            Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(stringResource(R.string.deck_difficulty_title), style = MaterialTheme.typography.titleMedium)
-                if (histogramLoading) {
-                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-                } else {
-                    DeckDifficultyHistogram(buckets = histogram)
-                }
-            }
-        }
-
-        ElevatedCard(Modifier.fillMaxWidth()) {
-            Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(stringResource(R.string.deck_recent_words_title), style = MaterialTheme.typography.titleMedium)
-                when {
-                    recentWordsLoading -> {
-                        CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
-                    }
-
-                    recentWords.isEmpty() -> {
-                        Text(stringResource(R.string.deck_recent_words_empty))
-                    }
-
-                    else -> {
+                else -> {
+                    if (currentCategories.isEmpty()) {
+                        Text(stringResource(R.string.deck_categories_empty))
+                    } else {
                         FlowRow(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            recentWords.forEach { word ->
-                                AssistChip(onClick = {}, enabled = false, label = { Text(word) })
+                            currentCategories.forEach { category ->
+                                AssistChip(onClick = {}, enabled = false, label = { Text(category) })
                             }
                         }
                     }
@@ -1636,41 +1601,89 @@ private fun DeckDetailScreen(vm: MainViewModel, deck: DeckEntity) {
             }
         }
 
-        ElevatedCard(Modifier.fillMaxWidth()) {
-            Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(stringResource(R.string.deck_examples_title), style = MaterialTheme.typography.titleMedium)
-                when {
-                    examplesLoading -> {
-                        CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
-                    }
+        DetailCard(title = stringResource(R.string.deck_difficulty_title)) {
+            if (histogramLoading) {
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            } else {
+                DeckDifficultyHistogram(buckets = histogram)
+            }
+        }
 
-                    examplesError -> {
-                        Text(stringResource(R.string.deck_examples_error), color = MaterialTheme.colorScheme.error)
-                    }
+        DetailCard(title = stringResource(R.string.deck_recent_words_title)) {
+            when {
+                recentWordsLoading -> {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+                }
 
-                    wordExamples.isEmpty() -> {
-                        Text(stringResource(R.string.deck_examples_empty))
-                    }
+                recentWords.isEmpty() -> {
+                    Text(stringResource(R.string.deck_recent_words_empty))
+                }
 
-                    else -> {
-                        FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            wordExamples.forEach { example ->
-                                AssistChip(onClick = {}, enabled = false, label = { Text(example) })
-                            }
+                else -> {
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        recentWords.forEach { word ->
+                            AssistChip(onClick = {}, enabled = false, label = { Text(word) })
                         }
                     }
                 }
-                TextButton(
-                    onClick = { scope.launch { refreshExamples() } },
-                    enabled = !examplesLoading,
-                    modifier = Modifier.align(Alignment.End)
-                ) {
-                    Text(stringResource(R.string.deck_examples_reload))
+            }
+        }
+
+        DetailCard(title = stringResource(R.string.deck_examples_title)) {
+            when {
+                examplesLoading -> {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+                }
+
+                examplesError -> {
+                    Text(stringResource(R.string.deck_examples_error), color = MaterialTheme.colorScheme.error)
+                }
+
+                wordExamples.isEmpty() -> {
+                    Text(stringResource(R.string.deck_examples_empty))
+                }
+
+                else -> {
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        wordExamples.forEach { example ->
+                            AssistChip(onClick = {}, enabled = false, label = { Text(example) })
+                        }
+                    }
                 }
             }
+            TextButton(
+                onClick = { scope.launch { refreshExamples() } },
+                enabled = !examplesLoading,
+                modifier = Modifier.align(Alignment.End)
+            ) {
+                Text(stringResource(R.string.deck_examples_reload))
+            }
+        }
+    }
+}
+
+@Composable
+private fun DetailCard(
+    title: String,
+    modifier: Modifier = Modifier,
+    contentSpacing: Dp = 12.dp,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    ElevatedCard(modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(contentSpacing)
+        ) {
+            Text(title, style = MaterialTheme.typography.titleMedium)
+            content()
         }
     }
 }

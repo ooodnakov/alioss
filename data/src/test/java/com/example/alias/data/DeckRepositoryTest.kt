@@ -311,9 +311,9 @@ class DeckRepositoryTest {
         override suspend fun getRandomWordSamples(deckId: String, limit: Int): List<String> {
             return words
                 .filter { it.deckId == deckId }
-                .sortedBy { it.id }
-                .map { it.text }
+                .shuffled()
                 .take(limit)
+                .map { it.text }
         }
     }
 
