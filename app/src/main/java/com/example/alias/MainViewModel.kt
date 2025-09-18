@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.alias.data.DeckRepository
 import com.example.alias.data.db.WordDao
+import com.example.alias.data.db.DifficultyBucket
 import com.example.alias.data.download.PackDownloader
 import com.example.alias.data.TurnHistoryRepository
 import com.example.alias.data.db.TurnHistoryEntity
@@ -319,6 +320,12 @@ class MainViewModel @Inject constructor(
     suspend fun getDeckWordSamples(deckId: String, limit: Int = 5): List<String> = withContext(Dispatchers.IO) {
         wordDao.getRandomWordSamples(deckId, limit)
     }
+
+    suspend fun getDeckDifficultyHistogram(deckId: String): List<DifficultyBucket> =
+        withContext(Dispatchers.IO) { deckRepository.getDifficultyHistogram(deckId) }
+
+    suspend fun getDeckRecentWords(deckId: String, limit: Int = 8): List<String> =
+        withContext(Dispatchers.IO) { deckRepository.getRecentWords(deckId, limit) }
 
     fun updateSeenTutorial(value: Boolean) {
         viewModelScope.launch { settingsRepository.updateSeenTutorial(value) }
