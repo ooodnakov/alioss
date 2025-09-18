@@ -478,14 +478,12 @@ class MainViewModel @Inject constructor(
             filters.wordClasses,
             filters.wordClassFilterEnabled
         )
-        val words = briefs.map { it.text }.distinct()
-        val info = mutableMapOf<String, WordInfo>()
-        for (brief in briefs) {
-            if (!info.containsKey(brief.text)) {
-                info[brief.text] = WordInfo(brief.difficulty, brief.category, parseClass(brief.wordClass))
+        val info = briefs
+            .distinctBy { it.text }
+            .associate { brief ->
+                brief.text to WordInfo(brief.difficulty, brief.category, parseClass(brief.wordClass))
             }
-        }
-        return WordData(words, info.toMap())
+        return WordData(info.keys.toList(), info)
     }
 
     fun resetLocalData(onDone: (() -> Unit)? = null) {
