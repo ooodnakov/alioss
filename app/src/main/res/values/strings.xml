@@ -120,6 +120,10 @@
     <string name="max_skips_label">Max skips</string>
     <string name="penalty_per_skip_label">Penalty/skip</string>
     <string name="punish_skips_label">Punish skips</string>
+    <string name="match_rules_tab">Match rules</string>
+    <string name="input_feedback_tab">Input &amp; feedback</string>
+    <string name="teams_tab">Teams</string>
+    <string name="advanced_tab">Advanced</string>
     <string name="language_and_content">Language &amp; Content</string>
     <string name="language_hint">Language (e.g., en, ru)</string>
     <string name="allow_nsfw_label">Allow NSFW</string>
@@ -138,12 +142,25 @@
     <string name="teams_label">Teams</string>
     <string name="add_team_label">Add Team</string>
     <string name="remove_team">Remove team</string>
+    <string name="team_drag_handle_description">Reorder team</string>
+    <string name="drag_to_reorder_hint">Press and drag the handle to reorder your lineup.</string>
+    <string name="team_suggestions_label">Need inspiration?</string>
+    <string name="team_suggestions_hint">Tap a suggestion to auto-fill the next open slot.</string>
     <string name="save_label">Save</string>
     <string name="save_and_restart_label">Save &amp; Restart</string>
-    
+
     <string name="reset_local_data">Reset local data</string>
     <string name="reset_confirm_title">Reset local data?</string>
     <string name="reset_confirm_message">This clears decks, words, history, and settings. This cannot be undone.</string>
     <string name="cancel">Cancel</string>
     <string name="confirm">Confirm</string>
+    <string name="support_and_data_label">Support &amp; data</string>
+
+    <string-array name="team_name_suggestions">
+        <item>Word Wizards</item>
+        <item>Lightning Bolts</item>
+        <item>Brain Trust</item>
+        <item>Trailblazers</item>
+        <item>Quick Thinkers</item>
+    </string-array>
 </resources>
