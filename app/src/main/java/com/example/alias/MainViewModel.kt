@@ -147,7 +147,7 @@ class MainViewModel @Inject constructor(
             filters.wordClasses,
             filters.wordClassFilterEnabled,
         )
-        return words.distinct()
+        return words
     }
 
     init {
