@@ -1045,13 +1045,6 @@ private fun DeckDetailScreen(vm: MainViewModel, deck: DeckEntity) {
     var examplesError by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(deck.id) {
-        count = vm.getWordCount(deck.id)
-    }
-    LaunchedEffect(deck.id) {
-        categories = runCatching { vm.getDeckCategories(deck.id) }.getOrElse { emptyList() }
-    }
-
     suspend fun refreshExamples() {
         examplesLoading = true
         examplesError = false
@@ -1062,7 +1055,9 @@ private fun DeckDetailScreen(vm: MainViewModel, deck: DeckEntity) {
     }
 
     LaunchedEffect(deck.id) {
-        refreshExamples()
+        launch { count = vm.getWordCount(deck.id) }
+        launch { categories = runCatching { vm.getDeckCategories(deck.id) }.getOrElse { emptyList() } }
+        launch { refreshExamples() }
     }
 
     val configuration = LocalConfiguration.current
@@ -1108,17 +1103,18 @@ private fun DeckDetailScreen(vm: MainViewModel, deck: DeckEntity) {
 
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(stringResource(R.string.deck_categories_title), style = MaterialTheme.typography.titleMedium)
-            when {
-                categories == null -> {
+            when (val currentCategories = categories) {
+                null -> {
                     CircularProgressIndicator(modifier = Modifier.size(24.dp))
                 }
-                categories!!.isEmpty() -> {
-                    Text(stringResource(R.string.deck_categories_empty))
-                }
                 else -> {
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        categories!!.forEach { category ->
-                            AssistChip(onClick = {}, enabled = false, label = { Text(category) })
+                    if (currentCategories.isEmpty()) {
+                        Text(stringResource(R.string.deck_categories_empty))
+                    } else {
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            currentCategories.forEach { category ->
+                                AssistChip(onClick = {}, enabled = false, label = { Text(category) })
+                            }
                         }
                     }
                 }
