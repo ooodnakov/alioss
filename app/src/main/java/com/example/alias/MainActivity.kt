@@ -2,10 +2,20 @@ package com.example.alias
 
 import android.content.res.Configuration
 import android.os.Bundle
+import androidx.activity.compose.setContent
 import android.os.VibrationEffect
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.animation.AnimatedContent
@@ -93,13 +103,32 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Switch
+import androidx.compose.material3.TextButton
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
+import android.content.res.Configuration
+import android.os.VibrationEffect
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -168,11 +197,12 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.rememberModalBottomSheetState
 import com.example.alias.MainViewModel.UiEvent
-import androidx.compose.material3.SnackbarResult
-import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.AssistChip
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
@@ -193,8 +223,8 @@ import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.ScreenRotation
 import androidx.compose.material.icons.filled.ScreenLockPortrait
 import androidx.compose.material.icons.filled.ScreenLockLandscape
@@ -219,6 +249,7 @@ import com.example.alias.ui.WordCardAction
 import com.example.alias.ui.TutorialOverlay
 import com.example.alias.data.settings.SettingsRepository
 import com.example.alias.data.db.DeckEntity
+import com.example.alias.data.db.TurnHistoryEntity
 import com.example.alias.data.db.DifficultyBucket
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.graphics.Brush
@@ -283,9 +314,22 @@ class MainActivity : AppCompatActivity() {
                     exitTransition = { fadeOut() }
                 ) {
                     composable("home") {
+                        val engine by vm.engine.collectAsState()
+                        val gameState = engine?.let { current ->
+                            val state by current.state.collectAsState()
+                            state
+                        }
+                        val decks by vm.decks.collectAsState()
+                        val recentHistoryFlow = remember { vm.recentHistory(12) }
+                        val recentHistory by recentHistoryFlow.collectAsState(initial = emptyList())
                         AppScaffold(snackbarHostState = snack) {
                             HomeScreen(
-                                onQuickPlay = { vm.restartMatch(); nav.navigate("game") },
+                                gameState = gameState,
+                                settings = settings,
+                                decks = decks,
+                                recentHistory = recentHistory,
+                                onResumeMatch = { nav.navigate("game") },
+                                onStartNewMatch = { vm.restartMatch(); nav.navigate("game") },
                                 onDecks = { nav.navigate("decks") },
                                 onSettings = { nav.navigate("settings") },
                                 onHistory = { nav.navigate("history") }
@@ -364,7 +408,12 @@ class MainActivity : AppCompatActivity() {
 
 @Composable
 private fun HomeScreen(
-    onQuickPlay: () -> Unit,
+    gameState: GameState?,
+    settings: Settings,
+    decks: List<DeckEntity>,
+    recentHistory: List<TurnHistoryEntity>,
+    onResumeMatch: () -> Unit,
+    onStartNewMatch: () -> Unit,
     onDecks: () -> Unit,
     onSettings: () -> Unit,
     onHistory: () -> Unit,
@@ -374,30 +423,38 @@ private fun HomeScreen(
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
     if (isLandscape) {
+        val scrollState = rememberScrollState()
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp),
+                .padding(24.dp)
+                .verticalScroll(scrollState),
             horizontalArrangement = Arrangement.spacedBy(20.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.Top
         ) {
-            // Left: brand + primary action
             Column(
                 modifier = Modifier.weight(1.4f),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                horizontalAlignment = Alignment.Start
+                verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
-                HomeLogo(size = 72.dp)
+                HomeHeroSection(
+                    gameState = gameState,
+                    settings = settings,
+                    decks = decks,
+                    recentHistory = recentHistory,
+                    onResumeMatch = onResumeMatch,
+                    onStartNewMatch = onStartNewMatch,
+                    onHistory = onHistory,
+                    onDecks = onDecks
+                )
                 HomeActionCard(
                     icon = Icons.Filled.PlayArrow,
                     title = stringResource(R.string.quick_play),
                     subtitle = stringResource(R.string.quick_play_subtitle),
-                    onClick = onQuickPlay,
+                    onClick = onStartNewMatch,
                     containerColor = colors.primaryContainer,
                     contentColor = colors.onPrimaryContainer
                 )
             }
-            // Right: secondary actions stacked
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -432,18 +489,26 @@ private fun HomeScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp, Alignment.CenterVertically),
+                .padding(24.dp)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // App title / branding
-            HomeLogo(size = 96.dp)
-            // Primary actions as sleek cards
+            HomeHeroSection(
+                gameState = gameState,
+                settings = settings,
+                decks = decks,
+                recentHistory = recentHistory,
+                onResumeMatch = onResumeMatch,
+                onStartNewMatch = onStartNewMatch,
+                onHistory = onHistory,
+                onDecks = onDecks
+            )
             HomeActionCard(
                 icon = Icons.Filled.PlayArrow,
                 title = stringResource(R.string.quick_play),
                 subtitle = stringResource(R.string.quick_play_subtitle),
-                onClick = onQuickPlay,
+                onClick = onStartNewMatch,
                 containerColor = colors.primaryContainer,
                 contentColor = colors.onPrimaryContainer
             )
@@ -471,6 +536,316 @@ private fun HomeScreen(
                 containerColor = colors.tertiaryContainer,
                 contentColor = colors.onTertiaryContainer
             )
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun HomeHeroSection(
+    gameState: GameState?,
+    settings: Settings,
+    decks: List<DeckEntity>,
+    recentHistory: List<TurnHistoryEntity>,
+    onResumeMatch: () -> Unit,
+    onStartNewMatch: () -> Unit,
+    onHistory: () -> Unit,
+    onDecks: () -> Unit,
+) {
+    val colors = MaterialTheme.colorScheme
+    val contentColor = colors.onPrimaryContainer
+    val gradient = remember(colors) {
+        Brush.verticalGradient(
+            0f to colors.primary.copy(alpha = 0.35f),
+            1f to Color.Transparent
+        )
+    }
+    val liveScores = when (gameState) {
+        is GameState.TurnFinished -> gameState.scores
+        is GameState.MatchFinished -> gameState.scores
+        else -> null
+    }
+    val scoreboardState = rememberSaveable(settings.teams, saver = ScoreboardSaver) {
+        mutableStateMapOf<String, Int>().apply {
+            settings.teams.forEach { team -> this[team] = 0 }
+        }
+    }
+    LaunchedEffect(liveScores) {
+        if (liveScores != null) {
+            scoreboardState.clear()
+            settings.teams.forEach { team ->
+                scoreboardState[team] = liveScores[team] ?: 0
+            }
+        }
+    }
+    val scoreboard = liveScores ?: scoreboardState.toMap()
+    val hasProgress = recentHistory.isNotEmpty() || scoreboard.values.any { it != 0 }
+    val heroTitle = when (gameState) {
+        is GameState.MatchFinished -> stringResource(R.string.home_hero_title_victory)
+        is GameState.TurnFinished -> if (gameState.matchOver) {
+            stringResource(R.string.home_hero_title_victory)
+        } else {
+            stringResource(R.string.home_hero_title_ready)
+        }
+        is GameState.TurnActive -> stringResource(R.string.home_hero_title_playing)
+        is GameState.TurnPending -> stringResource(R.string.home_hero_title_ready)
+        else -> stringResource(R.string.home_hero_title_idle)
+    }
+    val heroSubtitle = when (gameState) {
+        null, GameState.Idle -> stringResource(R.string.home_hero_idle_subtitle, settings.teams.size)
+        is GameState.TurnPending -> stringResource(R.string.home_hero_pending_subtitle, gameState.team)
+        is GameState.TurnActive -> stringResource(R.string.home_hero_active_subtitle, gameState.team, gameState.timeRemaining)
+        is GameState.TurnFinished -> if (gameState.matchOver) {
+            stringResource(R.string.home_match_point, gameState.team)
+        } else {
+            stringResource(R.string.home_hero_finished_subtitle, gameState.team, gameState.deltaScore)
+        }
+        is GameState.MatchFinished -> {
+            val maxScore = scoreboard.maxOfOrNull { it.value }
+            if (maxScore == null) {
+                stringResource(R.string.home_match_finished_tie, 0)
+            } else {
+                val winners = scoreboard.filterValues { it == maxScore }.keys
+                if (winners.size > 1) {
+                    stringResource(R.string.home_match_finished_tie, maxScore)
+                } else {
+                    stringResource(R.string.home_match_finished_winner, winners.first(), maxScore)
+                }
+            }
+        }
+    }
+    val favoriteDecks = remember(settings.enabledDeckIds, decks) {
+        val enabled = settings.enabledDeckIds
+        decks.filter { enabled.contains(it.id) }
+            .sortedBy { it.name }
+            .take(3)
+    }
+    val extraDecks = (settings.enabledDeckIds.size - favoriteDecks.size).coerceAtLeast(0)
+    val highlight = recentHistory.firstOrNull()
+    val highlightText = when {
+        highlight == null -> stringResource(R.string.home_highlight_empty)
+        highlight.correct -> stringResource(R.string.home_highlight_correct, highlight.team, highlight.word)
+        else -> stringResource(R.string.home_highlight_skip, highlight.team, highlight.word)
+    }
+    val highlightIcon = when {
+        highlight == null -> null
+        highlight.correct -> Icons.Filled.Check
+        else -> Icons.Filled.Close
+    }
+    val highlightTint = when {
+        highlight == null -> contentColor.copy(alpha = 0.7f)
+        highlight.correct -> colors.tertiary
+        else -> colors.error
+    }
+    val showResume = gameState != null && gameState !is GameState.Idle
+
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = colors.primaryContainer,
+            contentColor = contentColor
+        )
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(gradient)
+                .padding(24.dp)
+        ) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(20.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    HomeLogo(size = 64.dp)
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(heroTitle, style = MaterialTheme.typography.headlineSmall, color = contentColor)
+                        Text(heroSubtitle, style = MaterialTheme.typography.bodyLarge, color = contentColor.copy(alpha = 0.9f))
+                    }
+                }
+                HomeScoreboardSection(scoreboard = scoreboard, hasProgress = hasProgress, contentColor = contentColor)
+                FavoriteDecksSection(
+                    favorites = favoriteDecks,
+                    extra = extraDecks,
+                    onDecks = onDecks,
+                    contentColor = contentColor
+                )
+                RecentHighlightSection(
+                    text = highlightText,
+                    icon = highlightIcon,
+                    iconTint = highlightTint,
+                    contentColor = contentColor
+                )
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    if (showResume) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Button(
+                                onClick = onResumeMatch,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text(stringResource(R.string.resume_match))
+                            }
+                            OutlinedButton(
+                                onClick = onStartNewMatch,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text(stringResource(R.string.start_new_game))
+                            }
+                        }
+                    } else {
+                        Button(
+                            onClick = onStartNewMatch,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(stringResource(R.string.start_new_game))
+                        }
+                    }
+                    TextButton(
+                        onClick = onHistory,
+                        colors = ButtonDefaults.textButtonColors(contentColor = contentColor)
+                    ) {
+                        Text(stringResource(R.string.view_history))
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun HomeScoreboardSection(
+    scoreboard: Map<String, Int>,
+    hasProgress: Boolean,
+    contentColor: Color,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = stringResource(R.string.scoreboard),
+            style = MaterialTheme.typography.titleSmall,
+            color = contentColor.copy(alpha = 0.85f)
+        )
+        if (!hasProgress) {
+            Text(
+                text = stringResource(R.string.home_scoreboard_placeholder),
+                style = MaterialTheme.typography.bodySmall,
+                color = contentColor.copy(alpha = 0.7f)
+            )
+        } else {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                scoreboard.entries.sortedByDescending { it.value }.forEach { entry ->
+                    Surface(
+                        shape = RoundedCornerShape(50),
+                        color = contentColor.copy(alpha = 0.1f)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(entry.key, style = MaterialTheme.typography.bodyMedium, color = contentColor)
+                            Text(entry.value.toString(), style = MaterialTheme.typography.titleSmall, color = contentColor.copy(alpha = 0.9f))
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun FavoriteDecksSection(
+    favorites: List<DeckEntity>,
+    extra: Int,
+    onDecks: () -> Unit,
+    contentColor: Color,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = stringResource(R.string.home_favorite_decks),
+            style = MaterialTheme.typography.titleSmall,
+            color = contentColor.copy(alpha = 0.85f)
+        )
+        if (favorites.isEmpty()) {
+            Text(
+                text = stringResource(R.string.home_empty_favorites),
+                style = MaterialTheme.typography.bodySmall,
+                color = contentColor.copy(alpha = 0.7f)
+            )
+        } else {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                favorites.forEach { deck ->
+                    AssistChip(
+                        onClick = onDecks,
+                        label = { Text(deck.name) },
+                        leadingIcon = {
+                            Icon(
+                                Icons.Filled.Star,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        },
+                        colors = AssistChipDefaults.assistChipColors(
+                            containerColor = contentColor.copy(alpha = 0.08f),
+                            labelColor = contentColor,
+                            leadingIconContentColor = contentColor
+                        )
+                    )
+                }
+                if (extra > 0) {
+                    AssistChip(
+                        onClick = onDecks,
+                        label = { Text("+${extra}") },
+                        colors = AssistChipDefaults.assistChipColors(
+                            containerColor = contentColor.copy(alpha = 0.08f),
+                            labelColor = contentColor
+                        )
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RecentHighlightSection(
+    text: String,
+    icon: ImageVector?,
+    iconTint: Color,
+    contentColor: Color,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = stringResource(R.string.home_recent_highlight),
+            style = MaterialTheme.typography.titleSmall,
+            color = contentColor.copy(alpha = 0.85f)
+        )
+        Surface(
+            shape = RoundedCornerShape(24.dp),
+            color = contentColor.copy(alpha = 0.08f)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (icon != null) {
+                    Icon(icon, contentDescription = null, tint = iconTint)
+                }
+                Text(text, style = MaterialTheme.typography.bodyMedium, color = contentColor)
+            }
         }
     }
 }
@@ -539,6 +914,11 @@ private fun HomeActionCard(
     }
 }
 
+private val ScoreboardSaver: Saver<SnapshotStateMap<String, Int>, Map<String, Int>> = Saver(
+    save = { it.toMap() },
+    restore = { restored -> mutableStateMapOf<String, Int>().apply { putAll(restored) } }
+)
+
 @Composable
 fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
     val context = LocalContext.current
@@ -559,10 +939,14 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
     // Show tutorial overlay on first play (or when re-enabled via Settings)
     var showTutorial by rememberSaveable(settings.seenTutorial) { mutableStateOf(!settings.seenTutorial) }
     if (showTutorial) {
-        com.example.alias.ui.TutorialOverlay(onDismiss = {
-            showTutorial = false
-            vm.updateSeenTutorial(true)
-        })
+        TutorialOverlay(
+            verticalMode = settings.verticalSwipes,
+            onDismiss = {
+                showTutorial = false
+                vm.updateSeenTutorial(true)
+            },
+            modifier = Modifier.zIndex(1f)
+        )
     }
     when (val s = state) {
         GameState.Idle -> Text(stringResource(R.string.idle))
