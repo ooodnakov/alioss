@@ -62,6 +62,7 @@ import kotlin.math.roundToInt
 fun TutorialOverlay(
     verticalMode: Boolean,
     onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val swipeBody = if (verticalMode) {
         stringResource(R.string.tutorial_instructions_vertical)
@@ -90,7 +91,7 @@ fun TutorialOverlay(
     val step = steps[stepIndex]
     val interactionSource = remember { MutableInteractionSource() }
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .clickable(interactionSource = interactionSource, indication = null) { }
     ) {
@@ -186,13 +187,7 @@ fun TutorialOverlay(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         TextButton(
-                            onClick = {
-                                if (stepIndex > 0) {
-                                    stepIndex--
-                                } else {
-                                    onDismiss()
-                                }
-                            },
+                            onClick = { stepIndex-- },
                             enabled = stepIndex > 0
                         ) {
                             Text(stringResource(R.string.tutorial_back))

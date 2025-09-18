@@ -449,14 +449,6 @@ private fun HomeHeroSection(
             settings.teams.forEach { team -> this[team] = 0 }
         }
     }
-    LaunchedEffect(settings.teams) {
-        val activeTeams = settings.teams.toSet()
-        val toRemove = scoreboardState.keys.filter { it !in activeTeams }
-        toRemove.forEach { team -> scoreboardState.remove(team) }
-        settings.teams.forEach { team ->
-            scoreboardState.putIfAbsent(team, 0)
-        }
-    }
     LaunchedEffect(liveScores) {
         if (liveScores != null) {
             scoreboardState.clear()
@@ -831,7 +823,8 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
             onDismiss = {
                 showTutorial = false
                 vm.updateSeenTutorial(true)
-            }
+            },
+            modifier = Modifier.zIndex(1f)
         )
     }
     when (val s = state) {
