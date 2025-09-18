@@ -328,15 +328,20 @@ class MainViewModel @Inject constructor(
             )
             try {
                 val bytes = withContext(Dispatchers.IO) {
+                    var lastUpdate = 0L
                     downloader.download(
                         url.trim(),
                         expectedSha256?.trim().takeUnless { it.isNullOrEmpty() }
-                    ) { read, total ->
-                        _deckDownloadProgress.value = DeckDownloadProgress(
-                            step = DeckDownloadStep.DOWNLOADING,
-                            bytesRead = read,
-                            totalBytes = total
-                        )
+                    ) { bytesRead, totalBytes ->
+                        val now = System.currentTimeMillis()
+                        if (now - lastUpdate > 100 || (totalBytes != null && bytesRead == totalBytes)) {
+                            _deckDownloadProgress.value = DeckDownloadProgress(
+                                step = DeckDownloadStep.DOWNLOADING,
+                                bytesRead = bytesRead,
+                                totalBytes = totalBytes
+                            )
+                            lastUpdate = now
+                        }
                     }
                 }
                 // Try JSON first

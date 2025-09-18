@@ -1037,18 +1037,11 @@ private fun DeckDownloadProgressIndicator(progress: MainViewModel.DeckDownloadPr
 
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(statusText, style = MaterialTheme.typography.bodyMedium)
-        when (progress.step) {
-            MainViewModel.DeckDownloadStep.DOWNLOADING -> {
-                if (fraction != null) {
-                    LinearProgressIndicator(progress = fraction, modifier = Modifier.fillMaxWidth())
-                } else {
-                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-                }
-            }
-
-            MainViewModel.DeckDownloadStep.IMPORTING -> {
-                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-            }
+        val indicatorModifier = Modifier.fillMaxWidth()
+        if (fraction != null && progress.step == MainViewModel.DeckDownloadStep.DOWNLOADING) {
+            LinearProgressIndicator(progress = { fraction }, modifier = indicatorModifier)
+        } else {
+            LinearProgressIndicator(modifier = indicatorModifier)
         }
     }
 }
