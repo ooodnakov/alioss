@@ -88,6 +88,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
@@ -109,6 +110,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
@@ -154,8 +156,10 @@ import com.example.alias.ui.WordCard
 import com.example.alias.ui.WordCardAction
 import com.google.accompanist.placeholder.material3.placeholder
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.DateFormat
 import java.util.Date
 import java.util.Locale
@@ -1592,16 +1596,18 @@ private fun DeckCard(
 @Composable
 private fun DeckCoverArt(deck: DeckEntity, modifier: Modifier = Modifier) {
     val gradient = rememberDeckCoverBrush(deck.id)
-    val coverImage = remember(deck.coverImageBase64) {
-        deck.coverImageBase64?.let { encoded ->
-            runCatching {
-                val bytes = Base64.decode(encoded, Base64.DEFAULT)
-                if (bytes.isEmpty()) {
-                    null
-                } else {
-                    BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap()
-                }
-            }.getOrNull()
+    val coverImage by produceState<ImageBitmap?>(initialValue = null, deck.coverImageBase64) {
+        value = deck.coverImageBase64?.let { encoded ->
+            withContext(Dispatchers.IO) {
+                runCatching {
+                    val bytes = Base64.decode(encoded, Base64.DEFAULT)
+                    if (bytes.isEmpty()) {
+                        null
+                    } else {
+                        BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap()
+                    }
+                }.getOrNull()
+            }
         }
     }
     val initial = remember(deck.id, deck.name) {

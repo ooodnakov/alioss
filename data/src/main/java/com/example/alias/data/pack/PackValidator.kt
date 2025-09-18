@@ -9,6 +9,7 @@ import java.util.Base64
 object PackValidator {
     private const val MAX_WORDS = 200_000
     private const val MAX_COVER_IMAGE_BYTES = 256_000
+    private const val MAX_COVER_IMAGE_DIMENSION = 2_048
     private val ID_REGEX = Regex("^[a-z0-9_-]{1,64}$")
     private val LANG_REGEX = Regex("^[A-Za-z]{2,8}(-[A-Za-z0-9]{1,8})*$")
     private val base64Encoder = Base64.getEncoder()
@@ -50,7 +51,88 @@ object PackValidator {
         }
         require(decoded.isNotEmpty()) { "Cover image is empty" }
         require(decoded.size <= MAX_COVER_IMAGE_BYTES) { "Cover image too large" }
+        val (width, height) = decodeImageDimensions(decoded)
+            ?: throw IllegalArgumentException("Cover image has invalid dimensions")
+        require(width > 0 && height > 0) { "Cover image has invalid dimensions" }
+        require(width <= MAX_COVER_IMAGE_DIMENSION && height <= MAX_COVER_IMAGE_DIMENSION) {
+            "Cover image dimensions too large"
+        }
         return base64Encoder.encodeToString(decoded)
+    }
+
+    private fun decodeImageDimensions(data: ByteArray): Pair<Int, Int>? {
+        if (data.size >= 24 && hasPngSignature(data)) {
+            val width = readUInt32(data, 16)
+            val height = readUInt32(data, 20)
+            return width to height
+        }
+        if (data.size >= 4 && data[0] == 0xFF.toByte() && data[1] == 0xD8.toByte()) {
+            var offset = 2
+            while (offset + 4 < data.size) {
+                if (data[offset] != 0xFF.toByte()) {
+                    offset++
+                    continue
+                }
+                val marker = data[offset + 1].toInt() and 0xFF
+                if (marker == 0xFF) {
+                    offset++
+                    continue
+                }
+                if (marker == 0xD9 || marker == 0xDA) {
+                    break
+                }
+                if (offset + 3 >= data.size) {
+                    return null
+                }
+                val length = ((data[offset + 2].toInt() and 0xFF) shl 8) or (data[offset + 3].toInt() and 0xFF)
+                if (length < 2 || offset + 2 + length > data.size) {
+                    return null
+                }
+                if (isStartOfFrame(marker)) {
+                    if (length < 7) {
+                        return null
+                    }
+                    val height = ((data[offset + 5].toInt() and 0xFF) shl 8) or (data[offset + 6].toInt() and 0xFF)
+                    val width = ((data[offset + 7].toInt() and 0xFF) shl 8) or (data[offset + 8].toInt() and 0xFF)
+                    return width to height
+                }
+                offset += 2 + length
+            }
+        }
+        return null
+    }
+
+    private fun readUInt32(data: ByteArray, offset: Int): Int {
+        return ((data[offset].toInt() and 0xFF) shl 24) or
+            ((data[offset + 1].toInt() and 0xFF) shl 16) or
+            ((data[offset + 2].toInt() and 0xFF) shl 8) or
+            (data[offset + 3].toInt() and 0xFF)
+    }
+
+    private fun isStartOfFrame(marker: Int): Boolean {
+        return when (marker) {
+            0xC0, 0xC1, 0xC2, 0xC3,
+            0xC5, 0xC6, 0xC7,
+            0xC9, 0xCA, 0xCB,
+            0xCD, 0xCE, 0xCF -> true
+            else -> false
+        }
+    }
+
+    private val PNG_SIGNATURE = byteArrayOf(
+        137.toByte(), 80, 78, 71, 13, 10, 26, 10
+    )
+
+    private fun hasPngSignature(data: ByteArray): Boolean {
+        if (data.size < PNG_SIGNATURE.size) {
+            return false
+        }
+        PNG_SIGNATURE.forEachIndexed { index, value ->
+            if (data[index] != value) {
+                return false
+            }
+        }
+        return true
     }
 
     fun validateWordCount(count: Int) {
