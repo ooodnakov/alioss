@@ -173,7 +173,7 @@ class MainActivity : AppCompatActivity() {
                     exitTransition = { fadeOut() }
                 ) {
                     composable("home") {
-                        AppScaffold(title = stringResource(R.string.app_name), snackbarHostState = snack) {
+                        AppScaffold(snackbarHostState = snack) {
                             HomeScreen(
                                 onQuickPlay = { vm.restartMatch(); nav.navigate("game") },
                                 onDecks = { nav.navigate("decks") },
@@ -185,7 +185,7 @@ class MainActivity : AppCompatActivity() {
                     composable("game") {
                         val engine by vm.engine.collectAsState()
                         val settings by vm.settings.collectAsState()
-                        AppScaffold(title = stringResource(R.string.title_game), onBack = { nav.popBackStack() }, snackbarHostState = snack) {
+                        AppScaffold(snackbarHostState = snack) {
                             if (engine == null) {
                                 Surface(
                                     modifier = Modifier
@@ -198,7 +198,7 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                     composable("decks") {
-                        AppScaffold(title = stringResource(R.string.title_decks), onBack = { nav.popBackStack() }, snackbarHostState = snack) {
+                        AppScaffold(snackbarHostState = snack) {
                             DecksScreen(vm = vm, onDeckSelected = { nav.navigate("deck/${'$'}{it.id}") })
                         }
                     }
@@ -211,8 +211,6 @@ class MainActivity : AppCompatActivity() {
                         val deck = decks.find { it.id == id }
                         if (deck == null) {
                             AppScaffold(
-                                title = stringResource(R.string.title_deck),
-                                onBack = { nav.popBackStack() },
                                 snackbarHostState = snack
                             ) {
                                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -221,8 +219,6 @@ class MainActivity : AppCompatActivity() {
                             }
                         } else {
                             AppScaffold(
-                                title = deck.name,
-                                onBack = { nav.popBackStack() },
                                 snackbarHostState = snack
                             ) {
                                 DeckDetailScreen(vm = vm, deck = deck)
@@ -230,7 +226,7 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                     composable("settings") {
-                        AppScaffold(title = stringResource(R.string.title_settings), onBack = { nav.popBackStack() }, snackbarHostState = snack) {
+                        AppScaffold(snackbarHostState = snack) {
                             SettingsScreen(
                                 vm = vm,
                                 onBack = { nav.popBackStack() },
@@ -239,14 +235,14 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                     composable("history") {
-                        AppScaffold(title = stringResource(R.string.title_history), onBack = { nav.popBackStack() }, snackbarHostState = snack) {
+                        AppScaffold(snackbarHostState = snack) {
                             val historyFlow = remember { vm.recentHistory(HISTORY_LIMIT) }
                             val history by historyFlow.collectAsState(initial = emptyList())
                             HistoryScreen(history)
                         }
                     }
                     composable("about") {
-                        AppScaffold(title = stringResource(R.string.title_about), onBack = { nav.popBackStack() }, snackbarHostState = snack) {
+                        AppScaffold(snackbarHostState = snack) {
                             AboutScreen()
                         }
                     }
