@@ -6,6 +6,7 @@ import com.example.alias.data.db.WordClassEntity
 import com.example.alias.data.db.WordDao
 import com.example.alias.data.db.WordBrief
 import com.example.alias.data.db.WordEntity
+import com.example.alias.data.db.DifficultyBucket
 import com.example.alias.data.pack.ParsedPack
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -154,6 +155,7 @@ class DeckRepositoryTest {
     private class FakeWordDao : WordDao {
         private val words = mutableListOf<WordEntity>()
         private val wordClassEntries = mutableListOf<WordClassEntity>()
+        private var nextWordId = 1L
 
         override suspend fun insertWords(words: List<WordEntity>) {
             words.forEach { newWord ->
@@ -161,9 +163,10 @@ class DeckRepositoryTest {
                     it.deckId == newWord.deckId && it.text == newWord.text
                 }
                 if (index != -1) {
-                    this.words[index] = newWord
+                    val existingId = this.words[index].id
+                    this.words[index] = newWord.copy(id = existingId)
                 } else {
-                    this.words.add(newWord)
+                    this.words.add(newWord.copy(id = nextWordId++))
                 }
             }
         }
@@ -193,6 +196,21 @@ class DeckRepositoryTest {
             words.removeAll { it.deckId == deckId }
             wordClassEntries.removeAll { it.deckId == deckId }
         }
+
+        override suspend fun getDifficultyHistogram(deckId: String): List<DifficultyBucket> =
+            words.filter { it.deckId == deckId }
+                .groupBy { it.difficulty }
+                .entries
+                .map { (difficulty, entries) ->
+                    DifficultyBucket(difficulty = difficulty, count = entries.size)
+                }
+                .sortedBy { it.difficulty }
+
+        override suspend fun getRecentWords(deckId: String, limit: Int): List<String> =
+            words.filter { it.deckId == deckId }
+                .sortedByDescending { it.id }
+                .take(limit)
+                .map { it.text }
 
         override suspend fun getWordTextsForDecks(
             deckIds: List<String>,
@@ -280,6 +298,22 @@ class DeckRepositoryTest {
                 .filter { (it.deckId to it.wordText) in relevantWords }
                 .map { it.wordClass.uppercase() }
                 .distinct()
+        }
+
+        override suspend fun getDeckCategories(deckId: String): List<String> {
+            return words
+                .filter { it.deckId == deckId }
+                .mapNotNull { it.category?.trim()?.takeIf(String::isNotEmpty) }
+                .distinctBy { it.lowercase() }
+                .sortedBy { it.lowercase() }
+        }
+
+        override suspend fun getRandomWordSamples(deckId: String, limit: Int): List<String> {
+            return words
+                .filter { it.deckId == deckId }
+                .shuffled()
+                .take(limit)
+                .map { it.text }
         }
     }
 
