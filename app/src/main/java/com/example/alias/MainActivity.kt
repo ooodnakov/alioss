@@ -3200,7 +3200,7 @@ private fun ScoreProgressGraph(events: List<TimelineEvent>, modifier: Modifier =
                 val yRange = (yMax - yMin)
                 val offsets = points.mapIndexed { index, point ->
                     val xFraction = if (useIndex) {
-                        if (points.lastIndex == 0) 0f else index.toFloat() / points.lastIndex.toFloat()
+                        index.toFloat() / points.lastIndex.toFloat()
                     } else {
                         (point.time - xMin) / xRange
                     }
