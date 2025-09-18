@@ -22,7 +22,7 @@ class DefaultGameEngine(
     private val _state = MutableStateFlow<GameState>(GameState.Idle)
     override val state: StateFlow<GameState> = _state.asStateFlow()
 
-    private var queue: ArrayDeque<String> = ArrayDeque()
+    private lateinit var queue: ArrayDeque<String>
     private lateinit var config: MatchConfig
     private lateinit var teams: List<String>
     private val scores: MutableMap<String, Int> = mutableMapOf()
