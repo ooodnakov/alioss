@@ -300,6 +300,14 @@ class MainViewModel @Inject constructor(
 
     suspend fun getWordCount(deckId: String): Int = deckRepository.getWordCount(deckId)
 
+    suspend fun getDeckCategories(deckId: String): List<String> = withContext(Dispatchers.IO) {
+        wordDao.getDeckCategories(deckId)
+    }
+
+    suspend fun getDeckWordSamples(deckId: String, limit: Int = 5): List<String> = withContext(Dispatchers.IO) {
+        wordDao.getRandomWordSamples(deckId, limit)
+    }
+
     fun updateSeenTutorial(value: Boolean) {
         viewModelScope.launch { settingsRepository.updateSeenTutorial(value) }
     }
