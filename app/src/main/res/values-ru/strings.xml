@@ -16,6 +16,7 @@
     <string name="idle">Ожидание</string>
     <string name="team_label">Команда: %s</string>
     <string name="remaining_label">Осталось %d</string>
+    <string name="countdown_announcement">Обратный отсчёт: %1$d</string>
     <plurals name="score_label">
         <item quantity="one">%d очко</item>
         <item quantity="few">%d очка</item>
