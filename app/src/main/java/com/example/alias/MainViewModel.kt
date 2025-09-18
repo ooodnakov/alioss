@@ -46,6 +46,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Locale
+import org.json.JSONObject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
@@ -107,6 +108,17 @@ class MainViewModel @Inject constructor(
         onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
     val uiEvents: SharedFlow<UiEvent> = _uiEvents
+
+    private fun showCoverImageErrorSnackbar() {
+        _uiEvents.tryEmit(
+            UiEvent(
+                message = "Deck cover image couldn't be processed",
+                actionLabel = "Dismiss",
+                duration = SnackbarDuration.Long,
+                isError = true,
+            )
+        )
+    }
 
     private data class WordQueryFilters(
         val deckIds: List<String>,
@@ -186,6 +198,43 @@ class MainViewModel @Inject constructor(
         return SanitizedPack(sanitized, coverError)
     }
 
+    private suspend fun parseAndSanitizePack(content: String): SanitizedPack {
+        return try {
+            val parsed = PackParser.fromJson(content)
+            sanitizeCoverImage(parsed)
+        } catch (error: Throwable) {
+            if (error is CancellationException) throw error
+            if (!error.isCoverImageError()) throw error
+            val sanitizedJson = removeCoverImageField(content) ?: throw error
+            val parsed = PackParser.fromJson(sanitizedJson)
+            val sanitized = sanitizeCoverImage(parsed)
+            sanitized.copy(coverImageError = sanitized.coverImageError ?: error)
+        }
+    }
+
+    private fun removeCoverImageField(content: String): String? {
+        return try {
+            val root = JSONObject(content)
+            val deck = root.optJSONObject("deck") ?: return null
+            if (!deck.has("coverImage")) {
+                null
+            } else {
+                deck.remove("coverImage")
+                root.toString()
+            }
+        } catch (error: Exception) {
+            null
+        }
+    }
+
+    private fun Throwable.isCoverImageError(): Boolean {
+        if (this is IllegalArgumentException && message?.contains("cover image", ignoreCase = true) == true) {
+            return true
+        }
+        val cause = cause
+        return cause != null && cause !== this && cause.isCoverImageError()
+    }
+
     private fun Settings.toWordQueryFilters(deckIdsOverride: Set<String>? = null): WordQueryFilters {
         val deckIds = (deckIdsOverride ?: enabledDeckIds).toList()
         val categories = selectedCategories.toList()
@@ -255,8 +304,7 @@ class MainViewModel @Inject constructor(
                 for (f in toImport) {
                     try {
                         val content = context.assets.open("decks/$f").bufferedReader().use { it.readText() }
-                        val pack = PackParser.fromJson(content)
-                        val (sanitizedPack, coverError) = sanitizeCoverImage(pack)
+                        val (sanitizedPack, coverError) = parseAndSanitizePack(content)
                         deckRepository.importPack(sanitizedPack)
                         if (coverError != null) {
                             Log.w(TAG, "Bundled deck $f cover art discarded due to decode failure", coverError)
@@ -458,17 +506,13 @@ class MainViewModel @Inject constructor(
     suspend fun getDeckWordClassCounts(deckId: String): List<WordClassCount> =
         withContext(Dispatchers.IO) {
             val counts = wordDao.getWordClassCounts(deckId)
-            val orderedKeys = WordClassCatalog.order(counts.map { it.wordClass })
-            val byClass = counts.associateBy { it.wordClass }
-            buildList {
-                orderedKeys.forEach { key ->
-                    byClass[key]?.let { add(it) }
-                }
-                val orderedSet = orderedKeys.toSet()
-                counts.filter { it.wordClass !in orderedSet }
-                    .sortedBy { it.wordClass }
-                    .forEach { add(it) }
-            }
+            val knownOrder = WordClassCatalog.allowed.withIndex().associate { it.value to it.index }
+            counts.sortedWith(
+                compareBy(
+                    { knownOrder[it.wordClass] ?: Int.MAX_VALUE },
+                    { it.wordClass }
+                )
+            )
         }
 
     fun updateSeenTutorial(value: Boolean) {
@@ -506,8 +550,7 @@ class MainViewModel @Inject constructor(
                 // Try JSON first
                 val text = bytes.toString(Charsets.UTF_8)
                 _deckDownloadProgress.value = DeckDownloadProgress(step = DeckDownloadStep.IMPORTING)
-                val parsed = withContext(Dispatchers.IO) { PackParser.fromJson(text) }
-                val (sanitizedPack, imageError) = sanitizeCoverImage(parsed)
+                val (sanitizedPack, imageError) = withContext(Dispatchers.IO) { parseAndSanitizePack(text) }
                 withContext(Dispatchers.IO) { deckRepository.importPack(sanitizedPack) }
                 _uiEvents.tryEmit(
                     UiEvent(
@@ -518,14 +561,7 @@ class MainViewModel @Inject constructor(
                     )
                 )
                 if (imageError != null) {
-                    _uiEvents.tryEmit(
-                        UiEvent(
-                            message = "Deck cover image couldn't be processed",
-                            actionLabel = "Dismiss",
-                            duration = SnackbarDuration.Long,
-                            isError = true,
-                        )
-                    )
+                    showCoverImageErrorSnackbar()
                 }
             } catch (t: Throwable) {
                 _uiEvents.tryEmit(
@@ -550,8 +586,7 @@ class MainViewModel @Inject constructor(
                     context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
                         ?: throw IllegalStateException("Empty file")
                 }
-                val pack = withContext(Dispatchers.IO) { PackParser.fromJson(text) }
-                val (sanitizedPack, imageError) = sanitizeCoverImage(pack)
+                val (sanitizedPack, imageError) = withContext(Dispatchers.IO) { parseAndSanitizePack(text) }
                 withContext(Dispatchers.IO) { deckRepository.importPack(sanitizedPack) }
                 runCatching {
                     val s = settingsRepository.settings.first()
@@ -564,14 +599,7 @@ class MainViewModel @Inject constructor(
                 }
                 _uiEvents.tryEmit(UiEvent(message = "Imported deck", actionLabel = "OK", duration = SnackbarDuration.Short))
                 if (imageError != null) {
-                    _uiEvents.tryEmit(
-                        UiEvent(
-                            message = "Deck cover image couldn't be processed",
-                            actionLabel = "Dismiss",
-                            duration = SnackbarDuration.Long,
-                            isError = true,
-                        )
-                    )
+                    showCoverImageErrorSnackbar()
                 }
             } catch (t: Throwable) {
                 _uiEvents.tryEmit(
