@@ -1574,6 +1574,10 @@ private fun RoundSummaryScreen(vm: MainViewModel, s: GameState.TurnFinished, set
 }
 
 private const val BONUS_STREAK_THRESHOLD = 3
+private val TIMELINE_INDICATOR_CANVAS_WIDTH = 12.dp
+private val TIMELINE_INDICATOR_NODE_RADIUS = 6.dp
+private val TIMELINE_INDICATOR_VERTICAL_PADDING = 4.dp
+private const val TIMELINE_INDICATOR_CONNECTOR_ALPHA = 0.35f
 
 private enum class TimelineSegmentType { CORRECT, SKIP, PENDING }
 
@@ -1634,9 +1638,7 @@ private fun buildTimelineData(outcomes: List<TurnOutcome>, penaltyPerSkip: Int):
     var bucket = mutableListOf<TimelineEvent>()
     events.forEach { event ->
         if (event.type != currentType) {
-            if (bucket.isNotEmpty()) {
-                segments += TimelineSegment(currentType, bucket.toList())
-            }
+            segments += TimelineSegment(currentType, bucket.toList())
             bucket = mutableListOf()
             currentType = event.type
         }
@@ -1808,13 +1810,13 @@ private fun TimelineIndicator(color: Color, showTopConnector: Boolean, showBotto
             .fillMaxHeight(),
         contentAlignment = Alignment.TopCenter
     ) {
-        Canvas(modifier = Modifier.fillMaxHeight().width(12.dp)) {
+        Canvas(modifier = Modifier.fillMaxHeight().width(TIMELINE_INDICATOR_CANVAS_WIDTH)) {
             val centerX = size.width / 2f
-            val circleRadius = 6.dp.toPx()
-            val centerY = circleRadius + 4.dp.toPx()
+            val circleRadius = TIMELINE_INDICATOR_NODE_RADIUS.toPx()
+            val centerY = circleRadius + TIMELINE_INDICATOR_VERTICAL_PADDING.toPx()
             if (showTopConnector) {
                 drawLine(
-                    color = color.copy(alpha = 0.35f),
+                    color = color.copy(alpha = TIMELINE_INDICATOR_CONNECTOR_ALPHA),
                     start = Offset(centerX, 0f),
                     end = Offset(centerX, centerY - circleRadius)
                 )
@@ -1822,7 +1824,7 @@ private fun TimelineIndicator(color: Color, showTopConnector: Boolean, showBotto
             drawCircle(color = color, radius = circleRadius, center = Offset(centerX, centerY))
             if (showBottomConnector) {
                 drawLine(
-                    color = color.copy(alpha = 0.35f),
+                    color = color.copy(alpha = TIMELINE_INDICATOR_CONNECTOR_ALPHA),
                     start = Offset(centerX, centerY + circleRadius),
                     end = Offset(centerX, size.height)
                 )

@@ -53,6 +53,10 @@ import com.example.alias.R
 import com.example.alias.data.db.TurnHistoryEntity
 import kotlin.math.roundToInt
 
+private const val SPARKLINE_RECENT_ENTRIES_COUNT = 12
+private val SPARKLINE_DOT_RADIUS = 4.dp
+private const val SPARKLINE_STROKE_WIDTH = 4f
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun HistoryScreen(history: List<TurnHistoryEntity>) {
@@ -232,7 +236,7 @@ private fun HistoryPerformanceSection(history: List<TurnHistoryEntity>) {
 @Composable
 private fun HistoryPerformanceCard(team: String, entries: List<TurnHistoryEntity>) {
     val ordered = remember(entries) { entries.sortedBy { it.timestamp } }
-    val recent = remember(ordered) { ordered.takeLast(12) }
+    val recent = remember(ordered) { ordered.takeLast(SPARKLINE_RECENT_ENTRIES_COUNT) }
     val total = ordered.size
     val correct = ordered.count { it.correct }
     val percent = if (total > 0) ((correct.toFloat() / total) * 100).roundToInt() else 0
@@ -284,7 +288,7 @@ private fun Sparkline(values: List<Float>, modifier: Modifier = Modifier) {
         val clamped = values.map { it.coerceIn(0f, 1f) }
         if (clamped.size == 1) {
             val y = size.height - (clamped.first() * size.height)
-            drawCircle(color = color, radius = 4.dp.toPx(), center = Offset(size.width / 2f, y))
+            drawCircle(color = color, radius = SPARKLINE_DOT_RADIUS.toPx(), center = Offset(size.width / 2f, y))
             return@Canvas
         }
         val stepX = if (clamped.size > 1) size.width / (clamped.size - 1) else size.width
@@ -301,7 +305,7 @@ private fun Sparkline(values: List<Float>, modifier: Modifier = Modifier) {
         drawPath(
             path = path,
             color = color,
-            style = Stroke(width = 4f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+            style = Stroke(width = SPARKLINE_STROKE_WIDTH, cap = StrokeCap.Round, join = StrokeJoin.Round)
         )
     }
 }
