@@ -20,7 +20,8 @@ class PackDownloader(
 ) {
     companion object {
         // 40 MB cap to avoid memory bombs; tune as needed
-        private const val MAX_BYTES: Long = 40L * 1024 * 1024
+        internal const val MAX_BYTES: Long = 40L * 1024 * 1024
+        internal const val CHUNK_SIZE: Int = 8 * 1024
         private const val USER_AGENT = "AliasLocal/dev"
     }
 
@@ -55,7 +56,7 @@ class PackDownloader(
                 val out = ByteArrayOutputStream()
                 val digest = MessageDigest.getInstance("SHA-256")
                 var total = 0L
-                val chunk = ByteArray(8 * 1024)
+                val chunk = ByteArray(CHUNK_SIZE)
                 while (true) {
                     val read = source.read(chunk)
                     if (read == -1) break
