@@ -1,37 +1,40 @@
 package com.example.alias
 
 import android.content.Context
+import android.net.Uri
+import android.util.Log
+import androidx.compose.material3.SnackbarDuration
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.alias.data.DeckRepository
-import com.example.alias.data.db.WordDao
-import com.example.alias.data.download.PackDownloader
 import com.example.alias.data.TurnHistoryRepository
 import com.example.alias.data.db.TurnHistoryEntity
+import com.example.alias.data.db.WordDao
+import com.example.alias.data.download.PackDownloader
+import com.example.alias.data.pack.PackParser
+import com.example.alias.data.settings.Settings
+import com.example.alias.data.settings.SettingsRepository
 import com.example.alias.domain.DefaultGameEngine
 import com.example.alias.domain.GameEngine
 import com.example.alias.domain.MatchConfig
 import com.example.alias.domain.word.WordClassCatalog
-import com.example.alias.data.settings.SettingsRepository
-import com.example.alias.data.settings.Settings
-import com.example.alias.data.pack.PackParser
-import android.net.Uri
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
-import androidx.compose.material3.SnackbarDuration
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -46,6 +49,10 @@ class MainViewModel @Inject constructor(
     private val downloader: PackDownloader,
     private val historyRepository: TurnHistoryRepository,
 ) : ViewModel() {
+    companion object {
+        private const val TAG = "MainViewModel"
+    }
+
     private val _engine = MutableStateFlow<GameEngine?>(null)
     val engine: StateFlow<GameEngine?> = _engine.asStateFlow()
 
@@ -104,6 +111,11 @@ class MainViewModel @Inject constructor(
         val wordClassFilterEnabled: Int,
     )
 
+    private data class InitialLoadResult(
+        val words: List<String>,
+        val settings: Settings,
+    )
+
     private fun Settings.toWordQueryFilters(deckIdsOverride: Set<String>? = null): WordQueryFilters {
         val deckIds = (deckIdsOverride ?: enabledDeckIds).toList()
         val categories = selectedCategories.toList()
@@ -123,7 +135,7 @@ class MainViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            val words = withContext(Dispatchers.IO) {
+            val initial = withContext(Dispatchers.IO) {
                 // Import bundled JSON decks from assets/decks/ when changed (by checksum) or on first run
                 val assetFiles = context.assets.list("decks")?.filter { it.endsWith(".json") } ?: emptyList()
                 val prev = settingsRepository.readBundledDeckHashes()
@@ -163,19 +175,23 @@ class MainViewModel @Inject constructor(
                 // Persist current checksums if any
                 runCatching { settingsRepository.writeBundledDeckHashes(currentEntries) }
                 // Resolve enabled deck ids; if none set, pick available decks matching language preference
-                val s0 = settingsRepository.settings.first()
+                val baseSettings = settingsRepository.settings.first()
                 val allDecks = deckRepository.getDecks().first()
-                val preferredIds = allDecks.filter { it.language == s0.languagePreference }.map { it.id }.toSet()
+                val preferredIds = allDecks.filter { it.language == baseSettings.languagePreference }.map { it.id }.toSet()
                 val fallbackIds = allDecks.map { it.id }.toSet()
-                val initialEnabled = if (s0.enabledDeckIds.isEmpty()) {
+                val resolvedEnabled = if (baseSettings.enabledDeckIds.isEmpty()) {
                     if (preferredIds.isNotEmpty()) preferredIds else fallbackIds
-                } else s0.enabledDeckIds
-                if (s0.enabledDeckIds.isEmpty()) {
-                    try { settingsRepository.setEnabledDeckIds(initialEnabled) } catch (_: Throwable) {}
+                } else baseSettings.enabledDeckIds
+                if (baseSettings.enabledDeckIds.isEmpty()) {
+                    try {
+                        settingsRepository.setEnabledDeckIds(resolvedEnabled)
+                    } catch (t: Throwable) {
+                        Log.e(TAG, "Failed to persist enabled deck ids", t)
+                    }
                 }
                 // Fetch words for enabled decks in preferred language
-                val filters = s0.toWordQueryFilters(initialEnabled)
-                if (filters.deckIds.isEmpty()) emptyList() else wordDao.getWordTextsForDecks(
+                val filters = baseSettings.toWordQueryFilters(resolvedEnabled)
+                val words = if (filters.deckIds.isEmpty()) emptyList() else wordDao.getWordTextsForDecks(
                     filters.deckIds,
                     filters.language,
                     filters.allowNSFW,
@@ -185,55 +201,62 @@ class MainViewModel @Inject constructor(
                     filters.categoryFilterEnabled,
                     filters.wordClasses,
                     filters.wordClassFilterEnabled
+                )
+                InitialLoadResult(
+                    words = words,
+                    settings = baseSettings.copy(enabledDeckIds = resolvedEnabled)
                 )
             }
-            // Also prepare word metadata for the same filtered set
-            viewModelScope.launch(Dispatchers.IO) {
-                val filters = settingsRepository.settings.first().toWordQueryFilters()
-                val briefs = if (filters.deckIds.isEmpty()) emptyList() else wordDao.getWordBriefsForDecks(
-                    filters.deckIds,
-                    filters.language,
-                    filters.allowNSFW,
-                    filters.minDifficulty,
-                    filters.maxDifficulty,
-                    filters.categories,
-                    filters.categoryFilterEnabled,
-                    filters.wordClasses,
-                    filters.wordClassFilterEnabled
-                )
-                val map = briefs.associateBy({ it.text }) {
-                    WordInfo(it.difficulty, it.category, parseClass(it.wordClass))
+            // Also prepare word metadata and supporting filters for the same snapshot
+            withContext(Dispatchers.IO) {
+                val filters = initial.settings.toWordQueryFilters()
+                if (filters.deckIds.isEmpty()) {
+                    _wordInfo.value = emptyMap()
+                    _availableCategories.value = emptyList()
+                    _availableWordClasses.value = emptyList()
+                } else {
+                    coroutineScope {
+                        val briefsDeferred = async {
+                            wordDao.getWordBriefsForDecks(
+                                filters.deckIds,
+                                filters.language,
+                                filters.allowNSFW,
+                                filters.minDifficulty,
+                                filters.maxDifficulty,
+                                filters.categories,
+                                filters.categoryFilterEnabled,
+                                filters.wordClasses,
+                                filters.wordClassFilterEnabled
+                            )
+                        }
+                        val categoriesDeferred = async {
+                            wordDao.getAvailableCategories(filters.deckIds, filters.language, filters.allowNSFW)
+                        }
+                        val classesDeferred = async {
+                            wordDao.getAvailableWordClasses(filters.deckIds, filters.language, filters.allowNSFW)
+                        }
+                        val briefs = briefsDeferred.await()
+                        val categories = categoriesDeferred.await().sorted()
+                        val classes = classesDeferred.await()
+                        val map = briefs.associateBy({ it.text }) {
+                            WordInfo(it.difficulty, it.category, parseClass(it.wordClass))
+                        }
+                        _wordInfo.value = map
+                        _availableCategories.value = categories
+                        _availableWordClasses.value = WordClassCatalog.order(classes)
+                    }
                 }
-                _wordInfo.value = map
             }
-            // Load available categories for enabled decks
-            viewModelScope.launch(Dispatchers.IO) {
-                val filters = settingsRepository.settings.first().toWordQueryFilters()
-                val list = if (filters.deckIds.isEmpty()) emptyList() else wordDao.getAvailableCategories(
-                    filters.deckIds, filters.language, filters.allowNSFW
-                ).sorted()
-                _availableCategories.value = list
-            }
-            // Load available word classes
-            viewModelScope.launch(Dispatchers.IO) {
-                val filters = settingsRepository.settings.first().toWordQueryFilters()
-                val list = if (filters.deckIds.isEmpty()) emptyList() else wordDao.getAvailableWordClasses(
-                    filters.deckIds, filters.language, filters.allowNSFW
-                )
-                _availableWordClasses.value = WordClassCatalog.order(list)
-            }
-            val e = DefaultGameEngine(words, viewModelScope)
+            val e = DefaultGameEngine(initial.words, viewModelScope)
             _engine.value = e
-            // Resolve initial settings
-            val s = settingsRepository.settings.first()
             val config = MatchConfig(
-                targetWords = s.targetWords,
-                maxSkips = s.maxSkips,
-                penaltyPerSkip = if (s.punishSkips) s.penaltyPerSkip else 0,
-                roundSeconds = s.roundSeconds
+                targetWords = initial.settings.targetWords,
+                maxSkips = initial.settings.maxSkips,
+                penaltyPerSkip = if (initial.settings.punishSkips) initial.settings.penaltyPerSkip else 0,
+                roundSeconds = initial.settings.roundSeconds
             )
             val seed = java.security.SecureRandom().nextLong()
-            e.startMatch(config, teams = s.teams, seed = seed)
+            e.startMatch(config, teams = initial.settings.teams, seed = seed)
         }
     }
 
