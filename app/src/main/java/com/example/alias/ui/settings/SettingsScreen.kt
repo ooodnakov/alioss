@@ -74,6 +74,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.alias.MainViewModel
 import com.example.alias.R
+import com.example.alias.SettingsUpdateRequest
 import com.example.alias.data.settings.SettingsRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -119,7 +120,7 @@ fun settingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () -> Unit) {
     val applySettings: () -> Job = {
         scope.launch {
             vm.updateSettings(
-                MainViewModel.SettingsUpdateRequest(
+                SettingsUpdateRequest(
                     roundSeconds = round.toIntOrNull() ?: s.roundSeconds,
                     targetWords = target.toIntOrNull() ?: s.targetWords,
                     maxSkips = maxSkips.toIntOrNull() ?: s.maxSkips,
