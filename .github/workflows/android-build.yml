@@ -13,7 +13,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  unit-tests:
+  lint:
+    name: Code Quality Checks
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -29,7 +30,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      
+
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v3
 
@@ -44,6 +45,27 @@ jobs:
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: app/build/reports/detekt/detekt.sarif
+
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate Gradle Wrapper (tolerate missing JAR until committed)
+        uses: gradle/actions/wrapper-validation@v3
+        with:
+          min-wrapper-count: 0
+
+      - name: Set up Java 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v3
 
       - name: Run unit tests (domain, data, app)
         run: ./gradlew --version :domain:test :data:test :app:testDebugUnitTest --no-daemon --console=plain
@@ -60,9 +82,8 @@ jobs:
           if-no-files-found: warn
 
   build-apk:
-    needs: unit-tests
+    name: Assemble Debug APK
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
