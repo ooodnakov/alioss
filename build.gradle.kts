@@ -29,6 +29,34 @@ subprojects {
             }
         }
     }
+
+    // ✅ Attach detekt-formatting to every module that applied detekt
+    dependencies {
+        add("detektPlugins", "io.gitlab.arturbosch.detekt:detekt-formatting:1.23.8")
+    }
+
+    // ✅ Configure Detekt via extension (non-deprecated bits only)
+    plugins.withId("io.gitlab.arturbosch.detekt") {
+        configure<io.gitlab.arturbosch.detekt.extensions.DetektExtension> {
+            buildUponDefaultConfig = true
+            config.setFrom(files("$rootDir/detekt.yml")) // your current path
+            parallel = true
+        }
+
+        // ✅ Configure reports on the TASK, not the extension (fixes deprecation warning)
+        tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
+            reports {
+                html.required.set(true)
+                xml.required.set(true)
+                sarif.required.set(true)
+                txt.required.set(false)
+            }
+            // sources/excludes live on the task
+            setSource(files("src"))
+            include("**/*.kt", "**/*.kts")
+            exclude("**/build/**", "**/generated/**")
+        }
+    }
 }
 
 allprojects {
@@ -37,5 +65,19 @@ allprojects {
             config.setFrom(files("$rootDir/detekt.yml"))
             buildUponDefaultConfig = true
         }
+    }
+}
+
+detekt {
+    buildUponDefaultConfig = true
+    allRules = false
+    autoCorrect = true
+    parallel = true
+
+    reports {
+        html.required.set(true)
+        xml.required.set(true)
+        sarif.required.set(true)
+        txt.required.set(false)
     }
 }

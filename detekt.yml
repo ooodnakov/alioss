@@ -1,10 +1,149 @@
-build:
-  maxIssues: 200
-
+# config/detekt/detekt.yml
 config:
   validation: true
+  warningsAsErrors: false
+
+build:
+  maxIssues: 0
+  excludeCorrectable: false
+
+processors:
+  active: true
+
+console-reports:
+  active: true
+  exclude:
+    - 'ProjectStatisticsReport'
+    - 'ComplexityReport'
+    - 'NotificationReport'
+
+# ===== RULE SETS =====
 
 style:
+  active: true
+  WildcardImport:
+    active: true
+    excludes: ['**/test/**']
+    excludeImports: ['java.util.*']
   MagicNumber:
     active: false
+  MaxLineLength:
+    active: true
+    maxLineLength: 720
+    excludePackageStatements: true
+    excludeImportStatements: true
+    excludes: ['**/test/**', '**/androidTest/**']
+  ReturnCount:
+    active: true
+    max: 3
+    excludeReturnFromLambda: true
+    excludeGuardClauses: true
+  RedundantVisibilityModifierRule:
+    active: true
+  OptionalUnit:
+    active: true
+  UnusedPrivateMember:
+    active: true
+    allowedNames: '_|ignored|expected'
 
+naming:
+  active: true
+  ClassNaming:
+    active: true
+    classPattern: '[A-Z][a-zA-Z0-9]*'
+  FunctionNaming:
+    active: true
+    functionPattern: '[a-z][a-zA-Z0-9]*'
+    # 'ignoreOverridden' is deprecated/ignored; remove it.
+  VariableNaming:
+    active: true
+    variablePattern: '[a-z][A-Za-z0-9]*'
+    privateVariablePattern: '(_)?[a-z][A-Za-z0-9]*'
+    excludeClassPattern: '$^'
+  PackageNaming:
+    active: true
+    packagePattern: '[a-z]+(\.[a-z][a-z0-9_]*)*'
+  # Note: ConstantNaming was removed; use VariableNaming + TopLevelPropertyNaming if needed.
+
+complexity:
+  active: true
+  CyclomaticComplexMethod:
+    active: true
+    threshold: 15
+    ignoreSimpleWhenEntries: true
+  LongMethod:
+    active: true
+    threshold: 60
+    ignoreAnnotated: ['Composable', 'Preview']
+  LongParameterList:
+    active: true
+    functionThreshold: 6
+    constructorThreshold: 8
+    ignoreDefaultParameters: true
+    ignoreDataClasses: true
+  NestedBlockDepth:
+    active: true
+    threshold: 4
+  TooManyFunctions:
+    active: true
+    thresholdInClasses: 20
+    thresholdInObjects: 20
+    thresholdInInterfaces: 30
+
+empty-blocks:
+  active: true
+  EmptyCatchBlock:
+    active: true
+    allowedExceptionNameRegex: 'ignored|expected'
+
+exceptions:
+  active: true
+  InstanceOfCheckForException:
+    active: true
+
+potential-bugs:
+  active: true
+  EqualsWithHashCodeExist:
+    active: true
+  LateinitUsage:
+    active: true
+    ignoreAnnotated: ['Inject', 'HiltViewModel']  # was excludeAnnotatedProperties (deprecated)
+    ignoreOnClassesPattern: '.*Test|.*AndroidTest'
+  ImplicitDefaultLocale:
+    active: true
+  UnsafeCallOnNullableType:
+    active: true
+
+performance:
+  active: true
+  ForEachOnRange:
+    active: true
+  ArrayPrimitive:
+    active: true
+
+comments:
+  active: true
+  CommentOverPrivateFunction:
+    active: false
+  UndocumentedPublicClass:
+    active: false
+  UndocumentedPublicFunction:
+    active: false
+
+# formatting rules only work if detekt-formatting is on the task classpath
+formatting:
+  active: true
+  android: true
+  autoCorrect: true
+  ImportOrdering:
+    active: true
+    autoCorrect: true
+  MaximumLineLength:
+    active: true
+    maxLineLength: 120
+  Indentation:
+    active: true
+    indentSize: 4
+    # continuationIndentSize is deprecated/ignored by ktlint; do not set it
+  NoWildcardImports:
+    active: true
