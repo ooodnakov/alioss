@@ -36,11 +36,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -75,10 +77,13 @@ fun historyScreen(history: List<TurnHistoryEntity>) {
     val teams = remember(history) { history.map { it.team }.distinct().sorted() }
     val difficulties = remember(history) { history.mapNotNull { it.difficulty }.distinct().sorted() }
 
-    var selectedTeam by rememberSaveable { mutableStateOf<String?>(null) }
-    var selectedDifficulty by rememberSaveable { mutableStateOf<Int?>(null) }
-    var selectedResult by rememberSaveable { mutableStateOf(ResultFilter.All) }
+    val filterState = rememberHistoryFilterState()
+    val filterListener = rememberHistoryFilterListener(filterState)
     var headerExpanded by rememberSaveable { mutableStateOf(true) }
+
+    val selectedTeam = filterState.selectedTeam
+    val selectedDifficulty = filterState.selectedDifficulty
+    val selectedResult = filterState.selectedResult
 
     val filtered = remember(sorted, selectedTeam, selectedDifficulty, selectedResult) {
         sorted.filter { entry ->
@@ -126,12 +131,8 @@ fun historyScreen(history: List<TurnHistoryEntity>) {
                 historyFilters(
                     teams = teams,
                     difficulties = difficulties,
-                    selectedTeam = selectedTeam,
-                    onTeamSelected = { selectedTeam = it },
-                    selectedDifficulty = selectedDifficulty,
-                    onDifficultySelected = { selectedDifficulty = it },
-                    selectedResult = selectedResult,
-                    onResultSelected = { selectedResult = it },
+                    filterState = filterState,
+                    listener = filterListener,
                 )
                 historyPerformanceSection(history = sorted)
             }
@@ -179,13 +180,13 @@ fun historyScreen(history: List<TurnHistoryEntity>) {
 private fun historyFilters(
     teams: List<String>,
     difficulties: List<Int>,
-    selectedTeam: String?,
-    onTeamSelected: (String?) -> Unit,
-    selectedDifficulty: Int?,
-    onDifficultySelected: (Int?) -> Unit,
-    selectedResult: ResultFilter,
-    onResultSelected: (ResultFilter) -> Unit,
+    filterState: HistoryFilterState,
+    listener: HistoryFilterListener,
 ) {
+    val selectedTeam = filterState.selectedTeam
+    val selectedDifficulty = filterState.selectedDifficulty
+    val selectedResult = filterState.selectedResult
+
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
@@ -199,14 +200,14 @@ private fun historyFilters(
             ) {
                 FilterChip(
                     selected = selectedTeam == null,
-                    onClick = { onTeamSelected(null) },
+                    onClick = { listener.onTeamSelected(null) },
                     label = { Text(stringResource(R.string.history_filter_all_teams)) },
                 )
                 teams.forEach { team ->
                     val selected = selectedTeam == team
                     FilterChip(
                         selected = selected,
-                        onClick = { onTeamSelected(if (selected) null else team) },
+                        onClick = { listener.onTeamSelected(if (selected) null else team) },
                         label = { Text(team) },
                     )
                 }
@@ -224,7 +225,7 @@ private fun historyFilters(
             ) {
                 FilterChip(
                     selected = selectedDifficulty == null,
-                    onClick = { onDifficultySelected(null) },
+                    onClick = { listener.onDifficultySelected(null) },
                     label = { Text(stringResource(R.string.history_filter_all_difficulties)) },
                 )
                 if (difficulties.isEmpty()) {
@@ -242,7 +243,7 @@ private fun historyFilters(
                         val selected = selectedDifficulty == level
                         FilterChip(
                             selected = selected,
-                            onClick = { onDifficultySelected(if (selected) null else level) },
+                            onClick = { listener.onDifficultySelected(if (selected) null else level) },
                             label = { Text(stringResource(R.string.word_difficulty_value, level)) },
                         )
                     }
@@ -262,13 +263,29 @@ private fun historyFilters(
                 ResultFilter.values().forEach { filter ->
                     FilterChip(
                         selected = selectedResult == filter,
-                        onClick = { onResultSelected(filter) },
+                        onClick = { listener.onResultSelected(filter) },
                         label = { Text(stringResource(filter.labelRes)) },
                     )
                 }
             }
         }
     }
+}
+
+@Composable
+private fun rememberHistoryFilterState(): HistoryFilterState {
+    return rememberSaveable(saver = HistoryFilterState.Saver) {
+        HistoryFilterState(
+            selectedTeam = null,
+            selectedDifficulty = null,
+            selectedResult = ResultFilter.All,
+        )
+    }
+}
+
+@Composable
+private fun rememberHistoryFilterListener(state: HistoryFilterState): HistoryFilterListener {
+    return remember(state) { DefaultHistoryFilterListener(state) }
 }
 
 @Composable
@@ -445,6 +462,76 @@ private fun historyEntryCard(entry: TurnHistoryEntity) {
                 }
             }
         }
+    }
+}
+
+@Stable
+private class HistoryFilterState(
+    selectedTeam: String?,
+    selectedDifficulty: Int?,
+    selectedResult: ResultFilter,
+) {
+    var selectedTeam by mutableStateOf(selectedTeam)
+        private set
+
+    var selectedDifficulty by mutableStateOf(selectedDifficulty)
+        private set
+
+    var selectedResult by mutableStateOf(selectedResult)
+        private set
+
+    fun selectTeam(team: String?) {
+        selectedTeam = team
+    }
+
+    fun selectDifficulty(difficulty: Int?) {
+        selectedDifficulty = difficulty
+    }
+
+    fun selectResult(result: ResultFilter) {
+        selectedResult = result
+    }
+
+    companion object {
+        val Saver = listSaver(
+            save = {
+                listOf(
+                    it.selectedTeam,
+                    it.selectedDifficulty,
+                    it.selectedResult.ordinal,
+                )
+            },
+            restore = {
+                val savedTeam = it[0] as String?
+                val savedDifficulty = it[1] as Int?
+                val savedResult = (it[2] as Int).let { ordinal ->
+                    ResultFilter.entries.getOrElse(ordinal) { ResultFilter.All }
+                }
+                HistoryFilterState(savedTeam, savedDifficulty, savedResult)
+            },
+        )
+    }
+}
+
+private interface HistoryFilterListener {
+    fun onTeamSelected(team: String?)
+    fun onDifficultySelected(difficulty: Int?)
+    fun onResultSelected(result: ResultFilter)
+}
+
+private class DefaultHistoryFilterListener(
+    private val state: HistoryFilterState,
+) : HistoryFilterListener {
+    override fun onTeamSelected(team: String?) {
+        state.selectTeam(team)
+    }
+
+    override fun onDifficultySelected(difficulty: Int?) {
+        state.selectDifficulty(difficulty)
+    }
+
+    override fun onResultSelected(result: ResultFilter) {
+        state.selectResult(result)
     }
 }
 
