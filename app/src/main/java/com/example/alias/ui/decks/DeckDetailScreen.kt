@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.CircularProgressIndicator
@@ -23,9 +25,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,12 +37,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import com.example.alias.MainViewModel
 import com.example.alias.R
 import com.example.alias.data.db.DeckEntity
 import com.example.alias.data.db.DifficultyBucket
 import com.example.alias.data.db.WordClassCount
+import com.example.alias.domain.word.WordClassCatalog
 import kotlinx.coroutines.launch
 import java.text.DateFormat
 import java.util.Date
@@ -58,23 +61,17 @@ fun DeckDetailScreen(vm: MainViewModel, deck: DeckEntity) {
     var wordExamples by remember { mutableStateOf<List<String>>(emptyList()) }
     var examplesLoading by remember { mutableStateOf(false) }
     var examplesError by remember { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
-
-    suspend fun refreshExamples() {
-        examplesLoading = true
-        examplesError = false
-        val result = runCatching { vm.getDeckWordSamples(deck.id) }
-        wordExamples = result.getOrDefault(emptyList())
-        examplesError = result.isFailure
-        examplesLoading = false
-    }
+    var examplesRefreshKey by remember { mutableIntStateOf(0) }
 
     LaunchedEffect(deck.id) {
         wordClassCounts = null
-        scope.launch { count = vm.getWordCount(deck.id) }
-        scope.launch { categories = runCatching { vm.getDeckCategories(deck.id) }.getOrElse { emptyList() } }
-        scope.launch { wordClassCounts = runCatching { vm.getDeckWordClassCounts(deck.id) }.getOrElse { emptyList() } }
-        scope.launch {
+        wordExamples = emptyList()
+        examplesError = false
+        examplesLoading = true
+        launch { count = vm.getWordCount(deck.id) }
+        launch { categories = runCatching { vm.getDeckCategories(deck.id) }.getOrElse { emptyList() } }
+        launch { wordClassCounts = runCatching { vm.getDeckWordClassCounts(deck.id) }.getOrElse { emptyList() } }
+        launch {
             histogramLoading = true
             try {
                 histogram = runCatching { vm.getDeckDifficultyHistogram(deck.id) }.getOrElse { emptyList() }
@@ -82,7 +79,7 @@ fun DeckDetailScreen(vm: MainViewModel, deck: DeckEntity) {
                 histogramLoading = false
             }
         }
-        scope.launch {
+        launch {
             recentWordsLoading = true
             try {
                 recentWords = runCatching { vm.getDeckRecentWords(deck.id) }.getOrElse { emptyList() }
@@ -90,7 +87,15 @@ fun DeckDetailScreen(vm: MainViewModel, deck: DeckEntity) {
                 recentWordsLoading = false
             }
         }
-        scope.launch { refreshExamples() }
+    }
+
+    LaunchedEffect(deck.id, examplesRefreshKey) {
+        examplesLoading = true
+        examplesError = false
+        val result = runCatching { vm.getDeckWordSamples(deck.id) }
+        wordExamples = result.getOrDefault(emptyList())
+        examplesError = result.isFailure
+        examplesLoading = false
     }
 
     val downloadDateText = remember(deck.updatedAt) {
@@ -173,12 +178,19 @@ fun DeckDetailScreen(vm: MainViewModel, deck: DeckEntity) {
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             counts.forEach { entry ->
-                                val label = stringResource(
-                                    R.string.deck_word_class_entry,
-                                    entry.wordClass,
-                                    entry.count
+                                val label = when (entry.wordClass) {
+                                    WordClassCatalog.NOUN -> stringResource(R.string.word_class_label_noun)
+                                    WordClassCatalog.VERB -> stringResource(R.string.word_class_label_verb)
+                                    WordClassCatalog.ADJECTIVE -> stringResource(R.string.word_class_label_adj)
+                                    else -> entry.wordClass
+                                }
+                                AssistChip(
+                                    onClick = {},
+                                    enabled = false,
+                                    label = {
+                                        Text(stringResource(R.string.deck_word_classes_chip, label, entry.count))
+                                    }
                                 )
-                                AssistChip(onClick = {}, enabled = false, label = { Text(label) })
                             }
                         }
                     }
@@ -198,37 +210,53 @@ fun DeckDetailScreen(vm: MainViewModel, deck: DeckEntity) {
             if (recentWordsLoading) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
             } else {
-                if (recentWords.isEmpty()) {
-                    Text(stringResource(R.string.deck_recent_words_empty))
-                } else {
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        recentWords.forEach { word ->
-                            Text(word, style = MaterialTheme.typography.bodyMedium)
+                when {
+                    recentWords.isEmpty() -> Text(stringResource(R.string.deck_recent_words_empty))
+
+                    else -> {
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            recentWords.forEach { word ->
+                                AssistChip(onClick = {}, enabled = false, label = { Text(word) })
+                            }
                         }
                     }
                 }
             }
         }
 
-        DetailCard(title = stringResource(R.string.deck_word_examples_title)) {
+        DetailCard(title = stringResource(R.string.deck_examples_title)) {
             when {
                 examplesLoading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+
                 examplesError -> {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(stringResource(R.string.deck_examples_error))
-                        TextButton(onClick = { scope.launch { refreshExamples() } }) {
-                            Text(stringResource(R.string.retry))
-                        }
-                    }
+                    Text(
+                        text = stringResource(R.string.deck_examples_error),
+                        color = MaterialTheme.colorScheme.error
+                    )
                 }
+
                 wordExamples.isEmpty() -> Text(stringResource(R.string.deck_examples_empty))
+
                 else -> {
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
                         wordExamples.forEach { example ->
-                            Text(example, style = MaterialTheme.typography.bodyMedium)
+                            AssistChip(onClick = {}, enabled = false, label = { Text(example) })
                         }
                     }
                 }
+            }
+            TextButton(
+                onClick = { examplesRefreshKey++ },
+                enabled = !examplesLoading,
+                modifier = Modifier.align(Alignment.End)
+            ) {
+                Text(stringResource(R.string.deck_examples_reload))
             }
         }
     }

@@ -4,11 +4,14 @@ import android.graphics.BitmapFactory
 import android.util.Base64
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -17,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -34,6 +38,8 @@ import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
@@ -42,7 +48,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -68,7 +73,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.matchParentSize
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -83,8 +87,10 @@ import kotlinx.coroutines.withContext
 import java.util.Locale
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 
+private val DIFFICULTY_LEVELS = listOf(1, 2, 3, 4, 5)
+
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
     val decks by vm.decks.collectAsState()
@@ -212,9 +218,9 @@ fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
                     )
                 )
             }
-            if (downloadProgress != null) {
+            downloadProgress?.let { progress ->
                 item(span = { GridItemSpan(maxLineSpan) }) {
-                    DeckDownloadCard(downloadProgress)
+                    DeckDownloadCard(progress)
                 }
             }
             if (decks.isEmpty()) {
@@ -232,7 +238,7 @@ fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
                 }
             }
         }
-        androidx.compose.material3.ExtendedFloatingActionButton(
+        ExtendedFloatingActionButton(
             onClick = { activeSheet = DeckSheet.IMPORT },
             modifier = Modifier
                 .align(Alignment.BottomEnd)
@@ -240,7 +246,7 @@ fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
         ) {
             Icon(Icons.Filled.Download, contentDescription = null)
             Spacer(Modifier.width(8.dp))
-            Text(stringResource(R.string.import_deck_action))
+            Text(stringResource(R.string.import_decks_action))
         }
     }
 }
@@ -435,11 +441,11 @@ private fun DeckCoverArt(deck: DeckEntity, modifier: Modifier = Modifier) {
                 bitmap = image,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.matchParentSize()
+                modifier = Modifier.fillMaxSize()
             )
             Box(
                 modifier = Modifier
-                    .matchParentSize()
+                    .fillMaxSize()
                     .background(Color.Black.copy(alpha = 0.25f))
             )
         } else {
@@ -599,22 +605,24 @@ private fun DeckFiltersSheet(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text(stringResource(R.string.deck_filters_title), style = MaterialTheme.typography.titleLarge)
+        Text(stringResource(R.string.filters_label), style = MaterialTheme.typography.titleLarge)
+        Text(stringResource(R.string.deck_filters_description), style = MaterialTheme.typography.bodyMedium)
         DifficultyFilter(state.difficulty, callbacks.onDifficultyToggle)
         FilterChipGroup(
-            title = stringResource(R.string.deck_filters_categories),
+            title = stringResource(R.string.categories_label),
             items = state.categories.available,
             selectedItems = state.categories.selected,
             onSelectionChanged = callbacks.onCategoriesChange
         )
         FilterChipGroup(
-            title = stringResource(R.string.deck_filters_word_classes),
+            title = stringResource(R.string.word_classes_label),
             items = state.wordClasses.available,
             selectedItems = state.wordClasses.selected,
             onSelectionChanged = callbacks.onWordClassesChange
         )
-        Button(onClick = callbacks.onApply, modifier = Modifier.fillMaxWidth()) {
-            Text(stringResource(R.string.apply_filters))
+        Text(stringResource(R.string.filters_hint), style = MaterialTheme.typography.bodySmall)
+        Button(onClick = callbacks.onApply, modifier = Modifier.align(Alignment.End)) {
+            Text(stringResource(R.string.apply_label))
         }
     }
 }
@@ -623,9 +631,9 @@ private fun DeckFiltersSheet(
 @Composable
 private fun DifficultyFilter(state: DifficultyFilterState, onToggle: (Int) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(stringResource(R.string.deck_filters_difficulty), style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(R.string.difficulty_filter_label), style = MaterialTheme.typography.titleMedium)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Settings.DIFFICULTY_LEVELS.forEach { level ->
+            DIFFICULTY_LEVELS.forEach { level ->
                 val selected = state.selectedLevels.contains(level)
                 FilterChip(
                     selected = selected,
@@ -668,18 +676,19 @@ private fun DeckImportSheet(
             .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text(stringResource(R.string.import_deck_title), style = MaterialTheme.typography.titleLarge)
+        Text(stringResource(R.string.import_sheet_title), style = MaterialTheme.typography.titleLarge)
+        Text(stringResource(R.string.import_sheet_hint), style = MaterialTheme.typography.bodyMedium)
         OutlinedTextField(
             value = state.url,
             onValueChange = callbacks.onUrlChange,
-            label = { Text(stringResource(R.string.import_deck_url_hint)) },
+            label = { Text(stringResource(R.string.https_url)) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true
         )
         OutlinedTextField(
             value = state.sha256,
             onValueChange = callbacks.onShaChange,
-            label = { Text(stringResource(R.string.import_deck_sha_hint)) },
+            label = { Text(stringResource(R.string.expected_sha256_optional)) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true
         )
@@ -690,7 +699,7 @@ private fun DeckImportSheet(
             Button(onClick = callbacks.onPickFile, modifier = Modifier.weight(1f)) {
                 Icon(Icons.Filled.Add, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
-                Text(stringResource(R.string.import_from_file))
+                Text(stringResource(R.string.import_file))
             }
             Button(onClick = callbacks.onDownload, enabled = state.url.isNotBlank(), modifier = Modifier.weight(1f)) {
                 Icon(Icons.Filled.Download, contentDescription = null)
@@ -751,14 +760,14 @@ private fun FilterChipGroup(
 }
 
 private fun normalizeDifficultyRange(min: Int, max: Int): IntRange {
-    val boundedMin = min.coerceAtLeast(Settings.DIFFICULTY_LEVELS.first())
-    val boundedMax = max.coerceAtMost(Settings.DIFFICULTY_LEVELS.last())
+    val boundedMin = min.coerceAtLeast(DIFFICULTY_LEVELS.first())
+    val boundedMax = max.coerceAtMost(DIFFICULTY_LEVELS.last())
     return IntRange(boundedMin, boundedMax)
 }
 
 private fun IntRange.toDifficultyRange(): IntRange {
-    val start = first.coerceAtLeast(Settings.DIFFICULTY_LEVELS.first())
-    val end = last.coerceAtMost(Settings.DIFFICULTY_LEVELS.last())
+    val start = first.coerceAtLeast(DIFFICULTY_LEVELS.first())
+    val end = last.coerceAtMost(DIFFICULTY_LEVELS.last())
     return IntRange(start, end)
 }
 
@@ -768,7 +777,7 @@ private fun adjustDifficultyRange(range: IntRange, level: Int): IntRange {
             range.first == range.last -> range
             level == range.first -> IntRange(range.first + 1, range.last)
             level == range.last -> IntRange(range.first, range.last - 1)
-            else -> IntRange(level, range.last)
+            else -> range
         }
     } else {
         when {

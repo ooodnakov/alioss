@@ -16,7 +16,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.rememberNavController
 import com.example.alias.MainViewModel.UiEvent
 import com.example.alias.navigation.AliasNavHost
-import com.example.alias.ui.theme.AliasAppTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin

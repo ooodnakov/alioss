@@ -41,7 +41,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
-import androidx.compose.ui.layout.matchParentSize
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
@@ -55,6 +54,7 @@ import com.example.alias.R
 import com.example.alias.data.settings.Settings
 import com.example.alias.domain.GameEngine
 import com.example.alias.domain.GameState
+import com.example.alias.ui.common.Scoreboard
 import com.example.alias.ui.CountdownOverlay
 import com.example.alias.ui.TutorialOverlay
 import com.example.alias.ui.WordCard
@@ -66,6 +66,9 @@ import kotlinx.coroutines.launch
 
 private val LARGE_BUTTON_HEIGHT = 80.dp
 private const val PRE_TURN_COUNTDOWN_SECONDS = 3
+private val TIMER_SAFE_COLOR = Color(0xFF4CAF50)
+private val TIMER_WARNING_COLOR = Color(0xFFFFC107)
+private val TIMER_CRITICAL_COLOR = Color(0xFFF44336)
 
 @Composable
 fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
@@ -82,6 +85,9 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
     }
     val vibrator = remember { context.getSystemService(android.os.Vibrator::class.java) }
     val tone = remember { android.media.ToneGenerator(android.media.AudioManager.STREAM_MUSIC, 80) }
+    DisposableEffect(Unit) {
+        onDispose { tone.release() }
+    }
     val state by engine.state.collectAsState()
     val scope = rememberCoroutineScope()
     var showTutorial by rememberSaveable(settings.seenTutorial) { mutableStateOf(!settings.seenTutorial) }
@@ -173,10 +179,10 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
             val progress by animateFloatAsState(rawProgress, label = "timerProgress")
             val targetColor = if (rawProgress > 0.5f) {
                 val t = (1 - rawProgress) * 2f
-                lerp(Color(0xFF4CAF50), Color(0xFFFFC107), t)
+                lerp(TIMER_SAFE_COLOR, TIMER_WARNING_COLOR, t)
             } else {
                 val t = rawProgress * 2f
-                lerp(Color(0xFFFFC107), Color(0xFFF44336), 1 - t)
+                lerp(TIMER_WARNING_COLOR, TIMER_CRITICAL_COLOR, 1 - t)
             }
             val barColor by animateColorAsState(targetColor, label = "timerColor")
             LaunchedEffect(s.timeRemaining) {
@@ -205,7 +211,7 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                         WordCard(
                             word = nextWord,
                             modifier = Modifier
-                                .matchParentSize()
+                                .fillMaxSize()
                                 .zIndex(0f)
                                 .alpha(if (committing) 1f else 0f),
                             enabled = false,
@@ -223,7 +229,7 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                     }
                     WordCard(
                         word = s.word,
-                        modifier = Modifier.matchParentSize().zIndex(1f),
+                        modifier = Modifier.fillMaxSize().zIndex(1f),
                         enabled = true,
                         vibrator = vibrator,
                         hapticsEnabled = settings.hapticsEnabled,

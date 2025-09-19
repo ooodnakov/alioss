@@ -8,6 +8,7 @@ import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -20,6 +21,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -67,14 +69,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.input.pointer.consume
+import androidx.compose.ui.input.pointer.consumePositionChange
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.graphicsLayer
@@ -541,7 +542,7 @@ private fun TeamsTab(
                             dragOffset = 0f
                         },
                         onDrag = { change, dragAmount ->
-                            change.consume()
+                            change.consumePositionChange()
                             val current = draggingIndex ?: return@detectDragGesturesAfterLongPress
                             dragOffset += dragAmount.y
                             if (dragOffset > 0 && current < teams.lastIndex) {
@@ -576,17 +577,17 @@ private fun TeamsTab(
         item {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Button(onClick = onTeamAdd, enabled = canAddTeam, modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.add_team))
+                    Text(stringResource(R.string.add_team_label))
                 }
                 OutlinedButton(onClick = { suggestions.randomOrNull()?.let(onApplySuggestion) }, modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.random_team_suggestion))
+                    Text(stringResource(R.string.team_suggestions_label))
                 }
             }
         }
         item {
             ElevatedCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(stringResource(R.string.team_suggestions_title), style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.team_suggestions_label), style = MaterialTheme.typography.titleMedium)
                     Text(
                         text = stringResource(R.string.team_suggestions_hint),
                         style = MaterialTheme.typography.bodySmall,
