@@ -51,7 +51,7 @@ class DefaultGameEngineTest {
     @Test
     fun `pending state exposes scoreboard and remaining count`() =
         runTest {
-            val engine = DefaultGameEngine(listOf("a"), this)
+            val engine = DefaultGameEngine(listOf("a", "b", "c"), this)
             val cfg = config.copy(targetWords = 2, roundSeconds = 5)
             engine.startMatch(cfg, teams = listOf("Team"), seed = 0L)
 
@@ -61,6 +61,8 @@ class DefaultGameEngineTest {
 
             engine.startTurn()
             engine.correct()
+            advanceTimeBy(cfg.roundSeconds * 1000L)
+            runCurrent()
             val finished = assertIs<GameState.TurnFinished>(engine.state.value)
             assertEquals(1, finished.deltaScore)
 
