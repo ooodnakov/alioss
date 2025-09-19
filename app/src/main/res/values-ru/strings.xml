@@ -136,7 +136,9 @@
         <item quantity="other">Ожидающие слова ×%d</item>
     </plurals>
     <string name="tutorial_instructions">Вправо — верно, влево — пропуск.</string>
+    <string name="tutorial_instructions_no_skip">Вправо — верно. Пропусков не осталось.</string>
     <string name="tutorial_instructions_vertical">Вверх — верно, вниз — пропуск.</string>
+    <string name="tutorial_instructions_vertical_no_skip">Вверх — верно. Пропусков не осталось.</string>
     <string name="tutorial_step_swipe_title">Жесты для очков</string>
     <string name="tutorial_step_status_title">Следите за таймером</string>
     <string name="tutorial_step_status_body">Здесь обновляются таймер, команда, счёт и пропуски.</string>

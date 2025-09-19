@@ -114,7 +114,9 @@
         <item quantity="other">Pending words ×%d</item>
     </plurals>
     <string name="tutorial_instructions">Swipe right for Correct, left for Skip.</string>
+    <string name="tutorial_instructions_no_skip">Swipe right for Correct. No skips left.</string>
     <string name="tutorial_instructions_vertical">Swipe up for Correct, down for Skip.</string>
+    <string name="tutorial_instructions_vertical_no_skip">Swipe up for Correct. No skips left.</string>
     <string name="tutorial_step_swipe_title">Swipe to score</string>
     <string name="tutorial_step_status_title">Watch the countdown</string>
     <string name="tutorial_step_status_body">Timer, team, score, and skips update here.</string>

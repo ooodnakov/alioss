@@ -79,13 +79,20 @@ fun WordCard(
     var hapticPlayed by remember { mutableStateOf(false) }
     val density = LocalDensity.current
     val commitPx = with(density) { COMMIT_DISTANCE.toPx() }
-    val instructions = if (verticalMode) {
-        stringResource(
+    val instructionsRes = if (allowSkip) {
+        if (verticalMode) {
             R.string.tutorial_instructions_vertical
-        )
+        } else {
+            R.string.tutorial_instructions
+        }
     } else {
-        stringResource(R.string.tutorial_instructions)
+        if (verticalMode) {
+            R.string.tutorial_instructions_vertical_no_skip
+        } else {
+            R.string.tutorial_instructions_no_skip
+        }
     }
+    val instructions = stringResource(instructionsRes)
 
     LaunchedEffect(word) {
         animX.snapTo(0f)
@@ -221,14 +228,16 @@ fun WordCard(
                         .padding(16.dp)
                         .alpha(if (currentY < 0f) fraction else 0f)
                 )
-                Text(
-                    text = stringResource(R.string.skip),
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(16.dp)
-                        .alpha(if (currentY > 0f) fraction else 0f)
-                )
+                if (allowSkip) {
+                    Text(
+                        text = stringResource(R.string.skip),
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(16.dp)
+                            .alpha(if (currentY > 0f) fraction else 0f)
+                    )
+                }
             } else {
                 Text(
                     text = stringResource(R.string.correct),
@@ -238,14 +247,16 @@ fun WordCard(
                         .padding(16.dp)
                         .alpha(if (currentX > 0f) fraction else 0f)
                 )
-                Text(
-                    text = stringResource(R.string.skip),
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .padding(16.dp)
-                        .alpha(if (currentX < 0f) fraction else 0f)
-                )
+                if (allowSkip) {
+                    Text(
+                        text = stringResource(R.string.skip),
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(16.dp)
+                            .alpha(if (currentX < 0f) fraction else 0f)
+                    )
+                }
             }
             if (metadataItems.isNotEmpty()) {
                 FlowRow(
