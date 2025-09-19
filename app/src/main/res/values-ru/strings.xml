@@ -66,7 +66,36 @@
     <string name="end_match">Завершить матч</string>
     <string name="next_team">Следующая команда</string>
     <string name="turn_summary">Ход: %s</string>
+    <string name="turn_summary_status_match_complete">Матч завершён! Итоговый счёт ниже.</string>
+    <string name="turn_summary_status_next_team">Готовьтесь к следующей команде.</string>
     <string name="score_change">Изменение счёта: %+d</string>
+    <plurals name="turn_summary_stat_correct">
+        <item quantity="one">%d верное слово</item>
+        <item quantity="few">%d верных слова</item>
+        <item quantity="many">%d верных слов</item>
+        <item quantity="other">%d верных слова</item>
+    </plurals>
+    <plurals name="turn_summary_stat_skipped">
+        <item quantity="one">%d пропуск</item>
+        <item quantity="few">%d пропуска</item>
+        <item quantity="many">%d пропусков</item>
+        <item quantity="other">%d пропуска</item>
+    </plurals>
+    <plurals name="turn_summary_stat_pending">
+        <item quantity="one">%d требует проверки</item>
+        <item quantity="few">%d требуют проверки</item>
+        <item quantity="many">%d требуют проверки</item>
+        <item quantity="other">%d требуют проверки</item>
+    </plurals>
+    <plurals name="turn_summary_stat_bonus">
+        <item quantity="one">%d бонусная серия</item>
+        <item quantity="few">%d бонусные серии</item>
+        <item quantity="many">%d бонусных серий</item>
+        <item quantity="other">%d бонусные серии</item>
+    </plurals>
+    <string name="turn_summary_stat_time_label">Затраченное время</string>
+    <string name="turn_summary_stat_time_value">%1$.1f с</string>
+    <string name="turn_summary_stat_time_under_second_value">&lt;1 с</string>
     <string name="turn_timeline_title">Хронология хода</string>
     <string name="timeline_score_breakdown">Посмотрите, как команда набрала очки в этом раунде.</string>
     <string name="timeline_score_graph_label">Очки по времени</string>

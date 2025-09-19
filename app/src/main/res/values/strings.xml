@@ -60,7 +60,28 @@
     <string name="end_match">End Match</string>
     <string name="next_team">Next Team</string>
     <string name="turn_summary">Turn summary for %s</string>
+    <string name="turn_summary_status_match_complete">Match complete! Final scores below.</string>
+    <string name="turn_summary_status_next_team">Get ready for the next team.</string>
     <string name="score_change">Score change: %+d</string>
+    <plurals name="turn_summary_stat_correct">
+        <item quantity="one">%d correct word</item>
+        <item quantity="other">%d correct words</item>
+    </plurals>
+    <plurals name="turn_summary_stat_skipped">
+        <item quantity="one">%d skipped</item>
+        <item quantity="other">%d skipped</item>
+    </plurals>
+    <plurals name="turn_summary_stat_pending">
+        <item quantity="one">%d needs review</item>
+        <item quantity="other">%d need review</item>
+    </plurals>
+    <plurals name="turn_summary_stat_bonus">
+        <item quantity="one">%d bonus streak</item>
+        <item quantity="other">%d bonus streaks</item>
+    </plurals>
+    <string name="turn_summary_stat_time_label">Time used</string>
+    <string name="turn_summary_stat_time_value">%1$.1fs</string>
+    <string name="turn_summary_stat_time_under_second_value">&lt;1s</string>
     <string name="turn_timeline_title">Turn timeline</string>
     <string name="timeline_score_breakdown">See how the team built this round\'s score.</string>
     <string name="timeline_score_graph_label">Score over time</string>
