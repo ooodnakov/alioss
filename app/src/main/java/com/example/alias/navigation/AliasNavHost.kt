@@ -80,15 +80,13 @@ fun aliasNavHost(
             val engine by viewModel.engine.collectAsState()
             val currentSettings by viewModel.settings.collectAsState()
             appScaffold(snackbarHostState = snackbarHostState) {
-                if (engine == null) {
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(MaterialTheme.colorScheme.surfaceVariant),
-                    ) {}
-                } else {
-                    gameScreen(viewModel, engine!!, currentSettings)
-                }
+                engine?.let { gameEngine ->
+                    gameScreen(viewModel, gameEngine, currentSettings)
+                } ?: Surface(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                ) {}
             }
         }
         composable("decks") {
