@@ -61,14 +61,24 @@ import kotlin.math.roundToInt
 @Composable
 fun TutorialOverlay(
     verticalMode: Boolean,
+    allowSkip: Boolean,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val swipeBody = if (verticalMode) {
-        stringResource(R.string.tutorial_instructions_vertical)
+    val swipeInstructionsRes = if (allowSkip) {
+        if (verticalMode) {
+            R.string.tutorial_instructions_vertical
+        } else {
+            R.string.tutorial_instructions
+        }
     } else {
-        stringResource(R.string.tutorial_instructions)
+        if (verticalMode) {
+            R.string.tutorial_instructions_vertical_no_skip
+        } else {
+            R.string.tutorial_instructions_no_skip
+        }
     }
+    val swipeBody = stringResource(swipeInstructionsRes)
     val steps = listOf(
         TutorialStep(
             title = stringResource(R.string.tutorial_step_swipe_title),

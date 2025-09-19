@@ -79,20 +79,20 @@ fun WordCard(
     var hapticPlayed by remember { mutableStateOf(false) }
     val density = LocalDensity.current
     val commitPx = with(density) { COMMIT_DISTANCE.toPx() }
-    val instructions = when {
-        allowSkip && verticalMode -> {
-            stringResource(R.string.tutorial_instructions_vertical)
+    val instructionsRes = if (allowSkip) {
+        if (verticalMode) {
+            R.string.tutorial_instructions_vertical
+        } else {
+            R.string.tutorial_instructions
         }
-        allowSkip -> {
-            stringResource(R.string.tutorial_instructions)
-        }
-        verticalMode -> {
-            stringResource(R.string.tutorial_instructions_vertical_no_skip)
-        }
-        else -> {
-            stringResource(R.string.tutorial_instructions_no_skip)
+    } else {
+        if (verticalMode) {
+            R.string.tutorial_instructions_vertical_no_skip
+        } else {
+            R.string.tutorial_instructions_no_skip
         }
     }
+    val instructions = stringResource(instructionsRes)
 
     LaunchedEffect(word) {
         animX.snapTo(0f)

@@ -101,9 +101,12 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
         }
     }
 
-    if (showTutorialOnFirstTurn && state is GameState.TurnActive && !seenTutorial) {
+    val activeState = state as? GameState.TurnActive
+
+    if (showTutorialOnFirstTurn && activeState != null && !seenTutorial) {
         TutorialOverlay(
             verticalMode = settings.verticalSwipes,
+            allowSkip = activeState.skipsRemaining > 0,
             onDismiss = {
                 vm.updateSeenTutorial(true)
             },
