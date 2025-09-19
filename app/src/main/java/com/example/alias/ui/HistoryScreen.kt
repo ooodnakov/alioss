@@ -2,6 +2,7 @@ package com.example.alias.ui
 
 import android.text.format.DateUtils
 import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -106,37 +107,34 @@ fun HistoryScreen(history: List<TurnHistoryEntity>) {
         ) {
             Text(stringResource(R.string.title_history), style = MaterialTheme.typography.headlineSmall)
             TextButton(onClick = { headerExpanded = !headerExpanded }) {
-                val toggleLabel = stringResource(
-                    if (headerExpanded) {
-                        R.string.history_hide_header
-                    } else {
-                        R.string.history_show_header
-                    },
-                )
+                val (labelRes, icon) = if (headerExpanded) {
+                    R.string.history_hide_header to Icons.Filled.KeyboardArrowUp
+                } else {
+                    R.string.history_show_header to Icons.Filled.KeyboardArrowDown
+                }
+                val toggleLabel = stringResource(labelRes)
                 Text(toggleLabel)
                 Spacer(Modifier.width(4.dp))
                 Icon(
-                    imageVector = if (headerExpanded) {
-                        Icons.Filled.KeyboardArrowUp
-                    } else {
-                        Icons.Filled.KeyboardArrowDown
-                    },
+                    imageVector = icon,
                     contentDescription = toggleLabel,
                 )
             }
         }
-        if (headerExpanded) {
-            HistoryFilters(
-                teams = teams,
-                difficulties = difficulties,
-                selectedTeam = selectedTeam,
-                onTeamSelected = { selectedTeam = it },
-                selectedDifficulty = selectedDifficulty,
-                onDifficultySelected = { selectedDifficulty = it },
-                selectedResult = selectedResult,
-                onResultSelected = { selectedResult = it },
-            )
-            HistoryPerformanceSection(history = sorted)
+        AnimatedVisibility(visible = headerExpanded) {
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                HistoryFilters(
+                    teams = teams,
+                    difficulties = difficulties,
+                    selectedTeam = selectedTeam,
+                    onTeamSelected = { selectedTeam = it },
+                    selectedDifficulty = selectedDifficulty,
+                    onDifficultySelected = { selectedDifficulty = it },
+                    selectedResult = selectedResult,
+                    onResultSelected = { selectedResult = it },
+                )
+                HistoryPerformanceSection(history = sorted)
+            }
         }
         HorizontalDivider()
         Row(
