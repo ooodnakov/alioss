@@ -39,6 +39,12 @@ jobs:
       - name: Run detekt
         run: ./gradlew detekt --no-daemon --console=plain
 
+      - name: Upload SARIF reports
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: build/reports/detekt/**/*.sarif
+
       - name: Run unit tests (domain, data, app)
         run: ./gradlew --version :domain:test :data:test :app:testDebugUnitTest --no-daemon --console=plain
 
