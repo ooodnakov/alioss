@@ -54,8 +54,8 @@ jobs:
         with:
           name: unit-test-reports
           path: |
-            domain/build/reports/tests/**
-            data/build/reports/tests/**
+            app/domain/build/reports/tests/**
+            app/data/build/reports/tests/**
             app/build/reports/tests/**
           if-no-files-found: warn
 
