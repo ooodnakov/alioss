@@ -708,37 +708,59 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    suspend fun updateSettings(
-        roundSeconds: Int,
-        targetWords: Int,
-        maxSkips: Int,
-        penaltyPerSkip: Int,
-        punishSkips: Boolean,
-        language: String,
-        uiLanguage: String,
-        allowNSFW: Boolean,
-        haptics: Boolean,
-        sound: Boolean,
-        oneHanded: Boolean,
-        verticalSwipes: Boolean,
-        orientation: String,
-        teams: List<String>,
+    data class SettingsUpdateRequest(
+        val roundSeconds: Int,
+        val targetWords: Int,
+        val maxSkips: Int,
+        val penaltyPerSkip: Int,
+        val punishSkips: Boolean,
+        val language: String,
+        val uiLanguage: String,
+        val allowNSFW: Boolean,
+        val haptics: Boolean,
+        val sound: Boolean,
+        val oneHanded: Boolean,
+        val verticalSwipes: Boolean,
+        val orientation: String,
+        val teams: List<String>,
     ) {
+        companion object {
+            fun from(settings: Settings): SettingsUpdateRequest =
+                SettingsUpdateRequest(
+                    roundSeconds = settings.roundSeconds,
+                    targetWords = settings.targetWords,
+                    maxSkips = settings.maxSkips,
+                    penaltyPerSkip = settings.penaltyPerSkip,
+                    punishSkips = settings.punishSkips,
+                    language = settings.languagePreference,
+                    uiLanguage = settings.uiLanguage,
+                    allowNSFW = settings.allowNSFW,
+                    haptics = settings.hapticsEnabled,
+                    sound = settings.soundEnabled,
+                    oneHanded = settings.oneHandedLayout,
+                    verticalSwipes = settings.verticalSwipes,
+                    orientation = settings.orientation,
+                    teams = settings.teams.toList(),
+                )
+        }
+    }
+
+    suspend fun updateSettings(request: SettingsUpdateRequest) {
         // Persist all settings synchronously so callers can chain actions reliably (e.g., Save & Restart)
         val before = settingsRepository.settings.first()
-        settingsRepository.updateRoundSeconds(roundSeconds)
-        settingsRepository.updateTargetWords(targetWords)
-        settingsRepository.updateSkipPolicy(maxSkips, penaltyPerSkip)
-        settingsRepository.updatePunishSkips(punishSkips)
-        settingsRepository.updateAllowNSFW(allowNSFW)
-        settingsRepository.updateHapticsEnabled(haptics)
-        settingsRepository.updateSoundEnabled(sound)
-        settingsRepository.updateOneHandedLayout(oneHanded)
-        settingsRepository.updateVerticalSwipes(verticalSwipes)
-        settingsRepository.updateOrientation(orientation)
-        settingsRepository.updateUiLanguage(canonicalizeLocalePreference(uiLanguage))
+        settingsRepository.updateRoundSeconds(request.roundSeconds)
+        settingsRepository.updateTargetWords(request.targetWords)
+        settingsRepository.updateSkipPolicy(request.maxSkips, request.penaltyPerSkip)
+        settingsRepository.updatePunishSkips(request.punishSkips)
+        settingsRepository.updateAllowNSFW(request.allowNSFW)
+        settingsRepository.updateHapticsEnabled(request.haptics)
+        settingsRepository.updateSoundEnabled(request.sound)
+        settingsRepository.updateOneHandedLayout(request.oneHanded)
+        settingsRepository.updateVerticalSwipes(request.verticalSwipes)
+        settingsRepository.updateOrientation(request.orientation)
+        settingsRepository.updateUiLanguage(canonicalizeLocalePreference(request.uiLanguage))
         // Language validation may fail; keep others applied regardless
-        val langResult = runCatching { settingsRepository.updateLanguagePreference(language) }
+        val langResult = runCatching { settingsRepository.updateLanguagePreference(request.language) }
         if (langResult.isFailure) {
             _uiEvents.tryEmit(
                 UiEvent(
@@ -748,7 +770,7 @@ class MainViewModel @Inject constructor(
                 ),
             )
         } else {
-            val newLang = language.trim().lowercase()
+            val newLang = request.language.trim().lowercase()
             if (!newLang.equals(before.languagePreference, ignoreCase = true)) {
                 val decksAll = deckRepository.getDecks().first()
                 val preferred = decksAll.filter { it.language.equals(newLang, ignoreCase = true) }.map { it.id }.toSet()
@@ -768,7 +790,7 @@ class MainViewModel @Inject constructor(
             }
         }
         // Ensure teams are saved
-        settingsRepository.setTeams(teams)
+        settingsRepository.setTeams(request.teams)
         _uiEvents.tryEmit(UiEvent(message = "Settings updated", actionLabel = "Dismiss"))
     }
 

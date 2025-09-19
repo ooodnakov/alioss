@@ -119,20 +119,22 @@ fun settingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () -> Unit) {
     val applySettings: () -> Job = {
         scope.launch {
             vm.updateSettings(
-                roundSeconds = round.toIntOrNull() ?: s.roundSeconds,
-                targetWords = target.toIntOrNull() ?: s.targetWords,
-                maxSkips = maxSkips.toIntOrNull() ?: s.maxSkips,
-                penaltyPerSkip = penalty.toIntOrNull() ?: s.penaltyPerSkip,
-                punishSkips = punishSkips,
-                language = lang.ifBlank { s.languagePreference },
-                uiLanguage = uiLang,
-                allowNSFW = nsfw,
-                haptics = haptics,
-                sound = sound,
-                oneHanded = oneHand,
-                verticalSwipes = verticalSwipes,
-                orientation = orientation,
-                teams = teams.map { it.name },
+                MainViewModel.SettingsUpdateRequest(
+                    roundSeconds = round.toIntOrNull() ?: s.roundSeconds,
+                    targetWords = target.toIntOrNull() ?: s.targetWords,
+                    maxSkips = maxSkips.toIntOrNull() ?: s.maxSkips,
+                    penaltyPerSkip = penalty.toIntOrNull() ?: s.penaltyPerSkip,
+                    punishSkips = punishSkips,
+                    language = lang.ifBlank { s.languagePreference },
+                    uiLanguage = uiLang,
+                    allowNSFW = nsfw,
+                    haptics = haptics,
+                    sound = sound,
+                    oneHanded = oneHand,
+                    verticalSwipes = verticalSwipes,
+                    orientation = orientation,
+                    teams = teams.map { it.name },
+                ),
             )
         }
     }
