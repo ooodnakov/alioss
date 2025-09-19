@@ -152,12 +152,12 @@ fun settingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () -> Unit) {
     )
     val teamsActions = TeamsActions(
         onTeamNameChange = { index, value ->
-            teams = teams.toMutableList().also { list ->
-                list[index] = list[index].copy(name = value)
+            teams = teams.mapIndexed { i, team ->
+                if (i == index) team.copy(name = value) else team
             }
         },
         onTeamRemove = { index ->
-            teams = teams.toMutableList().also { it.removeAt(index) }
+            teams = teams.toMutableList().apply { removeAt(index) }
         },
         onTeamAdd = {
             val defaultName = ctx.getString(R.string.team_default_name, teams.size + 1)
@@ -176,11 +176,11 @@ fun settingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () -> Unit) {
         onApplySuggestion = suggestion@{ suggestion ->
             if (teams.any { it.name.equals(suggestion, ignoreCase = true) }) return@suggestion
             val targetIndex = teams.indexOfFirst { it.name.isBlank() }
-            teams = teams.toMutableList().also { list ->
+            teams = teams.toMutableList().apply {
                 when {
-                    targetIndex >= 0 -> list[targetIndex] = list[targetIndex].copy(name = suggestion)
-                    list.size < MAX_TEAMS -> {
-                        list += TeamEditorEntry(nextTeamId, suggestion)
+                    targetIndex >= 0 -> this[targetIndex] = this[targetIndex].copy(name = suggestion)
+                    size < MAX_TEAMS -> {
+                        add(TeamEditorEntry(nextTeamId, suggestion))
                         nextTeamId += 1
                     }
                 }
