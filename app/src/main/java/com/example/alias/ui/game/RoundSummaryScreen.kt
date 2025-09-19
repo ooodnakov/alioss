@@ -60,10 +60,10 @@ import com.example.alias.R
 import com.example.alias.data.settings.Settings
 import com.example.alias.domain.GameState
 import com.example.alias.domain.TurnOutcome
-import com.example.alias.ui.common.Scoreboard
+import com.example.alias.ui.common.scoreboard
 
 @Composable
-fun RoundSummaryScreen(vm: MainViewModel, s: GameState.TurnFinished, settings: Settings) {
+fun roundSummaryScreen(vm: MainViewModel, s: GameState.TurnFinished, settings: Settings) {
     val penaltyPerSkip = remember(settings.punishSkips, settings.penaltyPerSkip) {
         if (settings.punishSkips) settings.penaltyPerSkip else 0
     }
@@ -78,7 +78,7 @@ fun RoundSummaryScreen(vm: MainViewModel, s: GameState.TurnFinished, settings: S
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
         item {
-            TurnSummaryHeader(
+            turnSummaryHeader(
                 team = s.team,
                 deltaScore = s.deltaScore,
                 matchOver = s.matchOver,
@@ -86,9 +86,9 @@ fun RoundSummaryScreen(vm: MainViewModel, s: GameState.TurnFinished, settings: S
                 deltaColor = deltaColor,
             )
         }
-        item { ScoreboardCard(scores = s.scores) }
+        item { scoreboardCard(scores = s.scores) }
         item {
-            TimelineCard(
+            timelineCard(
                 timeline = timeline,
                 penaltyPerSkip = penaltyPerSkip,
                 onOverride = { index, correct -> vm.overrideOutcome(index, correct) },
@@ -103,7 +103,7 @@ fun RoundSummaryScreen(vm: MainViewModel, s: GameState.TurnFinished, settings: S
 }
 
 @Composable
-private fun ScoreboardCard(
+private fun scoreboardCard(
     scores: Map<String, Int>,
     modifier: Modifier = Modifier,
 ) {
@@ -113,13 +113,13 @@ private fun ScoreboardCard(
         tonalElevation = 2.dp,
     ) {
         Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp)) {
-            Scoreboard(scores)
+            scoreboard(scores)
         }
     }
 }
 
 @Composable
-private fun TimelineCard(
+private fun timelineCard(
     timeline: TimelineData,
     penaltyPerSkip: Int,
     onOverride: (Int, Boolean) -> Unit,
@@ -161,13 +161,13 @@ private fun TimelineCard(
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.onSurfaceVariant,
                     )
-                    ScoreProgressGraph(
+                    scoreProgressGraph(
                         events = timeline.events,
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
                 timeline.segments.forEachIndexed { segmentIndex, segment ->
-                    TimelineSegmentHeader(
+                    timelineSegmentHeader(
                         segment = segment,
                         modifier = Modifier.padding(horizontal = 20.dp),
                         penaltyPerSkip = penaltyPerSkip,
@@ -177,7 +177,7 @@ private fun TimelineCard(
                         val isLastSegment = segmentIndex == timeline.segments.lastIndex
                         val isLastEventInSegment = eventIndex == segment.events.lastIndex
                         val hasNext = !(isLastSegment && isLastEventInSegment)
-                        TimelineEventRow(
+                        timelineEventRow(
                             event = event,
                             hasPrev = hasPrev,
                             hasNext = hasNext,
@@ -325,7 +325,7 @@ private fun buildScoreProgressPoints(events: List<TimelineEvent>): List<ScoreTim
 }
 
 @Composable
-private fun TurnSummaryHeader(
+private fun turnSummaryHeader(
     team: String,
     deltaScore: Int,
     matchOver: Boolean,
@@ -359,14 +359,14 @@ private fun TurnSummaryHeader(
                     color = colors.onSurfaceVariant,
                 )
             }
-            ScoreChangeHighlight(deltaScore = deltaScore, deltaColor = deltaColor)
-            TurnSummaryStatsRow(stats = stats)
+            scoreChangeHighlight(deltaScore = deltaScore, deltaColor = deltaColor)
+            turnSummaryStatsRow(stats = stats)
         }
     }
 }
 
 @Composable
-private fun ScoreChangeHighlight(deltaScore: Int, deltaColor: Color, modifier: Modifier = Modifier) {
+private fun scoreChangeHighlight(deltaScore: Int, deltaColor: Color, modifier: Modifier = Modifier) {
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
@@ -385,7 +385,7 @@ private fun ScoreChangeHighlight(deltaScore: Int, deltaColor: Color, modifier: M
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun TurnSummaryStatsRow(
+private fun turnSummaryStatsRow(
     stats: TurnSummaryStats,
     modifier: Modifier = Modifier,
 ) {
@@ -465,7 +465,7 @@ private fun TurnSummaryStatsRow(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         statsToDisplay.forEach { stat ->
-            TurnSummaryStatCard(
+            turnSummaryStatCard(
                 label = stat.label,
                 value = stat.value,
                 accentColor = stat.color,
@@ -483,7 +483,7 @@ private data class SummaryStatDisplay(
 )
 
 @Composable
-private fun TurnSummaryStatCard(
+private fun turnSummaryStatCard(
     label: String,
     value: String,
     accentColor: Color,
@@ -510,7 +510,7 @@ private fun TurnSummaryStatCard(
 }
 
 @Composable
-private fun ScoreProgressGraph(events: List<TimelineEvent>, modifier: Modifier = Modifier) {
+private fun scoreProgressGraph(events: List<TimelineEvent>, modifier: Modifier = Modifier) {
     val points = remember(events) { buildScoreProgressPoints(events) }
     if (points.size <= 1) return
     val colors = MaterialTheme.colorScheme
@@ -604,7 +604,7 @@ private fun ScoreProgressGraph(events: List<TimelineEvent>, modifier: Modifier =
 }
 
 @Composable
-private fun TimelineSegmentHeader(
+private fun timelineSegmentHeader(
     segment: TimelineSegment,
     modifier: Modifier = Modifier,
     penaltyPerSkip: Int,
@@ -693,7 +693,7 @@ private fun TimelineSegmentHeader(
 }
 
 @Composable
-private fun TimelineEventRow(
+private fun timelineEventRow(
     event: TimelineEvent,
     hasPrev: Boolean,
     hasNext: Boolean,
@@ -716,7 +716,7 @@ private fun TimelineEventRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.Top,
     ) {
-        TimelineIndicator(
+        timelineIndicator(
             color = color,
             showTopConnector = hasPrev,
             showBottomConnector = hasNext,
@@ -782,7 +782,7 @@ private fun TimelineEventRow(
 }
 
 @Composable
-private fun TimelineIndicator(color: Color, showTopConnector: Boolean, showBottomConnector: Boolean) {
+private fun timelineIndicator(color: Color, showTopConnector: Boolean, showBottomConnector: Boolean) {
     Box(
         modifier = Modifier
             .width(24.dp)

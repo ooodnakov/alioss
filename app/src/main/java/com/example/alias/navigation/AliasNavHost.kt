@@ -25,20 +25,20 @@ import androidx.navigation.navArgument
 import com.example.alias.MainViewModel
 import com.example.alias.R
 import com.example.alias.data.settings.Settings
-import com.example.alias.ui.AppScaffold
-import com.example.alias.ui.HistoryScreen
-import com.example.alias.ui.about.AboutScreen
-import com.example.alias.ui.decks.DeckDetailScreen
-import com.example.alias.ui.decks.DecksScreen
-import com.example.alias.ui.game.GameScreen
-import com.example.alias.ui.home.HomeScreen
-import com.example.alias.ui.settings.SettingsScreen
+import com.example.alias.ui.about.aboutScreen
+import com.example.alias.ui.appScaffold
+import com.example.alias.ui.decks.deckDetailScreen
+import com.example.alias.ui.decks.decksScreen
+import com.example.alias.ui.game.gameScreen
+import com.example.alias.ui.historyScreen
+import com.example.alias.ui.home.homeScreen
+import com.example.alias.ui.settings.settingsScreen
 
 private const val HISTORY_LIMIT = 50
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-fun AliasNavHost(
+fun aliasNavHost(
     navController: NavHostController,
     snackbarHostState: SnackbarHostState,
     settings: Settings,
@@ -59,8 +59,8 @@ fun AliasNavHost(
             val decks by viewModel.decks.collectAsState()
             val recentHistoryFlow = remember { viewModel.recentHistory(12) }
             val recentHistory by recentHistoryFlow.collectAsState(initial = emptyList())
-            AppScaffold(snackbarHostState = snackbarHostState) {
-                HomeScreen(
+            appScaffold(snackbarHostState = snackbarHostState) {
+                homeScreen(
                     gameState = gameState,
                     settings = settings,
                     decks = decks,
@@ -79,7 +79,7 @@ fun AliasNavHost(
         composable("game") {
             val engine by viewModel.engine.collectAsState()
             val currentSettings by viewModel.settings.collectAsState()
-            AppScaffold(snackbarHostState = snackbarHostState) {
+            appScaffold(snackbarHostState = snackbarHostState) {
                 if (engine == null) {
                     Surface(
                         modifier = Modifier
@@ -87,13 +87,13 @@ fun AliasNavHost(
                             .background(MaterialTheme.colorScheme.surfaceVariant),
                     ) {}
                 } else {
-                    GameScreen(viewModel, engine!!, currentSettings)
+                    gameScreen(viewModel, engine!!, currentSettings)
                 }
             }
         }
         composable("decks") {
-            AppScaffold(snackbarHostState = snackbarHostState) {
-                DecksScreen(
+            appScaffold(snackbarHostState = snackbarHostState) {
+                decksScreen(
                     vm = viewModel,
                     onDeckSelected = { navController.navigate("deck/${it.id}") },
                 )
@@ -107,7 +107,7 @@ fun AliasNavHost(
             val decks by viewModel.decks.collectAsState()
             val deck = decks.find { it.id == id }
             if (deck == null) {
-                AppScaffold(
+                appScaffold(
                     snackbarHostState = snackbarHostState,
                 ) {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -115,16 +115,16 @@ fun AliasNavHost(
                     }
                 }
             } else {
-                AppScaffold(
+                appScaffold(
                     snackbarHostState = snackbarHostState,
                 ) {
-                    DeckDetailScreen(vm = viewModel, deck = deck)
+                    deckDetailScreen(vm = viewModel, deck = deck)
                 }
             }
         }
         composable("settings") {
-            AppScaffold(snackbarHostState = snackbarHostState) {
-                SettingsScreen(
+            appScaffold(snackbarHostState = snackbarHostState) {
+                settingsScreen(
                     vm = viewModel,
                     onBack = { navController.popBackStack() },
                     onAbout = { navController.navigate("about") },
@@ -132,15 +132,15 @@ fun AliasNavHost(
             }
         }
         composable("history") {
-            AppScaffold(snackbarHostState = snackbarHostState) {
+            appScaffold(snackbarHostState = snackbarHostState) {
                 val historyFlow = remember { viewModel.recentHistory(HISTORY_LIMIT) }
                 val history by historyFlow.collectAsState(initial = emptyList())
-                HistoryScreen(history)
+                historyScreen(history)
             }
         }
         composable("about") {
-            AppScaffold(snackbarHostState = snackbarHostState) {
-                AboutScreen()
+            appScaffold(snackbarHostState = snackbarHostState) {
+                aboutScreen()
             }
         }
     }

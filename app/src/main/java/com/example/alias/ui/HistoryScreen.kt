@@ -63,7 +63,7 @@ private const val SPARKLINE_STROKE_WIDTH = 4f
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun HistoryScreen(history: List<TurnHistoryEntity>) {
+fun historyScreen(history: List<TurnHistoryEntity>) {
     if (history.isEmpty()) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text(stringResource(R.string.no_history))
@@ -123,7 +123,7 @@ fun HistoryScreen(history: List<TurnHistoryEntity>) {
         }
         AnimatedVisibility(visible = headerExpanded) {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                HistoryFilters(
+                historyFilters(
                     teams = teams,
                     difficulties = difficulties,
                     selectedTeam = selectedTeam,
@@ -133,7 +133,7 @@ fun HistoryScreen(history: List<TurnHistoryEntity>) {
                     selectedResult = selectedResult,
                     onResultSelected = { selectedResult = it },
                 )
-                HistoryPerformanceSection(history = sorted)
+                historyPerformanceSection(history = sorted)
             }
         }
         HorizontalDivider()
@@ -167,7 +167,7 @@ fun HistoryScreen(history: List<TurnHistoryEntity>) {
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 items(filtered) { entry ->
-                    HistoryEntryCard(entry = entry)
+                    historyEntryCard(entry = entry)
                 }
             }
         }
@@ -176,7 +176,7 @@ fun HistoryScreen(history: List<TurnHistoryEntity>) {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun HistoryFilters(
+private fun historyFilters(
     teams: List<String>,
     difficulties: List<Int>,
     selectedTeam: String?,
@@ -272,7 +272,7 @@ private fun HistoryFilters(
 }
 
 @Composable
-private fun HistoryPerformanceSection(history: List<TurnHistoryEntity>) {
+private fun historyPerformanceSection(history: List<TurnHistoryEntity>) {
     val grouped = remember(history) { history.groupBy { it.team } }
     if (grouped.isEmpty()) return
 
@@ -280,14 +280,14 @@ private fun HistoryPerformanceSection(history: List<TurnHistoryEntity>) {
         Text(stringResource(R.string.history_section_performance), style = MaterialTheme.typography.titleMedium)
         LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             items(grouped.entries.sortedBy { it.key }) { (team, entries) ->
-                HistoryPerformanceCard(team = team, entries = entries)
+                historyPerformanceCard(team = team, entries = entries)
             }
         }
     }
 }
 
 @Composable
-private fun HistoryPerformanceCard(team: String, entries: List<TurnHistoryEntity>) {
+private fun historyPerformanceCard(team: String, entries: List<TurnHistoryEntity>) {
     val ordered = remember(entries) { entries.sortedBy { it.timestamp } }
     val recent = remember(ordered) { ordered.takeLast(SPARKLINE_RECENT_ENTRIES_COUNT) }
     val total = ordered.size
@@ -314,7 +314,7 @@ private fun HistoryPerformanceCard(team: String, entries: List<TurnHistoryEntity
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Sparkline(
+            sparkline(
                 values = sparkValues,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -325,7 +325,7 @@ private fun HistoryPerformanceCard(team: String, entries: List<TurnHistoryEntity
 }
 
 @Composable
-private fun Sparkline(values: List<Float>, modifier: Modifier = Modifier) {
+private fun sparkline(values: List<Float>, modifier: Modifier = Modifier) {
     val color = MaterialTheme.colorScheme.primary
     val baseline = color.copy(alpha = 0.2f)
     Canvas(modifier = modifier) {
@@ -365,7 +365,7 @@ private fun Sparkline(values: List<Float>, modifier: Modifier = Modifier) {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun HistoryEntryCard(entry: TurnHistoryEntity) {
+private fun historyEntryCard(entry: TurnHistoryEntity) {
     val visuals = when {
         entry.correct -> ResultVisuals(
             icon = Icons.Filled.Check,

@@ -31,7 +31,7 @@ import com.example.alias.BuildConfig
 import com.example.alias.R
 
 @Composable
-fun AboutScreen() {
+fun aboutScreen() {
     val uriHandler = LocalUriHandler.current
     val colors = MaterialTheme.colorScheme
     val version = BuildConfig.VERSION_NAME

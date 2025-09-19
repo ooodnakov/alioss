@@ -15,7 +15,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.rememberNavController
 import com.example.alias.MainViewModel.UiEvent
-import com.example.alias.navigation.AliasNavHost
+import com.example.alias.navigation.aliasNavHost
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
@@ -28,7 +28,7 @@ class MainActivity : AppCompatActivity() {
         installSplashScreen()
         super.onCreate(savedInstanceState)
         setContent {
-            AliasAppTheme {
+            aliasAppTheme {
                 val nav = rememberNavController()
                 val vm: MainViewModel = hiltViewModel()
                 val snack = remember { SnackbarHostState() }
@@ -75,7 +75,7 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
 
-                AliasNavHost(
+                aliasNavHost(
                     navController = nav,
                     snackbarHostState = snack,
                     settings = settings,

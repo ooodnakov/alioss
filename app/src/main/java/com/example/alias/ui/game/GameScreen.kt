@@ -57,11 +57,11 @@ import com.example.alias.R
 import com.example.alias.data.settings.Settings
 import com.example.alias.domain.GameEngine
 import com.example.alias.domain.GameState
-import com.example.alias.ui.CountdownOverlay
-import com.example.alias.ui.TutorialOverlay
-import com.example.alias.ui.WordCard
 import com.example.alias.ui.WordCardAction
-import com.example.alias.ui.common.Scoreboard
+import com.example.alias.ui.common.scoreboard
+import com.example.alias.ui.countdownOverlay
+import com.example.alias.ui.tutorialOverlay
+import com.example.alias.ui.wordCard
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -75,7 +75,7 @@ private val TIMER_WARNING_COLOR = Color(0xFFFFC107)
 private val TIMER_CRITICAL_COLOR = Color(0xFFF44336)
 
 @Composable
-fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
+fun gameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
     val context = LocalContext.current
     val activity = context as? android.app.Activity
     DisposableEffect(settings.orientation) {
@@ -113,7 +113,7 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
     val activeState = state as? GameState.TurnActive
 
     if (showTutorialOnFirstTurn && activeState != null && !seenTutorial) {
-        TutorialOverlay(
+        tutorialOverlay(
             verticalMode = settings.verticalSwipes,
             allowSkip = activeState.skipsRemaining > 0,
             onDismiss = {
@@ -161,7 +161,7 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                                 fontWeight = FontWeight.Bold,
                                 textAlign = TextAlign.Center,
                             )
-                            Scoreboard(s.scores)
+                            scoreboard(s.scores)
                             Text(
                                 text = pluralStringResource(
                                     R.plurals.turn_pending_status,
@@ -195,7 +195,7 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                     }
                 }
                 countdownState.value?.let { value ->
-                    CountdownOverlay(
+                    countdownOverlay(
                         value = value,
                         modifier = Modifier
                             .fillMaxSize()
@@ -247,7 +247,7 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                         },
                 ) {
                     if (nextWord != null) {
-                        WordCard(
+                        wordCard(
                             word = nextWord,
                             modifier = Modifier
                                 .fillMaxSize()
@@ -266,7 +266,7 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                             wordClass = nextMeta?.wordClass,
                         )
                     }
-                    WordCard(
+                    wordCard(
                         word = s.word,
                         modifier = Modifier
                             .fillMaxSize()
@@ -507,7 +507,7 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
             }
         }
         is GameState.TurnFinished -> {
-            RoundSummaryScreen(vm = vm, s = s, settings = settings)
+            roundSummaryScreen(vm = vm, s = s, settings = settings)
         }
         is GameState.MatchFinished -> {
             Column(
@@ -516,7 +516,7 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text("🎉 Match over 🎉", style = MaterialTheme.typography.headlineSmall)
-                Scoreboard(s.scores)
+                scoreboard(s.scores)
                 Text(stringResource(R.string.start_new_match))
                 Button(onClick = {
                     if (settings.hapticsEnabled) {

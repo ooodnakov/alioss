@@ -20,7 +20,7 @@ private val LightColors = lightColorScheme()
 private val DarkColors = darkColorScheme()
 
 @Composable
-fun AliasAppTheme(
+fun aliasAppTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     useDynamicColor: Boolean = true,
     content: @Composable () -> Unit,

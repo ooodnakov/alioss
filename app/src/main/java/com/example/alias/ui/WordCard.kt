@@ -54,7 +54,7 @@ private const val SWIPE_AWAY_MULTIPLIER = 4
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun WordCard(
+fun wordCard(
     word: String,
     modifier: Modifier = Modifier,
     enabled: Boolean,
@@ -265,7 +265,7 @@ fun WordCard(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     metadataItems.forEach { (text, highlighted) ->
-                        WordMetadataChip(text = text, highlighted = highlighted)
+                        wordMetadataChip(text = text, highlighted = highlighted)
                     }
                 }
             }
@@ -274,7 +274,7 @@ fun WordCard(
 }
 
 @Composable
-private fun WordMetadataChip(
+private fun wordMetadataChip(
     text: String,
     highlighted: Boolean,
     modifier: Modifier = Modifier,

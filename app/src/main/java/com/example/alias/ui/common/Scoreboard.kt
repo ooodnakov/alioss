@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.dp
 import com.example.alias.R
 
 @Composable
-fun Scoreboard(scores: Map<String, Int>) {
+fun scoreboard(scores: Map<String, Int>) {
     Column(Modifier.fillMaxWidth()) {
         Text(stringResource(R.string.scoreboard), style = MaterialTheme.typography.titleMedium)
         val max = scores.values.maxOrNull() ?: 0
