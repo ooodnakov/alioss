@@ -63,6 +63,20 @@ import com.example.alias.data.db.TurnHistoryEntity
 import com.example.alias.data.settings.Settings
 import com.example.alias.domain.GameState
 
+private data class HomeHeroState(
+    val gameState: GameState?,
+    val settings: Settings,
+    val decks: List<DeckEntity>,
+    val recentHistory: List<TurnHistoryEntity>,
+)
+
+private data class HomeHeroActions(
+    val onResumeMatch: () -> Unit,
+    val onStartNewMatch: () -> Unit,
+    val onHistory: () -> Unit,
+    val onDecks: () -> Unit,
+)
+
 @Composable
 fun homeScreen(
     gameState: GameState?,
@@ -75,6 +89,18 @@ fun homeScreen(
     onSettings: () -> Unit,
     onHistory: () -> Unit,
 ) {
+    val heroState = HomeHeroState(
+        gameState = gameState,
+        settings = settings,
+        decks = decks,
+        recentHistory = recentHistory,
+    )
+    val heroActions = HomeHeroActions(
+        onResumeMatch = onResumeMatch,
+        onStartNewMatch = onStartNewMatch,
+        onHistory = onHistory,
+        onDecks = onDecks,
+    )
     val colors = MaterialTheme.colorScheme
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
@@ -93,16 +119,7 @@ fun homeScreen(
                 modifier = Modifier.weight(1.4f),
                 verticalArrangement = Arrangement.spacedBy(20.dp),
             ) {
-                homeHeroSection(
-                    gameState = gameState,
-                    settings = settings,
-                    decks = decks,
-                    recentHistory = recentHistory,
-                    onResumeMatch = onResumeMatch,
-                    onStartNewMatch = onStartNewMatch,
-                    onHistory = onHistory,
-                    onDecks = onDecks,
-                )
+                homeHeroSection(state = heroState, actions = heroActions)
                 homeActionCard(
                     icon = Icons.Filled.PlayArrow,
                     title = stringResource(R.string.quick_play),
@@ -151,16 +168,7 @@ fun homeScreen(
             verticalArrangement = Arrangement.spacedBy(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            homeHeroSection(
-                gameState = gameState,
-                settings = settings,
-                decks = decks,
-                recentHistory = recentHistory,
-                onResumeMatch = onResumeMatch,
-                onStartNewMatch = onStartNewMatch,
-                onHistory = onHistory,
-                onDecks = onDecks,
-            )
+            homeHeroSection(state = heroState, actions = heroActions)
             homeActionCard(
                 icon = Icons.Filled.PlayArrow,
                 title = stringResource(R.string.quick_play),
@@ -199,15 +207,13 @@ fun homeScreen(
 
 @Composable
 private fun homeHeroSection(
-    gameState: GameState?,
-    settings: Settings,
-    decks: List<DeckEntity>,
-    recentHistory: List<TurnHistoryEntity>,
-    onResumeMatch: () -> Unit,
-    onStartNewMatch: () -> Unit,
-    onHistory: () -> Unit,
-    onDecks: () -> Unit,
+    state: HomeHeroState,
+    actions: HomeHeroActions,
 ) {
+    val gameState = state.gameState
+    val settings = state.settings
+    val decks = state.decks
+    val recentHistory = state.recentHistory
     val colors = MaterialTheme.colorScheme
     val contentColor = colors.onPrimaryContainer
     val gradient = remember(colors) {
@@ -335,7 +341,7 @@ private fun homeHeroSection(
                 favoriteDecksSection(
                     favorites = favoriteDecks,
                     extra = extraDecks,
-                    onDecks = onDecks,
+                    onDecks = actions.onDecks,
                     contentColor = contentColor,
                 )
                 recentHighlightSection(
@@ -348,13 +354,13 @@ private fun homeHeroSection(
                     if (showResume) {
                         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             Button(
-                                onClick = onResumeMatch,
+                                onClick = actions.onResumeMatch,
                                 modifier = Modifier.weight(1f),
                             ) {
                                 Text(stringResource(R.string.resume_match))
                             }
                             OutlinedButton(
-                                onClick = onStartNewMatch,
+                                onClick = actions.onStartNewMatch,
                                 modifier = Modifier.weight(1f),
                             ) {
                                 Text(stringResource(R.string.start_new_game))
@@ -362,14 +368,14 @@ private fun homeHeroSection(
                         }
                     } else {
                         Button(
-                            onClick = onStartNewMatch,
+                            onClick = actions.onStartNewMatch,
                             modifier = Modifier.fillMaxWidth(),
                         ) {
                             Text(stringResource(R.string.start_new_game))
                         }
                     }
                     TextButton(
-                        onClick = onHistory,
+                        onClick = actions.onHistory,
                         colors = ButtonDefaults.textButtonColors(contentColor = contentColor),
                     ) {
                         Text(stringResource(R.string.view_history))
