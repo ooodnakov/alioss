@@ -3,9 +3,9 @@ package com.example.alias.navigation
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
@@ -83,10 +83,16 @@ fun aliasNavHost(
                 engine?.let { gameEngine ->
                     gameScreen(viewModel, gameEngine, currentSettings)
                 } ?: Surface(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.surfaceVariant),
-                ) {}
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                ) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                }
             }
         }
         composable("decks") {
