@@ -217,6 +217,7 @@ private fun HomeHeroSection(
         )
     }
     val liveScores = when (gameState) {
+        is GameState.TurnPending -> gameState.scores
         is GameState.TurnFinished -> gameState.scores
         is GameState.MatchFinished -> gameState.scores
         else -> null

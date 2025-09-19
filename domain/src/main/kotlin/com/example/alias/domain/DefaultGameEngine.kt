@@ -132,7 +132,14 @@ class DefaultGameEngine(
             finishMatchLocked()
             return
         }
-        _state.update { GameState.TurnPending(teams[currentTeam]) }
+        val remainingToWin = (config.targetWords - correctTotal).coerceAtLeast(0)
+        _state.update {
+            GameState.TurnPending(
+                team = teams[currentTeam],
+                scores = scores.toMap(),
+                remainingToWin = remainingToWin,
+            )
+        }
     }
 
     private suspend fun startTurnLocked() {
