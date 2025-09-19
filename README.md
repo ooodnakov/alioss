@@ -162,6 +162,7 @@ Current repo has minimal tests; contributions welcome to expand coverage.
 
 
 ## Roadmap
+- v0.2: Revamped deck management with covers/filters, tabbed settings UI, richer turn summaries/history, and tightened match flow.
 - v0.1: Pass-and-play with bundled decks, timer, correct/skip, deterministic order.
 - v1.0: Deck manager (local import), NSFW toggle, language/difficulty mix, accessibility polish.
 - v1.1+: Allow-listed downloads, checksums/signatures, on-device stemming cache.
@@ -186,4 +187,3 @@ Current repo has minimal tests; contributions welcome to expand coverage.
 
 ## Acknowledgements
 Inspired by Alias-style gameplay. This project is not affiliated with or endorsed by the original trademark holders.
-
