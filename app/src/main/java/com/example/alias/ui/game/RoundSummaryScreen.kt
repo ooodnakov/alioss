@@ -246,10 +246,20 @@ private fun buildTurnSummaryStats(events: List<TimelineEvent>): TurnSummaryStats
             elapsedMillis = null,
         )
     }
-    val totalCorrect = events.count { it.type == TimelineSegmentType.CORRECT }
-    val totalSkipped = events.count { it.type == TimelineSegmentType.SKIP }
-    val totalPending = events.count { it.type == TimelineSegmentType.PENDING }
-    val bonusCount = events.count { it.isBonus }
+    var totalCorrect = 0
+    var totalSkipped = 0
+    var totalPending = 0
+    var bonusCount = 0
+    for (event in events) {
+        when (event.type) {
+            TimelineSegmentType.CORRECT -> totalCorrect++
+            TimelineSegmentType.SKIP -> totalSkipped++
+            TimelineSegmentType.PENDING -> totalPending++
+        }
+        if (event.isBonus) {
+            bonusCount++
+        }
+    }
     val elapsedMillis = events.last().elapsedMillis
     return TurnSummaryStats(
         totalCorrect = totalCorrect,
@@ -283,6 +293,11 @@ private fun TurnSummaryHeader(
 ) {
     val colors = MaterialTheme.colorScheme
     val onContainer = colors.onPrimaryContainer
+    val gradientBrush = remember(colors.primaryContainer, colors.tertiaryContainer) {
+        Brush.linearGradient(
+            colors = listOf(colors.primaryContainer, colors.tertiaryContainer)
+        )
+    }
     ElevatedCard(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(28.dp)
@@ -291,9 +306,7 @@ private fun TurnSummaryHeader(
             modifier = Modifier
                 .clip(RoundedCornerShape(28.dp))
                 .background(
-                    brush = Brush.linearGradient(
-                        colors = listOf(colors.primaryContainer, colors.tertiaryContainer)
-                    )
+                    brush = gradientBrush
                 )
         ) {
             Column(
