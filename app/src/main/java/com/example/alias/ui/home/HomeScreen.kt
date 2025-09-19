@@ -210,10 +210,7 @@ private fun homeHeroSection(
     state: HomeHeroState,
     actions: HomeHeroActions,
 ) {
-    val gameState = state.gameState
-    val settings = state.settings
-    val decks = state.decks
-    val recentHistory = state.recentHistory
+    val (gameState, settings, decks, recentHistory) = state
     val colors = MaterialTheme.colorScheme
     val contentColor = colors.onPrimaryContainer
     val gradient = remember(colors) {
