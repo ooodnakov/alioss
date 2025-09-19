@@ -210,4 +210,41 @@ class DefaultGameEngineTest {
             assertTrue(updated.outcomes[1].correct)
             assertEquals(2, updated.scores["Team"])
         }
+
+    @Test
+    fun `override crossing target updates match completion on next turn`() =
+        runTest {
+            val engine = DefaultGameEngine(listOf("a"), this)
+            val cfg = config.copy(targetWords = 1, maxSkips = 1, penaltyPerSkip = 1, roundSeconds = 5)
+
+            // Cross upward: override to reach the target and ensure nextTurn finishes the match.
+            engine.startMatch(cfg, teams = listOf("Team"), seed = 0L)
+
+            engine.startTurn()
+            engine.skip()
+            var finished = assertIs<GameState.TurnFinished>(engine.state.value)
+            assertFalse(finished.matchOver)
+
+            engine.overrideOutcome(0, true)
+            finished = assertIs<GameState.TurnFinished>(engine.state.value)
+            assertTrue(finished.matchOver)
+
+            engine.nextTurn()
+            assertIs<GameState.MatchFinished>(engine.state.value)
+
+            // Cross downward: drop below the target and ensure nextTurn reopens the match.
+            engine.startMatch(cfg, teams = listOf("Team"), seed = 1L)
+
+            engine.startTurn()
+            engine.correct()
+            finished = assertIs<GameState.TurnFinished>(engine.state.value)
+            assertTrue(finished.matchOver)
+
+            engine.overrideOutcome(0, false)
+            finished = assertIs<GameState.TurnFinished>(engine.state.value)
+            assertFalse(finished.matchOver)
+
+            engine.nextTurn()
+            assertIs<GameState.TurnPending>(engine.state.value)
+        }
 }

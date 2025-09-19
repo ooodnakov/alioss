@@ -123,7 +123,8 @@ class DefaultGameEngine(
             }
             outcomes[index] = item.copy(correct = correct, skipped = !correct)
             val nowMatchOver = correctTotal >= config.targetWords
-            _state.update { GameState.TurnFinished(team, turnScore, scores.toMap(), outcomes.toList(), nowMatchOver) }
+            matchOver = nowMatchOver
+            _state.update { GameState.TurnFinished(team, turnScore, scores.toMap(), outcomes.toList(), matchOver) }
         }
     }
 
