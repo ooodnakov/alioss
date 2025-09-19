@@ -64,6 +64,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -105,11 +107,10 @@ fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
     var sha by rememberSaveable { mutableStateOf("") }
     var newTrusted by rememberSaveable { mutableStateOf("") }
 
-    var difficultyRange by rememberSaveable(settings) {
-        mutableStateOf(
-            normalizeDifficultyRange(settings.minDifficulty, settings.maxDifficulty)
-        )
-    }
+    var minDifficulty by rememberSaveable(settings) { mutableStateOf(settings.minDifficulty) }
+    var maxDifficulty by rememberSaveable(settings) { mutableStateOf(settings.maxDifficulty) }
+    
+    val difficultyRange = normalizeDifficultyRange(minDifficulty, maxDifficulty)
     var selectedCategories by rememberSaveable(settings) { mutableStateOf(settings.selectedCategories) }
     var selectedWordClasses by rememberSaveable(settings) { mutableStateOf(settings.selectedWordClasses) }
 
@@ -130,7 +131,7 @@ fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
                 DeckSheet.FILTERS -> DeckFiltersSheet(
                     state = DeckFiltersSheetState(
                         difficulty = DifficultyFilterState(
-                            selectedLevels = difficultyRange.toDifficultyRange().toSet()
+                            selectedLevels = IntRange(minDifficulty, maxDifficulty).toSet()
                         ),
                         categories = FilterSelectionState(
                             available = availableCategories,
@@ -143,13 +144,15 @@ fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
                     ),
                     callbacks = DeckFiltersSheetCallbacks(
                         onDifficultyToggle = { level ->
-                            difficultyRange = adjustDifficultyRange(difficultyRange, level)
+                            val currentRange = IntRange(minDifficulty, maxDifficulty)
+                            val newRange = adjustDifficultyRange(currentRange, level)
+                            minDifficulty = newRange.first
+                            maxDifficulty = newRange.last
                         },
                         onCategoriesChange = { selectedCategories = it },
                         onWordClassesChange = { selectedWordClasses = it },
                         onApply = {
-                            val range = difficultyRange.toDifficultyRange()
-                            vm.updateDifficultyFilter(range.first, range.last)
+                            vm.updateDifficultyFilter(minDifficulty, maxDifficulty)
                             vm.updateCategoriesFilter(selectedCategories)
                             vm.updateWordClassesFilter(selectedWordClasses)
                             activeSheet = null
