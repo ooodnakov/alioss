@@ -48,6 +48,8 @@ sealed interface GameState {
     /** A team's turn is ready to start. */
     data class TurnPending(
         val team: String,
+        val scores: Map<String, Int>,
+        val remainingToWin: Int,
     ) : GameState
 
     /** A turn is active and [word] should be explained by [team]. */
