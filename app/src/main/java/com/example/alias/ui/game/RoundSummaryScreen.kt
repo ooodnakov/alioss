@@ -1,3 +1,5 @@
+@file:Suppress("FunctionNaming", "FunctionName")
+
 package com.example.alias.ui.game
 
 import androidx.compose.foundation.BorderStroke
@@ -19,7 +21,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -141,42 +142,41 @@ private fun TimelineCard(
                 )
             }
         } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxWidth(),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 16.dp),
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                item {
-                    Column(
-                        modifier = Modifier.padding(horizontal = 20.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        Text(
-                            stringResource(R.string.turn_timeline_title),
-                            style = MaterialTheme.typography.titleMedium,
-                        )
-                        Text(
-                            text = stringResource(R.string.timeline_score_breakdown),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = colors.onSurfaceVariant,
-                        )
-                        ScoreProgressGraph(
-                            events = timeline.events,
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                    }
+                Column(
+                    modifier = Modifier.padding(horizontal = 20.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Text(
+                        stringResource(R.string.turn_timeline_title),
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                    Text(
+                        text = stringResource(R.string.timeline_score_breakdown),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.onSurfaceVariant,
+                    )
+                    ScoreProgressGraph(
+                        events = timeline.events,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
                 }
                 timeline.segments.forEachIndexed { segmentIndex, segment ->
-                    item {
-                        TimelineSegmentHeader(
-                            segment = segment,
-                            modifier = Modifier.padding(horizontal = 20.dp),
-                            penaltyPerSkip = penaltyPerSkip,
-                        )
-                    }
-                    itemsIndexed(segment.events) { eventIndex, event ->
+                    TimelineSegmentHeader(
+                        segment = segment,
+                        modifier = Modifier.padding(horizontal = 20.dp),
+                        penaltyPerSkip = penaltyPerSkip,
+                    )
+                    segment.events.forEachIndexed { eventIndex, event ->
                         val hasPrev = segmentIndex > 0 || eventIndex > 0
-                        val hasNext = !(segmentIndex == timeline.segments.lastIndex && eventIndex == segment.events.lastIndex)
+                        val isLastSegment = segmentIndex == timeline.segments.lastIndex
+                        val isLastEventInSegment = eventIndex == segment.events.lastIndex
+                        val hasNext = !(isLastSegment && isLastEventInSegment)
                         TimelineEventRow(
                             event = event,
                             hasPrev = hasPrev,
