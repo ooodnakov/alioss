@@ -63,6 +63,7 @@ fun TutorialOverlay(
     verticalMode: Boolean,
     allowSkip: Boolean,
     onDismiss: () -> Unit,
+    cardBounds: Rect? = null,
     modifier: Modifier = Modifier,
 ) {
     val swipeInstructionsRes = if (allowSkip) {
@@ -107,7 +108,7 @@ fun TutorialOverlay(
     ) {
         BoxWithConstraints(Modifier.fillMaxSize()) {
             val containerSize = Size(constraints.maxWidth.toFloat(), constraints.maxHeight.toFloat())
-            val focusRect = step.focus.calculateRect(containerSize)
+            val focusRect = step.focus.calculateRect(containerSize, cardBounds)
             val density = LocalDensity.current
             val scrimColor = MaterialTheme.colorScheme.scrim.copy(alpha = 0.75f)
             Box(
@@ -258,18 +259,28 @@ private data class TutorialStep(
 )
 
 private sealed interface TutorialFocus {
-    fun calculateRect(containerSize: Size): Rect
+    fun calculateRect(containerSize: Size, cardBounds: Rect?): Rect
 
     object Card : TutorialFocus {
-        override fun calculateRect(containerSize: Size): Rect = containerSize.rectangle(
-            widthFraction = 0.78f,
-            heightFraction = 0.38f,
-            topFraction = 0.26f
-        )
+        override fun calculateRect(containerSize: Size, cardBounds: Rect?): Rect {
+            val measuredRect = cardBounds?.let { rect ->
+                val left = rect.left.coerceIn(0f, containerSize.width)
+                val top = rect.top.coerceIn(0f, containerSize.height)
+                val right = rect.right.coerceIn(left, containerSize.width)
+                val bottom = rect.bottom.coerceIn(top, containerSize.height)
+                Rect(left, top, right, bottom)
+            }
+            return measuredRect ?: containerSize.rectangle(
+                widthFraction = 0.78f,
+                heightFraction = 0.38f,
+                topFraction = 0.26f
+            )
+        }
     }
 
     object Status : TutorialFocus {
-        override fun calculateRect(containerSize: Size): Rect = containerSize.rectangle(
+        @Suppress("UNUSED_PARAMETER")
+        override fun calculateRect(containerSize: Size, cardBounds: Rect?): Rect = containerSize.rectangle(
             widthFraction = 0.9f,
             heightFraction = 0.2f,
             topFraction = 0.08f
@@ -277,7 +288,8 @@ private sealed interface TutorialFocus {
     }
 
     object Controls : TutorialFocus {
-        override fun calculateRect(containerSize: Size): Rect = containerSize.rectangle(
+        @Suppress("UNUSED_PARAMETER")
+        override fun calculateRect(containerSize: Size, cardBounds: Rect?): Rect = containerSize.rectangle(
             widthFraction = 0.9f,
             heightFraction = 0.22f,
             topFraction = 0.68f

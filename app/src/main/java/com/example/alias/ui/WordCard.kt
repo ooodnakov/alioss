@@ -9,8 +9,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -122,7 +122,6 @@ fun WordCard(
         modifier = modifier
             .then(if (testTag != null) Modifier.testTag(testTag) else Modifier)
             .fillMaxWidth()
-            .height(200.dp)
             .offset { IntOffset(currentX.roundToInt(), currentY.roundToInt()) }
             .graphicsLayer(rotationZ = if (verticalMode) 0f else currentX / ROTATION_DIVISOR)
             .scale(scale)
@@ -209,9 +208,7 @@ fun WordCard(
         shadowElevation = 10.dp
     ) {
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp),
+            modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
             Text(

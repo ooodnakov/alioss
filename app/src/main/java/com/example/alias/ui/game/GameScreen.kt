@@ -6,6 +6,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -38,8 +39,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
@@ -64,6 +68,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 private val LARGE_BUTTON_HEIGHT = 80.dp
+private const val CARD_ASPECT_RATIO = 1.8f
 private const val PRE_TURN_COUNTDOWN_SECONDS = 3
 private val TIMER_SAFE_COLOR = Color(0xFF4CAF50)
 private val TIMER_WARNING_COLOR = Color(0xFFFFC107)
@@ -91,6 +96,7 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
     val scope = rememberCoroutineScope()
     val showTutorialOnFirstTurn by vm.showTutorialOnFirstTurn.collectAsState()
     val seenTutorial = settings.seenTutorial
+    var cardBounds by remember { mutableStateOf<Rect?>(null) }
 
     LaunchedEffect(state) {
         if (showTutorialOnFirstTurn && state is GameState.TurnActive && !seenTutorial) {
@@ -98,6 +104,9 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
         } else if (showTutorialOnFirstTurn) {
             // Tutorial was dismissed or not first turn
             vm.dismissTutorialOnFirstTurn()
+        }
+        if (state !is GameState.TurnActive) {
+            cardBounds = null
         }
     }
 
@@ -110,6 +119,7 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
             onDismiss = {
                 vm.updateSeenTutorial(true)
             },
+            cardBounds = cardBounds,
             modifier = Modifier.zIndex(1f)
         )
     }
@@ -228,7 +238,14 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                 val nextWord = frozenNext ?: computedNext
                 val nextMeta = nextWord?.let { infoMap[it] }
                 val currentMeta = infoMap[s.word]
-                Box(Modifier.fillMaxWidth().height(200.dp)) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(CARD_ASPECT_RATIO)
+                        .onGloballyPositioned { coordinates ->
+                            cardBounds = coordinates.boundsInRoot()
+                        }
+                ) {
                     if (nextWord != null) {
                         WordCard(
                             word = nextWord,
@@ -251,7 +268,9 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                     }
                     WordCard(
                         word = s.word,
-                        modifier = Modifier.fillMaxSize().zIndex(1f),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .zIndex(1f),
                         enabled = true,
                         vibrator = vibrator,
                         hapticsEnabled = settings.hapticsEnabled,
