@@ -212,39 +212,67 @@ class DefaultGameEngineTest {
         }
 
     @Test
-    fun `override crossing target updates match completion on next turn`() =
+    fun `override to correct finishes match when crossing target`() =
         runTest {
             val engine = DefaultGameEngine(listOf("a"), this)
             val cfg = config.copy(targetWords = 1, maxSkips = 1, penaltyPerSkip = 1, roundSeconds = 5)
-
-            // Cross upward: override to reach the target and ensure nextTurn finishes the match.
             engine.startMatch(cfg, teams = listOf("Team"), seed = 0L)
 
             engine.startTurn()
             engine.skip()
-            var finished = assertIs<GameState.TurnFinished>(engine.state.value)
-            assertFalse(finished.matchOver)
+            val finishedAfterSkip = assertIs<GameState.TurnFinished>(engine.state.value)
+            assertFalse(finishedAfterSkip.matchOver)
 
             engine.overrideOutcome(0, true)
-            finished = assertIs<GameState.TurnFinished>(engine.state.value)
-            assertTrue(finished.matchOver)
+            val finishedAfterOverride = assertIs<GameState.TurnFinished>(engine.state.value)
+            assertTrue(finishedAfterOverride.matchOver)
 
             engine.nextTurn()
             assertIs<GameState.MatchFinished>(engine.state.value)
+        }
 
-            // Cross downward: drop below the target and ensure nextTurn reopens the match.
+    @Test
+    fun `override to incorrect reopens match when dropping below target`() =
+        runTest {
+            val engine = DefaultGameEngine(listOf("a"), this)
+            val cfg = config.copy(targetWords = 1, maxSkips = 1, penaltyPerSkip = 1, roundSeconds = 5)
             engine.startMatch(cfg, teams = listOf("Team"), seed = 1L)
 
             engine.startTurn()
             engine.correct()
-            finished = assertIs<GameState.TurnFinished>(engine.state.value)
-            assertTrue(finished.matchOver)
+            val finishedAfterCorrect = assertIs<GameState.TurnFinished>(engine.state.value)
+            assertTrue(finishedAfterCorrect.matchOver)
 
             engine.overrideOutcome(0, false)
-            finished = assertIs<GameState.TurnFinished>(engine.state.value)
-            assertFalse(finished.matchOver)
+            val finishedAfterOverride = assertIs<GameState.TurnFinished>(engine.state.value)
+            assertFalse(finishedAfterOverride.matchOver)
 
             engine.nextTurn()
             assertIs<GameState.TurnPending>(engine.state.value)
+        }
+
+    @Test
+    fun `override to incorrect preserves match completion when no words remain`() =
+        runTest {
+            val engine = DefaultGameEngine(listOf("a", "b"), this)
+            val cfg =
+                config.copy(targetWords = 2, maxSkips = 0, penaltyPerSkip = 0, roundSeconds = 1)
+            engine.startMatch(cfg, teams = listOf("Team"), seed = 0L)
+
+            engine.startTurn()
+            engine.correct() // consume first word
+            advanceTimeBy(cfg.roundSeconds * 1000L)
+            runCurrent()
+
+            val finishedAfterTimer = assertIs<GameState.TurnFinished>(engine.state.value)
+            assertTrue(finishedAfterTimer.matchOver)
+            assertTrue(finishedAfterTimer.outcomes.first().correct)
+
+            engine.overrideOutcome(0, false)
+            val finishedAfterOverride = assertIs<GameState.TurnFinished>(engine.state.value)
+            assertTrue(finishedAfterOverride.matchOver)
+
+            engine.nextTurn()
+            assertIs<GameState.MatchFinished>(engine.state.value)
         }
 }

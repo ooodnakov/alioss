@@ -118,12 +118,15 @@ class DefaultGameEngine(
             turnScore += change
             scores[team] = scores.getOrDefault(team, 0) + change
             // Update total correct words across the match based on override
+            val reachedTargetBeforeOverride = correctTotal >= config.targetWords
             if (item.correct != correct) {
                 if (correct) correctTotal++ else correctTotal--
             }
             outcomes[index] = item.copy(correct = correct, skipped = !correct)
             val nowMatchOver = correctTotal >= config.targetWords
-            matchOver = nowMatchOver
+            val preserveExistingCompletion =
+                current.matchOver && !reachedTargetBeforeOverride && queue.isEmpty()
+            matchOver = nowMatchOver || preserveExistingCompletion
             _state.update { GameState.TurnFinished(team, turnScore, scores.toMap(), outcomes.toList(), matchOver) }
         }
     }
