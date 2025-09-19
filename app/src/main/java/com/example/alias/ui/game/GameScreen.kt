@@ -90,12 +90,22 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
     }
     val state by engine.state.collectAsState()
     val scope = rememberCoroutineScope()
-    var showTutorial by rememberSaveable(settings.seenTutorial) { mutableStateOf(!settings.seenTutorial) }
-    if (showTutorial) {
+    val showTutorialOnFirstTurn by vm.showTutorialOnFirstTurn.collectAsState()
+    val seenTutorial by settings.seenTutorial
+    
+    LaunchedEffect(state) {
+        if (showTutorialOnFirstTurn && state is GameState.TurnActive && !seenTutorial) {
+            // First turn started, tutorial will show below
+        } else if (showTutorialOnFirstTurn) {
+            // Tutorial was dismissed or not first turn
+            vm.dismissTutorialOnFirstTurn()
+        }
+    }
+    
+    if (showTutorialOnFirstTurn && state is GameState.TurnActive && !seenTutorial) {
         TutorialOverlay(
             verticalMode = settings.verticalSwipes,
             onDismiss = {
-                showTutorial = false
                 vm.updateSeenTutorial(true)
             },
             modifier = Modifier.zIndex(1f)

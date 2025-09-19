@@ -516,7 +516,14 @@ class MainViewModel @Inject constructor(
         }
 
     fun updateSeenTutorial(value: Boolean) {
-        viewModelScope.launch { settingsRepository.updateSeenTutorial(value) }
+        viewModelScope.launch {
+            settingsRepository.updateSeenTutorial(value)
+            _showTutorialOnFirstTurn.value = false
+        }
+    }
+
+    fun dismissTutorialOnFirstTurn() {
+        _showTutorialOnFirstTurn.value = false
     }
 
     fun downloadPackFromUrl(url: String, expectedSha256: String?) {
