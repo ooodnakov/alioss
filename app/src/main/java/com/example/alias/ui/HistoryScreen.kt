@@ -22,6 +22,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.CardDefaults
@@ -31,6 +33,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -74,6 +77,7 @@ fun HistoryScreen(history: List<TurnHistoryEntity>) {
     var selectedTeam by rememberSaveable { mutableStateOf<String?>(null) }
     var selectedDifficulty by rememberSaveable { mutableStateOf<Int?>(null) }
     var selectedResult by rememberSaveable { mutableStateOf(ResultFilter.All) }
+    var headerExpanded by rememberSaveable { mutableStateOf(true) }
 
     val filtered = remember(sorted, selectedTeam, selectedDifficulty, selectedResult) {
         sorted.filter { entry ->
@@ -95,18 +99,45 @@ fun HistoryScreen(history: List<TurnHistoryEntity>) {
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Text(stringResource(R.string.title_history), style = MaterialTheme.typography.headlineSmall)
-        HistoryFilters(
-            teams = teams,
-            difficulties = difficulties,
-            selectedTeam = selectedTeam,
-            onTeamSelected = { selectedTeam = it },
-            selectedDifficulty = selectedDifficulty,
-            onDifficultySelected = { selectedDifficulty = it },
-            selectedResult = selectedResult,
-            onResultSelected = { selectedResult = it },
-        )
-        HistoryPerformanceSection(history = sorted)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(stringResource(R.string.title_history), style = MaterialTheme.typography.headlineSmall)
+            TextButton(onClick = { headerExpanded = !headerExpanded }) {
+                val toggleLabel = stringResource(
+                    if (headerExpanded) {
+                        R.string.history_hide_header
+                    } else {
+                        R.string.history_show_header
+                    },
+                )
+                Text(toggleLabel)
+                Spacer(Modifier.width(4.dp))
+                Icon(
+                    imageVector = if (headerExpanded) {
+                        Icons.Filled.KeyboardArrowUp
+                    } else {
+                        Icons.Filled.KeyboardArrowDown
+                    },
+                    contentDescription = toggleLabel,
+                )
+            }
+        }
+        if (headerExpanded) {
+            HistoryFilters(
+                teams = teams,
+                difficulties = difficulties,
+                selectedTeam = selectedTeam,
+                onTeamSelected = { selectedTeam = it },
+                selectedDifficulty = selectedDifficulty,
+                onDifficultySelected = { selectedDifficulty = it },
+                selectedResult = selectedResult,
+                onResultSelected = { selectedResult = it },
+            )
+            HistoryPerformanceSection(history = sorted)
+        }
         HorizontalDivider()
         Row(
             modifier = Modifier.fillMaxWidth(),
