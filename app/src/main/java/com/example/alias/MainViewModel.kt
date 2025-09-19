@@ -270,15 +270,20 @@ class MainViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
+            Log.e(TAG, "Starting MainViewModel init block")
             val initial = withContext(Dispatchers.IO) {
+                Log.e(TAG, "Entering IO dispatcher for bundled deck import")
                 // Import bundled JSON decks from assets/decks/ when changed (by checksum) or on first run
                 val assetFiles = context.assets.list("decks")?.filter { it.endsWith(".json") } ?: emptyList()
+                Log.e(TAG, "Found ${assetFiles.size} asset files: $assetFiles")
                 val prev = settingsRepository.readBundledDeckHashes()
+                Log.e(TAG, "Previous bundled deck hashes: $prev")
                 val digest = java.security.MessageDigest.getInstance("SHA-256")
                 fun sha256(bytes: ByteArray): String = digest.digest(bytes).joinToString("") { b -> "%02x".format(b) }
                 val currentEntries = mutableSetOf<String>()
                 val toImport = mutableListOf<String>()
                 for (f in assetFiles) {
+                    Log.e(TAG, "Processing asset file: $f")
                     val bytes = runCatching { context.assets.open("decks/$f").use { it.readBytes() } }.getOrNull()
                     if (bytes != null) {
                         val h = sha256(bytes)
@@ -287,25 +292,36 @@ class MainViewModel @Inject constructor(
                         if (prev.none { it.startsWith("$f:") } || !prev.contains(entry)) {
                             toImport += f
                         }
+                        Log.e(TAG, "Hash for $f: $h, toImport: ${toImport.size} files")
+                    } else {
+                        Log.e(TAG, "Failed to read bytes for $f")
                     }
                 }
                 if (prev.isEmpty() && currentEntries.isEmpty()) {
                     // No bundled content found; nothing to import
+                    Log.e(TAG, "No bundled content found")
                 } else if (prev.isEmpty() && currentEntries.isNotEmpty()) {
                     // First run: import all
                     toImport.clear()
                     toImport.addAll(assetFiles)
+                    Log.e(TAG, "First run: importing all ${assetFiles.size} files")
                 }
                 val hadDecks = deckRepository.getDecks().first().isNotEmpty()
+                Log.e(TAG, "Had decks before import: $hadDecks")
                 if (!hadDecks && assetFiles.isNotEmpty()) {
                     toImport.clear()
                     toImport.addAll(assetFiles)
+                    Log.e(TAG, "No decks found, forcing import of all files")
                 }
                 for (f in toImport) {
                     try {
+                        Log.e(TAG, "Importing bundled deck: $f")
                         val content = context.assets.open("decks/$f").bufferedReader().use { it.readText() }
+                        Log.e(TAG, "Read content for $f, length: ${content.length}")
                         val (sanitizedPack, coverError) = parseAndSanitizePack(content)
+                        Log.e(TAG, "Parsed and sanitized pack for $f, coverError: ${coverError != null}")
                         deckRepository.importPack(sanitizedPack)
+                        Log.e(TAG, "Successfully imported pack for $f")
                         if (coverError != null) {
                             Log.w(TAG, "Bundled deck $f cover art discarded due to decode failure", coverError)
                         }
@@ -314,37 +330,49 @@ class MainViewModel @Inject constructor(
                     }
                 }
                 // Persist current checksums if any
-                runCatching { settingsRepository.writeBundledDeckHashes(currentEntries) }
+                runCatching {
+                    settingsRepository.writeBundledDeckHashes(currentEntries)
+                    Log.e(TAG, "Persisted bundled deck hashes: $currentEntries")
+                }
                 // Resolve enabled deck ids; if none set, pick available decks matching language preference
                 val baseSettings = settingsRepository.settings.first()
+                Log.e(TAG, "Base settings: ${baseSettings.enabledDeckIds.size} enabled decks")
                 val allDecks = deckRepository.getDecks().first()
+                Log.e(TAG, "All decks after import: ${allDecks.size}")
                 val preferredIds = allDecks.filter { it.language == baseSettings.languagePreference }.map { it.id }.toSet()
                 val fallbackIds = allDecks.map { it.id }.toSet()
                 val resolvedEnabled = if (baseSettings.enabledDeckIds.isEmpty()) {
                     if (preferredIds.isNotEmpty()) preferredIds else fallbackIds
                 } else baseSettings.enabledDeckIds
+                Log.e(TAG, "Resolved enabled decks: ${resolvedEnabled.size} ids")
                 if (baseSettings.enabledDeckIds.isEmpty()) {
                     try {
                         settingsRepository.setEnabledDeckIds(resolvedEnabled)
+                        Log.e(TAG, "Set enabled deck ids: $resolvedEnabled")
                     } catch (t: Throwable) {
                         Log.e(TAG, "Failed to persist enabled deck ids", t)
                     }
                 }
                 // Fetch words for enabled decks in preferred language
                 val filters = baseSettings.toWordQueryFilters(resolvedEnabled)
+                Log.e(TAG, "Word query filters: decks=${filters.deckIds.size}, lang=${filters.language}")
                 val words = loadWords(filters)
+                Log.e(TAG, "Loaded ${words.size} words")
                 InitialLoadResult(
                     words = words,
                     settings = baseSettings.copy(enabledDeckIds = resolvedEnabled)
                 )
             }
+            Log.e(TAG, "Finished IO dispatcher, preparing word metadata")
             // Also prepare word metadata and supporting filters for the same snapshot
             withContext(Dispatchers.IO) {
                 val filters = initial.settings.toWordQueryFilters()
+                Log.e(TAG, "Preparing metadata for filters: decks=${filters.deckIds.size}")
                 if (filters.deckIds.isEmpty()) {
                     _wordInfo.value = emptyMap()
                     _availableCategories.value = emptyList()
                     _availableWordClasses.value = emptyList()
+                    Log.e(TAG, "Empty deck ids, clearing metadata")
                 } else {
                     coroutineScope {
                         val briefsDeferred = async {
@@ -369,6 +397,7 @@ class MainViewModel @Inject constructor(
                         val briefs = briefsDeferred.await()
                         val categories = categoriesDeferred.await().sorted()
                         val classes = classesDeferred.await()
+                        Log.e(TAG, "Metadata: ${briefs.size} briefs, ${categories.size} categories, ${classes.size} classes")
                         val map = briefs.associateBy({ it.text }) {
                             WordInfo(it.difficulty, it.category, parseClass(it.wordClass))
                         }
@@ -378,8 +407,10 @@ class MainViewModel @Inject constructor(
                     }
                 }
             }
+            Log.e(TAG, "Creating GameEngine with ${initial.words.size} words")
             val e = DefaultGameEngine(initial.words, viewModelScope)
             _engine.value = e
+            Log.e(TAG, "GameEngine created successfully")
             val config = MatchConfig(
                 targetWords = initial.settings.targetWords,
                 maxSkips = initial.settings.maxSkips,
@@ -387,7 +418,9 @@ class MainViewModel @Inject constructor(
                 roundSeconds = initial.settings.roundSeconds
             )
             val seed = java.security.SecureRandom().nextLong()
+            Log.e(TAG, "Starting match with config: targetWords=${config.targetWords}, maxSkips=${config.maxSkips}")
             e.startMatch(config, teams = initial.settings.teams, seed = seed)
+            Log.e(TAG, "Match started, MainViewModel init complete")
         }
 
         viewModelScope.launch {
