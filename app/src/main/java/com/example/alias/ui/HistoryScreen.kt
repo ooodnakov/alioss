@@ -93,7 +93,7 @@ fun HistoryScreen(history: List<TurnHistoryEntity>) {
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Text(stringResource(R.string.title_history), style = MaterialTheme.typography.headlineSmall)
         HistoryFilters(
@@ -104,20 +104,20 @@ fun HistoryScreen(history: List<TurnHistoryEntity>) {
             selectedDifficulty = selectedDifficulty,
             onDifficultySelected = { selectedDifficulty = it },
             selectedResult = selectedResult,
-            onResultSelected = { selectedResult = it }
+            onResultSelected = { selectedResult = it },
         )
         HistoryPerformanceSection(history = sorted)
         HorizontalDivider()
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(stringResource(R.string.history_section_recent_turns), style = MaterialTheme.typography.titleMedium)
             Text(
                 text = stringResource(R.string.history_recent_count, filtered.size, sorted.size),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
         if (filtered.isEmpty()) {
@@ -125,17 +125,17 @@ fun HistoryScreen(history: List<TurnHistoryEntity>) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.Center,
             ) {
                 Text(
                     stringResource(R.string.history_no_entries_for_filters),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         } else {
             LazyColumn(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 items(filtered) { entry ->
                     HistoryEntryCard(entry = entry)
@@ -162,23 +162,23 @@ private fun HistoryFilters(
             Text(
                 stringResource(R.string.history_filter_team),
                 style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
             )
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 FilterChip(
                     selected = selectedTeam == null,
                     onClick = { onTeamSelected(null) },
-                    label = { Text(stringResource(R.string.history_filter_all_teams)) }
+                    label = { Text(stringResource(R.string.history_filter_all_teams)) },
                 )
                 teams.forEach { team ->
                     val selected = selectedTeam == team
                     FilterChip(
                         selected = selected,
                         onClick = { onTeamSelected(if (selected) null else team) },
-                        label = { Text(team) }
+                        label = { Text(team) },
                     )
                 }
             }
@@ -187,16 +187,16 @@ private fun HistoryFilters(
             Text(
                 stringResource(R.string.history_filter_difficulty),
                 style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
             )
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 FilterChip(
                     selected = selectedDifficulty == null,
                     onClick = { onDifficultySelected(null) },
-                    label = { Text(stringResource(R.string.history_filter_all_difficulties)) }
+                    label = { Text(stringResource(R.string.history_filter_all_difficulties)) },
                 )
                 if (difficulties.isEmpty()) {
                     AssistChip(
@@ -204,9 +204,9 @@ private fun HistoryFilters(
                         enabled = false,
                         colors = AssistChipDefaults.assistChipColors(
                             disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                            disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                            disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
                         ),
-                        label = { Text(stringResource(R.string.history_filter_unknown_difficulty)) }
+                        label = { Text(stringResource(R.string.history_filter_unknown_difficulty)) },
                     )
                 } else {
                     difficulties.forEach { level ->
@@ -214,7 +214,7 @@ private fun HistoryFilters(
                         FilterChip(
                             selected = selected,
                             onClick = { onDifficultySelected(if (selected) null else level) },
-                            label = { Text(stringResource(R.string.word_difficulty_value, level)) }
+                            label = { Text(stringResource(R.string.word_difficulty_value, level)) },
                         )
                     }
                 }
@@ -224,17 +224,17 @@ private fun HistoryFilters(
             Text(
                 stringResource(R.string.history_filter_result),
                 style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
             )
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 ResultFilter.values().forEach { filter ->
                     FilterChip(
                         selected = selectedResult == filter,
                         onClick = { onResultSelected(filter) },
-                        label = { Text(stringResource(filter.labelRes)) }
+                        label = { Text(stringResource(filter.labelRes)) },
                     )
                 }
             }
@@ -277,19 +277,19 @@ private fun HistoryPerformanceCard(team: String, entries: List<TurnHistoryEntity
     ElevatedCard(modifier = Modifier.width(220.dp)) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Text(team, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             Text(
                 text = stringResource(R.string.history_performance_summary, correct, total, percent),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Sparkline(
                 values = sparkValues,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp)
+                    .height(56.dp),
             )
         }
     }
@@ -304,7 +304,7 @@ private fun Sparkline(values: List<Float>, modifier: Modifier = Modifier) {
             color = baseline,
             start = Offset(0f, size.height),
             end = Offset(size.width, size.height),
-            strokeWidth = 2f
+            strokeWidth = 2f,
         )
         if (values.isEmpty()) {
             return@Canvas
@@ -329,7 +329,7 @@ private fun Sparkline(values: List<Float>, modifier: Modifier = Modifier) {
         drawPath(
             path = path,
             color = color,
-            style = Stroke(width = SPARKLINE_STROKE_WIDTH, cap = StrokeCap.Round, join = StrokeJoin.Round)
+            style = Stroke(width = SPARKLINE_STROKE_WIDTH, cap = StrokeCap.Round, join = StrokeJoin.Round),
         )
     }
 }
@@ -342,31 +342,31 @@ private fun HistoryEntryCard(entry: TurnHistoryEntity) {
             icon = Icons.Filled.Check,
             container = MaterialTheme.colorScheme.tertiaryContainer,
             content = MaterialTheme.colorScheme.onTertiaryContainer,
-            labelRes = R.string.history_result_correct
+            labelRes = R.string.history_result_correct,
         )
         entry.skipped -> ResultVisuals(
             icon = Icons.Filled.Close,
             container = MaterialTheme.colorScheme.errorContainer,
             content = MaterialTheme.colorScheme.onErrorContainer,
-            labelRes = R.string.history_result_skipped
+            labelRes = R.string.history_result_skipped,
         )
         else -> ResultVisuals(
             icon = Icons.Filled.Close,
             container = MaterialTheme.colorScheme.secondaryContainer,
             content = MaterialTheme.colorScheme.onSecondaryContainer,
-            labelRes = R.string.history_result_missed
+            labelRes = R.string.history_result_missed,
         )
     }
     val relativeTime = remember(entry.timestamp) {
         DateUtils.getRelativeTimeSpanString(
             entry.timestamp,
             System.currentTimeMillis(),
-            DateUtils.MINUTE_IN_MILLIS
+            DateUtils.MINUTE_IN_MILLIS,
         ).toString()
     }
     val chipColors = AssistChipDefaults.assistChipColors(
         disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-        disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
+        disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
     )
 
     ElevatedCard {
@@ -374,13 +374,13 @@ private fun HistoryEntryCard(entry: TurnHistoryEntity) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            verticalAlignment = Alignment.Top
+            verticalAlignment = Alignment.Top,
         ) {
             Box(
                 modifier = Modifier
                     .size(48.dp)
                     .padding(top = 4.dp),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.Center,
             ) {
                 ElevatedCard(colors = CardDefaults.elevatedCardColors(containerColor = visuals.container)) {
                     Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
@@ -391,17 +391,17 @@ private fun HistoryEntryCard(entry: TurnHistoryEntity) {
             Spacer(Modifier.width(16.dp))
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Text(entry.word, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                 Text(
                     relativeTime,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     AssistChip(onClick = {}, enabled = false, colors = chipColors, label = { Text(entry.team) })
                     val difficultyLabel = entry.difficulty?.let { stringResource(R.string.word_difficulty_value, it) }
@@ -411,7 +411,7 @@ private fun HistoryEntryCard(entry: TurnHistoryEntity) {
                         onClick = {},
                         enabled = false,
                         colors = chipColors,
-                        label = { Text(stringResource(visuals.labelRes)) }
+                        label = { Text(stringResource(visuals.labelRes)) },
                     )
                 }
             }

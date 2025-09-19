@@ -6,10 +6,10 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -120,7 +120,7 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                 vm.updateSeenTutorial(true)
             },
             cardBounds = cardBounds,
-            modifier = Modifier.zIndex(1f)
+            modifier = Modifier.zIndex(1f),
         )
     }
     when (val s = state) {
@@ -132,14 +132,14 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
             }
             Box(
                 modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.Center,
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(24.dp)
                         .zIndex(0f),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                         Column(
@@ -147,7 +147,7 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                                 .padding(horizontal = 24.dp, vertical = 32.dp)
                                 .fillMaxWidth(),
                             verticalArrangement = Arrangement.spacedBy(16.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
+                            horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
                             Text(
                                 text = stringResource(R.string.next_team),
@@ -166,7 +166,7 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                                 text = pluralStringResource(
                                     R.plurals.turn_pending_status,
                                     s.remainingToWin,
-                                    s.remainingToWin
+                                    s.remainingToWin,
                                 ),
                                 style = MaterialTheme.typography.bodyMedium,
                                 textAlign = TextAlign.Center,
@@ -185,7 +185,7 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                                 enabled = !countdownState.isRunning,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(LARGE_BUTTON_HEIGHT)
+                                    .height(LARGE_BUTTON_HEIGHT),
                             ) {
                                 Icon(Icons.Filled.PlayArrow, contentDescription = null)
                                 Spacer(Modifier.width(8.dp))
@@ -199,7 +199,7 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                         value = value,
                         modifier = Modifier
                             .fillMaxSize()
-                            .zIndex(1f)
+                            .zIndex(1f),
                     )
                 }
             }
@@ -244,7 +244,7 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                         .aspectRatio(CARD_ASPECT_RATIO)
                         .onGloballyPositioned { coordinates ->
                             cardBounds = coordinates.boundsInRoot()
-                        }
+                        },
                 ) {
                     if (nextWord != null) {
                         WordCard(
@@ -287,7 +287,7 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                                     if (settings.soundEnabled) {
                                         tone.startTone(
                                             android.media.ToneGenerator.TONE_PROP_ACK,
-                                            100
+                                            100,
                                         )
                                     }
                                     scope.launch {
@@ -300,14 +300,16 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                                         if (settings.soundEnabled) {
                                             tone.startTone(
                                                 android.media.ToneGenerator.TONE_PROP_NACK,
-                                                100
+                                                100,
                                             )
                                         }
                                         scope.launch {
                                             engine.skip()
                                             isProcessing = false
                                         }
-                                    } else { isProcessing = false }
+                                    } else {
+                                        isProcessing = false
+                                    }
                                 }
                             }
                         },
@@ -325,31 +327,31 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                     pluralStringResource(
                         R.plurals.time_remaining_seconds,
                         s.timeRemaining,
-                        s.timeRemaining
+                        s.timeRemaining,
                     ),
                     style = MaterialTheme.typography.headlineLarge,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
                 )
                 Text(stringResource(R.string.team_label, s.team), style = MaterialTheme.typography.titleMedium)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     AssistChip(
                         onClick = {},
                         enabled = false,
-                        label = { Text(stringResource(R.string.remaining_label, s.remaining)) }
+                        label = { Text(stringResource(R.string.remaining_label, s.remaining)) },
                     )
                     AssistChip(
                         onClick = {},
                         enabled = false,
-                        label = { Text(pluralStringResource(R.plurals.score_label, s.score, s.score)) }
+                        label = { Text(pluralStringResource(R.plurals.score_label, s.score, s.score)) },
                     )
                     AssistChip(
                         onClick = {},
                         enabled = false,
                         label = {
                             Text(
-                                pluralStringResource(R.plurals.skips_label, s.skipsRemaining, s.skipsRemaining)
+                                pluralStringResource(R.plurals.skips_label, s.skipsRemaining, s.skipsRemaining),
                             )
-                        }
+                        },
                     )
                 }
                 Text(stringResource(R.string.summary_label, s.remaining, s.score, s.skipsRemaining))
@@ -360,13 +362,13 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                     LinearProgressIndicator(
                         progress = { progress },
                         color = barColor,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
                     )
                     Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                         Column(
                             Modifier.weight(1f),
                             verticalArrangement = Arrangement.spacedBy(12.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
+                            horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
                             Controls()
                             val onCorrect = {
@@ -395,11 +397,11 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                                 Button(
                                     onClick = onCorrect,
                                     enabled = !isProcessing,
-                                    modifier = Modifier.weight(1f).height(60.dp)
+                                    modifier = Modifier.weight(1f).height(60.dp),
                                 ) {
                                     Icon(
                                         Icons.Filled.Check,
-                                        contentDescription = null
+                                        contentDescription = null,
                                     )
                                     Spacer(Modifier.width(8.dp))
                                     Text(stringResource(R.string.correct))
@@ -407,11 +409,11 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                                 Button(
                                     onClick = onSkip,
                                     enabled = !isProcessing && s.skipsRemaining > 0,
-                                    modifier = Modifier.weight(1f).height(60.dp)
+                                    modifier = Modifier.weight(1f).height(60.dp),
                                 ) {
                                     Icon(
                                         Icons.Filled.Close,
-                                        contentDescription = null
+                                        contentDescription = null,
                                     )
                                     Spacer(Modifier.width(8.dp))
                                     Text(stringResource(R.string.skip))
@@ -419,13 +421,13 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                             }
                             Button(
                                 onClick = { vm.restartMatch() },
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier.fillMaxWidth(),
                             ) { Text(stringResource(R.string.restart_match)) }
                         }
                         Column(
                             Modifier.weight(1f),
                             verticalArrangement = Arrangement.Center,
-                            horizontalAlignment = Alignment.CenterHorizontally
+                            horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
                             CardStack()
                         }
@@ -435,12 +437,12 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                 Column(
                     modifier = Modifier.fillMaxSize().padding(24.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     LinearProgressIndicator(
                         progress = { progress },
                         color = barColor,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
                     )
                     Controls()
                     CardStack()
@@ -471,11 +473,11 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                             Button(
                                 onClick = onSkip,
                                 enabled = !isProcessing && s.skipsRemaining > 0,
-                                modifier = Modifier.weight(1f).height(60.dp)
+                                modifier = Modifier.weight(1f).height(60.dp),
                             ) {
                                 Icon(
                                     Icons.Filled.Close,
-                                    contentDescription = null
+                                    contentDescription = null,
                                 )
                                 Spacer(Modifier.width(8.dp))
                                 Text(stringResource(R.string.skip))
@@ -483,11 +485,11 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                             Button(
                                 onClick = onCorrect,
                                 enabled = !isProcessing,
-                                modifier = Modifier.weight(1f).height(60.dp)
+                                modifier = Modifier.weight(1f).height(60.dp),
                             ) {
                                 Icon(
                                     Icons.Filled.Check,
-                                    contentDescription = null
+                                    contentDescription = null,
                                 )
                                 Spacer(Modifier.width(8.dp))
                                 Text(stringResource(R.string.correct))
@@ -511,7 +513,7 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
             Column(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text("🎉 Match over 🎉", style = MaterialTheme.typography.headlineSmall)
                 Scoreboard(s.scores)
@@ -535,7 +537,7 @@ private fun rememberCountdownState(scope: CoroutineScope): CountdownState {
 
 @Stable
 private class CountdownState(
-    private val coroutineScope: CoroutineScope
+    private val coroutineScope: CoroutineScope,
 ) {
     var value by mutableStateOf<Int?>(null)
         private set
@@ -547,7 +549,7 @@ private class CountdownState(
 
     fun start(
         durationSeconds: Int = PRE_TURN_COUNTDOWN_SECONDS,
-        onFinished: () -> Unit
+        onFinished: () -> Unit,
     ) {
         if (isRunning) return
         isRunning = true

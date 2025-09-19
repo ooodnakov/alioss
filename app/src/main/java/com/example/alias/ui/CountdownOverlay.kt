@@ -85,18 +85,18 @@ fun CountdownOverlay(
                     Modifier.clickable(
                         interactionSource = interaction,
                         indication = null,
-                        onClick = {}
+                        onClick = {},
                     )
                 } else {
                     Modifier
-                }
+                },
             )
             // Screen reader announces each tick.
             .semantics {
                 contentDescription = announcement
                 liveRegion = LiveRegionMode.Assertive
             },
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
     ) {
         AnimatedContent(
             targetState = value,
@@ -107,24 +107,24 @@ fun CountdownOverlay(
                         initialScale = 0.6f,
                         animationSpec = spring(
                             stiffness = Spring.StiffnessLow,
-                            dampingRatio = Spring.DampingRatioMediumBouncy
-                        )
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                        ),
                     ) + fadeIn()
                     ) togetherWith
                     (
                         scaleOut(
                             targetScale = 1.1f,
-                            animationSpec = tween(200, easing = LinearOutSlowInEasing)
+                            animationSpec = tween(200, easing = LinearOutSlowInEasing),
                         ) + fadeOut(tween(150))
                         )
             },
-            label = "countdown"
+            label = "countdown",
         ) { number ->
             Text(
                 text = number.toString(),
                 style = textStyle,
                 color = textColor,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
             )
         }
     }

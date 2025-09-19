@@ -31,7 +31,7 @@ class PackDownloader(
     suspend fun download(
         url: String,
         expectedSha256: String? = null,
-        onProgress: (bytesRead: Long, totalBytes: Long?) -> Unit = { _, _ -> }
+        onProgress: (bytesRead: Long, totalBytes: Long?) -> Unit = { _, _ -> },
     ): ByteArray {
         val httpUrl = url.toHttpUrlOrNull() ?: error("Invalid URL")
         require(httpUrl.isHttps) { "TLS required" }

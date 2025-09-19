@@ -163,7 +163,7 @@ fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () -> Unit) {
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Text(stringResource(R.string.title_settings), style = MaterialTheme.typography.headlineSmall)
         TabRow(selectedTabIndex = pagerState.currentPage) {
@@ -176,14 +176,14 @@ fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () -> Unit) {
                             pagerState.animateScrollToPage(index)
                         }
                     },
-                    text = { Text(stringResource(tab.titleRes)) }
+                    text = { Text(stringResource(tab.titleRes)) },
                 )
             }
         }
         Box(modifier = Modifier.weight(1f)) {
             HorizontalPager(
                 state = pagerState,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
             ) { page ->
                 when (SettingsTab.values()[page]) {
                     SettingsTab.MATCH_RULES -> MatchRulesTab(
@@ -196,7 +196,7 @@ fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () -> Unit) {
                         penalty = penalty,
                         onPenaltyChange = { penalty = it },
                         punishSkips = punishSkips,
-                        onPunishSkipsChange = { punishSkips = it }
+                        onPunishSkipsChange = { punishSkips = it },
                     )
 
                     SettingsTab.INPUT_FEEDBACK -> InputFeedbackTab(
@@ -209,7 +209,7 @@ fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () -> Unit) {
                         verticalSwipes = verticalSwipes,
                         onVerticalSwipesChange = { verticalSwipes = it },
                         orientation = orientation,
-                        onOrientationChange = { orientation = it }
+                        onOrientationChange = { orientation = it },
                     )
 
                     SettingsTab.TEAMS -> TeamsTab(
@@ -251,7 +251,7 @@ fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () -> Unit) {
                                     }
                                 }
                             }
-                        }
+                        },
                     )
 
                     SettingsTab.ADVANCED -> AdvancedTab(
@@ -263,14 +263,14 @@ fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () -> Unit) {
                         onAllowNsfwChange = { nsfw = it },
                         onShowTutorialAgain = { vm.updateSeenTutorial(false) },
                         onAbout = onAbout,
-                        onReset = { showResetDialog = true }
+                        onReset = { showResetDialog = true },
                     )
                 }
             }
         }
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Button(onClick = { applySettings() }, enabled = canSave, modifier = Modifier.weight(1f)) {
                 Text(stringResource(R.string.save_label))
@@ -284,7 +284,7 @@ fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () -> Unit) {
                     }
                 },
                 enabled = canSave,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
             ) {
                 Text(stringResource(R.string.save_and_restart_label))
             }
@@ -299,7 +299,7 @@ private enum class SettingsTab(@StringRes val titleRes: Int) {
     MATCH_RULES(R.string.match_rules_tab),
     INPUT_FEEDBACK(R.string.input_feedback_tab),
     TEAMS(R.string.teams_tab),
-    ADVANCED(R.string.advanced_tab)
+    ADVANCED(R.string.advanced_tab),
 }
 
 private data class TeamEditorEntry(val id: Long, val name: String)
@@ -313,7 +313,7 @@ private val TeamEditorEntryStateSaver = listSaver<MutableState<List<TeamEditorEn
             TeamEditorEntry(id, name)
         }
         mutableStateOf(entries)
-    }
+    },
 )
 
 @Composable
@@ -332,7 +332,7 @@ private fun MatchRulesTab(
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(16.dp),
-        contentPadding = PaddingValues(bottom = 16.dp)
+        contentPadding = PaddingValues(bottom = 16.dp),
     ) {
         item {
             ElevatedCard(Modifier.fillMaxWidth()) {
@@ -344,7 +344,7 @@ private fun MatchRulesTab(
                         label = { Text(stringResource(R.string.round_seconds_label)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     )
                     OutlinedTextField(
                         value = target,
@@ -352,7 +352,7 @@ private fun MatchRulesTab(
                         label = { Text(stringResource(R.string.target_words_label)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     )
                 }
             }
@@ -368,7 +368,7 @@ private fun MatchRulesTab(
                             label = { Text(stringResource(R.string.max_skips_label)) },
                             modifier = Modifier.weight(1f),
                             singleLine = true,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         )
                         OutlinedTextField(
                             value = penalty,
@@ -376,7 +376,7 @@ private fun MatchRulesTab(
                             label = { Text(stringResource(R.string.penalty_per_skip_label)) },
                             modifier = Modifier.weight(1f),
                             singleLine = true,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         )
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -406,7 +406,7 @@ private fun InputFeedbackTab(
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(16.dp),
-        contentPadding = PaddingValues(bottom = 16.dp)
+        contentPadding = PaddingValues(bottom = 16.dp),
     ) {
         item {
             ElevatedCard(Modifier.fillMaxWidth()) {
@@ -415,22 +415,22 @@ private fun InputFeedbackTab(
                     SettingsToggleRow(
                         label = stringResource(R.string.haptics_label),
                         checked = haptics,
-                        onCheckedChange = onHapticsChange
+                        onCheckedChange = onHapticsChange,
                     )
                     SettingsToggleRow(
                         label = stringResource(R.string.sound_effects_label),
                         checked = sound,
-                        onCheckedChange = onSoundChange
+                        onCheckedChange = onSoundChange,
                     )
                     SettingsToggleRow(
                         label = stringResource(R.string.one_hand_layout_label),
                         checked = oneHand,
-                        onCheckedChange = onOneHandChange
+                        onCheckedChange = onOneHandChange,
                     )
                     SettingsToggleRow(
                         label = stringResource(R.string.vertical_swipes_label),
                         checked = verticalSwipes,
-                        onCheckedChange = onVerticalSwipesChange
+                        onCheckedChange = onVerticalSwipesChange,
                     )
                 }
             }
@@ -442,25 +442,25 @@ private fun InputFeedbackTab(
                     FlowRow(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         OrientationChip(
                             selected = orientation == "system",
                             label = stringResource(R.string.auto_label),
                             icon = Icons.Filled.ScreenRotation,
-                            onClick = { onOrientationChange("system") }
+                            onClick = { onOrientationChange("system") },
                         )
                         OrientationChip(
                             selected = orientation == "portrait",
                             label = stringResource(R.string.portrait_label),
                             icon = Icons.Filled.ScreenLockPortrait,
-                            onClick = { onOrientationChange("portrait") }
+                            onClick = { onOrientationChange("portrait") },
                         )
                         OrientationChip(
                             selected = orientation == "landscape",
                             label = stringResource(R.string.landscape_label),
                             icon = Icons.Filled.ScreenLockLandscape,
-                            onClick = { onOrientationChange("landscape") }
+                            onClick = { onOrientationChange("landscape") },
                         )
                     }
                 }
@@ -492,7 +492,7 @@ private fun OrientationChip(
         selected = selected,
         onClick = onClick,
         label = { Text(label) },
-        leadingIcon = { Icon(icon, contentDescription = null) }
+        leadingIcon = { Icon(icon, contentDescription = null) },
     )
 }
 
@@ -516,7 +516,7 @@ private fun TeamsTab(
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(16.dp),
-        contentPadding = PaddingValues(bottom = 16.dp)
+        contentPadding = PaddingValues(bottom = 16.dp),
     ) {
         item {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -524,7 +524,7 @@ private fun TeamsTab(
                 Text(
                     text = stringResource(R.string.drag_to_reorder_hint),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
@@ -573,10 +573,10 @@ private fun TeamsTab(
                         onDragCancel = {
                             draggingIndex = null
                             dragOffset = 0f
-                        }
+                        },
                     )
                 },
-                isDragging = isDragging
+                isDragging = isDragging,
             )
         }
         item {
@@ -586,7 +586,7 @@ private fun TeamsTab(
                 }
                 OutlinedButton(
                     onClick = { suggestions.randomOrNull()?.let(onApplySuggestion) },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 ) {
                     Text(stringResource(R.string.team_suggestions_label))
                 }
@@ -599,11 +599,11 @@ private fun TeamsTab(
                     Text(
                         text = stringResource(R.string.team_suggestions_hint),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     FlowRow(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         suggestions.forEach { suggestion ->
                             SuggestionChip(onClick = { onApplySuggestion(suggestion) }, label = { Text(suggestion) })
@@ -629,18 +629,18 @@ private fun TeamEditorCard(
     val elevation = if (isDragging) 8.dp else 2.dp
     ElevatedCard(
         modifier = modifier,
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = elevation)
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = elevation),
     ) {
         Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 val initial = name.firstOrNull()?.uppercaseChar()?.toString() ?: (index + 1).toString()
                 Surface(
                     modifier = Modifier.size(48.dp),
                     shape = CircleShape,
-                    color = MaterialTheme.colorScheme.secondaryContainer
+                    color = MaterialTheme.colorScheme.secondaryContainer,
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Text(initial, style = MaterialTheme.typography.titleMedium)
@@ -651,7 +651,7 @@ private fun TeamEditorCard(
                     onValueChange = { onNameChange(index, it) },
                     label = { Text(stringResource(R.string.team_default_name, index + 1)) },
                     modifier = Modifier.weight(1f),
-                    singleLine = true
+                    singleLine = true,
                 )
                 IconButton(onClick = { onRemove(index) }, enabled = canRemove) {
                     Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.remove_team))
@@ -661,11 +661,11 @@ private fun TeamEditorCard(
                         .size(40.dp)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.surfaceVariant),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         Icons.Filled.DragHandle,
-                        contentDescription = stringResource(R.string.team_drag_handle_description)
+                        contentDescription = stringResource(R.string.team_drag_handle_description),
                     )
                 }
             }
@@ -690,7 +690,7 @@ private fun AdvancedTab(
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(16.dp),
-        contentPadding = PaddingValues(bottom = 16.dp)
+        contentPadding = PaddingValues(bottom = 16.dp),
     ) {
         item {
             ElevatedCard(Modifier.fillMaxWidth()) {
@@ -700,34 +700,34 @@ private fun AdvancedTab(
                     FlowRow(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         FilterChip(
                             selected = selectedLanguage == "system",
                             onClick = { onUiLanguageChange("system") },
-                            label = { Text(stringResource(R.string.system_default_label)) }
+                            label = { Text(stringResource(R.string.system_default_label)) },
                         )
                         FilterChip(
                             selected = selectedLanguage == "en",
                             onClick = { onUiLanguageChange("en") },
-                            label = { Text(stringResource(R.string.english_label)) }
+                            label = { Text(stringResource(R.string.english_label)) },
                         )
                         FilterChip(
                             selected = selectedLanguage == "ru",
                             onClick = { onUiLanguageChange("ru") },
-                            label = { Text(stringResource(R.string.russian_label)) }
+                            label = { Text(stringResource(R.string.russian_label)) },
                         )
                     }
                     OutlinedTextField(
                         value = language,
                         onValueChange = onLanguageChange,
                         label = { Text(stringResource(R.string.language_hint)) },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
                     )
                     SettingsToggleRow(
                         label = stringResource(R.string.allow_nsfw_label),
                         checked = allowNsfw,
-                        onCheckedChange = onAllowNsfwChange
+                        onCheckedChange = onAllowNsfwChange,
                     )
                 }
             }
@@ -739,19 +739,19 @@ private fun AdvancedTab(
                     ListItem(
                         leadingContent = { Icon(Icons.Filled.History, contentDescription = null) },
                         headlineContent = { Text(stringResource(R.string.show_tutorial_again)) },
-                        modifier = Modifier.clickable { onShowTutorialAgain() }
+                        modifier = Modifier.clickable { onShowTutorialAgain() },
                     )
                     HorizontalDivider()
                     ListItem(
                         leadingContent = { Icon(Icons.Filled.Info, contentDescription = null) },
                         headlineContent = { Text(stringResource(R.string.title_about)) },
-                        modifier = Modifier.clickable(onClick = onAbout)
+                        modifier = Modifier.clickable(onClick = onAbout),
                     )
                     HorizontalDivider()
                     ListItem(
                         leadingContent = { Icon(Icons.Filled.Delete, contentDescription = null) },
                         headlineContent = { Text(stringResource(R.string.reset_local_data)) },
-                        modifier = Modifier.clickable { onReset() }
+                        modifier = Modifier.clickable { onReset() },
                     )
                 }
             }

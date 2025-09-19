@@ -32,7 +32,7 @@ interface WordDao {
             "AND (:hasClasses = 0 OR EXISTS (" +
             "    SELECT 1 FROM word_classes wc " +
             "    WHERE wc.deckId = w.deckId AND wc.wordText = w.text AND UPPER(wc.wordClass) IN (:classes)" +
-            "))"
+            "))",
     )
     suspend fun getWordTextsForDecks(
         deckIds: List<String>,
@@ -59,7 +59,7 @@ interface WordDao {
             "    SELECT 1 FROM word_classes wc2 " +
             "    WHERE wc2.deckId = w.deckId AND wc2.wordText = w.text AND UPPER(wc2.wordClass) IN (:classes)" +
             ")) " +
-            "GROUP BY w.text, w.difficulty, w.category"
+            "GROUP BY w.text, w.difficulty, w.category",
     )
     suspend fun getWordBriefsForDecks(
         deckIds: List<String>,
@@ -78,7 +78,7 @@ interface WordDao {
             "WHERE deckId IN (:deckIds) " +
             "AND language = :language " +
             "AND category IS NOT NULL AND TRIM(category) != '' " +
-            "AND (:allowNSFW = 1 OR isNSFW = 0)"
+            "AND (:allowNSFW = 1 OR isNSFW = 0)",
     )
     suspend fun getAvailableCategories(
         deckIds: List<String>,
@@ -91,7 +91,7 @@ interface WordDao {
             "JOIN words w ON w.deckId = wc.deckId AND w.text = wc.wordText " +
             "WHERE w.deckId IN (:deckIds) " +
             "AND w.language = :language " +
-            "AND (:allowNSFW = 1 OR w.isNSFW = 0)"
+            "AND (:allowNSFW = 1 OR w.isNSFW = 0)",
     )
     suspend fun getAvailableWordClasses(
         deckIds: List<String>,
@@ -102,7 +102,7 @@ interface WordDao {
     @Query(
         "SELECT UPPER(wordClass) AS wordClass, COUNT(*) AS count FROM word_classes " +
             "WHERE deckId = :deckId " +
-            "GROUP BY UPPER(wordClass)"
+            "GROUP BY UPPER(wordClass)",
     )
     suspend fun getWordClassCounts(deckId: String): List<WordClassCount>
 
@@ -110,7 +110,7 @@ interface WordDao {
         "SELECT DISTINCT category FROM words " +
             "WHERE deckId = :deckId " +
             "AND category IS NOT NULL AND TRIM(category) != '' " +
-            "ORDER BY category COLLATE NOCASE"
+            "ORDER BY category COLLATE NOCASE",
     )
     suspend fun getDeckCategories(deckId: String): List<String>
 
@@ -118,7 +118,7 @@ interface WordDao {
         "SELECT text FROM words " +
             "WHERE deckId = :deckId " +
             "ORDER BY RANDOM() " +
-            "LIMIT :limit"
+            "LIMIT :limit",
     )
     suspend fun getRandomWordSamples(deckId: String, limit: Int): List<String>
 
@@ -126,7 +126,7 @@ interface WordDao {
         "SELECT difficulty AS difficulty, COUNT(*) AS count FROM words " +
             "WHERE deckId = :deckId " +
             "GROUP BY difficulty " +
-            "ORDER BY difficulty"
+            "ORDER BY difficulty",
     )
     suspend fun getDifficultyHistogram(deckId: String): List<DifficultyBucket>
 
@@ -134,7 +134,7 @@ interface WordDao {
         "SELECT text FROM words " +
             "WHERE deckId = :deckId " +
             "ORDER BY id DESC " +
-            "LIMIT :limit"
+            "LIMIT :limit",
     )
     suspend fun getRecentWords(deckId: String, limit: Int): List<String>
 }

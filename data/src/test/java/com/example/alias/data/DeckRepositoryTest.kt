@@ -31,7 +31,7 @@ class DeckRepositoryTest {
         repository = DeckRepositoryImpl(
             deckDao = deckDao,
             wordDao = wordDao,
-            transactionRunner = { action -> action() }
+            transactionRunner = { action -> action() },
         )
     }
 
@@ -41,8 +41,8 @@ class DeckRepositoryTest {
             deckId = "test_deck",
             words = listOf(
                 WordSpec(text = "Alpha"),
-                WordSpec(text = "Beta")
-            )
+                WordSpec(text = "Beta"),
+            ),
         )
 
         repository.importPack(pack)
@@ -60,12 +60,12 @@ class DeckRepositoryTest {
         val initialPack = createPack(
             deckId = deckId,
             version = 1,
-            words = listOf(WordSpec(text = "Alpha", wordClass = "NOUN"))
+            words = listOf(WordSpec(text = "Alpha", wordClass = "NOUN")),
         )
         val updatedPack = createPack(
             deckId = deckId,
             version = 2,
-            words = listOf(WordSpec(text = "Gamma", wordClass = "VERB"))
+            words = listOf(WordSpec(text = "Gamma", wordClass = "VERB")),
         )
 
         repository.importPack(initialPack)
@@ -82,7 +82,7 @@ class DeckRepositoryTest {
             categories = emptyList(),
             hasCategories = 0,
             classes = emptyList(),
-            hasClasses = 0
+            hasClasses = 0,
         )
         assertEquals(1, briefs.size)
         val brief = briefs.single()
@@ -96,7 +96,7 @@ class DeckRepositoryTest {
         val deckId = "test_deck"
         val pack = createPack(
             deckId = deckId,
-            words = listOf(WordSpec(text = "Alpha"))
+            words = listOf(WordSpec(text = "Alpha")),
         )
 
         repository.importPack(pack)
@@ -112,7 +112,7 @@ class DeckRepositoryTest {
     private fun createPack(
         deckId: String,
         version: Int = 1,
-        words: List<WordSpec>
+        words: List<WordSpec>,
     ): ParsedPack {
         val deck = DeckEntity(
             id = deckId,
@@ -121,7 +121,7 @@ class DeckRepositoryTest {
             isOfficial = false,
             isNSFW = false,
             version = version,
-            updatedAt = version.toLong()
+            updatedAt = version.toLong(),
         )
         val wordEntities = words.map { spec ->
             WordEntity(
@@ -132,7 +132,7 @@ class DeckRepositoryTest {
                 category = spec.category,
                 difficulty = spec.difficulty,
                 tabooStems = null,
-                isNSFW = false
+                isNSFW = false,
             )
         }
         val classEntities = words
@@ -141,7 +141,7 @@ class DeckRepositoryTest {
                     WordClassEntity(
                         deckId = deckId,
                         wordText = spec.text,
-                        wordClass = wordClass
+                        wordClass = wordClass,
                     )
                 }
             }
@@ -152,7 +152,7 @@ class DeckRepositoryTest {
         val text: String,
         val difficulty: Int = 1,
         val category: String? = null,
-        val wordClass: String? = null
+        val wordClass: String? = null,
     )
 
     private class FakeDeckDao : DeckDao {
@@ -246,7 +246,7 @@ class DeckRepositoryTest {
             categories: List<String>,
             hasCategories: Int,
             classes: List<String>,
-            hasClasses: Int
+            hasClasses: Int,
         ): List<String> = getWordBriefsForDecks(
             deckIds = deckIds,
             language = language,
@@ -256,7 +256,7 @@ class DeckRepositoryTest {
             categories = categories,
             hasCategories = hasCategories,
             classes = classes,
-            hasClasses = hasClasses
+            hasClasses = hasClasses,
         ).map { it.text }
 
         override suspend fun getWordBriefsForDecks(
@@ -268,7 +268,7 @@ class DeckRepositoryTest {
             categories: List<String>,
             hasCategories: Int,
             classes: List<String>,
-            hasClasses: Int
+            hasClasses: Int,
         ): List<WordBrief> {
             val requiredClasses = classes.map { it.uppercase() }
             return words.filter { word ->
@@ -286,7 +286,7 @@ class DeckRepositoryTest {
                     text = word.text,
                     difficulty = word.difficulty,
                     category = word.category,
-                    wordClass = joinedClasses
+                    wordClass = joinedClasses,
                 )
             }
         }
@@ -299,7 +299,7 @@ class DeckRepositoryTest {
         override suspend fun getAvailableCategories(
             deckIds: List<String>,
             language: String,
-            allowNSFW: Boolean
+            allowNSFW: Boolean,
         ): List<String> =
             words.filter { deckIds.contains(it.deckId) && it.language == language && (allowNSFW || !it.isNSFW) }
                 .mapNotNull { it.category }
@@ -308,7 +308,7 @@ class DeckRepositoryTest {
         override suspend fun getAvailableWordClasses(
             deckIds: List<String>,
             language: String,
-            allowNSFW: Boolean
+            allowNSFW: Boolean,
         ): List<String> {
             val relevantWords = words
                 .filter {

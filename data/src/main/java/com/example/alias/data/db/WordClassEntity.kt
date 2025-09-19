@@ -17,12 +17,12 @@ import androidx.room.Index
             childColumns = ["deckId", "wordText"],
             onDelete = ForeignKey.CASCADE,
             onUpdate = ForeignKey.CASCADE,
-        )
+        ),
     ],
     indices = [
         Index("wordClass"),
         Index(value = ["deckId", "wordText"]),
-    ]
+    ],
 )
 data class WordClassEntity(
     val deckId: String,

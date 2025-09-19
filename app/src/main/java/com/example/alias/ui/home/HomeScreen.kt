@@ -87,11 +87,11 @@ fun HomeScreen(
                 .padding(24.dp)
                 .verticalScroll(scrollState),
             horizontalArrangement = Arrangement.spacedBy(20.dp),
-            verticalAlignment = Alignment.Top
+            verticalAlignment = Alignment.Top,
         ) {
             Column(
                 modifier = Modifier.weight(1.4f),
-                verticalArrangement = Arrangement.spacedBy(20.dp)
+                verticalArrangement = Arrangement.spacedBy(20.dp),
             ) {
                 HomeHeroSection(
                     gameState = gameState,
@@ -101,7 +101,7 @@ fun HomeScreen(
                     onResumeMatch = onResumeMatch,
                     onStartNewMatch = onStartNewMatch,
                     onHistory = onHistory,
-                    onDecks = onDecks
+                    onDecks = onDecks,
                 )
                 HomeActionCard(
                     icon = Icons.Filled.PlayArrow,
@@ -109,12 +109,12 @@ fun HomeScreen(
                     subtitle = stringResource(R.string.quick_play_subtitle),
                     onClick = onStartNewMatch,
                     containerColor = colors.primaryContainer,
-                    contentColor = colors.onPrimaryContainer
+                    contentColor = colors.onPrimaryContainer,
                 )
             }
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 HomeActionCard(
                     icon = Icons.AutoMirrored.Filled.LibraryBooks,
@@ -122,7 +122,7 @@ fun HomeScreen(
                     subtitle = stringResource(R.string.decks_subtitle),
                     onClick = onDecks,
                     containerColor = colors.secondaryContainer,
-                    contentColor = colors.onSecondaryContainer
+                    contentColor = colors.onSecondaryContainer,
                 )
                 HomeActionCard(
                     icon = Icons.Filled.Settings,
@@ -130,7 +130,7 @@ fun HomeScreen(
                     subtitle = stringResource(R.string.settings_subtitle),
                     onClick = onSettings,
                     containerColor = colors.tertiaryContainer,
-                    contentColor = colors.onTertiaryContainer
+                    contentColor = colors.onTertiaryContainer,
                 )
                 HomeActionCard(
                     icon = Icons.Filled.History,
@@ -138,7 +138,7 @@ fun HomeScreen(
                     subtitle = stringResource(R.string.history_subtitle),
                     onClick = onHistory,
                     containerColor = colors.tertiaryContainer,
-                    contentColor = colors.onTertiaryContainer
+                    contentColor = colors.onTertiaryContainer,
                 )
             }
         }
@@ -149,7 +149,7 @@ fun HomeScreen(
                 .padding(24.dp)
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             HomeHeroSection(
                 gameState = gameState,
@@ -159,7 +159,7 @@ fun HomeScreen(
                 onResumeMatch = onResumeMatch,
                 onStartNewMatch = onStartNewMatch,
                 onHistory = onHistory,
-                onDecks = onDecks
+                onDecks = onDecks,
             )
             HomeActionCard(
                 icon = Icons.Filled.PlayArrow,
@@ -167,7 +167,7 @@ fun HomeScreen(
                 subtitle = stringResource(R.string.quick_play_subtitle),
                 onClick = onStartNewMatch,
                 containerColor = colors.primaryContainer,
-                contentColor = colors.onPrimaryContainer
+                contentColor = colors.onPrimaryContainer,
             )
             HomeActionCard(
                 icon = Icons.AutoMirrored.Filled.LibraryBooks,
@@ -175,7 +175,7 @@ fun HomeScreen(
                 subtitle = stringResource(R.string.decks_subtitle),
                 onClick = onDecks,
                 containerColor = colors.secondaryContainer,
-                contentColor = colors.onSecondaryContainer
+                contentColor = colors.onSecondaryContainer,
             )
             HomeActionCard(
                 icon = Icons.Filled.Settings,
@@ -183,7 +183,7 @@ fun HomeScreen(
                 subtitle = stringResource(R.string.settings_subtitle),
                 onClick = onSettings,
                 containerColor = colors.tertiaryContainer,
-                contentColor = colors.onTertiaryContainer
+                contentColor = colors.onTertiaryContainer,
             )
             HomeActionCard(
                 icon = Icons.Filled.History,
@@ -191,7 +191,7 @@ fun HomeScreen(
                 subtitle = stringResource(R.string.history_subtitle),
                 onClick = onHistory,
                 containerColor = colors.tertiaryContainer,
-                contentColor = colors.onTertiaryContainer
+                contentColor = colors.onTertiaryContainer,
             )
         }
     }
@@ -213,7 +213,7 @@ private fun HomeHeroSection(
     val gradient = remember(colors) {
         Brush.verticalGradient(
             0f to colors.primary.copy(alpha = 0.35f),
-            1f to Color.Transparent
+            1f to Color.Transparent,
         )
     }
     val liveScores = when (gameState) {
@@ -254,7 +254,7 @@ private fun HomeHeroSection(
         is GameState.TurnActive -> stringResource(
             R.string.home_hero_active_subtitle,
             gameState.team,
-            gameState.timeRemaining
+            gameState.timeRemaining,
         )
         is GameState.TurnFinished -> if (gameState.matchOver) {
             stringResource(R.string.home_match_point, gameState.team)
@@ -305,21 +305,21 @@ private fun HomeHeroSection(
         shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.elevatedCardColors(
             containerColor = colors.primaryContainer,
-            contentColor = contentColor
-        )
+            contentColor = contentColor,
+        ),
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(gradient)
-                .padding(24.dp)
+                .padding(24.dp),
         ) {
             Column(
-                verticalArrangement = Arrangement.spacedBy(20.dp)
+                verticalArrangement = Arrangement.spacedBy(20.dp),
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
                     HomeLogo(size = 64.dp)
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -327,7 +327,7 @@ private fun HomeHeroSection(
                         Text(
                             heroSubtitle,
                             style = MaterialTheme.typography.bodyLarge,
-                            color = contentColor.copy(alpha = 0.9f)
+                            color = contentColor.copy(alpha = 0.9f),
                         )
                     }
                 }
@@ -336,26 +336,26 @@ private fun HomeHeroSection(
                     favorites = favoriteDecks,
                     extra = extraDecks,
                     onDecks = onDecks,
-                    contentColor = contentColor
+                    contentColor = contentColor,
                 )
                 RecentHighlightSection(
                     text = highlightText,
                     icon = highlightIcon,
                     iconTint = highlightTint,
-                    contentColor = contentColor
+                    contentColor = contentColor,
                 )
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     if (showResume) {
                         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             Button(
                                 onClick = onResumeMatch,
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
                             ) {
                                 Text(stringResource(R.string.resume_match))
                             }
                             OutlinedButton(
                                 onClick = onStartNewMatch,
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
                             ) {
                                 Text(stringResource(R.string.start_new_game))
                             }
@@ -363,14 +363,14 @@ private fun HomeHeroSection(
                     } else {
                         Button(
                             onClick = onStartNewMatch,
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
                         ) {
                             Text(stringResource(R.string.start_new_game))
                         }
                     }
                     TextButton(
                         onClick = onHistory,
-                        colors = ButtonDefaults.textButtonColors(contentColor = contentColor)
+                        colors = ButtonDefaults.textButtonColors(contentColor = contentColor),
                     ) {
                         Text(stringResource(R.string.view_history))
                     }
@@ -391,34 +391,34 @@ private fun HomeScoreboardSection(
         Text(
             text = stringResource(R.string.scoreboard),
             style = MaterialTheme.typography.titleSmall,
-            color = contentColor.copy(alpha = 0.85f)
+            color = contentColor.copy(alpha = 0.85f),
         )
         if (!hasProgress) {
             Text(
                 text = stringResource(R.string.home_scoreboard_placeholder),
                 style = MaterialTheme.typography.bodySmall,
-                color = contentColor.copy(alpha = 0.7f)
+                color = contentColor.copy(alpha = 0.7f),
             )
         } else {
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 scoreboard.entries.sortedByDescending { it.value }.forEach { entry ->
                     Surface(
                         shape = RoundedCornerShape(50),
-                        color = contentColor.copy(alpha = 0.1f)
+                        color = contentColor.copy(alpha = 0.1f),
                     ) {
                         Row(
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Text(entry.key, style = MaterialTheme.typography.bodyMedium, color = contentColor)
                             Text(
                                 entry.value.toString(),
                                 style = MaterialTheme.typography.titleSmall,
-                                color = contentColor.copy(alpha = 0.9f)
+                                color = contentColor.copy(alpha = 0.9f),
                             )
                         }
                     }
@@ -440,18 +440,18 @@ private fun FavoriteDecksSection(
         Text(
             text = stringResource(R.string.home_favorite_decks),
             style = MaterialTheme.typography.titleSmall,
-            color = contentColor.copy(alpha = 0.85f)
+            color = contentColor.copy(alpha = 0.85f),
         )
         if (favorites.isEmpty()) {
             Text(
                 text = stringResource(R.string.home_empty_favorites),
                 style = MaterialTheme.typography.bodySmall,
-                color = contentColor.copy(alpha = 0.7f)
+                color = contentColor.copy(alpha = 0.7f),
             )
         } else {
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 favorites.forEach { deck ->
                     AssistChip(
@@ -461,14 +461,14 @@ private fun FavoriteDecksSection(
                             Icon(
                                 Icons.Filled.Star,
                                 contentDescription = null,
-                                modifier = Modifier.size(18.dp)
+                                modifier = Modifier.size(18.dp),
                             )
                         },
                         colors = AssistChipDefaults.assistChipColors(
                             containerColor = contentColor.copy(alpha = 0.08f),
                             labelColor = contentColor,
-                            leadingIconContentColor = contentColor
-                        )
+                            leadingIconContentColor = contentColor,
+                        ),
                     )
                 }
                 if (extra > 0) {
@@ -477,8 +477,8 @@ private fun FavoriteDecksSection(
                         label = { Text("+$extra") },
                         colors = AssistChipDefaults.assistChipColors(
                             containerColor = contentColor.copy(alpha = 0.08f),
-                            labelColor = contentColor
-                        )
+                            labelColor = contentColor,
+                        ),
                     )
                 }
             }
@@ -497,18 +497,18 @@ private fun RecentHighlightSection(
         Text(
             text = stringResource(R.string.home_recent_highlight),
             style = MaterialTheme.typography.titleSmall,
-            color = contentColor.copy(alpha = 0.85f)
+            color = contentColor.copy(alpha = 0.85f),
         )
         Surface(
             shape = RoundedCornerShape(24.dp),
-            color = contentColor.copy(alpha = 0.08f)
+            color = contentColor.copy(alpha = 0.08f),
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 12.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (icon != null) {
                     Icon(icon, contentDescription = null, tint = iconTint)
@@ -525,13 +525,13 @@ private fun HomeLogo(size: Dp, modifier: Modifier = Modifier) {
         modifier = modifier.size(size),
         shape = CircleShape,
         color = MaterialTheme.colorScheme.primaryContainer,
-        contentColor = MaterialTheme.colorScheme.primary
+        contentColor = MaterialTheme.colorScheme.primary,
     ) {
         Box(contentAlignment = Alignment.Center) {
             Icon(
                 painter = painterResource(id = R.drawable.ic_launcher_foreground_asset),
                 contentDescription = stringResource(R.string.app_name),
-                modifier = Modifier.fillMaxSize(0.6f)
+                modifier = Modifier.fillMaxSize(0.6f),
             )
         }
     }
@@ -555,22 +555,22 @@ private fun HomeActionCard(
         },
         colors = CardDefaults.elevatedCardColors(
             containerColor = containerColor,
-            contentColor = contentColor
+            contentColor = contentColor,
         ),
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 18.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Box(
                 modifier = Modifier
                     .size(44.dp),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.Center,
             ) {
                 Icon(icon, contentDescription = null)
             }
@@ -601,5 +601,5 @@ private val ScoreboardSaver: Saver<SnapshotStateMap<String, Int>, Bundle> = Save
                 this[team] = scores.getOrNull(index) ?: 0
             }
         }
-    }
+    },
 )

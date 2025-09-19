@@ -13,14 +13,14 @@ import androidx.room.PrimaryKey
             entity = DeckEntity::class,
             parentColumns = ["id"],
             childColumns = ["deckId"],
-            onDelete = ForeignKey.CASCADE
-        )
+            onDelete = ForeignKey.CASCADE,
+        ),
     ],
     indices = [
         Index("deckId"),
         Index(value = ["language", "deckId"]),
         Index(value = ["deckId", "text"], unique = true),
-    ]
+    ],
 )
 data class WordEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -31,5 +31,5 @@ data class WordEntity(
     val category: String?,
     val difficulty: Int,
     val tabooStems: String?,
-    val isNSFW: Boolean
+    val isNSFW: Boolean,
 )

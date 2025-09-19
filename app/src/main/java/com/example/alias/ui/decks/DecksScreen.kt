@@ -122,22 +122,22 @@ fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
     if (sheet != null) {
         ModalBottomSheet(
             onDismissRequest = { activeSheet = null },
-            sheetState = sheetState
+            sheetState = sheetState,
         ) {
             when (sheet) {
                 DeckSheet.FILTERS -> DeckFiltersSheet(
                     state = DeckFiltersSheetState(
                         difficulty = DifficultyFilterState(
-                            selectedLevels = IntRange(minDifficulty, maxDifficulty).toSet()
+                            selectedLevels = IntRange(minDifficulty, maxDifficulty).toSet(),
                         ),
                         categories = FilterSelectionState(
                             available = availableCategories,
-                            selected = selectedCategories
+                            selected = selectedCategories,
                         ),
                         wordClasses = FilterSelectionState(
                             available = availableWordClasses,
-                            selected = selectedWordClasses
-                        )
+                            selected = selectedWordClasses,
+                        ),
                     ),
                     callbacks = DeckFiltersSheetCallbacks(
                         onDifficultyToggle = { level ->
@@ -153,14 +153,14 @@ fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
                             vm.updateCategoriesFilter(selectedCategories)
                             vm.updateWordClassesFilter(selectedWordClasses)
                             activeSheet = null
-                        }
-                    )
+                        },
+                    ),
                 )
 
                 DeckSheet.IMPORT -> DeckImportSheet(
                     state = DeckImportSheetState(
                         url = url,
-                        sha256 = sha
+                        sha256 = sha,
                     ),
                     callbacks = DeckImportSheetCallbacks(
                         onUrlChange = { url = it },
@@ -170,8 +170,8 @@ fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
                             vm.downloadPackFromUrl(url, sha)
                             activeSheet = null
                         },
-                        onOpenTrusted = { activeSheet = DeckSheet.TRUSTED }
-                    )
+                        onOpenTrusted = { activeSheet = DeckSheet.TRUSTED },
+                    ),
                 )
 
                 DeckSheet.TRUSTED -> DeckTrustedSourcesSheet(
@@ -185,7 +185,7 @@ fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
                             vm.addTrustedSource(trimmed)
                             newTrusted = ""
                         }
-                    }
+                    },
                 )
             }
         }
@@ -199,23 +199,23 @@ fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
                 start = 16.dp,
                 top = 16.dp,
                 end = 16.dp,
-                bottom = 96.dp
+                bottom = 96.dp,
             ),
             verticalArrangement = Arrangement.spacedBy(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             item(span = { GridItemSpan(maxLineSpan) }) {
                 DecksHeroSummary(
                     state = DecksHeroSummaryState(
                         decks = decks,
-                        enabledDeckIds = enabled
+                        enabledDeckIds = enabled,
                     ),
                     actions = DecksHeroSummaryActions(
                         onFiltersClick = { activeSheet = DeckSheet.FILTERS },
                         onEnableAll = { vm.setAllDecksEnabled(true) },
                         onDisableAll = { vm.setAllDecksEnabled(false) },
-                        onManageSources = { activeSheet = DeckSheet.TRUSTED }
-                    )
+                        onManageSources = { activeSheet = DeckSheet.TRUSTED },
+                    ),
                 )
             }
             downloadProgress?.let { progress ->
@@ -234,7 +234,7 @@ fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
                         enabled = enabled.contains(deck.id),
                         onToggle = { toggled -> vm.setDeckEnabled(deck.id, toggled) },
                         onClick = { onDeckSelected(deck) },
-                        onDelete = { deckPendingDelete = deck }
+                        onDelete = { deckPendingDelete = deck },
                     )
                 }
             }
@@ -243,7 +243,7 @@ fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
             onClick = { activeSheet = DeckSheet.IMPORT },
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(16.dp)
+                .padding(16.dp),
         ) {
             Icon(Icons.Filled.Download, contentDescription = null)
             Spacer(Modifier.width(8.dp))
@@ -270,7 +270,7 @@ fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
                     TextButton(onClick = { deckPendingDelete = null }) {
                         Text(stringResource(R.string.cancel))
                     }
-                }
+                },
             )
         }
     }
@@ -302,29 +302,29 @@ private fun DecksHeroSummary(state: DecksHeroSummaryState, actions: DecksHeroSum
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+        ),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Text(
                 text = stringResource(R.string.title_decks),
-                style = MaterialTheme.typography.headlineSmall
+                style = MaterialTheme.typography.headlineSmall,
             )
             Text(
                 text = stringResource(R.string.deck_active_summary, activeCount, state.decks.size),
                 style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium
+                fontWeight = FontWeight.Medium,
             )
             DeckLanguagesSummary(languages = languages)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 FilledTonalButton(onClick = actions.onFiltersClick) {
                     Icon(Icons.Filled.Tune, contentDescription = null)
@@ -339,14 +339,14 @@ private fun DecksHeroSummary(state: DecksHeroSummaryState, actions: DecksHeroSum
             }
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 TextButton(onClick = actions.onEnableAll) { Text(stringResource(R.string.enable_all)) }
                 TextButton(onClick = actions.onDisableAll) { Text(stringResource(R.string.disable_all)) }
             }
             Text(
                 text = stringResource(R.string.filters_hint),
-                style = MaterialTheme.typography.bodySmall
+                style = MaterialTheme.typography.bodySmall,
             )
         }
     }
@@ -359,7 +359,7 @@ private fun DeckLanguagesSummary(languages: List<String>, modifier: Modifier = M
         Text(
             text = stringResource(R.string.deck_languages_summary, languages.joinToString(" • ")),
             style = MaterialTheme.typography.bodyMedium,
-            modifier = modifier
+            modifier = modifier,
         )
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             languages.forEach { language ->
@@ -370,7 +370,7 @@ private fun DeckLanguagesSummary(languages: List<String>, modifier: Modifier = M
         Text(
             text = stringResource(R.string.deck_languages_none),
             style = MaterialTheme.typography.bodyMedium,
-            modifier = modifier
+            modifier = modifier,
         )
     }
 }
@@ -387,7 +387,7 @@ private fun DeckCard(
 ) {
     ElevatedCard(
         onClick = onClick,
-        modifier = modifier.fillMaxWidth()
+        modifier = modifier.fillMaxWidth(),
     ) {
         Column {
             DeckCoverArt(deck = deck)
@@ -395,18 +395,18 @@ private fun DeckCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
                         text = deck.name,
                         style = MaterialTheme.typography.titleMedium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f, fill = false)
+                        modifier = Modifier.weight(1f, fill = false),
                     )
                     if (onDelete != null) {
                         var menuExpanded by remember { mutableStateOf(false) }
@@ -414,25 +414,25 @@ private fun DeckCard(
                             IconButton(onClick = { menuExpanded = true }) {
                                 Icon(
                                     imageVector = Icons.Filled.MoreVert,
-                                    contentDescription = stringResource(R.string.deck_more_actions)
+                                    contentDescription = stringResource(R.string.deck_more_actions),
                                 )
                             }
                             DropdownMenu(
                                 expanded = menuExpanded,
-                                onDismissRequest = { menuExpanded = false }
+                                onDismissRequest = { menuExpanded = false },
                             ) {
                                 DropdownMenuItem(
                                     text = { Text(stringResource(R.string.deck_delete_action)) },
                                     leadingIcon = {
                                         Icon(
                                             imageVector = Icons.Filled.Delete,
-                                            contentDescription = null
+                                            contentDescription = null,
                                         )
                                     },
                                     onClick = {
                                         menuExpanded = false
                                         onDelete()
-                                    }
+                                    },
                                 )
                             }
                         }
@@ -442,44 +442,44 @@ private fun DeckCard(
                     AssistChip(
                         onClick = {},
                         enabled = false,
-                        label = { Text(deck.language.uppercase(Locale.getDefault())) }
+                        label = { Text(deck.language.uppercase(Locale.getDefault())) },
                     )
                     if (deck.isOfficial) {
                         AssistChip(
                             onClick = {},
                             enabled = false,
-                            label = { Text(stringResource(R.string.deck_official_label)) }
+                            label = { Text(stringResource(R.string.deck_official_label)) },
                         )
                     }
                     if (deck.isNSFW) {
                         AssistChip(
                             onClick = {},
                             enabled = false,
-                            label = { Text(stringResource(R.string.deck_nsfw_label)) }
+                            label = { Text(stringResource(R.string.deck_nsfw_label)) },
                         )
                     }
                 }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     Text(
                         text = if (enabled) {
                             stringResource(
-                                R.string.deck_card_enabled
+                                R.string.deck_card_enabled,
                             )
                         } else {
                             stringResource(R.string.deck_card_disabled)
                         },
-                        style = MaterialTheme.typography.bodyMedium
+                        style = MaterialTheme.typography.bodyMedium,
                     )
                     Switch(checked = enabled, onCheckedChange = onToggle)
                 }
                 Text(
                     text = stringResource(R.string.deck_card_view_details),
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.primary,
                 )
             }
         }
@@ -499,25 +499,25 @@ private fun DeckCoverArt(deck: DeckEntity, modifier: Modifier = Modifier) {
             .fillMaxWidth()
             .aspectRatio(4f / 3f)
             .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
-            .background(gradient)
+            .background(gradient),
     ) {
         coverImage?.let { image ->
             androidx.compose.foundation.Image(
                 bitmap = image,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
             )
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.25f))
+                    .background(Color.Black.copy(alpha = 0.25f)),
             )
         } ?: Text(
             text = initial,
             style = MaterialTheme.typography.displayLarge,
             color = Color.White.copy(alpha = 0.25f),
-            modifier = Modifier.align(Alignment.Center)
+            modifier = Modifier.align(Alignment.Center),
         )
         Text(
             text = stringResource(R.string.deck_cover_language, deck.language.uppercase(Locale.getDefault())),
@@ -525,7 +525,7 @@ private fun DeckCoverArt(deck: DeckEntity, modifier: Modifier = Modifier) {
             color = Color.White,
             modifier = Modifier
                 .align(Alignment.BottomStart)
-                .padding(16.dp)
+                .padding(16.dp),
         )
     }
 }
@@ -573,7 +573,7 @@ private fun EmptyDecksState(onImportClick: () -> Unit, modifier: Modifier = Modi
     ElevatedCard(modifier = modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Text(stringResource(R.string.no_decks_installed), style = MaterialTheme.typography.titleMedium)
             Text(stringResource(R.string.no_decks_call_to_action), style = MaterialTheme.typography.bodyMedium)
@@ -587,7 +587,7 @@ private fun DeckDownloadCard(progress: MainViewModel.DeckDownloadProgress) {
     ElevatedCard(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Text(stringResource(R.string.deck_download_in_progress), style = MaterialTheme.typography.titleMedium)
             DeckDownloadProgressIndicator(progress)
@@ -607,7 +607,7 @@ private fun DeckTrustedSourcesSheet(
         modifier = Modifier
             .fillMaxWidth()
             .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Text(stringResource(R.string.trusted_sources), style = MaterialTheme.typography.titleLarge)
         Text(stringResource(R.string.trusted_sources_sheet_hint), style = MaterialTheme.typography.bodyMedium)
@@ -621,7 +621,7 @@ private fun DeckTrustedSourcesSheet(
                         IconButton(onClick = { onRemove(entry) }) {
                             Icon(Icons.Filled.Delete, contentDescription = null)
                         }
-                    }
+                    },
                 )
                 if (index < trustedSources.lastIndex) {
                     HorizontalDivider()
@@ -631,13 +631,13 @@ private fun DeckTrustedSourcesSheet(
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             OutlinedTextField(
                 value = newSource,
                 onValueChange = onNewSourceChange,
                 label = { Text(stringResource(R.string.add_host_origin)) },
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
             )
             FilledTonalButton(onClick = onAdd, enabled = newSource.isNotBlank()) {
                 Text(stringResource(R.string.add))
@@ -685,7 +685,7 @@ private fun DeckFiltersSheet(
             .fillMaxWidth()
             .padding(24.dp)
             .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Text(stringResource(R.string.filters_label), style = MaterialTheme.typography.titleLarge)
         Text(stringResource(R.string.deck_filters_description), style = MaterialTheme.typography.bodyMedium)
@@ -694,13 +694,13 @@ private fun DeckFiltersSheet(
             title = stringResource(R.string.categories_label),
             items = state.categories.available,
             selectedItems = state.categories.selected,
-            onSelectionChanged = callbacks.onCategoriesChange
+            onSelectionChanged = callbacks.onCategoriesChange,
         )
         FilterChipGroup(
             title = stringResource(R.string.word_classes_label),
             items = state.wordClasses.available,
             selectedItems = state.wordClasses.selected,
-            onSelectionChanged = callbacks.onWordClassesChange
+            onSelectionChanged = callbacks.onWordClassesChange,
         )
         Text(stringResource(R.string.filters_hint), style = MaterialTheme.typography.bodySmall)
         Button(onClick = callbacks.onApply, modifier = Modifier.align(Alignment.End)) {
@@ -720,7 +720,7 @@ private fun DifficultyFilter(state: DifficultyFilterState, onToggle: (Int) -> Un
                 FilterChip(
                     selected = selected,
                     onClick = { onToggle(level) },
-                    label = { Text(level.toString()) }
+                    label = { Text(level.toString()) },
                 )
             }
         }
@@ -756,7 +756,7 @@ private fun DeckImportSheet(
         modifier = Modifier
             .fillMaxWidth()
             .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Text(stringResource(R.string.import_sheet_title), style = MaterialTheme.typography.titleLarge)
         Text(stringResource(R.string.import_sheet_hint), style = MaterialTheme.typography.bodyMedium)
@@ -765,18 +765,18 @@ private fun DeckImportSheet(
             onValueChange = callbacks.onUrlChange,
             label = { Text(stringResource(R.string.https_url)) },
             modifier = Modifier.fillMaxWidth(),
-            singleLine = true
+            singleLine = true,
         )
         OutlinedTextField(
             value = state.sha256,
             onValueChange = callbacks.onShaChange,
             label = { Text(stringResource(R.string.expected_sha256_optional)) },
             modifier = Modifier.fillMaxWidth(),
-            singleLine = true
+            singleLine = true,
         )
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Button(onClick = callbacks.onPickFile, modifier = Modifier.weight(1f)) {
                 Icon(Icons.Filled.Add, contentDescription = null)
@@ -824,7 +824,7 @@ private fun FilterChipGroup(
         Text(title)
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             items.forEach { item ->
                 val selected = selectedItems.contains(item)
@@ -834,7 +834,7 @@ private fun FilterChipGroup(
                         val updatedSelection = if (selected) selectedItems - item else selectedItems + item
                         onSelectionChanged(updatedSelection)
                     },
-                    label = { Text(item) }
+                    label = { Text(item) },
                 )
             }
         }

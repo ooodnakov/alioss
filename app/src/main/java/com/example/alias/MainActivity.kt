@@ -60,7 +60,7 @@ class MainActivity : AppCompatActivity() {
                                     message = ev.message,
                                     actionLabel = ev.actionLabel,
                                     withDismissAction = ev.actionLabel == null,
-                                    duration = duration
+                                    duration = duration,
                                 )
                             if (result == SnackbarResult.ActionPerformed) {
                                 ev.onAction?.invoke()
@@ -79,7 +79,7 @@ class MainActivity : AppCompatActivity() {
                     navController = nav,
                     snackbarHostState = snack,
                     settings = settings,
-                    viewModel = vm
+                    viewModel = vm,
                 )
             }
         }

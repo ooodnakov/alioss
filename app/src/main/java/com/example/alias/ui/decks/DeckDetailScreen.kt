@@ -126,13 +126,13 @@ fun DeckDetailScreen(vm: MainViewModel, deck: DeckEntity) {
             .fillMaxSize()
             .verticalScroll(scrollState)
             .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         DeckDetailHero(deck = deck, count = count, downloadDateText = downloadDateText)
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End
+            horizontalArrangement = Arrangement.End,
         ) {
             FilledTonalButton(onClick = { confirmDelete = true }) {
                 Icon(imageVector = Icons.Filled.Delete, contentDescription = null)
@@ -158,7 +158,7 @@ fun DeckDetailScreen(vm: MainViewModel, deck: DeckEntity) {
                     TextButton(onClick = { confirmDelete = false }) {
                         Text(stringResource(R.string.cancel))
                     }
-                }
+                },
             )
         }
 
@@ -169,7 +169,7 @@ fun DeckDetailScreen(vm: MainViewModel, deck: DeckEntity) {
                 Text(stringResource(R.string.deck_version_label, deck.version))
                 Text(
                     downloadDateText?.let { stringResource(R.string.deck_downloaded_label, it) }
-                        ?: stringResource(R.string.deck_downloaded_unknown)
+                        ?: stringResource(R.string.deck_downloaded_unknown),
                 )
             }
         }
@@ -186,7 +186,7 @@ fun DeckDetailScreen(vm: MainViewModel, deck: DeckEntity) {
                     } else {
                         FlowRow(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             currentCategories.forEach { category ->
                                 AssistChip(onClick = {}, enabled = false, label = { Text(category) })
@@ -212,13 +212,13 @@ fun DeckDetailScreen(vm: MainViewModel, deck: DeckEntity) {
                             stringResource(
                                 R.string.deck_word_classes_summary,
                                 counts.size,
-                                totalTagged
+                                totalTagged,
                             ),
-                            style = MaterialTheme.typography.bodyMedium
+                            style = MaterialTheme.typography.bodyMedium,
                         )
                         FlowRow(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             counts.forEach { entry ->
                                 val label = when (entry.wordClass) {
@@ -232,7 +232,7 @@ fun DeckDetailScreen(vm: MainViewModel, deck: DeckEntity) {
                                     enabled = false,
                                     label = {
                                         Text(stringResource(R.string.deck_word_classes_chip, label, entry.count))
-                                    }
+                                    },
                                 )
                             }
                         }
@@ -259,7 +259,7 @@ fun DeckDetailScreen(vm: MainViewModel, deck: DeckEntity) {
                     else -> {
                         FlowRow(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             recentWords.forEach { word ->
                                 AssistChip(onClick = {}, enabled = false, label = { Text(word) })
@@ -277,7 +277,7 @@ fun DeckDetailScreen(vm: MainViewModel, deck: DeckEntity) {
                 examplesError -> {
                     Text(
                         text = stringResource(R.string.deck_examples_error),
-                        color = MaterialTheme.colorScheme.error
+                        color = MaterialTheme.colorScheme.error,
                     )
                 }
 
@@ -286,7 +286,7 @@ fun DeckDetailScreen(vm: MainViewModel, deck: DeckEntity) {
                 else -> {
                     FlowRow(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         wordExamples.forEach { example ->
                             AssistChip(onClick = {}, enabled = false, label = { Text(example) })
@@ -297,7 +297,7 @@ fun DeckDetailScreen(vm: MainViewModel, deck: DeckEntity) {
             TextButton(
                 onClick = { examplesRefreshKey++ },
                 enabled = !examplesLoading,
-                modifier = Modifier.align(Alignment.End)
+                modifier = Modifier.align(Alignment.End),
             ) {
                 Text(stringResource(R.string.deck_examples_reload))
             }
@@ -316,7 +316,7 @@ private fun DetailCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Text(title, style = MaterialTheme.typography.titleMedium)
             content()
@@ -334,31 +334,31 @@ private fun DeckDetailHero(deck: DeckEntity, count: Int?, downloadDateText: Stri
         modifier = Modifier
             .fillMaxWidth()
             .height(220.dp)
-            .clip(RoundedCornerShape(28.dp))
+            .clip(RoundedCornerShape(28.dp)),
     ) {
         Box(
             modifier = Modifier
                 .matchParentSize()
-                .background(gradient)
+                .background(gradient),
         )
         coverImage?.let { bitmap ->
             Image(
                 bitmap = bitmap,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.matchParentSize()
+                modifier = Modifier.matchParentSize(),
             )
             Box(
                 modifier = Modifier
                     .matchParentSize()
-                    .background(Color.Black.copy(alpha = 0.35f))
+                    .background(Color.Black.copy(alpha = 0.35f)),
             )
         }
         Column(
             modifier = Modifier
                 .align(Alignment.BottomStart)
                 .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Text(deck.name, style = MaterialTheme.typography.headlineSmall, color = Color.White)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -373,13 +373,13 @@ private fun DeckDetailHero(deck: DeckEntity, count: Int?, downloadDateText: Stri
             Text(
                 text = stringResource(R.string.deck_word_count, countText),
                 style = MaterialTheme.typography.bodyLarge,
-                color = Color.White
+                color = Color.White,
             )
             Text(
                 text = downloadDateText?.let { stringResource(R.string.deck_downloaded_label, it) }
                     ?: stringResource(R.string.deck_downloaded_unknown),
                 style = MaterialTheme.typography.bodySmall,
-                color = Color.White.copy(alpha = 0.85f)
+                color = Color.White.copy(alpha = 0.85f),
             )
         }
     }
@@ -391,13 +391,13 @@ private fun DeckTag(text: String, modifier: Modifier = Modifier) {
         modifier = modifier,
         shape = CircleShape,
         color = Color.White.copy(alpha = 0.2f),
-        contentColor = Color.White
+        contentColor = Color.White,
     ) {
         Text(
             text = text,
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
             style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.Medium
+            fontWeight = FontWeight.Medium,
         )
     }
 }
@@ -420,7 +420,7 @@ private fun DeckDifficultyHistogram(
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(stringResource(R.string.word_difficulty_value, bucket.difficulty))
                     Text(bucket.count.toString(), style = MaterialTheme.typography.labelMedium)

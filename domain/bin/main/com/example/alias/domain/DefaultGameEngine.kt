@@ -115,7 +115,9 @@ class DefaultGameEngine(
                 } else {
                     -(1 + config.penaltyPerSkip)
                 }
-            println("DEBUG: overrideOutcome - before: turnScore=$turnScore, correctTotal=$correctTotal, matchOver=$matchOver, item.correct=${item.correct}, skipped=${item.skipped}, change=$change")
+            println(
+                "DEBUG: overrideOutcome - before: turnScore=$turnScore, correctTotal=$correctTotal, matchOver=$matchOver, item.correct=${item.correct}, skipped=${item.skipped}, change=$change",
+            )
             turnScore += change
             scores[team] = scores.getOrDefault(team, 0) + change
             // Update total correct words across the match based on override
@@ -131,8 +133,9 @@ class DefaultGameEngine(
                 current.matchOver && !reachedTargetBeforeOverride && queue.isEmpty()
             matchOver = nowMatchOver || preserveExistingCompletion
             _state.update { GameState.TurnFinished(team, turnScore, scores.toMap(), outcomes.toList(), matchOver) }
-            println("DEBUG: overrideOutcome - after: turnScore=$turnScore, correctTotal=$correctTotal, matchOver=$matchOver, nowMatchOver=$nowMatchOver, preserveExistingCompletion=$preserveExistingCompletion, noWordsLeft=$noWordsLeft")
-
+            println(
+                "DEBUG: overrideOutcome - after: turnScore=$turnScore, correctTotal=$correctTotal, matchOver=$matchOver, nowMatchOver=$nowMatchOver, preserveExistingCompletion=$preserveExistingCompletion, noWordsLeft=$noWordsLeft",
+            )
         }
     }
 

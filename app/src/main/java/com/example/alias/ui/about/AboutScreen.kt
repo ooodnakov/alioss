@@ -39,18 +39,18 @@ fun AboutScreen() {
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         item {
             ElevatedCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         Box(
                             modifier = Modifier.size(56.dp),
-                            contentAlignment = Alignment.Center
+                            contentAlignment = Alignment.Center,
                         ) {
                             Icon(Icons.Filled.Info, contentDescription = null, tint = colors.primary)
                         }
@@ -59,7 +59,7 @@ fun AboutScreen() {
                             Text(
                                 stringResource(R.string.version_label, version),
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = colors.onSurfaceVariant
+                                color = colors.onSurfaceVariant,
                             )
                         }
                     }
@@ -75,7 +75,7 @@ fun AboutScreen() {
                         headlineContent = { Text(stringResource(R.string.source_code_label)) },
                         supportingContent = { Text("github.com/ooodnakov/alias-game") },
                         trailingContent = { Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = null) },
-                        modifier = Modifier.clickable { uriHandler.openUri("https://github.com/ooodnakov/alias-game") }
+                        modifier = Modifier.clickable { uriHandler.openUri("https://github.com/ooodnakov/alias-game") },
                     )
                     HorizontalDivider()
                     ListItem(
@@ -85,9 +85,9 @@ fun AboutScreen() {
                         trailingContent = { Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = null) },
                         modifier = Modifier.clickable {
                             uriHandler.openUri(
-                                "https://github.com/ooodnakov/alias-game/issues"
+                                "https://github.com/ooodnakov/alias-game/issues",
                             )
-                        }
+                        },
                     )
                 }
             }
@@ -100,7 +100,7 @@ fun AboutScreen() {
                     Text(
                         stringResource(R.string.privacy_line),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = colors.onSurfaceVariant
+                        color = colors.onSurfaceVariant,
                     )
                 }
             }

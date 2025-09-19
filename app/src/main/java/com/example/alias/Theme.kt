@@ -23,7 +23,7 @@ private val DarkColors = darkColorScheme()
 fun AliasAppTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     useDynamicColor: Boolean = true,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     val context = LocalContext.current
     val view = LocalView.current

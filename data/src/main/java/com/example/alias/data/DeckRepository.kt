@@ -37,17 +37,17 @@ interface DeckRepository {
 class DeckRepositoryImpl(
     private val deckDao: DeckDao,
     private val wordDao: WordDao,
-    private val transactionRunner: suspend (suspend () -> Unit) -> Unit
+    private val transactionRunner: suspend (suspend () -> Unit) -> Unit,
 ) : DeckRepository {
 
     constructor(
         db: AliasDatabase,
         deckDao: DeckDao,
-        wordDao: WordDao
+        wordDao: WordDao,
     ) : this(
         deckDao = deckDao,
         wordDao = wordDao,
-        transactionRunner = { action -> db.withTransaction { action() } }
+        transactionRunner = { action -> db.withTransaction { action() } },
     )
     override fun getDecks(): Flow<List<DeckEntity>> = deckDao.getDecks()
 

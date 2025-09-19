@@ -85,18 +85,18 @@ fun TutorialOverlay(
             title = stringResource(R.string.tutorial_step_swipe_title),
             body = swipeBody,
             focus = TutorialFocus.Card,
-            extraContent = { SwipeIllustration(vertical = verticalMode) }
+            extraContent = { SwipeIllustration(vertical = verticalMode) },
         ),
         TutorialStep(
             title = stringResource(R.string.tutorial_step_status_title),
             body = stringResource(R.string.tutorial_step_status_body),
-            focus = TutorialFocus.Status
+            focus = TutorialFocus.Status,
         ),
         TutorialStep(
             title = stringResource(R.string.tutorial_step_actions_title),
             body = stringResource(R.string.tutorial_step_actions_body),
-            focus = TutorialFocus.Controls
-        )
+            focus = TutorialFocus.Controls,
+        ),
     )
     var stepIndex by rememberSaveable { mutableStateOf(0) }
     val step = steps[stepIndex]
@@ -104,7 +104,7 @@ fun TutorialOverlay(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .clickable(interactionSource = interactionSource, indication = null) { }
+            .clickable(interactionSource = interactionSource, indication = null) { },
     ) {
         BoxWithConstraints(Modifier.fillMaxSize()) {
             val containerSize = Size(constraints.maxWidth.toFloat(), constraints.maxHeight.toFloat())
@@ -114,7 +114,7 @@ fun TutorialOverlay(
             Box(
                 modifier = Modifier
                     .matchParentSize()
-                    .graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)
+                    .graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen),
             ) {
                 Canvas(Modifier.matchParentSize()) {
                     drawRect(scrimColor)
@@ -123,7 +123,7 @@ fun TutorialOverlay(
                         topLeft = focusRect.topLeft,
                         size = focusRect.size,
                         cornerRadius = CornerRadius(32.dp.toPx()),
-                        blendMode = BlendMode.Clear
+                        blendMode = BlendMode.Clear,
                     )
                 }
             }
@@ -134,21 +134,21 @@ fun TutorialOverlay(
                     }
                     .size(
                         width = with(density) { focusRect.width.toDp() },
-                        height = with(density) { focusRect.height.toDp() }
+                        height = with(density) { focusRect.height.toDp() },
                     )
                     .clip(RoundedCornerShape(32.dp))
                     .background(Color.Transparent, RectangleShape)
                     .border(
                         BorderStroke(2.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.85f)),
-                        RoundedCornerShape(32.dp)
-                    )
+                        RoundedCornerShape(32.dp),
+                    ),
             )
             TextButton(
                 onClick = onDismiss,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(16.dp),
-                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurface)
+                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurface),
             ) {
                 Text(stringResource(R.string.tutorial_skip))
             }
@@ -158,18 +158,18 @@ fun TutorialOverlay(
                     .padding(horizontal = 24.dp, vertical = 32.dp),
                 shape = RoundedCornerShape(28.dp),
                 tonalElevation = 6.dp,
-                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f)
+                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f),
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 24.dp, vertical = 20.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         repeat(steps.size) { index ->
                             val active = index == stepIndex
@@ -182,8 +182,8 @@ fun TutorialOverlay(
                                             MaterialTheme.colorScheme.primary
                                         } else {
                                             MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
-                                        }
-                                    )
+                                        },
+                                    ),
                             )
                         }
                     }
@@ -192,17 +192,17 @@ fun TutorialOverlay(
                         step.body,
                         style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     step.extraContent?.invoke()
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         TextButton(
                             onClick = { stepIndex-- },
-                            enabled = stepIndex > 0
+                            enabled = stepIndex > 0,
                         ) {
                             Text(stringResource(R.string.tutorial_back))
                         }
@@ -213,14 +213,14 @@ fun TutorialOverlay(
                                 } else {
                                     stepIndex++
                                 }
-                            }
+                            },
                         ) {
                             Text(
                                 if (stepIndex == steps.lastIndex) {
                                     stringResource(R.string.tutorial_finish)
                                 } else {
                                     stringResource(R.string.tutorial_next)
-                                }
+                                },
                             )
                         }
                     }
@@ -243,7 +243,7 @@ private fun SwipeIllustration(vertical: Boolean) {
     }
     Row(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(arrowStart, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
         Icon(Icons.Filled.TouchApp, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
@@ -273,7 +273,7 @@ private sealed interface TutorialFocus {
             return measuredRect ?: containerSize.rectangle(
                 widthFraction = 0.78f,
                 heightFraction = 0.38f,
-                topFraction = 0.26f
+                topFraction = 0.26f,
             )
         }
     }
@@ -283,7 +283,7 @@ private sealed interface TutorialFocus {
         override fun calculateRect(containerSize: Size, cardBounds: Rect?): Rect = containerSize.rectangle(
             widthFraction = 0.9f,
             heightFraction = 0.2f,
-            topFraction = 0.08f
+            topFraction = 0.08f,
         )
     }
 
@@ -292,7 +292,7 @@ private sealed interface TutorialFocus {
         override fun calculateRect(containerSize: Size, cardBounds: Rect?): Rect = containerSize.rectangle(
             widthFraction = 0.9f,
             heightFraction = 0.22f,
-            topFraction = 0.68f
+            topFraction = 0.68f,
         )
     }
 }

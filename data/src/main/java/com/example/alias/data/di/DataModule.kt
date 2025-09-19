@@ -60,7 +60,7 @@ object DataModule {
     fun providePreferencesDataStore(@ApplicationContext context: Context): DataStore<Preferences> =
         PreferenceDataStoreFactory.create(
             corruptionHandler = ReplaceFileCorruptionHandler { emptyPreferences() },
-            produceFile = { context.preferencesDataStoreFile("alias_settings") }
+            produceFile = { context.preferencesDataStoreFile("alias_settings") },
         )
 
     @Provides

@@ -48,7 +48,7 @@ fun AliasNavHost(
         navController = navController,
         startDestination = "home",
         enterTransition = { slideInHorizontally() },
-        exitTransition = { fadeOut() }
+        exitTransition = { fadeOut() },
     ) {
         composable("home") {
             val engine by viewModel.engine.collectAsState()
@@ -72,7 +72,7 @@ fun AliasNavHost(
                     },
                     onDecks = { navController.navigate("decks") },
                     onSettings = { navController.navigate("settings") },
-                    onHistory = { navController.navigate("history") }
+                    onHistory = { navController.navigate("history") },
                 )
             }
         }
@@ -84,7 +84,7 @@ fun AliasNavHost(
                     Surface(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .background(MaterialTheme.colorScheme.surfaceVariant),
                     ) {}
                 } else {
                     GameScreen(viewModel, engine!!, currentSettings)
@@ -95,20 +95,20 @@ fun AliasNavHost(
             AppScaffold(snackbarHostState = snackbarHostState) {
                 DecksScreen(
                     vm = viewModel,
-                    onDeckSelected = { navController.navigate("deck/${it.id}") }
+                    onDeckSelected = { navController.navigate("deck/${it.id}") },
                 )
             }
         }
         composable(
             route = "deck/{id}",
-            arguments = listOf(navArgument("id") { type = NavType.StringType })
+            arguments = listOf(navArgument("id") { type = NavType.StringType }),
         ) { backStackEntry ->
             val id = requireNotNull(backStackEntry.arguments?.getString("id"))
             val decks by viewModel.decks.collectAsState()
             val deck = decks.find { it.id == id }
             if (deck == null) {
                 AppScaffold(
-                    snackbarHostState = snackbarHostState
+                    snackbarHostState = snackbarHostState,
                 ) {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Text(stringResource(R.string.deck_not_found))
@@ -116,7 +116,7 @@ fun AliasNavHost(
                 }
             } else {
                 AppScaffold(
-                    snackbarHostState = snackbarHostState
+                    snackbarHostState = snackbarHostState,
                 ) {
                     DeckDetailScreen(vm = viewModel, deck = deck)
                 }
@@ -127,7 +127,7 @@ fun AliasNavHost(
                 SettingsScreen(
                     vm = viewModel,
                     onBack = { navController.popBackStack() },
-                    onAbout = { navController.navigate("about") }
+                    onAbout = { navController.navigate("about") },
                 )
             }
         }

@@ -13,7 +13,7 @@ import kotlinx.serialization.json.Json
 private data class PackDto(
     val format: String,
     val deck: DeckDto,
-    val words: List<WordDto>
+    val words: List<WordDto>,
 )
 
 @Serializable
@@ -36,7 +36,7 @@ private data class WordDto(
     @SerialName("wordClass") val wordClass: String? = null,
     @SerialName("wordClasses") val legacyWordClasses: List<String>? = null,
     @SerialName("isNSFW") val isNsfw: Boolean = false,
-    val tabooStems: List<String>? = null
+    val tabooStems: List<String>? = null,
 ) {
     fun normalizedDifficulty(): Int = difficulty ?: DEFAULT_DIFFICULTY
 
@@ -108,7 +108,7 @@ object PackParser {
                 difficulty = difficulty,
                 category = category,
                 tabooStems = word.tabooStems,
-                wordClass = normalizedClass
+                wordClass = normalizedClass,
             )
             wordEntities += WordEntity(
                 deckId = dto.deck.id,
@@ -118,13 +118,13 @@ object PackParser {
                 category = category,
                 difficulty = difficulty,
                 tabooStems = word.tabooStems?.joinToString(";"),
-                isNSFW = word.isNsfw
+                isNSFW = word.isNsfw,
             )
             normalizedClass?.let { cls ->
                 classEntities += WordClassEntity(
                     deckId = dto.deck.id,
                     wordText = word.text,
-                    wordClass = cls
+                    wordClass = cls,
                 )
             }
         }

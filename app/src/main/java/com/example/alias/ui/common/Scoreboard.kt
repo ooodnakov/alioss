@@ -39,7 +39,7 @@ fun Scoreboard(scores: Map<String, Int>) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (isLeader) {
                     Icon(
@@ -48,7 +48,7 @@ fun Scoreboard(scores: Map<String, Int>) {
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier
                             .size(20.dp)
-                            .padding(end = 8.dp)
+                            .padding(end = 8.dp),
                     )
                 } else {
                     Spacer(modifier = Modifier.width(28.dp))
@@ -56,7 +56,7 @@ fun Scoreboard(scores: Map<String, Int>) {
                 Text(
                     text = "$team: $score$suffix",
                     style = textStyle,
-                    color = textColor
+                    color = textColor,
                 )
             }
         }

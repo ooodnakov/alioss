@@ -152,8 +152,8 @@ fun WordCard(
                                 vibrator?.vibrate(
                                     VibrationEffect.createOneShot(
                                         HAPTIC_DURATION_MS.toLong(),
-                                        VibrationEffect.DEFAULT_AMPLITUDE
-                                    )
+                                        VibrationEffect.DEFAULT_AMPLITUDE,
+                                    ),
                                 )
                             }
                         }
@@ -199,22 +199,22 @@ fun WordCard(
                                 animY.animateTo(0f, tween(200))
                             }
                         }
-                    }
+                    },
                 )
             },
         shape = RoundedCornerShape(20.dp),
         color = MaterialTheme.colorScheme.surface,
         tonalElevation = 6.dp,
-        shadowElevation = 10.dp
+        shadowElevation = 10.dp,
     ) {
         Box(
             modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.Center,
         ) {
             Text(
                 text = word,
                 style = MaterialTheme.typography.displaySmall,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
             )
             if (verticalMode) {
                 Text(
@@ -223,7 +223,7 @@ fun WordCard(
                     modifier = Modifier
                         .align(Alignment.TopCenter)
                         .padding(16.dp)
-                        .alpha(if (currentY < 0f) fraction else 0f)
+                        .alpha(if (currentY < 0f) fraction else 0f),
                 )
                 if (allowSkip) {
                     Text(
@@ -232,7 +232,7 @@ fun WordCard(
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
                             .padding(16.dp)
-                            .alpha(if (currentY > 0f) fraction else 0f)
+                            .alpha(if (currentY > 0f) fraction else 0f),
                     )
                 }
             } else {
@@ -242,7 +242,7 @@ fun WordCard(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
                         .padding(16.dp)
-                        .alpha(if (currentX > 0f) fraction else 0f)
+                        .alpha(if (currentX > 0f) fraction else 0f),
                 )
                 if (allowSkip) {
                     Text(
@@ -251,7 +251,7 @@ fun WordCard(
                         modifier = Modifier
                             .align(Alignment.TopStart)
                             .padding(16.dp)
-                            .alpha(if (currentX < 0f) fraction else 0f)
+                            .alpha(if (currentX < 0f) fraction else 0f),
                     )
                 }
             }
@@ -262,7 +262,7 @@ fun WordCard(
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 16.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     metadataItems.forEach { (text, highlighted) ->
                         WordMetadataChip(text = text, highlighted = highlighted)
@@ -277,7 +277,7 @@ fun WordCard(
 private fun WordMetadataChip(
     text: String,
     highlighted: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Surface(
         modifier = modifier,
@@ -293,13 +293,13 @@ private fun WordMetadataChip(
             MaterialTheme.colorScheme.onSurfaceVariant
         },
         tonalElevation = 0.dp,
-        shadowElevation = 0.dp
+        shadowElevation = 0.dp,
     ) {
         Text(
             text = text,
             style = MaterialTheme.typography.labelMedium,
             textAlign = TextAlign.Center,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
         )
     }
 }

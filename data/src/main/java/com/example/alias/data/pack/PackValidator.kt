@@ -114,7 +114,8 @@ object PackValidator {
             0xC0, 0xC1, 0xC2, 0xC3,
             0xC5, 0xC6, 0xC7,
             0xC9, 0xCA, 0xCB,
-            0xCD, 0xCE, 0xCF -> true
+            0xCD, 0xCE, 0xCF,
+            -> true
             else -> false
         }
     }
@@ -127,7 +128,7 @@ object PackValidator {
         13,
         10,
         26,
-        10
+        10,
     )
 
     private fun hasPngSignature(data: ByteArray): Boolean {

@@ -57,7 +57,7 @@ class PackParserTest {
         val parsed = PackParser.fromJson(json)
 
         val expected = Base64.getEncoder().encodeToString(
-            Base64.getMimeDecoder().decode(base64Image.substringAfter(','))
+            Base64.getMimeDecoder().decode(base64Image.substringAfter(',')),
         )
         assertEquals(expected, parsed.deck.coverImageBase64)
     }

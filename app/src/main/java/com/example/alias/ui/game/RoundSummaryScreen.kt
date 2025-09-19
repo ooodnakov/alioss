@@ -84,38 +84,38 @@ fun RoundSummaryScreen(vm: MainViewModel, s: GameState.TurnFinished, settings: S
             if (timeline.events.isEmpty()) {
                 Box(
                     modifier = Modifier.fillMaxSize().padding(24.dp),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     Text(
                         text = stringResource(R.string.timeline_no_events),
                         style = MaterialTheme.typography.bodyMedium,
                         color = colors.onSurfaceVariant,
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Center,
                     )
                 }
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     item {
                         Column(
                             modifier = Modifier.padding(horizontal = 20.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             Text(
                                 stringResource(R.string.turn_timeline_title),
-                                style = MaterialTheme.typography.titleMedium
+                                style = MaterialTheme.typography.titleMedium,
                             )
                             Text(
                                 text = stringResource(R.string.timeline_score_breakdown),
                                 style = MaterialTheme.typography.bodySmall,
-                                color = colors.onSurfaceVariant
+                                color = colors.onSurfaceVariant,
                             )
                             ScoreProgressGraph(
                                 events = timeline.events,
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier.fillMaxWidth(),
                             )
                         }
                     }
@@ -124,7 +124,7 @@ fun RoundSummaryScreen(vm: MainViewModel, s: GameState.TurnFinished, settings: S
                             TimelineSegmentHeader(
                                 segment = segment,
                                 modifier = Modifier.padding(horizontal = 20.dp),
-                                penaltyPerSkip = penaltyPerSkip
+                                penaltyPerSkip = penaltyPerSkip,
                             )
                         }
                         itemsIndexed(segment.events) { eventIndex, event ->
@@ -135,7 +135,7 @@ fun RoundSummaryScreen(vm: MainViewModel, s: GameState.TurnFinished, settings: S
                                 hasPrev = hasPrev,
                                 hasNext = hasNext,
                                 onOverride = { vm.overrideOutcome(event.index, it) },
-                                modifier = Modifier.padding(horizontal = 20.dp)
+                                modifier = Modifier.padding(horizontal = 20.dp),
                             )
                         }
                     }
@@ -215,7 +215,7 @@ private fun buildTimelineData(outcomes: List<TurnOutcome>, penaltyPerSkip: Int):
             change = change,
             cumulative = cumulative,
             isBonus = isBonus,
-            elapsedMillis = elapsed
+            elapsedMillis = elapsed,
         )
         streak = if (type == TimelineSegmentType.CORRECT) nextStreak else 0
     }
@@ -295,32 +295,32 @@ private fun TurnSummaryHeader(
     val onContainer = colors.onPrimaryContainer
     val gradientBrush = remember(colors.primaryContainer, colors.tertiaryContainer) {
         Brush.linearGradient(
-            colors = listOf(colors.primaryContainer, colors.tertiaryContainer)
+            colors = listOf(colors.primaryContainer, colors.tertiaryContainer),
         )
     }
     ElevatedCard(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(28.dp)
+        shape = RoundedCornerShape(28.dp),
     ) {
         Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(28.dp))
                 .background(
-                    brush = gradientBrush
-                )
+                    brush = gradientBrush,
+                ),
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth().padding(24.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Column(
                         modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
                     ) {
                         Text(
                             text = stringResource(R.string.turn_summary, team),
@@ -335,25 +335,25 @@ private fun TurnSummaryHeader(
                         Text(
                             text = statusText,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = onContainer.copy(alpha = 0.85f)
+                            color = onContainer.copy(alpha = 0.85f),
                         )
                     }
                     Surface(
                         shape = RoundedCornerShape(20.dp),
-                        color = onContainer.copy(alpha = 0.08f)
+                        color = onContainer.copy(alpha = 0.08f),
                     ) {
                         Text(
                             text = stringResource(R.string.score_change, deltaScore),
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                             style = MaterialTheme.typography.titleLarge,
                             color = deltaColor,
-                            fontWeight = FontWeight.SemiBold
+                            fontWeight = FontWeight.SemiBold,
                         )
                     }
                 }
                 TurnSummaryStatsRow(
                     stats = stats,
-                    textColor = onContainer
+                    textColor = onContainer,
                 )
             }
         }
@@ -371,41 +371,41 @@ private fun TurnSummaryStatsRow(
     FlowRow(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         TurnSummaryStatChip(
             label = pluralStringResource(
                 R.plurals.turn_summary_stat_correct,
                 stats.totalCorrect,
-                stats.totalCorrect
+                stats.totalCorrect,
             ),
             value = stats.totalCorrect.toString(),
             icon = Icons.Filled.Check,
             accentColor = colors.tertiary,
-            textColor = textColor
+            textColor = textColor,
         )
         TurnSummaryStatChip(
             label = pluralStringResource(
                 R.plurals.turn_summary_stat_skipped,
                 stats.totalSkipped,
-                stats.totalSkipped
+                stats.totalSkipped,
             ),
             value = stats.totalSkipped.toString(),
             icon = Icons.Filled.Close,
             accentColor = colors.error,
-            textColor = textColor
+            textColor = textColor,
         )
         if (stats.totalPending > 0) {
             TurnSummaryStatChip(
                 label = pluralStringResource(
                     R.plurals.turn_summary_stat_pending,
                     stats.totalPending,
-                    stats.totalPending
+                    stats.totalPending,
                 ),
                 value = stats.totalPending.toString(),
                 icon = null,
                 accentColor = colors.outline,
-                textColor = textColor
+                textColor = textColor,
             )
         }
         if (stats.bonusCount > 0) {
@@ -413,12 +413,12 @@ private fun TurnSummaryStatsRow(
                 label = pluralStringResource(
                     R.plurals.turn_summary_stat_bonus,
                     stats.bonusCount,
-                    stats.bonusCount
+                    stats.bonusCount,
                 ),
                 value = stats.bonusCount.toString(),
                 icon = Icons.Filled.Star,
                 accentColor = colors.secondary,
-                textColor = textColor
+                textColor = textColor,
             )
         }
         stats.elapsedMillis?.let { elapsed ->
@@ -432,7 +432,7 @@ private fun TurnSummaryStatsRow(
                 value = timeValue,
                 icon = Icons.Filled.Schedule,
                 accentColor = colors.primary,
-                textColor = textColor
+                textColor = textColor,
             )
         }
     }
@@ -451,19 +451,19 @@ private fun TurnSummaryStatChip(
         modifier = modifier,
         shape = RoundedCornerShape(16.dp),
         color = accentColor.copy(alpha = 0.18f),
-        contentColor = textColor
+        contentColor = textColor,
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             if (icon != null) {
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
                     tint = accentColor,
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.size(18.dp),
                 )
             }
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -471,12 +471,12 @@ private fun TurnSummaryStatChip(
                     text = value,
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
-                    color = accentColor
+                    color = accentColor,
                 )
                 Text(
                     text = label,
                     style = MaterialTheme.typography.bodySmall,
-                    color = textColor.copy(alpha = 0.85f)
+                    color = textColor.copy(alpha = 0.85f),
                 )
             }
         }
@@ -495,7 +495,7 @@ private fun ScoreProgressGraph(events: List<TimelineEvent>, modifier: Modifier =
         Text(
             text = stringResource(R.string.timeline_score_graph_label),
             style = MaterialTheme.typography.labelLarge,
-            color = colors.onSurfaceVariant
+            color = colors.onSurfaceVariant,
         )
         Box(
             modifier = Modifier
@@ -503,7 +503,7 @@ private fun ScoreProgressGraph(events: List<TimelineEvent>, modifier: Modifier =
                 .height(64.dp)
                 .clip(RoundedCornerShape(12.dp))
                 .background(colors.surfaceVariant.copy(alpha = 0.6f))
-                .padding(horizontal = 12.dp, vertical = 8.dp)
+                .padding(horizontal = 12.dp, vertical = 8.dp),
         ) {
             Canvas(Modifier.fillMaxSize()) {
                 val xMin = points.minOf { it.time }
@@ -526,7 +526,7 @@ private fun ScoreProgressGraph(events: List<TimelineEvent>, modifier: Modifier =
                     }
                     Offset(
                         x = xFraction.coerceIn(0f, 1f) * size.width,
-                        y = size.height - yFraction.coerceIn(0f, 1f) * size.height
+                        y = size.height - yFraction.coerceIn(0f, 1f) * size.height,
                     )
                 }
                 val zeroLineY = when {
@@ -542,7 +542,7 @@ private fun ScoreProgressGraph(events: List<TimelineEvent>, modifier: Modifier =
                         color = baselineColor,
                         start = Offset(0f, zeroLineY),
                         end = Offset(size.width, zeroLineY),
-                        strokeWidth = 1.dp.toPx()
+                        strokeWidth = 1.dp.toPx(),
                     )
                 }
                 if (offsets.size >= 2) {
@@ -557,8 +557,8 @@ private fun ScoreProgressGraph(events: List<TimelineEvent>, modifier: Modifier =
                         brush = Brush.verticalGradient(
                             colors = listOf(fillColor, fillColor.copy(alpha = 0f)),
                             startY = 0f,
-                            endY = size.height
-                        )
+                            endY = size.height,
+                        ),
                     )
                     val strokePath = Path().apply {
                         offsets.forEachIndexed { index, offset ->
@@ -568,7 +568,7 @@ private fun ScoreProgressGraph(events: List<TimelineEvent>, modifier: Modifier =
                     drawPath(
                         path = strokePath,
                         color = strokeColor,
-                        style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
+                        style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round),
                     )
                     drawCircle(color = strokeColor, radius = 4.dp.toPx(), center = offsets.last())
                 }
@@ -588,17 +588,17 @@ private fun TimelineSegmentHeader(
         TimelineSegmentType.CORRECT -> pluralStringResource(
             R.plurals.timeline_correct,
             segment.events.size,
-            segment.events.size
+            segment.events.size,
         )
         TimelineSegmentType.SKIP -> pluralStringResource(
             R.plurals.timeline_skipped,
             segment.events.size,
-            segment.events.size
+            segment.events.size,
         )
         TimelineSegmentType.PENDING -> pluralStringResource(
             R.plurals.timeline_pending,
             segment.events.size,
-            segment.events.size
+            segment.events.size,
         )
     }
     val delta = segment.events.sumOf { it.change }
@@ -616,14 +616,14 @@ private fun TimelineSegmentHeader(
     Surface(
         modifier = modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.surfaceVariant,
-        contentColor = MaterialTheme.colorScheme.onSurface
+        contentColor = MaterialTheme.colorScheme.onSurface,
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             val icon = when (segment.type) {
                 TimelineSegmentType.CORRECT -> Icons.Filled.Check
@@ -633,13 +633,13 @@ private fun TimelineSegmentHeader(
             Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(20.dp))
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                 Text(
                     subtitle,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 if (showBonus) {
                     AssistChip(
@@ -651,8 +651,8 @@ private fun TimelineSegmentHeader(
                         label = { Text(stringResource(R.string.timeline_bonus_label)) },
                         colors = AssistChipDefaults.assistChipColors(
                             disabledContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                            disabledLabelColor = MaterialTheme.colorScheme.onTertiaryContainer
-                        )
+                            disabledLabelColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                        ),
                     )
                 }
             }
@@ -660,7 +660,7 @@ private fun TimelineSegmentHeader(
                 text = stringResource(R.string.timeline_change, delta),
                 style = MaterialTheme.typography.titleMedium,
                 color = color,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
             )
         }
     }
@@ -688,27 +688,27 @@ private fun TimelineEventRow(
             .padding(top = 4.dp)
             .height(IntrinsicSize.Min),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.Top
+        verticalAlignment = Alignment.Top,
     ) {
         TimelineIndicator(
             color = color,
             showTopConnector = hasPrev,
-            showBottomConnector = hasNext
+            showBottomConnector = hasNext,
         )
         Column(
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 Text(
                     event.outcome.word,
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
                 )
                 if (event.isBonus) {
                     AssistChip(
@@ -720,8 +720,8 @@ private fun TimelineEventRow(
                         label = { Text(stringResource(R.string.timeline_bonus_label)) },
                         colors = AssistChipDefaults.assistChipColors(
                             disabledContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                            disabledLabelColor = MaterialTheme.colorScheme.onTertiaryContainer
-                        )
+                            disabledLabelColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                        ),
                     )
                 }
             }
@@ -730,18 +730,18 @@ private fun TimelineEventRow(
                     text = stringResource(R.string.timeline_change, event.change),
                     style = MaterialTheme.typography.bodyMedium,
                     color = color,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Medium,
                 )
                 Text(
                     text = stringResource(R.string.timeline_running_total, event.cumulative),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             Text(
                 timeLabel,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -761,7 +761,7 @@ private fun TimelineIndicator(color: Color, showTopConnector: Boolean, showBotto
         modifier = Modifier
             .width(24.dp)
             .fillMaxHeight(),
-        contentAlignment = Alignment.TopCenter
+        contentAlignment = Alignment.TopCenter,
     ) {
         Canvas(modifier = Modifier.fillMaxHeight().width(TIMELINE_INDICATOR_CANVAS_WIDTH)) {
             val centerX = size.width / 2f
@@ -771,7 +771,7 @@ private fun TimelineIndicator(color: Color, showTopConnector: Boolean, showBotto
                 drawLine(
                     color = color.copy(alpha = TIMELINE_INDICATOR_CONNECTOR_ALPHA),
                     start = Offset(centerX, 0f),
-                    end = Offset(centerX, centerY - circleRadius)
+                    end = Offset(centerX, centerY - circleRadius),
                 )
             }
             drawCircle(color = color, radius = circleRadius, center = Offset(centerX, centerY))
@@ -779,7 +779,7 @@ private fun TimelineIndicator(color: Color, showTopConnector: Boolean, showBotto
                 drawLine(
                     color = color.copy(alpha = TIMELINE_INDICATOR_CONNECTOR_ALPHA),
                     start = Offset(centerX, centerY + circleRadius),
-                    end = Offset(centerX, size.height)
+                    end = Offset(centerX, size.height),
                 )
             }
         }

@@ -105,7 +105,7 @@ class MainViewModel @Inject constructor(
     )
     private val _uiEvents = MutableSharedFlow<UiEvent>(
         extraBufferCapacity = 16,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST
+        onBufferOverflow = BufferOverflow.DROP_OLDEST,
     )
     val uiEvents: SharedFlow<UiEvent> = _uiEvents
 
@@ -116,7 +116,7 @@ class MainViewModel @Inject constructor(
                 actionLabel = "Dismiss",
                 duration = SnackbarDuration.Long,
                 isError = true,
-            )
+            ),
         )
     }
 
@@ -368,7 +368,7 @@ class MainViewModel @Inject constructor(
                 Log.e(TAG, "Loaded ${words.size} words")
                 InitialLoadResult(
                     words = words,
-                    settings = baseSettings.copy(enabledDeckIds = resolvedEnabled)
+                    settings = baseSettings.copy(enabledDeckIds = resolvedEnabled),
                 )
             }
             Log.e(TAG, "Finished IO dispatcher, preparing word metadata")
@@ -393,7 +393,7 @@ class MainViewModel @Inject constructor(
                                 filters.categories,
                                 filters.categoryFilterEnabled,
                                 filters.wordClasses,
-                                filters.wordClassFilterEnabled
+                                filters.wordClassFilterEnabled,
                             )
                         }
                         val categoriesDeferred = async {
@@ -407,7 +407,7 @@ class MainViewModel @Inject constructor(
                         val classes = classesDeferred.await()
                         Log.e(
                             TAG,
-                            "Metadata: ${briefs.size} briefs, ${categories.size} categories, ${classes.size} classes"
+                            "Metadata: ${briefs.size} briefs, ${categories.size} categories, ${classes.size} classes",
                         )
                         val map = briefs.associateBy({ it.text }) {
                             WordInfo(it.difficulty, it.category, parseClass(it.wordClass))
@@ -426,7 +426,7 @@ class MainViewModel @Inject constructor(
                 targetWords = initial.settings.targetWords,
                 maxSkips = initial.settings.maxSkips,
                 penaltyPerSkip = if (initial.settings.punishSkips) initial.settings.penaltyPerSkip else 0,
-                roundSeconds = initial.settings.roundSeconds
+                roundSeconds = initial.settings.roundSeconds,
             )
             val seed = java.security.SecureRandom().nextLong()
             Log.e(TAG, "Starting match with config: targetWords=${config.targetWords}, maxSkips=${config.maxSkips}")
@@ -470,8 +470,8 @@ class MainViewModel @Inject constructor(
                         message = msg,
                         actionLabel = "Undo",
                         duration = SnackbarDuration.Short,
-                        onAction = { setDeckEnabled(id, !enabled, fromUndo = true) }
-                    )
+                        onAction = { setDeckEnabled(id, !enabled, fromUndo = true) },
+                    ),
                 )
             }
         }
@@ -493,8 +493,8 @@ class MainViewModel @Inject constructor(
                         actionLabel = "Dismiss",
                         duration = SnackbarDuration.Long,
                         isError = true,
-                        dismissCurrent = true
-                    )
+                        dismissCurrent = true,
+                    ),
                 )
                 return@launch
             }
@@ -505,8 +505,8 @@ class MainViewModel @Inject constructor(
                 UiEvent(
                     message = "Deleted deck: ${deck.name}",
                     actionLabel = "OK",
-                    dismissCurrent = true
-                )
+                    dismissCurrent = true,
+                ),
             )
         }
     }
@@ -535,8 +535,8 @@ class MainViewModel @Inject constructor(
                         message = "Invalid host/origin",
                         actionLabel = "Dismiss",
                         duration = SnackbarDuration.Short,
-                        isError = true
-                    )
+                        isError = true,
+                    ),
                 )
                 return@launch
             }
@@ -595,8 +595,8 @@ class MainViewModel @Inject constructor(
             counts.sortedWith(
                 compareBy(
                     { knownOrder[it.wordClass] ?: Int.MAX_VALUE },
-                    { it.wordClass }
-                )
+                    { it.wordClass },
+                ),
             )
         }
 
@@ -618,22 +618,22 @@ class MainViewModel @Inject constructor(
                 UiEvent(
                     message = "Downloading…",
                     duration = SnackbarDuration.Short,
-                    dismissCurrent = true
-                )
+                    dismissCurrent = true,
+                ),
             )
             try {
                 val bytes = withContext(Dispatchers.IO) {
                     var lastUpdate = 0L
                     downloader.download(
                         url.trim(),
-                        expectedSha256?.trim().takeUnless { it.isNullOrEmpty() }
+                        expectedSha256?.trim().takeUnless { it.isNullOrEmpty() },
                     ) { bytesRead, totalBytes ->
                         val now = System.currentTimeMillis()
                         if (now - lastUpdate > 100 || (totalBytes != null && bytesRead == totalBytes)) {
                             _deckDownloadProgress.value = DeckDownloadProgress(
                                 step = DeckDownloadStep.DOWNLOADING,
                                 bytesRead = bytesRead,
-                                totalBytes = totalBytes
+                                totalBytes = totalBytes,
                             )
                             lastUpdate = now
                         }
@@ -649,8 +649,8 @@ class MainViewModel @Inject constructor(
                         message = "Imported deck from URL",
                         actionLabel = "OK",
                         duration = SnackbarDuration.Short,
-                        dismissCurrent = true
-                    )
+                        dismissCurrent = true,
+                    ),
                 )
                 if (imageError != null) {
                     showCoverImageErrorSnackbar()
@@ -662,8 +662,8 @@ class MainViewModel @Inject constructor(
                         actionLabel = "Dismiss",
                         duration = SnackbarDuration.Long,
                         isError = true,
-                        dismissCurrent = true
-                    )
+                        dismissCurrent = true,
+                    ),
                 )
             } finally {
                 _deckDownloadProgress.value = null
@@ -690,7 +690,7 @@ class MainViewModel @Inject constructor(
                     }
                 }
                 _uiEvents.tryEmit(
-                    UiEvent(message = "Imported deck", actionLabel = "OK", duration = SnackbarDuration.Short)
+                    UiEvent(message = "Imported deck", actionLabel = "OK", duration = SnackbarDuration.Short),
                 )
                 if (imageError != null) {
                     showCoverImageErrorSnackbar()
@@ -701,8 +701,8 @@ class MainViewModel @Inject constructor(
                         message = "Failed: ${t.message}",
                         actionLabel = "Dismiss",
                         duration = SnackbarDuration.Long,
-                        isError = true
-                    )
+                        isError = true,
+                    ),
                 )
             }
         }
@@ -744,8 +744,8 @@ class MainViewModel @Inject constructor(
                 UiEvent(
                     message = langResult.exceptionOrNull()?.message ?: "Invalid language",
                     duration = SnackbarDuration.Short,
-                    isError = true
-                )
+                    isError = true,
+                ),
             )
         } else {
             val newLang = language.trim().lowercase()
@@ -760,8 +760,8 @@ class MainViewModel @Inject constructor(
                             UiEvent(
                                 message = "Enabled ${preferred.size} deck(s) for $newLang",
                                 actionLabel = "Undo",
-                                onAction = { settingsRepository.setEnabledDeckIds(prevEnabled) }
-                            )
+                                onAction = { settingsRepository.setEnabledDeckIds(prevEnabled) },
+                            ),
                         )
                     }
                 }
@@ -823,7 +823,7 @@ class MainViewModel @Inject constructor(
                         filters.categories,
                         filters.categoryFilterEnabled,
                         filters.wordClasses,
-                        filters.wordClassFilterEnabled
+                        filters.wordClassFilterEnabled,
                     )
                 }
                 val map = briefs.associateBy({ it.text }) {
@@ -839,7 +839,7 @@ class MainViewModel @Inject constructor(
                     wordDao.getAvailableCategories(
                         filters.deckIds,
                         filters.language,
-                        filters.allowNSFW
+                        filters.allowNSFW,
                     ).sorted()
                 }
                 _availableCategories.value = list
@@ -852,7 +852,7 @@ class MainViewModel @Inject constructor(
                     wordDao.getAvailableWordClasses(
                         filters.deckIds,
                         filters.language,
-                        filters.allowNSFW
+                        filters.allowNSFW,
                     )
                 }
                 _availableWordClasses.value = canonicalizeWordClassFilters(list)
@@ -863,7 +863,7 @@ class MainViewModel @Inject constructor(
                 targetWords = s.targetWords,
                 maxSkips = s.maxSkips,
                 penaltyPerSkip = if (s.punishSkips) s.penaltyPerSkip else 0,
-                roundSeconds = s.roundSeconds
+                roundSeconds = s.roundSeconds,
             )
             val seed = java.security.SecureRandom().nextLong()
             e.startMatch(config, teams = s.teams, seed = seed)
@@ -885,7 +885,7 @@ class MainViewModel @Inject constructor(
                         it.correct,
                         it.skipped,
                         infoByWord[it.word]?.difficulty,
-                        it.timestamp
+                        it.timestamp,
                     )
                 }
                 historyRepository.save(entries)

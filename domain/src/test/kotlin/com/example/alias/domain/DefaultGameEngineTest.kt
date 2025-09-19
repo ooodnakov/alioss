@@ -246,13 +246,13 @@ class DefaultGameEngineTest {
             engine.skip()
             var s2 = assertIs<GameState.TurnActive>(engine.state.value)
             assertEquals("banana", s2.word)
-            
+
             // Let timer expire to finish the turn after skip
             advanceTimeBy(cfg.roundSeconds * 1000L)
             runCurrent()
-            
+
             val finishedAfterSkip = assertIs<GameState.TurnFinished>(engine.state.value)
-            
+
             // Temporarily comment out the failing assertion to see actual values
             // assertFalse(finishedAfterSkip.matchOver)
             println("ACTUAL: matchOver = ${finishedAfterSkip.matchOver}")
@@ -283,7 +283,7 @@ class DefaultGameEngineTest {
             var s = assertIs<GameState.TurnActive>(engine.state.value)
             assertEquals("apple", s.word)
             engine.correct()
-            
+
             val finishedAfterCorrect = assertIs<GameState.TurnFinished>(engine.state.value)
             assertTrue(finishedAfterCorrect.matchOver)
             assertEquals(1, finishedAfterCorrect.deltaScore)
@@ -343,4 +343,4 @@ class DefaultGameEngineTest {
             engine.nextTurn()
             assertIs<GameState.MatchFinished>(engine.state.value)
         }
-    }
+}
