@@ -4,9 +4,7 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import java.util.Locale
 
-/**
- * Normalizes locale preference strings and applies them via [AppCompatDelegate].
- */
+/** Normalizes locale preference strings and applies them via [AppCompatDelegate]. */
 fun canonicalizeLocalePreference(raw: String): String {
     val trimmed = raw.trim()
     if (trimmed.equals("system", ignoreCase = true) || trimmed.isEmpty()) {
@@ -21,20 +19,22 @@ fun canonicalizeLocalePreference(raw: String): String {
 
 fun applyLocalePreference(tag: String) {
     val normalized = canonicalizeLocalePreference(tag)
-    val locales = if (normalized == "system") {
-        LocaleListCompat.getEmptyLocaleList()
-    } else {
-        LocaleListCompat.forLanguageTags(normalized)
-    }
+    val locales =
+            if (normalized == "system") {
+                LocaleListCompat.getEmptyLocaleList()
+            } else {
+                LocaleListCompat.forLanguageTags(normalized)
+            }
     val current = AppCompatDelegate.getApplicationLocales()
     if (current != locales) {
         AppCompatDelegate.setApplicationLocales(locales)
     }
-    val effectiveList = if (locales.isEmpty) {
-        LocaleListCompat.getAdjustedDefault()
-    } else {
-        locales
-    }
+    val effectiveList =
+            if (locales.isEmpty) {
+                LocaleListCompat.getAdjustedDefault()
+            } else {
+                locales
+            }
     effectiveList.firstOrNull()?.let(Locale::setDefault)
 }
 
@@ -43,11 +43,12 @@ fun resolveInitialLocalePreference(stored: String): String {
     val defaultLocales = LocaleListCompat.getAdjustedDefault()
     val defaultTag = canonicalizeLocalePreference(defaultLocales.toLanguageTags())
     val canonicalAppTag = canonicalizeLocalePreference(appLocales.toLanguageTags())
-    val appTag = when {
-        appLocales.isEmpty -> "system"
-        canonicalAppTag == defaultTag -> "system"
-        else -> canonicalAppTag
-    }
+    val appTag =
+            when {
+                appLocales.isEmpty -> "system"
+                canonicalAppTag == defaultTag -> "system"
+                else -> canonicalAppTag
+            }
     return if (appTag != "system") appTag else stored
 }
 

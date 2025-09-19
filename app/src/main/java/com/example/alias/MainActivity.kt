@@ -34,9 +34,7 @@ class MainActivity : AppCompatActivity() {
                 val snack = remember { SnackbarHostState() }
                 val settings by vm.settings.collectAsState()
 
-                LaunchedEffect(settings.uiLanguage) {
-                    applyLocalePreference(settings.uiLanguage)
-                }
+                LaunchedEffect(settings.uiLanguage) { applyLocalePreference(settings.uiLanguage) }
 
                 LaunchedEffect(Unit) {
                     var currentSnackbarJob: Job? = null
@@ -49,18 +47,21 @@ class MainActivity : AppCompatActivity() {
                         if (ev.message.isBlank()) {
                             return@collect
                         }
-                        val duration = if (ev.actionLabel != null && ev.duration == SnackbarDuration.Short) {
-                            SnackbarDuration.Long
-                        } else {
-                            ev.duration
-                        }
+                        val duration =
+                                if (ev.actionLabel != null && ev.duration == SnackbarDuration.Short
+                                ) {
+                                    SnackbarDuration.Long
+                                } else {
+                                    ev.duration
+                                }
                         val job = launch {
-                            val result = snack.showSnackbar(
-                                message = ev.message,
-                                actionLabel = ev.actionLabel,
-                                withDismissAction = ev.actionLabel == null,
-                                duration = duration
-                            )
+                            val result =
+                                    snack.showSnackbar(
+                                            message = ev.message,
+                                            actionLabel = ev.actionLabel,
+                                            withDismissAction = ev.actionLabel == null,
+                                            duration = duration
+                                    )
                             if (result == SnackbarResult.ActionPerformed) {
                                 ev.onAction?.invoke()
                             }
@@ -75,10 +76,10 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 AliasNavHost(
-                    navController = nav,
-                    snackbarHostState = snack,
-                    settings = settings,
-                    viewModel = vm
+                        navController = nav,
+                        snackbarHostState = snack,
+                        settings = settings,
+                        viewModel = vm
                 )
             }
         }
