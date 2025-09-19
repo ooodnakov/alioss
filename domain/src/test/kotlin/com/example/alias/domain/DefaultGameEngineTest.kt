@@ -202,12 +202,31 @@ class DefaultGameEngineTest {
             assertEquals(2, finished.outcomes.size)
             assertTrue(finished.outcomes[0].correct)
             assertFalse(finished.outcomes[1].correct)
-            assertFalse(finished.matchOver)
+            assertTrue(finished.matchOver)
 
             engine.overrideOutcome(1, true)
             val updated = assertIs<GameState.TurnFinished>(engine.state.value)
             assertEquals(2, updated.deltaScore)
             assertTrue(updated.outcomes[1].correct)
             assertEquals(2, updated.scores["Team"])
+        }
+
+    @Test
+    fun `match finishes when queue empties before reaching target`() =
+        runTest {
+            val words = listOf("apple", "banana")
+            val engine = DefaultGameEngine(words, this)
+            val cfg = config.copy(targetWords = 3, roundSeconds = 10)
+            engine.startMatch(cfg, teams = listOf("Solo"), seed = 0L)
+
+            engine.startTurn()
+            engine.correct()
+            engine.correct()
+
+            val finished = assertIs<GameState.TurnFinished>(engine.state.value)
+            assertTrue(finished.matchOver)
+
+            engine.nextTurn()
+            assertIs<GameState.MatchFinished>(engine.state.value)
         }
 }

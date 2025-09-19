@@ -177,7 +177,7 @@ class DefaultGameEngine(
                 outcomes.add(TurnOutcome(currentWord, false, System.currentTimeMillis(), skipped = false))
             }
         }
-        matchOver = reachedTarget || (byTimer && noWordsLeft)
+        matchOver = reachedTarget || noWordsLeft
         // Always end the turn first; if matchOver, UI can finalize via nextTurn()
         _state.update { GameState.TurnFinished(team, turnScore, scores.toMap(), outcomes.toList(), matchOver) }
     }
