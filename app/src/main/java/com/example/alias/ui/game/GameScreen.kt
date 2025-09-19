@@ -6,6 +6,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -64,6 +65,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 private val LARGE_BUTTON_HEIGHT = 80.dp
+private const val CARD_ASPECT_RATIO = 1.8f
 private const val PRE_TURN_COUNTDOWN_SECONDS = 3
 private val TIMER_SAFE_COLOR = Color(0xFF4CAF50)
 private val TIMER_WARNING_COLOR = Color(0xFFFFC107)
@@ -215,7 +217,11 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                 val nextWord = frozenNext ?: computedNext
                 val nextMeta = nextWord?.let { infoMap[it] }
                 val currentMeta = infoMap[s.word]
-                Box(Modifier.fillMaxWidth().height(200.dp)) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(CARD_ASPECT_RATIO)
+                ) {
                     if (nextWord != null) {
                         WordCard(
                             word = nextWord,
@@ -238,7 +244,9 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                     }
                     WordCard(
                         word = s.word,
-                        modifier = Modifier.fillMaxSize().zIndex(1f),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .zIndex(1f),
                         enabled = true,
                         vibrator = vibrator,
                         hapticsEnabled = settings.hapticsEnabled,
