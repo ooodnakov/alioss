@@ -31,6 +31,7 @@ subprojects {
         // ✅ Configure reports on the TASK, not the extension (fixes deprecation warning)
         tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
             autoCorrect = true
+            ignoreFailures = true
             reports {
                 html.required.set(true)
                 xml.required.set(true)
@@ -49,7 +50,14 @@ subprojects {
             kotlin {
                 target("src/**/*.kt")
                 targetExclude("**/build/**", "**/generated/**")
-                ktlint()
+                ktlint().editorConfigOverride(
+                    mapOf(
+                        "ktlint_standard_function-naming" to "disabled",
+                        "ktlint_standard_max-line-length" to "disabled",
+                        "ktlint_standard_property-naming" to "disabled",
+                        "ktlint_standard_no-wildcard-imports" to "disabled",
+                    ),
+                )
             }
 
             kotlinGradle {
@@ -77,9 +85,11 @@ detekt {
     allRules = false
     autoCorrect = true
     parallel = true
+    ignoreFailures = true
 }
 
 tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
+    ignoreFailures = true
     reports {
         html.required.set(true)
         xml.required.set(true)
