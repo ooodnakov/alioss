@@ -134,10 +134,15 @@
     <string name="deck_card_enabled">Enabled</string>
     <string name="deck_card_disabled">Disabled</string>
     <string name="deck_card_view_details">View details</string>
+    <string name="deck_more_actions">Deck options</string>
+    <string name="deck_delete_action">Delete deck</string>
+    <string name="deck_delete_dialog_title">Delete deck?</string>
+    <string name="deck_delete_dialog_message">Remove "%1$s" and its words? This cannot be undone.</string>
     <string name="deck_difficulty_title">Difficulty spread</string>
     <string name="deck_difficulty_empty">Difficulty data unavailable.</string>
     <string name="deck_recent_words_title">Recent words</string>
     <string name="deck_recent_words_empty">No recent words yet.</string>
+    <string name="deck_download_in_progress">Download in progress...</string>
     <string name="tutorial_dismiss">Got it</string>
     <string name="show_tutorial_again">Show tutorial again</string>
     <string name="no_history">No history yet</string>

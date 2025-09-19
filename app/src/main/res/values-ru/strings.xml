@@ -146,10 +146,15 @@
     <string name="deck_card_enabled">Включена</string>
     <string name="deck_card_disabled">Выключена</string>
     <string name="deck_card_view_details">Подробнее</string>
+    <string name="deck_more_actions">Опции колоды</string>
+    <string name="deck_delete_action">Удалить колоду</string>
+    <string name="deck_delete_dialog_title">Удалить колоду?</string>
+    <string name="deck_delete_dialog_message">Удалить"%1$s" и слова в ней? Это действие не может быть отменено.</string>
     <string name="deck_difficulty_title">Распределение сложности</string>
     <string name="deck_difficulty_empty">Данные о сложности недоступны.</string>
     <string name="deck_recent_words_title">Недавние слова</string>
     <string name="deck_recent_words_empty">Недавних слов пока нет.</string>
+    <string name="deck_download_in_progress">Идет загрузка...</string>
     <string name="tutorial_dismiss">Готово</string>
     <string name="show_tutorial_again">Показать обучение</string>
     <string name="no_history">Истории ещё нет</string>
