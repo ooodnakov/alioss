@@ -3,9 +3,9 @@ package com.example.alias.navigation
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.background
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
@@ -33,7 +33,6 @@ import com.example.alias.ui.decks.DecksScreen
 import com.example.alias.ui.game.GameScreen
 import com.example.alias.ui.home.HomeScreen
 import com.example.alias.ui.settings.SettingsScreen
-import com.google.accompanist.placeholder.material3.placeholder
 
 private const val HISTORY_LIMIT = 50
 

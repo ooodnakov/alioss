@@ -10,6 +10,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.alias.data.DeckRepository
 import com.example.alias.data.TurnHistoryRepository
+import com.example.alias.data.db.DeckEntity
 import com.example.alias.data.db.DifficultyBucket
 import com.example.alias.data.db.TurnHistoryEntity
 import com.example.alias.data.db.WordClassCount
@@ -47,6 +48,7 @@ import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.util.Locale
 import javax.inject.Inject
+import kotlin.text.Charsets
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
@@ -278,12 +280,17 @@ class MainViewModel @Inject constructor(
                 Log.e(TAG, "Previous bundled deck hashes: $prev")
                 val digest = java.security.MessageDigest.getInstance("SHA-256")
                 fun sha256(bytes: ByteArray): String = digest.digest(bytes).joinToString("") { b -> "%02x".format(b) }
+                val assetContents = mutableMapOf<String, String>()
                 val currentEntries = mutableSetOf<String>()
                 val toImport = mutableListOf<String>()
                 for (f in assetFiles) {
                     Log.e(TAG, "Processing asset file: $f")
-                    val bytes = runCatching { context.assets.open("decks/$f").use { it.readBytes() } }.getOrNull()
-                    if (bytes != null) {
+                    val content = runCatching {
+                        context.assets.open("decks/$f").bufferedReader().use { it.readText() }
+                    }.getOrNull()
+                    if (content != null) {
+                        assetContents[f] = content
+                        val bytes = content.toByteArray(Charsets.UTF_8)
                         val h = sha256(bytes)
                         val entry = "$f:$h"
                         currentEntries += entry
@@ -292,7 +299,7 @@ class MainViewModel @Inject constructor(
                         }
                         Log.e(TAG, "Hash for $f: $h, toImport: ${toImport.size} files")
                     } else {
-                        Log.e(TAG, "Failed to read bytes for $f")
+                        Log.e(TAG, "Failed to read bundled deck $f")
                     }
                 }
                 if (prev.isEmpty() && currentEntries.isEmpty()) {
@@ -314,7 +321,8 @@ class MainViewModel @Inject constructor(
                 for (f in toImport) {
                     try {
                         Log.e(TAG, "Importing bundled deck: $f")
-                        val content = context.assets.open("decks/$f").bufferedReader().use { it.readText() }
+                        val content = assetContents[f]
+                            ?: context.assets.open("decks/$f").bufferedReader().use { it.readText() }
                         Log.e(TAG, "Read content for $f, length: ${content.length}")
                         val (sanitizedPack, coverError) = parseAndSanitizePack(content)
                         Log.e(TAG, "Parsed and sanitized pack for $f, coverError: ${coverError != null}")
@@ -466,6 +474,40 @@ class MainViewModel @Inject constructor(
                     )
                 )
             }
+        }
+    }
+
+    fun deleteDeck(deck: DeckEntity) {
+        viewModelScope.launch {
+            val id = deck.id
+            val settingsSnapshot = settingsRepository.settings.first()
+            val updatedIds = settingsSnapshot.enabledDeckIds - id
+            val result = runCatching {
+                withContext(Dispatchers.IO) { deckRepository.deleteDeck(id) }
+            }
+            if (result.isFailure) {
+                val error = result.exceptionOrNull()?.message ?: "Unknown error"
+                _uiEvents.tryEmit(
+                    UiEvent(
+                        message = "Failed to delete deck: $error",
+                        actionLabel = "Dismiss",
+                        duration = SnackbarDuration.Long,
+                        isError = true,
+                        dismissCurrent = true
+                    )
+                )
+                return@launch
+            }
+            if (updatedIds != settingsSnapshot.enabledDeckIds) {
+                settingsRepository.setEnabledDeckIds(updatedIds)
+            }
+            _uiEvents.tryEmit(
+                UiEvent(
+                    message = "Deleted deck: ${deck.name}",
+                    actionLabel = "OK",
+                    dismissCurrent = true
+                )
+            )
         }
     }
 

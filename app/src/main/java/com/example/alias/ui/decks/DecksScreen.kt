@@ -31,11 +31,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.Verified
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -112,6 +116,7 @@ fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
 
     var activeSheet by rememberSaveable { mutableStateOf<DeckSheet?>(null) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var deckPendingDelete by remember { mutableStateOf<DeckEntity?>(null) }
 
     val sheet = activeSheet
     if (sheet != null) {
@@ -190,7 +195,7 @@ fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
         LazyVerticalGrid(
             columns = GridCells.Adaptive(minSize = 240.dp),
             modifier = Modifier.fillMaxSize(),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(
+            contentPadding = PaddingValues(
                 start = 16.dp,
                 top = 16.dp,
                 end = 16.dp,
@@ -228,7 +233,8 @@ fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
                         deck = deck,
                         enabled = enabled.contains(deck.id),
                         onToggle = { toggled -> vm.setDeckEnabled(deck.id, toggled) },
-                        onClick = { onDeckSelected(deck) }
+                        onClick = { onDeckSelected(deck) },
+                        onDelete = { deckPendingDelete = deck }
                     )
                 }
             }
@@ -242,6 +248,30 @@ fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
             Icon(Icons.Filled.Download, contentDescription = null)
             Spacer(Modifier.width(8.dp))
             Text(stringResource(R.string.import_decks_action))
+        }
+
+        val deckToDelete = deckPendingDelete
+        if (deckToDelete != null) {
+            AlertDialog(
+                onDismissRequest = { deckPendingDelete = null },
+                title = { Text(stringResource(R.string.deck_delete_dialog_title)) },
+                text = {
+                    Text(stringResource(R.string.deck_delete_dialog_message, deckToDelete.name))
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        vm.deleteDeck(deckToDelete)
+                        deckPendingDelete = null
+                    }) {
+                        Text(stringResource(R.string.deck_delete_action))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { deckPendingDelete = null }) {
+                        Text(stringResource(R.string.cancel))
+                    }
+                }
+            )
         }
     }
 }
@@ -353,6 +383,7 @@ private fun DeckCard(
     onToggle: (Boolean) -> Unit,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    onDelete: (() -> Unit)? = null,
 ) {
     ElevatedCard(
         onClick = onClick,
@@ -366,12 +397,47 @@ private fun DeckCard(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text(
-                    text = deck.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = deck.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                    if (onDelete != null) {
+                        var menuExpanded by remember { mutableStateOf(false) }
+                        Box {
+                            IconButton(onClick = { menuExpanded = true }) {
+                                Icon(
+                                    imageVector = Icons.Filled.MoreVert,
+                                    contentDescription = stringResource(R.string.deck_more_actions)
+                                )
+                            }
+                            DropdownMenu(
+                                expanded = menuExpanded,
+                                onDismissRequest = { menuExpanded = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.deck_delete_action)) },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Filled.Delete,
+                                            contentDescription = null
+                                        )
+                                    },
+                                    onClick = {
+                                        menuExpanded = false
+                                        onDelete()
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     AssistChip(
                         onClick = {},
@@ -423,25 +489,11 @@ private fun DeckCard(
 @Composable
 private fun DeckCoverArt(deck: DeckEntity, modifier: Modifier = Modifier) {
     val gradient = rememberDeckCoverBrush(deck.id)
-    val coverImage by produceState<ImageBitmap?>(initialValue = null, deck.coverImageBase64) {
-        value = deck.coverImageBase64?.let { encoded ->
-            withContext(Dispatchers.IO) {
-                runCatching {
-                    val bytes = Base64.decode(encoded, Base64.DEFAULT)
-                    if (bytes.isEmpty()) {
-                        null
-                    } else {
-                        BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap()
-                    }
-                }.getOrNull()
-            }
-        }
-    }
+    val coverImage = rememberDeckCoverImage(deck.coverImageBase64)
     val initial = remember(deck.id, deck.name) {
         deck.name.firstOrNull()?.uppercaseChar()?.toString()
             ?: deck.language.uppercase(Locale.getDefault())
     }
-    val image = coverImage
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -449,7 +501,7 @@ private fun DeckCoverArt(deck: DeckEntity, modifier: Modifier = Modifier) {
             .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
             .background(gradient)
     ) {
-        if (image != null) {
+        coverImage?.let { image ->
             androidx.compose.foundation.Image(
                 bitmap = image,
                 contentDescription = null,
@@ -461,14 +513,12 @@ private fun DeckCoverArt(deck: DeckEntity, modifier: Modifier = Modifier) {
                     .fillMaxSize()
                     .background(Color.Black.copy(alpha = 0.25f))
             )
-        } else {
-            Text(
-                text = initial,
-                style = MaterialTheme.typography.displayLarge,
-                color = Color.White.copy(alpha = 0.25f),
-                modifier = Modifier.align(Alignment.Center)
-            )
-        }
+        } ?: Text(
+            text = initial,
+            style = MaterialTheme.typography.displayLarge,
+            color = Color.White.copy(alpha = 0.25f),
+            modifier = Modifier.align(Alignment.Center)
+        )
         Text(
             text = stringResource(R.string.deck_cover_language, deck.language.uppercase(Locale.getDefault())),
             style = MaterialTheme.typography.labelLarge,
@@ -497,6 +547,25 @@ fun rememberDeckCoverBrush(deckId: String): Brush {
         listOf(DeckCoverPalette[baseIndex], DeckCoverPalette[nextIndex])
     }
     return remember(colors) { Brush.linearGradient(colors) }
+}
+
+@Composable
+fun rememberDeckCoverImage(base64: String?): ImageBitmap? {
+    val imageState = produceState<ImageBitmap?>(initialValue = null, base64) {
+        value = base64?.let { encoded ->
+            withContext(Dispatchers.IO) {
+                runCatching {
+                    val bytes = Base64.decode(encoded, Base64.DEFAULT)
+                    if (bytes.isEmpty()) {
+                        null
+                    } else {
+                        BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap()
+                    }
+                }.getOrNull()
+            }
+        }
+    }
+    return imageState.value
 }
 
 @Composable

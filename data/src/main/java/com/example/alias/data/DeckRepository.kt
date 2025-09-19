@@ -29,6 +29,9 @@ interface DeckRepository {
 
     /** Store a pre-parsed [pack]. */
     suspend fun importPack(pack: ParsedPack)
+
+    /** Delete deck and associated words. */
+    suspend fun deleteDeck(deckId: String)
 }
 
 class DeckRepositoryImpl(
@@ -69,6 +72,13 @@ class DeckRepositoryImpl(
             if (pack.wordClasses.isNotEmpty()) {
                 wordDao.insertWordClasses(pack.wordClasses)
             }
+        }
+    }
+
+    override suspend fun deleteDeck(deckId: String) {
+        transactionRunner {
+            wordDao.deleteByDeck(deckId)
+            deckDao.deleteDeck(deckId)
         }
     }
 }

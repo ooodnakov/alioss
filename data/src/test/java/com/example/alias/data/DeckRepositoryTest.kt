@@ -11,6 +11,7 @@ import com.example.alias.data.db.WordEntity
 import com.example.alias.data.pack.ParsedPack
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Test
@@ -90,6 +91,24 @@ class DeckRepositoryTest {
         assertFalse(brief.wordClass?.contains("NOUN") ?: false)
     }
 
+    @Test
+    fun deleting_deck_removes_it_and_words() = runBlocking {
+        val deckId = "test_deck"
+        val pack = createPack(
+            deckId = deckId,
+            words = listOf(WordSpec(text = "Alpha"))
+        )
+
+        repository.importPack(pack)
+        assertEquals(1, deckDao.getDecks().first().size)
+        assertEquals(1, wordDao.getWordCount(deckId))
+
+        repository.deleteDeck(deckId)
+
+        assertEquals(emptyList(), deckDao.getDecks().first())
+        assertEquals(0, wordDao.getWordCount(deckId))
+    }
+
     private fun createPack(
         deckId: String,
         version: Int = 1,
@@ -146,6 +165,11 @@ class DeckRepositoryTest {
         }
 
         override fun getDecks(): Flow<List<DeckEntity>> = decksFlow
+
+        override suspend fun deleteDeck(deckId: String) {
+            decks.remove(deckId)
+            decksFlow.value = decks.values.toList()
+        }
 
         override suspend fun deleteAll() {
             decks.clear()

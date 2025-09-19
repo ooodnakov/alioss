@@ -1,23 +1,32 @@
 package com.example.alias.ui.decks
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -34,6 +43,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -62,6 +72,7 @@ fun DeckDetailScreen(vm: MainViewModel, deck: DeckEntity) {
     var examplesLoading by remember { mutableStateOf(false) }
     var examplesError by remember { mutableStateOf(false) }
     var examplesRefreshKey by remember { mutableIntStateOf(0) }
+    var confirmDelete by remember { mutableStateOf(false) }
 
     LaunchedEffect(deck.id) {
         wordClassCounts = null
@@ -118,6 +129,38 @@ fun DeckDetailScreen(vm: MainViewModel, deck: DeckEntity) {
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         DeckDetailHero(deck = deck, count = count, downloadDateText = downloadDateText)
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End
+        ) {
+            FilledTonalButton(onClick = { confirmDelete = true }) {
+                Icon(imageVector = Icons.Filled.Delete, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text(stringResource(R.string.deck_delete_action))
+            }
+        }
+
+        if (confirmDelete) {
+            AlertDialog(
+                onDismissRequest = { confirmDelete = false },
+                title = { Text(stringResource(R.string.deck_delete_dialog_title)) },
+                text = { Text(stringResource(R.string.deck_delete_dialog_message, deck.name)) },
+                confirmButton = {
+                    TextButton(onClick = {
+                        confirmDelete = false
+                        vm.deleteDeck(deck)
+                    }) {
+                        Text(stringResource(R.string.deck_delete_action))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { confirmDelete = false }) {
+                        Text(stringResource(R.string.cancel))
+                    }
+                }
+            )
+        }
 
         ElevatedCard(Modifier.fillMaxWidth()) {
             val countText = count?.toString() ?: "…"
@@ -285,37 +328,60 @@ private fun DetailCard(
 @Composable
 private fun DeckDetailHero(deck: DeckEntity, count: Int?, downloadDateText: String?) {
     val gradient = rememberDeckCoverBrush(deck.id)
+    val coverImage = rememberDeckCoverImage(deck.coverImageBase64)
     val countText = count?.toString() ?: "…"
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(220.dp)
             .clip(RoundedCornerShape(28.dp))
-            .background(gradient)
-            .padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text(deck.name, style = MaterialTheme.typography.headlineSmall, color = Color.White)
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            DeckTag(deck.language.uppercase(Locale.getDefault()))
-            if (deck.isOfficial) {
-                DeckTag(stringResource(R.string.deck_official_label))
-            }
-            if (deck.isNSFW) {
-                DeckTag(stringResource(R.string.deck_nsfw_label))
-            }
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .background(gradient)
+        )
+        coverImage?.let { bitmap ->
+            Image(
+                bitmap = bitmap,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.matchParentSize()
+            )
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .background(Color.Black.copy(alpha = 0.35f))
+            )
         }
-        Text(
-            text = stringResource(R.string.deck_word_count, countText),
-            style = MaterialTheme.typography.bodyLarge,
-            color = Color.White
-        )
-        Text(
-            text = downloadDateText?.let { stringResource(R.string.deck_downloaded_label, it) }
-                ?: stringResource(R.string.deck_downloaded_unknown),
-            style = MaterialTheme.typography.bodySmall,
-            color = Color.White.copy(alpha = 0.85f)
-        )
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(deck.name, style = MaterialTheme.typography.headlineSmall, color = Color.White)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                DeckTag(deck.language.uppercase(Locale.getDefault()))
+                if (deck.isOfficial) {
+                    DeckTag(stringResource(R.string.deck_official_label))
+                }
+                if (deck.isNSFW) {
+                    DeckTag(stringResource(R.string.deck_nsfw_label))
+                }
+            }
+            Text(
+                text = stringResource(R.string.deck_word_count, countText),
+                style = MaterialTheme.typography.bodyLarge,
+                color = Color.White
+            )
+            Text(
+                text = downloadDateText?.let { stringResource(R.string.deck_downloaded_label, it) }
+                    ?: stringResource(R.string.deck_downloaded_unknown),
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.White.copy(alpha = 0.85f)
+            )
+        }
     }
 }
 
