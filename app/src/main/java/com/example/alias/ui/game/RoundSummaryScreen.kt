@@ -1,5 +1,8 @@
+@file:Suppress("FunctionNaming", "FunctionName")
+
 package com.example.alias.ui.game
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -16,8 +19,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -45,9 +48,9 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -69,82 +72,121 @@ fun RoundSummaryScreen(vm: MainViewModel, s: GameState.TurnFinished, settings: S
     val deltaColor = if (s.deltaScore >= 0) colors.tertiary else colors.error
     val stats = remember(timeline.events) { buildTurnSummaryStats(timeline.events) }
 
-    Column(
-        modifier = Modifier.fillMaxSize().padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.Top),
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 24.dp, vertical = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
-        TurnSummaryHeader(
-            team = s.team,
-            deltaScore = s.deltaScore,
-            matchOver = s.matchOver,
-            stats = stats,
-            deltaColor = deltaColor,
-        )
-        ElevatedCard(modifier = Modifier.weight(1f)) {
-            if (timeline.events.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxSize().padding(24.dp),
-                    contentAlignment = Alignment.Center,
+        item {
+            TurnSummaryHeader(
+                team = s.team,
+                deltaScore = s.deltaScore,
+                matchOver = s.matchOver,
+                stats = stats,
+                deltaColor = deltaColor,
+            )
+        }
+        item { ScoreboardCard(scores = s.scores) }
+        item {
+            TimelineCard(
+                timeline = timeline,
+                penaltyPerSkip = penaltyPerSkip,
+                onOverride = { index, correct -> vm.overrideOutcome(index, correct) },
+            )
+        }
+        item {
+            Button(onClick = { vm.nextTurn() }, modifier = Modifier.fillMaxWidth()) {
+                Text(if (s.matchOver) stringResource(R.string.end_match) else stringResource(R.string.next_team))
+            }
+        }
+    }
+}
+
+@Composable
+private fun ScoreboardCard(
+    scores: Map<String, Int>,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        tonalElevation = 2.dp,
+    ) {
+        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp)) {
+            Scoreboard(scores)
+        }
+    }
+}
+
+@Composable
+private fun TimelineCard(
+    timeline: TimelineData,
+    penaltyPerSkip: Int,
+    onOverride: (Int, Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = MaterialTheme.colorScheme
+    ElevatedCard(modifier = modifier.fillMaxWidth()) {
+        if (timeline.events.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 40.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = stringResource(R.string.timeline_no_events),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colors.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                )
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Column(
+                    modifier = Modifier.padding(horizontal = 20.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Text(
-                        text = stringResource(R.string.timeline_no_events),
-                        style = MaterialTheme.typography.bodyMedium,
+                        stringResource(R.string.turn_timeline_title),
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                    Text(
+                        text = stringResource(R.string.timeline_score_breakdown),
+                        style = MaterialTheme.typography.bodySmall,
                         color = colors.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
+                    )
+                    ScoreProgressGraph(
+                        events = timeline.events,
+                        modifier = Modifier.fillMaxWidth(),
                     )
                 }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    item {
-                        Column(
+                timeline.segments.forEachIndexed { segmentIndex, segment ->
+                    TimelineSegmentHeader(
+                        segment = segment,
+                        modifier = Modifier.padding(horizontal = 20.dp),
+                        penaltyPerSkip = penaltyPerSkip,
+                    )
+                    segment.events.forEachIndexed { eventIndex, event ->
+                        val hasPrev = segmentIndex > 0 || eventIndex > 0
+                        val isLastSegment = segmentIndex == timeline.segments.lastIndex
+                        val isLastEventInSegment = eventIndex == segment.events.lastIndex
+                        val hasNext = !(isLastSegment && isLastEventInSegment)
+                        TimelineEventRow(
+                            event = event,
+                            hasPrev = hasPrev,
+                            hasNext = hasNext,
+                            onOverride = { isCorrect -> onOverride(event.index, isCorrect) },
                             modifier = Modifier.padding(horizontal = 20.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            Text(
-                                stringResource(R.string.turn_timeline_title),
-                                style = MaterialTheme.typography.titleMedium,
-                            )
-                            Text(
-                                text = stringResource(R.string.timeline_score_breakdown),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = colors.onSurfaceVariant,
-                            )
-                            ScoreProgressGraph(
-                                events = timeline.events,
-                                modifier = Modifier.fillMaxWidth(),
-                            )
-                        }
-                    }
-                    timeline.segments.forEachIndexed { segmentIndex, segment ->
-                        item {
-                            TimelineSegmentHeader(
-                                segment = segment,
-                                modifier = Modifier.padding(horizontal = 20.dp),
-                                penaltyPerSkip = penaltyPerSkip,
-                            )
-                        }
-                        itemsIndexed(segment.events) { eventIndex, event ->
-                            val hasPrev = segmentIndex > 0 || eventIndex > 0
-                            val hasNext = !(segmentIndex == timeline.segments.lastIndex && eventIndex == segment.events.lastIndex)
-                            TimelineEventRow(
-                                event = event,
-                                hasPrev = hasPrev,
-                                hasNext = hasNext,
-                                onOverride = { vm.overrideOutcome(event.index, it) },
-                                modifier = Modifier.padding(horizontal = 20.dp),
-                            )
-                        }
+                        )
                     }
                 }
             }
-        }
-        Scoreboard(s.scores)
-        Button(onClick = { vm.nextTurn() }, modifier = Modifier.fillMaxWidth()) {
-            Text(if (s.matchOver) stringResource(R.string.end_match) else stringResource(R.string.next_team))
         }
     }
 }
@@ -292,71 +334,52 @@ private fun TurnSummaryHeader(
     modifier: Modifier = Modifier,
 ) {
     val colors = MaterialTheme.colorScheme
-    val onContainer = colors.onPrimaryContainer
-    val gradientBrush = remember(colors.primaryContainer, colors.tertiaryContainer) {
-        Brush.linearGradient(
-            colors = listOf(colors.primaryContainer, colors.tertiaryContainer),
-        )
-    }
-    ElevatedCard(
+    Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(28.dp),
+        tonalElevation = 6.dp,
     ) {
-        Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(28.dp))
-                .background(
-                    brush = gradientBrush,
-                ),
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(24.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(6.dp),
-                    ) {
-                        Text(
-                            text = stringResource(R.string.turn_summary, team),
-                            style = MaterialTheme.typography.headlineSmall,
-                            color = onContainer,
-                        )
-                        val statusText = if (matchOver) {
-                            stringResource(R.string.turn_summary_status_match_complete)
-                        } else {
-                            stringResource(R.string.turn_summary_status_next_team)
-                        }
-                        Text(
-                            text = statusText,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = onContainer.copy(alpha = 0.85f),
-                        )
-                    }
-                    Surface(
-                        shape = RoundedCornerShape(20.dp),
-                        color = onContainer.copy(alpha = 0.08f),
-                    ) {
-                        Text(
-                            text = stringResource(R.string.score_change, deltaScore),
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                            style = MaterialTheme.typography.titleLarge,
-                            color = deltaColor,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                    }
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = stringResource(R.string.turn_summary, team),
+                    style = MaterialTheme.typography.headlineSmall,
+                )
+                val statusText = if (matchOver) {
+                    stringResource(R.string.turn_summary_status_match_complete)
+                } else {
+                    stringResource(R.string.turn_summary_status_next_team)
                 }
-                TurnSummaryStatsRow(
-                    stats = stats,
-                    textColor = onContainer,
+                Text(
+                    text = statusText,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colors.onSurfaceVariant,
                 )
             }
+            ScoreChangeHighlight(deltaScore = deltaScore, deltaColor = deltaColor)
+            TurnSummaryStatsRow(stats = stats)
         }
+    }
+}
+
+@Composable
+private fun ScoreChangeHighlight(deltaScore: Int, deltaColor: Color, modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        color = deltaColor.copy(alpha = 0.12f),
+        border = BorderStroke(1.dp, deltaColor.copy(alpha = 0.35f)),
+    ) {
+        Text(
+            text = stringResource(R.string.score_change, deltaScore),
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = deltaColor,
+        )
     }
 }
 
@@ -364,61 +387,60 @@ private fun TurnSummaryHeader(
 @Composable
 private fun TurnSummaryStatsRow(
     stats: TurnSummaryStats,
-    textColor: Color,
     modifier: Modifier = Modifier,
 ) {
     val colors = MaterialTheme.colorScheme
-    FlowRow(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        TurnSummaryStatChip(
-            label = pluralStringResource(
-                R.plurals.turn_summary_stat_correct,
-                stats.totalCorrect,
-                stats.totalCorrect,
+    val statsToDisplay = buildList {
+        add(
+            SummaryStatDisplay(
+                label = pluralStringResource(
+                    R.plurals.turn_summary_stat_correct,
+                    stats.totalCorrect,
+                    stats.totalCorrect,
+                ),
+                value = stats.totalCorrect.toString(),
+                color = colors.tertiary,
+                style = MaterialTheme.typography.headlineSmall,
             ),
-            value = stats.totalCorrect.toString(),
-            icon = Icons.Filled.Check,
-            accentColor = colors.tertiary,
-            textColor = textColor,
         )
-        TurnSummaryStatChip(
-            label = pluralStringResource(
-                R.plurals.turn_summary_stat_skipped,
-                stats.totalSkipped,
-                stats.totalSkipped,
+        add(
+            SummaryStatDisplay(
+                label = pluralStringResource(
+                    R.plurals.turn_summary_stat_skipped,
+                    stats.totalSkipped,
+                    stats.totalSkipped,
+                ),
+                value = stats.totalSkipped.toString(),
+                color = if (stats.totalSkipped > 0) colors.error else colors.onSurfaceVariant,
+                style = MaterialTheme.typography.headlineSmall,
             ),
-            value = stats.totalSkipped.toString(),
-            icon = Icons.Filled.Close,
-            accentColor = colors.error,
-            textColor = textColor,
         )
         if (stats.totalPending > 0) {
-            TurnSummaryStatChip(
-                label = pluralStringResource(
-                    R.plurals.turn_summary_stat_pending,
-                    stats.totalPending,
-                    stats.totalPending,
+            add(
+                SummaryStatDisplay(
+                    label = pluralStringResource(
+                        R.plurals.turn_summary_stat_pending,
+                        stats.totalPending,
+                        stats.totalPending,
+                    ),
+                    value = stats.totalPending.toString(),
+                    color = colors.outline,
+                    style = MaterialTheme.typography.headlineSmall,
                 ),
-                value = stats.totalPending.toString(),
-                icon = null,
-                accentColor = colors.outline,
-                textColor = textColor,
             )
         }
         if (stats.bonusCount > 0) {
-            TurnSummaryStatChip(
-                label = pluralStringResource(
-                    R.plurals.turn_summary_stat_bonus,
-                    stats.bonusCount,
-                    stats.bonusCount,
+            add(
+                SummaryStatDisplay(
+                    label = pluralStringResource(
+                        R.plurals.turn_summary_stat_bonus,
+                        stats.bonusCount,
+                        stats.bonusCount,
+                    ),
+                    value = stats.bonusCount.toString(),
+                    color = colors.secondary,
+                    style = MaterialTheme.typography.headlineSmall,
                 ),
-                value = stats.bonusCount.toString(),
-                icon = Icons.Filled.Star,
-                accentColor = colors.secondary,
-                textColor = textColor,
             )
         }
         stats.elapsedMillis?.let { elapsed ->
@@ -427,59 +449,63 @@ private fun TurnSummaryStatsRow(
             } else {
                 stringResource(R.string.turn_summary_stat_time_value, elapsed / 1000f)
             }
-            TurnSummaryStatChip(
-                label = stringResource(R.string.turn_summary_stat_time_label),
-                value = timeValue,
-                icon = Icons.Filled.Schedule,
-                accentColor = colors.primary,
-                textColor = textColor,
+            add(
+                SummaryStatDisplay(
+                    label = stringResource(R.string.turn_summary_stat_time_label),
+                    value = timeValue,
+                    color = colors.primary,
+                    style = MaterialTheme.typography.titleMedium,
+                ),
+            )
+        }
+    }
+    FlowRow(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(24.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        statsToDisplay.forEach { stat ->
+            TurnSummaryStatCard(
+                label = stat.label,
+                value = stat.value,
+                accentColor = stat.color,
+                valueStyle = stat.style,
             )
         }
     }
 }
 
+private data class SummaryStatDisplay(
+    val label: String,
+    val value: String,
+    val color: Color,
+    val style: TextStyle,
+)
+
 @Composable
-private fun TurnSummaryStatChip(
+private fun TurnSummaryStatCard(
     label: String,
     value: String,
-    icon: ImageVector?,
     accentColor: Color,
-    textColor: Color,
+    valueStyle: TextStyle,
     modifier: Modifier = Modifier,
 ) {
-    Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(16.dp),
-        color = accentColor.copy(alpha = 0.18f),
-        contentColor = textColor,
+    Column(
+        modifier = modifier.widthIn(min = 72.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            if (icon != null) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = accentColor,
-                    modifier = Modifier.size(18.dp),
-                )
-            }
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(
-                    text = value,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = accentColor,
-                )
-                Text(
-                    text = label,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = textColor.copy(alpha = 0.85f),
-                )
-            }
-        }
+        Text(
+            text = value,
+            style = valueStyle,
+            fontWeight = FontWeight.SemiBold,
+            color = accentColor,
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 2,
+        )
     }
 }
 
