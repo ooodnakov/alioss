@@ -60,7 +60,7 @@ import java.util.Locale
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun DeckDetailScreen(vm: MainViewModel, deck: DeckEntity) {
+fun deckDetailScreen(vm: MainViewModel, deck: DeckEntity) {
     var count by remember { mutableStateOf<Int?>(null) }
     var categories by remember { mutableStateOf<List<String>?>(null) }
     var wordClassCounts by remember { mutableStateOf<List<WordClassCount>?>(null) }
@@ -128,7 +128,7 @@ fun DeckDetailScreen(vm: MainViewModel, deck: DeckEntity) {
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        DeckDetailHero(deck = deck, count = count, downloadDateText = downloadDateText)
+        deckDetailHero(deck = deck, count = count, downloadDateText = downloadDateText)
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -174,7 +174,7 @@ fun DeckDetailScreen(vm: MainViewModel, deck: DeckEntity) {
             }
         }
 
-        DetailCard(title = stringResource(R.string.deck_categories_title)) {
+        detailCard(title = stringResource(R.string.deck_categories_title)) {
             when (val currentCategories = categories) {
                 null -> {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
@@ -197,7 +197,7 @@ fun DeckDetailScreen(vm: MainViewModel, deck: DeckEntity) {
             }
         }
 
-        DetailCard(title = stringResource(R.string.word_classes_label)) {
+        detailCard(title = stringResource(R.string.word_classes_label)) {
             when (val counts = wordClassCounts) {
                 null -> {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
@@ -241,15 +241,15 @@ fun DeckDetailScreen(vm: MainViewModel, deck: DeckEntity) {
             }
         }
 
-        DetailCard(title = stringResource(R.string.deck_difficulty_title)) {
+        detailCard(title = stringResource(R.string.deck_difficulty_title)) {
             if (histogramLoading) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
             } else {
-                DeckDifficultyHistogram(histogram, modifier = Modifier.fillMaxWidth())
+                deckDifficultyHistogram(histogram, modifier = Modifier.fillMaxWidth())
             }
         }
 
-        DetailCard(title = stringResource(R.string.deck_recent_words_title)) {
+        detailCard(title = stringResource(R.string.deck_recent_words_title)) {
             if (recentWordsLoading) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
             } else {
@@ -270,7 +270,7 @@ fun DeckDetailScreen(vm: MainViewModel, deck: DeckEntity) {
             }
         }
 
-        DetailCard(title = stringResource(R.string.deck_examples_title)) {
+        detailCard(title = stringResource(R.string.deck_examples_title)) {
             when {
                 examplesLoading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
 
@@ -306,7 +306,7 @@ fun DeckDetailScreen(vm: MainViewModel, deck: DeckEntity) {
 }
 
 @Composable
-private fun DetailCard(
+private fun detailCard(
     title: String,
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit,
@@ -326,7 +326,7 @@ private fun DetailCard(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun DeckDetailHero(deck: DeckEntity, count: Int?, downloadDateText: String?) {
+private fun deckDetailHero(deck: DeckEntity, count: Int?, downloadDateText: String?) {
     val gradient = rememberDeckCoverBrush(deck.id)
     val coverImage = rememberDeckCoverImage(deck.coverImageBase64)
     val countText = count?.toString() ?: "…"
@@ -362,12 +362,12 @@ private fun DeckDetailHero(deck: DeckEntity, count: Int?, downloadDateText: Stri
         ) {
             Text(deck.name, style = MaterialTheme.typography.headlineSmall, color = Color.White)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                DeckTag(deck.language.uppercase(Locale.getDefault()))
+                deckTag(deck.language.uppercase(Locale.getDefault()))
                 if (deck.isOfficial) {
-                    DeckTag(stringResource(R.string.deck_official_label))
+                    deckTag(stringResource(R.string.deck_official_label))
                 }
                 if (deck.isNSFW) {
-                    DeckTag(stringResource(R.string.deck_nsfw_label))
+                    deckTag(stringResource(R.string.deck_nsfw_label))
                 }
             }
             Text(
@@ -386,7 +386,7 @@ private fun DeckDetailHero(deck: DeckEntity, count: Int?, downloadDateText: Stri
 }
 
 @Composable
-private fun DeckTag(text: String, modifier: Modifier = Modifier) {
+private fun deckTag(text: String, modifier: Modifier = Modifier) {
     Surface(
         modifier = modifier,
         shape = CircleShape,
@@ -403,7 +403,7 @@ private fun DeckTag(text: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun DeckDifficultyHistogram(
+private fun deckDifficultyHistogram(
     buckets: List<DifficultyBucket>,
     modifier: Modifier = Modifier,
 ) {

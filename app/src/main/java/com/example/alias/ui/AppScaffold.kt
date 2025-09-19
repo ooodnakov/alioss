@@ -12,7 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 
 @Composable
-fun AppScaffold(
+fun appScaffold(
     snackbarHostState: SnackbarHostState? = null,
     content: @Composable () -> Unit,
 ) {

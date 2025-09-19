@@ -45,7 +45,7 @@ import com.example.alias.R
  */
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-fun CountdownOverlay(
+fun countdownOverlay(
     value: Int?,
     modifier: Modifier = Modifier,
     scrimColor: Color = MaterialTheme.colorScheme.scrim,
@@ -76,8 +76,8 @@ fun CountdownOverlay(
             .fillMaxSize()
             .background(scrimColor.copy(alpha = scrimAlpha))
             .onSizeChanged { size ->
-                Log.d("CountdownOverlay", "Overlay size: ${size.width}x${size.height}")
-                Log.d("CountdownOverlay", "Screen size: ${screenWidthPx.toInt()}x${screenHeightPx.toInt()}")
+                Log.d("countdownOverlay", "Overlay size: ${size.width}x${size.height}")
+                Log.d("countdownOverlay", "Screen size: ${screenWidthPx.toInt()}x${screenHeightPx.toInt()}")
             }
             // Swallow taps so the game underneath doesn't get accidental clicks.
             .then(

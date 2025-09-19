@@ -83,7 +83,7 @@ private const val MIN_TEAMS = SettingsRepository.MIN_TEAMS
 private const val MAX_TEAMS = SettingsRepository.MAX_TEAMS
 
 @Composable
-fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () -> Unit) {
+fun settingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () -> Unit) {
     val s by vm.settings.collectAsState()
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -186,7 +186,7 @@ fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () -> Unit) {
                 modifier = Modifier.fillMaxSize(),
             ) { page ->
                 when (SettingsTab.values()[page]) {
-                    SettingsTab.MATCH_RULES -> MatchRulesTab(
+                    SettingsTab.MATCH_RULES -> matchRulesTab(
                         round = round,
                         onRoundChange = { round = it },
                         target = target,
@@ -199,7 +199,7 @@ fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () -> Unit) {
                         onPunishSkipsChange = { punishSkips = it },
                     )
 
-                    SettingsTab.INPUT_FEEDBACK -> InputFeedbackTab(
+                    SettingsTab.INPUT_FEEDBACK -> inputFeedbackTab(
                         haptics = haptics,
                         onHapticsChange = { haptics = it },
                         sound = sound,
@@ -212,7 +212,7 @@ fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () -> Unit) {
                         onOrientationChange = { orientation = it },
                     )
 
-                    SettingsTab.TEAMS -> TeamsTab(
+                    SettingsTab.TEAMS -> teamsTab(
                         teams = teams,
                         canRemoveTeam = teams.size > MIN_TEAMS,
                         canAddTeam = teams.size < MAX_TEAMS,
@@ -230,8 +230,8 @@ fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () -> Unit) {
                             nextTeamId += 1
                         },
                         onTeamMove = { from, to ->
-                            if (from == to) return@TeamsTab
-                            if (from !in teams.indices || to !in 0..teams.size) return@TeamsTab
+                            if (from == to) return@teamsTab
+                            if (from !in teams.indices || to !in 0..teams.size) return@teamsTab
                             val updated = teams.toMutableList()
                             val item = updated.removeAt(from)
                             val targetIndex = to.coerceIn(0, updated.size)
@@ -240,7 +240,7 @@ fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () -> Unit) {
                         },
                         suggestions = teamSuggestions,
                         onApplySuggestion = { suggestion ->
-                            if (teams.any { it.name.equals(suggestion, ignoreCase = true) }) return@TeamsTab
+                            if (teams.any { it.name.equals(suggestion, ignoreCase = true) }) return@teamsTab
                             val targetIndex = teams.indexOfFirst { it.name.isBlank() }
                             teams = teams.toMutableList().also { list ->
                                 when {
@@ -254,7 +254,7 @@ fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () -> Unit) {
                         },
                     )
 
-                    SettingsTab.ADVANCED -> AdvancedTab(
+                    SettingsTab.ADVANCED -> advancedTab(
                         uiLanguage = uiLang,
                         onUiLanguageChange = { uiLang = it },
                         language = lang,
@@ -317,7 +317,7 @@ private val TeamEditorEntryStateSaver = listSaver<MutableState<List<TeamEditorEn
 )
 
 @Composable
-private fun MatchRulesTab(
+private fun matchRulesTab(
     round: String,
     onRoundChange: (String) -> Unit,
     target: String,
@@ -391,7 +391,7 @@ private fun MatchRulesTab(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun InputFeedbackTab(
+private fun inputFeedbackTab(
     haptics: Boolean,
     onHapticsChange: (Boolean) -> Unit,
     sound: Boolean,
@@ -412,22 +412,22 @@ private fun InputFeedbackTab(
             ElevatedCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(stringResource(R.string.feedback_and_layout), style = MaterialTheme.typography.titleMedium)
-                    SettingsToggleRow(
+                    settingsToggleRow(
                         label = stringResource(R.string.haptics_label),
                         checked = haptics,
                         onCheckedChange = onHapticsChange,
                     )
-                    SettingsToggleRow(
+                    settingsToggleRow(
                         label = stringResource(R.string.sound_effects_label),
                         checked = sound,
                         onCheckedChange = onSoundChange,
                     )
-                    SettingsToggleRow(
+                    settingsToggleRow(
                         label = stringResource(R.string.one_hand_layout_label),
                         checked = oneHand,
                         onCheckedChange = onOneHandChange,
                     )
-                    SettingsToggleRow(
+                    settingsToggleRow(
                         label = stringResource(R.string.vertical_swipes_label),
                         checked = verticalSwipes,
                         onCheckedChange = onVerticalSwipesChange,
@@ -444,19 +444,19 @@ private fun InputFeedbackTab(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        OrientationChip(
+                        orientationChip(
                             selected = orientation == "system",
                             label = stringResource(R.string.auto_label),
                             icon = Icons.Filled.ScreenRotation,
                             onClick = { onOrientationChange("system") },
                         )
-                        OrientationChip(
+                        orientationChip(
                             selected = orientation == "portrait",
                             label = stringResource(R.string.portrait_label),
                             icon = Icons.Filled.ScreenLockPortrait,
                             onClick = { onOrientationChange("portrait") },
                         )
-                        OrientationChip(
+                        orientationChip(
                             selected = orientation == "landscape",
                             label = stringResource(R.string.landscape_label),
                             icon = Icons.Filled.ScreenLockLandscape,
@@ -470,7 +470,7 @@ private fun InputFeedbackTab(
 }
 
 @Composable
-private fun SettingsToggleRow(
+private fun settingsToggleRow(
     label: String,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
@@ -482,7 +482,7 @@ private fun SettingsToggleRow(
 }
 
 @Composable
-private fun OrientationChip(
+private fun orientationChip(
     selected: Boolean,
     label: String,
     icon: ImageVector,
@@ -498,7 +498,7 @@ private fun OrientationChip(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun TeamsTab(
+private fun teamsTab(
     teams: List<TeamEditorEntry>,
     canRemoveTeam: Boolean,
     canAddTeam: Boolean,
@@ -530,7 +530,7 @@ private fun TeamsTab(
         }
         itemsIndexed(teams, key = { _, team -> team.id }) { index, team ->
             val isDragging = draggingIndex == index
-            TeamEditorCard(
+            teamEditorCard(
                 index = index,
                 name = team.name,
                 canRemove = canRemoveTeam,
@@ -616,7 +616,7 @@ private fun TeamsTab(
 }
 
 @Composable
-private fun TeamEditorCard(
+private fun teamEditorCard(
     index: Int,
     name: String,
     canRemove: Boolean,
@@ -675,7 +675,7 @@ private fun TeamEditorCard(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun AdvancedTab(
+private fun advancedTab(
     uiLanguage: String,
     onUiLanguageChange: (String) -> Unit,
     language: String,
@@ -724,7 +724,7 @@ private fun AdvancedTab(
                         label = { Text(stringResource(R.string.language_hint)) },
                         modifier = Modifier.fillMaxWidth(),
                     )
-                    SettingsToggleRow(
+                    settingsToggleRow(
                         label = stringResource(R.string.allow_nsfw_label),
                         checked = allowNsfw,
                         onCheckedChange = onAllowNsfwChange,

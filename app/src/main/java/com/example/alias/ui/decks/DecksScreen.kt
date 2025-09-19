@@ -91,7 +91,7 @@ private val DIFFICULTY_LEVELS = listOf(1, 2, 3, 4, 5)
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
+fun decksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
     val decks by vm.decks.collectAsState()
     val enabled by vm.enabledDeckIds.collectAsState()
     val trusted by vm.trustedSources.collectAsState()
@@ -125,7 +125,7 @@ fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
             sheetState = sheetState,
         ) {
             when (sheet) {
-                DeckSheet.FILTERS -> DeckFiltersSheet(
+                DeckSheet.FILTERS -> deckFiltersSheet(
                     state = DeckFiltersSheetState(
                         difficulty = DifficultyFilterState(
                             selectedLevels = IntRange(minDifficulty, maxDifficulty).toSet(),
@@ -157,7 +157,7 @@ fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
                     ),
                 )
 
-                DeckSheet.IMPORT -> DeckImportSheet(
+                DeckSheet.IMPORT -> deckImportSheet(
                     state = DeckImportSheetState(
                         url = url,
                         sha256 = sha,
@@ -174,7 +174,7 @@ fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
                     ),
                 )
 
-                DeckSheet.TRUSTED -> DeckTrustedSourcesSheet(
+                DeckSheet.TRUSTED -> deckTrustedSourcesSheet(
                     trustedSources = trusted.toList(),
                     newSource = newTrusted,
                     onNewSourceChange = { newTrusted = it },
@@ -205,7 +205,7 @@ fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             item(span = { GridItemSpan(maxLineSpan) }) {
-                DecksHeroSummary(
+                decksHeroSummary(
                     state = DecksHeroSummaryState(
                         decks = decks,
                         enabledDeckIds = enabled,
@@ -220,16 +220,16 @@ fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
             }
             downloadProgress?.let { progress ->
                 item(span = { GridItemSpan(maxLineSpan) }) {
-                    DeckDownloadCard(progress)
+                    deckDownloadCard(progress)
                 }
             }
             if (decks.isEmpty()) {
                 item(span = { GridItemSpan(maxLineSpan) }) {
-                    EmptyDecksState(onImportClick = { activeSheet = DeckSheet.IMPORT })
+                    emptyDecksState(onImportClick = { activeSheet = DeckSheet.IMPORT })
                 }
             } else {
                 items(decks, key = { it.id }) { deck ->
-                    DeckCard(
+                    deckCard(
                         deck = deck,
                         enabled = enabled.contains(deck.id),
                         onToggle = { toggled -> vm.setDeckEnabled(deck.id, toggled) },
@@ -292,7 +292,7 @@ private data class DecksHeroSummaryActions(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun DecksHeroSummary(state: DecksHeroSummaryState, actions: DecksHeroSummaryActions) {
+private fun decksHeroSummary(state: DecksHeroSummaryState, actions: DecksHeroSummaryActions) {
     val activeCount = state.decks.count { state.enabledDeckIds.contains(it.id) }
     val languages = remember(state.decks) {
         state.decks.map { it.language.uppercase(Locale.getDefault()) }
@@ -320,7 +320,7 @@ private fun DecksHeroSummary(state: DecksHeroSummaryState, actions: DecksHeroSum
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
             )
-            DeckLanguagesSummary(languages = languages)
+            deckLanguagesSummary(languages = languages)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -354,7 +354,7 @@ private fun DecksHeroSummary(state: DecksHeroSummaryState, actions: DecksHeroSum
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun DeckLanguagesSummary(languages: List<String>, modifier: Modifier = Modifier) {
+private fun deckLanguagesSummary(languages: List<String>, modifier: Modifier = Modifier) {
     if (languages.isNotEmpty()) {
         Text(
             text = stringResource(R.string.deck_languages_summary, languages.joinToString(" • ")),
@@ -377,7 +377,7 @@ private fun DeckLanguagesSummary(languages: List<String>, modifier: Modifier = M
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun DeckCard(
+private fun deckCard(
     deck: DeckEntity,
     enabled: Boolean,
     onToggle: (Boolean) -> Unit,
@@ -390,7 +390,7 @@ private fun DeckCard(
         modifier = modifier.fillMaxWidth(),
     ) {
         Column {
-            DeckCoverArt(deck = deck)
+            deckCoverArt(deck = deck)
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -487,7 +487,7 @@ private fun DeckCard(
 }
 
 @Composable
-private fun DeckCoverArt(deck: DeckEntity, modifier: Modifier = Modifier) {
+private fun deckCoverArt(deck: DeckEntity, modifier: Modifier = Modifier) {
     val gradient = rememberDeckCoverBrush(deck.id)
     val coverImage = rememberDeckCoverImage(deck.coverImageBase64)
     val initial = remember(deck.id, deck.name) {
@@ -569,7 +569,7 @@ fun rememberDeckCoverImage(base64: String?): ImageBitmap? {
 }
 
 @Composable
-private fun EmptyDecksState(onImportClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun emptyDecksState(onImportClick: () -> Unit, modifier: Modifier = Modifier) {
     ElevatedCard(modifier = modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(24.dp),
@@ -583,20 +583,20 @@ private fun EmptyDecksState(onImportClick: () -> Unit, modifier: Modifier = Modi
 }
 
 @Composable
-private fun DeckDownloadCard(progress: MainViewModel.DeckDownloadProgress) {
+private fun deckDownloadCard(progress: MainViewModel.DeckDownloadProgress) {
     ElevatedCard(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Text(stringResource(R.string.deck_download_in_progress), style = MaterialTheme.typography.titleMedium)
-            DeckDownloadProgressIndicator(progress)
+            deckDownloadProgressIndicator(progress)
         }
     }
 }
 
 @Composable
-private fun DeckTrustedSourcesSheet(
+private fun deckTrustedSourcesSheet(
     trustedSources: List<String>,
     newSource: String,
     onNewSourceChange: (String) -> Unit,
@@ -647,7 +647,7 @@ private fun DeckTrustedSourcesSheet(
 }
 
 @Composable
-private fun DeckDownloadProgressIndicator(
+private fun deckDownloadProgressIndicator(
     progress: MainViewModel.DeckDownloadProgress,
     modifier: Modifier = Modifier,
 ) {
@@ -676,7 +676,7 @@ private fun DeckDownloadProgressIndicator(
 }
 
 @Composable
-private fun DeckFiltersSheet(
+private fun deckFiltersSheet(
     state: DeckFiltersSheetState,
     callbacks: DeckFiltersSheetCallbacks,
 ) {
@@ -689,14 +689,14 @@ private fun DeckFiltersSheet(
     ) {
         Text(stringResource(R.string.filters_label), style = MaterialTheme.typography.titleLarge)
         Text(stringResource(R.string.deck_filters_description), style = MaterialTheme.typography.bodyMedium)
-        DifficultyFilter(state.difficulty, callbacks.onDifficultyToggle)
-        FilterChipGroup(
+        difficultyFilter(state.difficulty, callbacks.onDifficultyToggle)
+        filterChipGroup(
             title = stringResource(R.string.categories_label),
             items = state.categories.available,
             selectedItems = state.categories.selected,
             onSelectionChanged = callbacks.onCategoriesChange,
         )
-        FilterChipGroup(
+        filterChipGroup(
             title = stringResource(R.string.word_classes_label),
             items = state.wordClasses.available,
             selectedItems = state.wordClasses.selected,
@@ -711,7 +711,7 @@ private fun DeckFiltersSheet(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun DifficultyFilter(state: DifficultyFilterState, onToggle: (Int) -> Unit) {
+private fun difficultyFilter(state: DifficultyFilterState, onToggle: (Int) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(stringResource(R.string.difficulty_filter_label), style = MaterialTheme.typography.titleMedium)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -748,7 +748,7 @@ private class DeckFiltersSheetCallbacks(
 )
 
 @Composable
-private fun DeckImportSheet(
+private fun deckImportSheet(
     state: DeckImportSheetState,
     callbacks: DeckImportSheetCallbacks,
 ) {
@@ -812,7 +812,7 @@ private class DeckImportSheetCallbacks(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun FilterChipGroup(
+private fun filterChipGroup(
     title: String,
     items: List<String>,
     selectedItems: Set<String>,

@@ -59,7 +59,7 @@ import com.example.alias.R
 import kotlin.math.roundToInt
 
 @Composable
-fun TutorialOverlay(
+fun tutorialOverlay(
     verticalMode: Boolean,
     allowSkip: Boolean,
     onDismiss: () -> Unit,
@@ -85,7 +85,7 @@ fun TutorialOverlay(
             title = stringResource(R.string.tutorial_step_swipe_title),
             body = swipeBody,
             focus = TutorialFocus.Card,
-            extraContent = { SwipeIllustration(vertical = verticalMode) },
+            extraContent = { swipeIllustration(vertical = verticalMode) },
         ),
         TutorialStep(
             title = stringResource(R.string.tutorial_step_status_title),
@@ -231,7 +231,7 @@ fun TutorialOverlay(
 }
 
 @Composable
-private fun SwipeIllustration(vertical: Boolean) {
+private fun swipeIllustration(vertical: Boolean) {
     val arrowStart: ImageVector
     val arrowEnd: ImageVector
     if (vertical) {

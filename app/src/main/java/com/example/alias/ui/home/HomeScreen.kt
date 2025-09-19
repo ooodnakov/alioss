@@ -64,7 +64,7 @@ import com.example.alias.data.settings.Settings
 import com.example.alias.domain.GameState
 
 @Composable
-fun HomeScreen(
+fun homeScreen(
     gameState: GameState?,
     settings: Settings,
     decks: List<DeckEntity>,
@@ -93,7 +93,7 @@ fun HomeScreen(
                 modifier = Modifier.weight(1.4f),
                 verticalArrangement = Arrangement.spacedBy(20.dp),
             ) {
-                HomeHeroSection(
+                homeHeroSection(
                     gameState = gameState,
                     settings = settings,
                     decks = decks,
@@ -103,7 +103,7 @@ fun HomeScreen(
                     onHistory = onHistory,
                     onDecks = onDecks,
                 )
-                HomeActionCard(
+                homeActionCard(
                     icon = Icons.Filled.PlayArrow,
                     title = stringResource(R.string.quick_play),
                     subtitle = stringResource(R.string.quick_play_subtitle),
@@ -116,7 +116,7 @@ fun HomeScreen(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                HomeActionCard(
+                homeActionCard(
                     icon = Icons.AutoMirrored.Filled.LibraryBooks,
                     title = stringResource(R.string.title_decks),
                     subtitle = stringResource(R.string.decks_subtitle),
@@ -124,7 +124,7 @@ fun HomeScreen(
                     containerColor = colors.secondaryContainer,
                     contentColor = colors.onSecondaryContainer,
                 )
-                HomeActionCard(
+                homeActionCard(
                     icon = Icons.Filled.Settings,
                     title = stringResource(R.string.title_settings),
                     subtitle = stringResource(R.string.settings_subtitle),
@@ -132,7 +132,7 @@ fun HomeScreen(
                     containerColor = colors.tertiaryContainer,
                     contentColor = colors.onTertiaryContainer,
                 )
-                HomeActionCard(
+                homeActionCard(
                     icon = Icons.Filled.History,
                     title = stringResource(R.string.title_history),
                     subtitle = stringResource(R.string.history_subtitle),
@@ -151,7 +151,7 @@ fun HomeScreen(
             verticalArrangement = Arrangement.spacedBy(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            HomeHeroSection(
+            homeHeroSection(
                 gameState = gameState,
                 settings = settings,
                 decks = decks,
@@ -161,7 +161,7 @@ fun HomeScreen(
                 onHistory = onHistory,
                 onDecks = onDecks,
             )
-            HomeActionCard(
+            homeActionCard(
                 icon = Icons.Filled.PlayArrow,
                 title = stringResource(R.string.quick_play),
                 subtitle = stringResource(R.string.quick_play_subtitle),
@@ -169,7 +169,7 @@ fun HomeScreen(
                 containerColor = colors.primaryContainer,
                 contentColor = colors.onPrimaryContainer,
             )
-            HomeActionCard(
+            homeActionCard(
                 icon = Icons.AutoMirrored.Filled.LibraryBooks,
                 title = stringResource(R.string.title_decks),
                 subtitle = stringResource(R.string.decks_subtitle),
@@ -177,7 +177,7 @@ fun HomeScreen(
                 containerColor = colors.secondaryContainer,
                 contentColor = colors.onSecondaryContainer,
             )
-            HomeActionCard(
+            homeActionCard(
                 icon = Icons.Filled.Settings,
                 title = stringResource(R.string.title_settings),
                 subtitle = stringResource(R.string.settings_subtitle),
@@ -185,7 +185,7 @@ fun HomeScreen(
                 containerColor = colors.tertiaryContainer,
                 contentColor = colors.onTertiaryContainer,
             )
-            HomeActionCard(
+            homeActionCard(
                 icon = Icons.Filled.History,
                 title = stringResource(R.string.title_history),
                 subtitle = stringResource(R.string.history_subtitle),
@@ -198,7 +198,7 @@ fun HomeScreen(
 }
 
 @Composable
-private fun HomeHeroSection(
+private fun homeHeroSection(
     gameState: GameState?,
     settings: Settings,
     decks: List<DeckEntity>,
@@ -321,7 +321,7 @@ private fun HomeHeroSection(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
-                    HomeLogo(size = 64.dp)
+                    homeLogo(size = 64.dp)
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(heroTitle, style = MaterialTheme.typography.headlineSmall, color = contentColor)
                         Text(
@@ -331,14 +331,14 @@ private fun HomeHeroSection(
                         )
                     }
                 }
-                HomeScoreboardSection(scoreboard = scoreboard, hasProgress = hasProgress, contentColor = contentColor)
-                FavoriteDecksSection(
+                homeScoreboardSection(scoreboard = scoreboard, hasProgress = hasProgress, contentColor = contentColor)
+                favoriteDecksSection(
                     favorites = favoriteDecks,
                     extra = extraDecks,
                     onDecks = onDecks,
                     contentColor = contentColor,
                 )
-                RecentHighlightSection(
+                recentHighlightSection(
                     text = highlightText,
                     icon = highlightIcon,
                     iconTint = highlightTint,
@@ -382,7 +382,7 @@ private fun HomeHeroSection(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun HomeScoreboardSection(
+private fun homeScoreboardSection(
     scoreboard: Map<String, Int>,
     hasProgress: Boolean,
     contentColor: Color,
@@ -430,7 +430,7 @@ private fun HomeScoreboardSection(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun FavoriteDecksSection(
+private fun favoriteDecksSection(
     favorites: List<DeckEntity>,
     extra: Int,
     onDecks: () -> Unit,
@@ -487,7 +487,7 @@ private fun FavoriteDecksSection(
 }
 
 @Composable
-private fun RecentHighlightSection(
+private fun recentHighlightSection(
     text: String,
     icon: ImageVector?,
     iconTint: Color,
@@ -520,7 +520,7 @@ private fun RecentHighlightSection(
 }
 
 @Composable
-private fun HomeLogo(size: Dp, modifier: Modifier = Modifier) {
+private fun homeLogo(size: Dp, modifier: Modifier = Modifier) {
     Surface(
         modifier = modifier.size(size),
         shape = CircleShape,
@@ -538,7 +538,7 @@ private fun HomeLogo(size: Dp, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun HomeActionCard(
+private fun homeActionCard(
     icon: ImageVector,
     title: String,
     subtitle: String,
