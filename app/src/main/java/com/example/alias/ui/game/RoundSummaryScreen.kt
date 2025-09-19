@@ -1,0 +1,569 @@
+package com.example.alias.ui.game
+
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.Button
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import com.example.alias.MainViewModel
+import com.example.alias.R
+import com.example.alias.data.settings.Settings
+import com.example.alias.domain.GameState
+import com.example.alias.domain.TurnOutcome
+
+@Composable
+fun RoundSummaryScreen(vm: MainViewModel, s: GameState.TurnFinished, settings: Settings) {
+    val penaltyPerSkip = remember(settings.punishSkips, settings.penaltyPerSkip) {
+        if (settings.punishSkips) settings.penaltyPerSkip else 0
+    }
+    val timeline = remember(s.outcomes, penaltyPerSkip) { buildTimelineData(s.outcomes, penaltyPerSkip) }
+    val colors = MaterialTheme.colorScheme
+    val deltaColor = if (s.deltaScore >= 0) colors.tertiary else colors.error
+
+    Column(
+        modifier = Modifier.fillMaxSize().padding(24.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.Top),
+    ) {
+        Text(stringResource(R.string.turn_summary, s.team), style = MaterialTheme.typography.headlineSmall)
+        Text(
+            text = stringResource(R.string.score_change, s.deltaScore),
+            style = MaterialTheme.typography.titleMedium,
+            color = deltaColor
+        )
+        ElevatedCard(modifier = Modifier.weight(1f)) {
+            if (timeline.events.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize().padding(24.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = stringResource(R.string.timeline_no_events),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colors.onSurfaceVariant,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    item {
+                        Column(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(stringResource(R.string.turn_timeline_title), style = MaterialTheme.typography.titleMedium)
+                            Text(
+                                text = stringResource(R.string.timeline_score_breakdown),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = colors.onSurfaceVariant
+                            )
+                            ScoreProgressGraph(
+                                events = timeline.events,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+                    timeline.segments.forEachIndexed { segmentIndex, segment ->
+                        item {
+                            TimelineSegmentHeader(
+                                segment = segment,
+                                modifier = Modifier.padding(horizontal = 20.dp),
+                                penaltyPerSkip = penaltyPerSkip
+                            )
+                        }
+                        itemsIndexed(segment.events) { eventIndex, event ->
+                            val hasPrev = segmentIndex > 0 || eventIndex > 0
+                            val hasNext = !(segmentIndex == timeline.segments.lastIndex && eventIndex == segment.events.lastIndex)
+                            TimelineEventRow(
+                                event = event,
+                                hasPrev = hasPrev,
+                                hasNext = hasNext,
+                                onOverride = { vm.overrideOutcome(event.index, it) },
+                                modifier = Modifier.padding(horizontal = 20.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+        Scoreboard(s.scores)
+        Button(onClick = { vm.nextTurn() }, modifier = Modifier.fillMaxWidth()) {
+            Text(if (s.matchOver) stringResource(R.string.end_match) else stringResource(R.string.next_team))
+        }
+    }
+}
+
+private const val BONUS_STREAK_THRESHOLD = 3
+private val TIMELINE_INDICATOR_CANVAS_WIDTH = 12.dp
+private val TIMELINE_INDICATOR_NODE_RADIUS = 6.dp
+private val TIMELINE_INDICATOR_VERTICAL_PADDING = 4.dp
+private const val TIMELINE_INDICATOR_CONNECTOR_ALPHA = 0.35f
+
+private enum class TimelineSegmentType { CORRECT, SKIP, PENDING }
+
+private data class TimelineEvent(
+    val index: Int,
+    val outcome: TurnOutcome,
+    val type: TimelineSegmentType,
+    val change: Int,
+    val cumulative: Int,
+    val isBonus: Boolean,
+    val elapsedMillis: Long,
+)
+
+private data class TimelineSegment(
+    val type: TimelineSegmentType,
+    val events: List<TimelineEvent>,
+)
+
+private data class TimelineData(
+    val events: List<TimelineEvent>,
+    val segments: List<TimelineSegment>,
+)
+
+private data class ScoreTimelinePoint(val time: Float, val score: Float)
+
+private fun buildTimelineData(outcomes: List<TurnOutcome>, penaltyPerSkip: Int): TimelineData {
+    if (outcomes.isEmpty()) return TimelineData(emptyList(), emptyList())
+    val events = mutableListOf<TimelineEvent>()
+    val start = outcomes.first().timestamp
+    var cumulative = 0
+    var streak = 0
+    outcomes.forEachIndexed { index, outcome ->
+        val type = when {
+            outcome.correct -> TimelineSegmentType.CORRECT
+            outcome.skipped -> TimelineSegmentType.SKIP
+            else -> TimelineSegmentType.PENDING
+        }
+        val nextStreak = if (type == TimelineSegmentType.CORRECT) streak + 1 else 0
+        val isBonus = type == TimelineSegmentType.CORRECT && nextStreak >= BONUS_STREAK_THRESHOLD
+        val change = when (type) {
+            TimelineSegmentType.CORRECT -> 1
+            TimelineSegmentType.SKIP -> -penaltyPerSkip
+            TimelineSegmentType.PENDING -> 0
+        }
+        cumulative += change
+        val elapsed = if (index == 0) 0L else (outcome.timestamp - start).coerceAtLeast(0L)
+        events += TimelineEvent(
+            index = index,
+            outcome = outcome,
+            type = type,
+            change = change,
+            cumulative = cumulative,
+            isBonus = isBonus,
+            elapsedMillis = elapsed
+        )
+        streak = if (type == TimelineSegmentType.CORRECT) nextStreak else 0
+    }
+    val segments = mutableListOf<TimelineSegment>()
+    var currentType = events.first().type
+    var bucket = mutableListOf<TimelineEvent>()
+    events.forEach { event ->
+        if (event.type != currentType) {
+            segments += TimelineSegment(currentType, bucket.toList())
+            bucket = mutableListOf()
+            currentType = event.type
+        }
+        bucket += event
+    }
+    if (bucket.isNotEmpty()) {
+        segments += TimelineSegment(currentType, bucket.toList())
+    }
+    return TimelineData(events = events, segments = segments)
+}
+
+private fun buildScoreProgressPoints(events: List<TimelineEvent>): List<ScoreTimelinePoint> {
+    if (events.isEmpty()) return emptyList()
+    val hasElapsed = events.any { it.elapsedMillis > 0L }
+    return buildList {
+        add(ScoreTimelinePoint(0f, 0f))
+        events.forEachIndexed { index, event ->
+            val time = if (hasElapsed) event.elapsedMillis.toFloat() else (index + 1).toFloat()
+            add(ScoreTimelinePoint(time, event.cumulative.toFloat()))
+        }
+    }
+}
+
+@Composable
+private fun ScoreProgressGraph(events: List<TimelineEvent>, modifier: Modifier = Modifier) {
+    val points = remember(events) { buildScoreProgressPoints(events) }
+    if (points.size <= 1) return
+    val colors = MaterialTheme.colorScheme
+    val strokeColor = if (events.lastOrNull()?.cumulative ?: 0 >= 0) colors.tertiary else colors.error
+    val fillColor = strokeColor.copy(alpha = 0.2f)
+    val baselineColor = colors.outline.copy(alpha = 0.5f)
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(
+            text = stringResource(R.string.timeline_score_graph_label),
+            style = MaterialTheme.typography.labelLarge,
+            color = colors.onSurfaceVariant
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(64.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(colors.surfaceVariant.copy(alpha = 0.6f))
+                .padding(horizontal = 12.dp, vertical = 8.dp)
+        ) {
+            Canvas(Modifier.fillMaxSize()) {
+                val xMin = points.minOf { it.time }
+                val xMax = points.maxOf { it.time }
+                val xRange = (xMax - xMin)
+                val useIndex = xRange <= 0f
+                val yMin = points.minOf { it.score }
+                val yMax = points.maxOf { it.score }
+                val yRange = (yMax - yMin)
+                val offsets = points.mapIndexed { index, point ->
+                    val xFraction = if (useIndex) {
+                        index.toFloat() / points.lastIndex.toFloat()
+                    } else {
+                        (point.time - xMin) / xRange
+                    }
+                    val yFraction = if (yRange > 0f) {
+                        (point.score - yMin) / yRange
+                    } else {
+                        0.5f
+                    }
+                    Offset(
+                        x = xFraction.coerceIn(0f, 1f) * size.width,
+                        y = size.height - yFraction.coerceIn(0f, 1f) * size.height
+                    )
+                }
+                val zeroLineY = when {
+                    yRange > 0f && yMin <= 0f && yMax >= 0f -> {
+                        val zeroFraction = (0f - yMin) / yRange
+                        size.height - zeroFraction * size.height
+                    }
+                    yRange == 0f && yMin == 0f -> size.height * 0.5f
+                    else -> null
+                }
+                if (zeroLineY != null) {
+                    drawLine(
+                        color = baselineColor,
+                        start = Offset(0f, zeroLineY),
+                        end = Offset(size.width, zeroLineY),
+                        strokeWidth = 1.dp.toPx()
+                    )
+                }
+                if (offsets.size >= 2) {
+                    val fillPath = Path().apply {
+                        moveTo(offsets.first().x, size.height)
+                        offsets.forEach { lineTo(it.x, it.y) }
+                        lineTo(offsets.last().x, size.height)
+                        close()
+                    }
+                    drawPath(
+                        path = fillPath,
+                        brush = Brush.verticalGradient(
+                            colors = listOf(fillColor, fillColor.copy(alpha = 0f)),
+                            startY = 0f,
+                            endY = size.height
+                        )
+                    )
+                    val strokePath = Path().apply {
+                        offsets.forEachIndexed { index, offset ->
+                            if (index == 0) moveTo(offset.x, offset.y) else lineTo(offset.x, offset.y)
+                        }
+                    }
+                    drawPath(
+                        path = strokePath,
+                        color = strokeColor,
+                        style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
+                    )
+                    drawCircle(color = strokeColor, radius = 4.dp.toPx(), center = offsets.last())
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TimelineSegmentHeader(
+    segment: TimelineSegment,
+    modifier: Modifier = Modifier,
+    penaltyPerSkip: Int,
+) {
+    val color = timelineColor(segment.type)
+    val title = when (segment.type) {
+        TimelineSegmentType.CORRECT -> pluralStringResource(R.plurals.timeline_correct, segment.events.size, segment.events.size)
+        TimelineSegmentType.SKIP -> pluralStringResource(R.plurals.timeline_skipped, segment.events.size, segment.events.size)
+        TimelineSegmentType.PENDING -> pluralStringResource(R.plurals.timeline_pending, segment.events.size, segment.events.size)
+    }
+    val delta = segment.events.sumOf { it.change }
+    val subtitle = when (segment.type) {
+        TimelineSegmentType.CORRECT -> stringResource(R.string.timeline_header_correct_subtitle, delta)
+        TimelineSegmentType.SKIP -> if (penaltyPerSkip == 0 || delta == 0) {
+            stringResource(R.string.timeline_header_skip_no_penalty)
+        } else {
+            stringResource(R.string.timeline_header_penalty_subtitle, delta)
+        }
+        TimelineSegmentType.PENDING -> stringResource(R.string.timeline_header_pending_subtitle)
+    }
+    val showBonus = segment.events.any { it.isBonus }
+
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        contentColor = MaterialTheme.colorScheme.onSurface
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            val icon = when (segment.type) {
+                TimelineSegmentType.CORRECT -> Icons.Filled.Check
+                TimelineSegmentType.SKIP -> Icons.Filled.Close
+                TimelineSegmentType.PENDING -> Icons.Filled.Schedule
+            }
+            Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(20.dp))
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (showBonus) {
+                    AssistChip(
+                        onClick = {},
+                        enabled = false,
+                        leadingIcon = {
+                            Icon(Icons.Filled.Star, contentDescription = null, modifier = Modifier.size(16.dp))
+                        },
+                        label = { Text(stringResource(R.string.timeline_bonus_label)) },
+                        colors = AssistChipDefaults.assistChipColors(
+                            disabledContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                            disabledLabelColor = MaterialTheme.colorScheme.onTertiaryContainer
+                        )
+                    )
+                }
+            }
+            Text(
+                text = stringResource(R.string.timeline_change, delta),
+                style = MaterialTheme.typography.titleMedium,
+                color = color,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
+
+@Composable
+private fun TimelineEventRow(
+    event: TimelineEvent,
+    hasPrev: Boolean,
+    hasNext: Boolean,
+    onOverride: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val color = timelineColor(event.type)
+    val timeLabel = if (event.elapsedMillis <= 0L) {
+        stringResource(R.string.timeline_elapsed_time_start)
+    } else {
+        val seconds = event.elapsedMillis / 1000f
+        stringResource(R.string.timeline_elapsed_time, seconds)
+    }
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(top = 4.dp)
+            .height(IntrinsicSize.Min),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.Top
+    ) {
+        TimelineIndicator(
+            color = color,
+            showTopConnector = hasPrev,
+            showBottomConnector = hasNext
+        )
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Text(
+                    event.outcome.word,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                if (event.isBonus) {
+                    AssistChip(
+                        onClick = {},
+                        enabled = false,
+                        leadingIcon = {
+                            Icon(Icons.Filled.Star, contentDescription = null, modifier = Modifier.size(14.dp))
+                        },
+                        label = { Text(stringResource(R.string.timeline_bonus_label)) },
+                        colors = AssistChipDefaults.assistChipColors(
+                            disabledContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                            disabledLabelColor = MaterialTheme.colorScheme.onTertiaryContainer
+                        )
+                    )
+                }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = stringResource(R.string.timeline_change, event.change),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = color,
+                    fontWeight = FontWeight.Medium
+                )
+                Text(
+                    text = stringResource(R.string.timeline_running_total, event.cumulative),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Text(timeLabel, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            IconButton(onClick = { onOverride(true) }) {
+                Icon(Icons.Filled.Check, contentDescription = stringResource(R.string.timeline_mark_correct))
+            }
+            IconButton(onClick = { onOverride(false) }) {
+                Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.timeline_mark_incorrect))
+            }
+        }
+    }
+}
+
+@Composable
+private fun TimelineIndicator(color: Color, showTopConnector: Boolean, showBottomConnector: Boolean) {
+    Box(
+        modifier = Modifier
+            .width(24.dp)
+            .fillMaxHeight(),
+        contentAlignment = Alignment.TopCenter
+    ) {
+        Canvas(modifier = Modifier.fillMaxHeight().width(TIMELINE_INDICATOR_CANVAS_WIDTH)) {
+            val centerX = size.width / 2f
+            val circleRadius = TIMELINE_INDICATOR_NODE_RADIUS.toPx()
+            val centerY = circleRadius + TIMELINE_INDICATOR_VERTICAL_PADDING.toPx()
+            if (showTopConnector) {
+                drawLine(
+                    color = color.copy(alpha = TIMELINE_INDICATOR_CONNECTOR_ALPHA),
+                    start = Offset(centerX, 0f),
+                    end = Offset(centerX, centerY - circleRadius)
+                )
+            }
+            drawCircle(color = color, radius = circleRadius, center = Offset(centerX, centerY))
+            if (showBottomConnector) {
+                drawLine(
+                    color = color.copy(alpha = TIMELINE_INDICATOR_CONNECTOR_ALPHA),
+                    start = Offset(centerX, centerY + circleRadius),
+                    end = Offset(centerX, size.height)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun timelineColor(type: TimelineSegmentType): Color {
+    val colors = MaterialTheme.colorScheme
+    return when (type) {
+        TimelineSegmentType.CORRECT -> colors.tertiary
+        TimelineSegmentType.SKIP -> colors.error
+        TimelineSegmentType.PENDING -> colors.outline
+    }
+}
+
+@Composable
+fun Scoreboard(scores: Map<String, Int>) {
+    Column(Modifier.fillMaxWidth()) {
+        Text(stringResource(R.string.scoreboard), style = MaterialTheme.typography.titleMedium)
+        val max = scores.values.maxOrNull() ?: 0
+        val leaders = scores.filterValues { it == max }.keys
+        scores.forEach { (team, score) ->
+            val isLeader = leaders.contains(team)
+            val suffix = if (leaders.size > 1 && isLeader) stringResource(R.string.tie_suffix) else ""
+            val textStyle = if (isLeader) {
+                MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
+            } else {
+                MaterialTheme.typography.bodyMedium
+            }
+            val textColor = if (isLeader) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (isLeader) {
+                    Icon(
+                        imageVector = Icons.Filled.Star,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier
+                            .size(20.dp)
+                            .padding(end = 8.dp)
+                    )
+                } else {
+                    Spacer(modifier = Modifier.width(28.dp))
+                }
+                Text(
+                    text = "$team: $score$suffix",
+                    style = textStyle,
+                    color = textColor
+                )
+            }
+        }
+    }
+}
