@@ -39,8 +39,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
@@ -93,6 +96,7 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
     val scope = rememberCoroutineScope()
     val showTutorialOnFirstTurn by vm.showTutorialOnFirstTurn.collectAsState()
     val seenTutorial = settings.seenTutorial
+    var cardBounds by remember { mutableStateOf<Rect?>(null) }
 
     LaunchedEffect(state) {
         if (showTutorialOnFirstTurn && state is GameState.TurnActive && !seenTutorial) {
@@ -100,6 +104,9 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
         } else if (showTutorialOnFirstTurn) {
             // Tutorial was dismissed or not first turn
             vm.dismissTutorialOnFirstTurn()
+        }
+        if (state !is GameState.TurnActive) {
+            cardBounds = null
         }
     }
 
@@ -109,6 +116,7 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
             onDismiss = {
                 vm.updateSeenTutorial(true)
             },
+            cardBounds = cardBounds,
             modifier = Modifier.zIndex(1f)
         )
     }
@@ -221,6 +229,9 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .aspectRatio(CARD_ASPECT_RATIO)
+                        .onGloballyPositioned { coordinates ->
+                            cardBounds = coordinates.boundsInRoot()
+                        }
                 ) {
                     if (nextWord != null) {
                         WordCard(
