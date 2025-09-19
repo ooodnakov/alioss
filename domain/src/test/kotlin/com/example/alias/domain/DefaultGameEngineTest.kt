@@ -131,7 +131,7 @@ class DefaultGameEngineTest {
             // Change should be -(1+2) = -3; total delta becomes -2
             assertEquals(-2, updated.deltaScore)
             assertEquals(-2, updated.scores["t"]) // team total
-            assertFalse(updated.matchOver)
+            assertTrue(updated.matchOver)
         }
 
     @Test
@@ -225,6 +225,10 @@ class DefaultGameEngineTest {
 
             val finished = assertIs<GameState.TurnFinished>(engine.state.value)
             assertTrue(finished.matchOver)
+
+            engine.overrideOutcome(0, false)
+            val updated = assertIs<GameState.TurnFinished>(engine.state.value)
+            assertTrue(updated.matchOver)
 
             engine.nextTurn()
             assertIs<GameState.MatchFinished>(engine.state.value)

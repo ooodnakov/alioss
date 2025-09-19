@@ -122,7 +122,9 @@ class DefaultGameEngine(
                 if (correct) correctTotal++ else correctTotal--
             }
             outcomes[index] = item.copy(correct = correct, skipped = !correct)
-            val nowMatchOver = correctTotal >= config.targetWords
+            val noWordsLeft = queue.isEmpty()
+            val nowMatchOver = correctTotal >= config.targetWords || noWordsLeft
+            matchOver = nowMatchOver
             _state.update { GameState.TurnFinished(team, turnScore, scores.toMap(), outcomes.toList(), nowMatchOver) }
         }
     }
