@@ -99,7 +99,10 @@ fun RoundSummaryScreen(vm: MainViewModel, s: GameState.TurnFinished, settings: S
                             modifier = Modifier.padding(horizontal = 20.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Text(stringResource(R.string.turn_timeline_title), style = MaterialTheme.typography.titleMedium)
+                            Text(
+                                stringResource(R.string.turn_timeline_title),
+                                style = MaterialTheme.typography.titleMedium
+                            )
                             Text(
                                 text = stringResource(R.string.timeline_score_breakdown),
                                 style = MaterialTheme.typography.bodySmall,
@@ -334,9 +337,21 @@ private fun TimelineSegmentHeader(
 ) {
     val color = timelineColor(segment.type)
     val title = when (segment.type) {
-        TimelineSegmentType.CORRECT -> pluralStringResource(R.plurals.timeline_correct, segment.events.size, segment.events.size)
-        TimelineSegmentType.SKIP -> pluralStringResource(R.plurals.timeline_skipped, segment.events.size, segment.events.size)
-        TimelineSegmentType.PENDING -> pluralStringResource(R.plurals.timeline_pending, segment.events.size, segment.events.size)
+        TimelineSegmentType.CORRECT -> pluralStringResource(
+            R.plurals.timeline_correct,
+            segment.events.size,
+            segment.events.size
+        )
+        TimelineSegmentType.SKIP -> pluralStringResource(
+            R.plurals.timeline_skipped,
+            segment.events.size,
+            segment.events.size
+        )
+        TimelineSegmentType.PENDING -> pluralStringResource(
+            R.plurals.timeline_pending,
+            segment.events.size,
+            segment.events.size
+        )
     }
     val delta = segment.events.sumOf { it.change }
     val subtitle = when (segment.type) {
@@ -373,7 +388,11 @@ private fun TimelineSegmentHeader(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
                 if (showBonus) {
                     AssistChip(
                         onClick = {},
@@ -471,7 +490,11 @@ private fun TimelineEventRow(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            Text(timeLabel, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                timeLabel,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             IconButton(onClick = { onOverride(true) }) {

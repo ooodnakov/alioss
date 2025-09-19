@@ -2,6 +2,9 @@ package com.example.alias.ui.settings
 
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
@@ -12,7 +15,6 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -20,11 +22,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DragHandle
@@ -45,13 +44,12 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.SuggestionChip
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
@@ -60,28 +58,23 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.input.pointer.consumePositionChange
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.graphics.graphicsLayer
 import com.example.alias.MainViewModel
 import com.example.alias.R
-import com.example.alias.data.settings.Settings
 import com.example.alias.data.settings.SettingsRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -113,7 +106,12 @@ fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () -> Unit) {
         mutableStateOf(s.teams.mapIndexed { index, name -> TeamEditorEntry(index.toLong(), name) })
     }
     var nextTeamId by rememberSaveable(s) { mutableStateOf(s.teams.size.toLong()) }
-    var selectedTab by rememberSaveable { mutableStateOf(SettingsTab.MATCH_RULES) }
+    val pagerState = rememberPagerState { SettingsTab.values().size }
+    var selectedTab by rememberSaveable(pagerState) { mutableStateOf(SettingsTab.MATCH_RULES) }
+
+    LaunchedEffect(pagerState.currentPage) {
+        selectedTab = SettingsTab.values()[pagerState.currentPage]
+    }
     var showResetDialog by rememberSaveable { mutableStateOf(false) }
 
     val teamSuggestions = stringArrayResource(R.array.team_name_suggestions).toList()
@@ -169,18 +167,26 @@ fun SettingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () -> Unit) {
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(stringResource(R.string.title_settings), style = MaterialTheme.typography.headlineSmall)
-        TabRow(selectedTabIndex = selectedTab.ordinal) {
-            SettingsTab.values().forEach { tab ->
+        TabRow(selectedTabIndex = pagerState.currentPage) {
+            SettingsTab.values().forEachIndexed { index, tab ->
                 Tab(
                     selected = selectedTab == tab,
-                    onClick = { selectedTab = tab },
+                    onClick = {
+                        selectedTab = tab
+                        scope.launch {
+                            pagerState.animateScrollToPage(index)
+                        }
+                    },
                     text = { Text(stringResource(tab.titleRes)) }
                 )
             }
         }
         Box(modifier = Modifier.weight(1f)) {
-            AnimatedContent(targetState = selectedTab, label = "settings_tabs") { tab ->
-                when (tab) {
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxSize()
+            ) { page ->
+                when (SettingsTab.values()[page]) {
                     SettingsTab.MATCH_RULES -> MatchRulesTab(
                         round = round,
                         onRoundChange = { round = it },
@@ -542,7 +548,7 @@ private fun TeamsTab(
                             dragOffset = 0f
                         },
                         onDrag = { change, dragAmount ->
-                            change.consumePositionChange()
+                            change.consume()
                             val current = draggingIndex ?: return@detectDragGesturesAfterLongPress
                             dragOffset += dragAmount.y
                             if (dragOffset > 0 && current < teams.lastIndex) {
@@ -579,7 +585,10 @@ private fun TeamsTab(
                 Button(onClick = onTeamAdd, enabled = canAddTeam, modifier = Modifier.weight(1f)) {
                     Text(stringResource(R.string.add_team_label))
                 }
-                OutlinedButton(onClick = { suggestions.randomOrNull()?.let(onApplySuggestion) }, modifier = Modifier.weight(1f)) {
+                OutlinedButton(
+                    onClick = { suggestions.randomOrNull()?.let(onApplySuggestion) },
+                    modifier = Modifier.weight(1f)
+                ) {
                     Text(stringResource(R.string.team_suggestions_label))
                 }
             }
@@ -655,7 +664,10 @@ private fun TeamEditorCard(
                         .background(MaterialTheme.colorScheme.surfaceVariant),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(Icons.Filled.DragHandle, contentDescription = stringResource(R.string.team_drag_handle_description))
+                    Icon(
+                        Icons.Filled.DragHandle,
+                        contentDescription = stringResource(R.string.team_drag_handle_description)
+                    )
                 }
             }
         }

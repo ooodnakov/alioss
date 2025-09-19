@@ -186,4 +186,3 @@ class PackParserTest {
         """.trimIndent().replace("\n", "")
     }
 }
-

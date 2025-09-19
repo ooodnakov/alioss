@@ -10,20 +10,20 @@ import androidx.datastore.preferences.preferencesDataStoreFile
 import androidx.room.Room
 import com.example.alias.data.DeckRepository
 import com.example.alias.data.DeckRepositoryImpl
-import com.example.alias.data.db.AliasDatabase
-import com.example.alias.data.db.DeckDao
-import com.example.alias.data.db.WordDao
-import com.example.alias.data.db.TurnHistoryDao
 import com.example.alias.data.TurnHistoryRepository
 import com.example.alias.data.TurnHistoryRepositoryImpl
+import com.example.alias.data.db.AliasDatabase
+import com.example.alias.data.db.DeckDao
+import com.example.alias.data.db.TurnHistoryDao
+import com.example.alias.data.db.WordDao
 import com.example.alias.data.download.PackDownloader
 import com.example.alias.data.settings.SettingsRepository
 import com.example.alias.data.settings.SettingsRepositoryImpl
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
-import dagger.hilt.components.SingletonComponent
 import dagger.hilt.android.qualifiers.ApplicationContext
+import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
 @Module

@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -14,10 +15,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.LibraryBooks
 import androidx.compose.material.icons.filled.Check
@@ -54,10 +55,8 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import com.example.alias.R
 import com.example.alias.data.db.DeckEntity
 import com.example.alias.data.db.TurnHistoryEntity
@@ -251,7 +250,11 @@ private fun HomeHeroSection(
     val heroSubtitle = when (gameState) {
         null, GameState.Idle -> stringResource(R.string.home_hero_idle_subtitle, settings.teams.size)
         is GameState.TurnPending -> stringResource(R.string.home_hero_pending_subtitle, gameState.team)
-        is GameState.TurnActive -> stringResource(R.string.home_hero_active_subtitle, gameState.team, gameState.timeRemaining)
+        is GameState.TurnActive -> stringResource(
+            R.string.home_hero_active_subtitle,
+            gameState.team,
+            gameState.timeRemaining
+        )
         is GameState.TurnFinished -> if (gameState.matchOver) {
             stringResource(R.string.home_match_point, gameState.team)
         } else {
@@ -320,7 +323,11 @@ private fun HomeHeroSection(
                     HomeLogo(size = 64.dp)
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(heroTitle, style = MaterialTheme.typography.headlineSmall, color = contentColor)
-                        Text(heroSubtitle, style = MaterialTheme.typography.bodyLarge, color = contentColor.copy(alpha = 0.9f))
+                        Text(
+                            heroSubtitle,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = contentColor.copy(alpha = 0.9f)
+                        )
                     }
                 }
                 HomeScoreboardSection(scoreboard = scoreboard, hasProgress = hasProgress, contentColor = contentColor)
@@ -407,7 +414,11 @@ private fun HomeScoreboardSection(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(entry.key, style = MaterialTheme.typography.bodyMedium, color = contentColor)
-                            Text(entry.value.toString(), style = MaterialTheme.typography.titleSmall, color = contentColor.copy(alpha = 0.9f))
+                            Text(
+                                entry.value.toString(),
+                                style = MaterialTheme.typography.titleSmall,
+                                color = contentColor.copy(alpha = 0.9f)
+                            )
                         }
                     }
                 }
@@ -462,7 +473,7 @@ private fun FavoriteDecksSection(
                 if (extra > 0) {
                     AssistChip(
                         onClick = onDecks,
-                        label = { Text("+${extra}") },
+                        label = { Text("+$extra") },
                         colors = AssistChipDefaults.assistChipColors(
                             containerColor = contentColor.copy(alpha = 0.08f),
                             labelColor = contentColor

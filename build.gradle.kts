@@ -12,23 +12,8 @@ plugins {
     alias(libs.plugins.spotless)
 }
 
-configure<SpotlessExtension> {
-    kotlinGradle {
-        ktlint()
-    }
-}
-
 subprojects {
     apply(plugin = "io.gitlab.arturbosch.detekt")
-    apply(plugin = "com.diffplug.spotless")
-
-    plugins.withId("com.diffplug.spotless") {
-        configure<SpotlessExtension> {
-            kotlin {
-                ktlint()
-            }
-        }
-    }
 
     // ✅ Attach detekt-formatting to every module that applied detekt
     dependencies {
@@ -45,6 +30,7 @@ subprojects {
 
         // ✅ Configure reports on the TASK, not the extension (fixes deprecation warning)
         tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
+            autoCorrect = true
             reports {
                 html.required.set(true)
                 xml.required.set(true)
@@ -57,6 +43,22 @@ subprojects {
             exclude("**/build/**", "**/generated/**")
         }
     }
+
+    plugins.withId("com.diffplug.spotless") {
+        configure<SpotlessExtension> {
+            kotlin {
+                target("src/**/*.kt")
+                targetExclude("**/build/**", "**/generated/**")
+                ktlint()
+            }
+
+            kotlinGradle {
+                target("*.gradle.kts", "src/**/*.gradle.kts")
+                targetExclude("**/build/**", "**/generated/**")
+                ktlint()
+            }
+        }
+    }
 }
 
 allprojects {
@@ -64,6 +66,8 @@ allprojects {
         configure<io.gitlab.arturbosch.detekt.extensions.DetektExtension> {
             config.setFrom(files("$rootDir/detekt.yml"))
             buildUponDefaultConfig = true
+            autoCorrect = true
+            parallel = true
         }
     }
 }
@@ -73,11 +77,20 @@ detekt {
     allRules = false
     autoCorrect = true
     parallel = true
+}
 
+tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
     reports {
         html.required.set(true)
         xml.required.set(true)
         sarif.required.set(true)
         txt.required.set(false)
+    }
+}
+
+spotless {
+    kotlinGradle {
+        target("*.gradle.kts", "gradle/**/*.gradle.kts")
+        ktlint()
     }
 }

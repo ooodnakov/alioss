@@ -2,12 +2,12 @@ package com.example.alias.data
 
 import com.example.alias.data.db.DeckDao
 import com.example.alias.data.db.DeckEntity
-import com.example.alias.data.db.WordClassEntity
-import com.example.alias.data.db.WordClassCount
-import com.example.alias.data.db.WordDao
-import com.example.alias.data.db.WordBrief
-import com.example.alias.data.db.WordEntity
 import com.example.alias.data.db.DifficultyBucket
+import com.example.alias.data.db.WordBrief
+import com.example.alias.data.db.WordClassCount
+import com.example.alias.data.db.WordClassEntity
+import com.example.alias.data.db.WordDao
+import com.example.alias.data.db.WordEntity
 import com.example.alias.data.pack.ParsedPack
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -327,5 +327,4 @@ class DeckRepositoryTest {
                 .map { it.text }
         }
     }
-
 }

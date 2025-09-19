@@ -29,7 +29,7 @@ style:
     active: false
   MaxLineLength:
     active: true
-    maxLineLength: 720
+    maxLineLength: 120
     excludePackageStatements: true
     excludeImportStatements: true
     excludes: ['**/test/**', '**/androidTest/**']

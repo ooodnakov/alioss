@@ -38,7 +38,9 @@ private class FakeSettingsRepo(origins: Set<String>) : SettingsRepository {
     override suspend fun setWordClassesFilter(classes: Set<String>) = Unit
     override suspend fun setTeams(teams: List<String>) = Unit
     override suspend fun updateVerticalSwipes(value: Boolean) = Unit
-    override suspend fun setTrustedSources(origins: Set<String>) { flow.value = flow.value.copy(trustedSources = origins) }
+    override suspend fun setTrustedSources(
+        origins: Set<String>
+    ) { flow.value = flow.value.copy(trustedSources = origins) }
     override suspend fun readBundledDeckHashes(): Set<String> = emptySet()
     override suspend fun writeBundledDeckHashes(entries: Set<String>) = Unit
     override suspend fun updateSeenTutorial(value: Boolean) = Unit

@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -51,21 +50,17 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.saveable.Saver
-import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -75,7 +70,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -83,7 +77,6 @@ import androidx.compose.ui.unit.dp
 import com.example.alias.MainViewModel
 import com.example.alias.R
 import com.example.alias.data.db.DeckEntity
-import com.example.alias.data.settings.Settings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.Locale
@@ -109,8 +102,7 @@ fun DecksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
 
     var minDifficulty by rememberSaveable(settings) { mutableStateOf(settings.minDifficulty) }
     var maxDifficulty by rememberSaveable(settings) { mutableStateOf(settings.maxDifficulty) }
-    
-    val difficultyRange = normalizeDifficultyRange(minDifficulty, maxDifficulty)
+
     var selectedCategories by rememberSaveable(settings) { mutableStateOf(settings.selectedCategories) }
     var selectedWordClasses by rememberSaveable(settings) { mutableStateOf(settings.selectedWordClasses) }
 
@@ -381,12 +373,24 @@ private fun DeckCard(
                     overflow = TextOverflow.Ellipsis
                 )
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    AssistChip(onClick = {}, enabled = false, label = { Text(deck.language.uppercase(Locale.getDefault())) })
+                    AssistChip(
+                        onClick = {},
+                        enabled = false,
+                        label = { Text(deck.language.uppercase(Locale.getDefault())) }
+                    )
                     if (deck.isOfficial) {
-                        AssistChip(onClick = {}, enabled = false, label = { Text(stringResource(R.string.deck_official_label)) })
+                        AssistChip(
+                            onClick = {},
+                            enabled = false,
+                            label = { Text(stringResource(R.string.deck_official_label)) }
+                        )
                     }
                     if (deck.isNSFW) {
-                        AssistChip(onClick = {}, enabled = false, label = { Text(stringResource(R.string.deck_nsfw_label)) })
+                        AssistChip(
+                            onClick = {},
+                            enabled = false,
+                            label = { Text(stringResource(R.string.deck_nsfw_label)) }
+                        )
                     }
                 }
                 Row(
@@ -395,7 +399,13 @@ private fun DeckCard(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = if (enabled) stringResource(R.string.deck_card_enabled) else stringResource(R.string.deck_card_disabled),
+                        text = if (enabled) {
+                            stringResource(
+                                R.string.deck_card_enabled
+                            )
+                        } else {
+                            stringResource(R.string.deck_card_disabled)
+                        },
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Switch(checked = enabled, onCheckedChange = onToggle)

@@ -79,7 +79,13 @@ fun WordCard(
     var hapticPlayed by remember { mutableStateOf(false) }
     val density = LocalDensity.current
     val commitPx = with(density) { COMMIT_DISTANCE.toPx() }
-    val instructions = if (verticalMode) stringResource(R.string.tutorial_instructions_vertical) else stringResource(R.string.tutorial_instructions)
+    val instructions = if (verticalMode) {
+        stringResource(
+            R.string.tutorial_instructions_vertical
+        )
+    } else {
+        stringResource(R.string.tutorial_instructions)
+    }
 
     LaunchedEffect(word) {
         animX.snapTo(0f)
@@ -119,7 +125,7 @@ fun WordCard(
                 if (!enabled) return@pointerInput
                 detectDragGestures(
                     onDragStart = { hapticPlayed = false },
-                    onDrag = { change, drag ->
+                    onDrag = { _, drag ->
                         if (verticalMode) {
                             dragY += drag.y
                         } else {

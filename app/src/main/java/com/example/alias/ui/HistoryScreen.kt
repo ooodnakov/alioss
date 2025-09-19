@@ -42,9 +42,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -127,7 +127,10 @@ fun HistoryScreen(history: List<TurnHistoryEntity>) {
                     .weight(1f),
                 contentAlignment = Alignment.Center
             ) {
-                Text(stringResource(R.string.history_no_entries_for_filters), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    stringResource(R.string.history_no_entries_for_filters),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         } else {
             LazyColumn(
@@ -156,8 +159,15 @@ private fun HistoryFilters(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(stringResource(R.string.history_filter_team), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                stringResource(R.string.history_filter_team),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold
+            )
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 FilterChip(
                     selected = selectedTeam == null,
                     onClick = { onTeamSelected(null) },
@@ -174,8 +184,15 @@ private fun HistoryFilters(
             }
         }
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(stringResource(R.string.history_filter_difficulty), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                stringResource(R.string.history_filter_difficulty),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold
+            )
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 FilterChip(
                     selected = selectedDifficulty == null,
                     onClick = { onDifficultySelected(null) },
@@ -204,8 +221,15 @@ private fun HistoryFilters(
             }
         }
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(stringResource(R.string.history_filter_result), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                stringResource(R.string.history_filter_result),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold
+            )
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 ResultFilter.values().forEach { filter ->
                     FilterChip(
                         selected = selectedResult == filter,
@@ -334,7 +358,11 @@ private fun HistoryEntryCard(entry: TurnHistoryEntity) {
         )
     }
     val relativeTime = remember(entry.timestamp) {
-        DateUtils.getRelativeTimeSpanString(entry.timestamp, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS).toString()
+        DateUtils.getRelativeTimeSpanString(
+            entry.timestamp,
+            System.currentTimeMillis(),
+            DateUtils.MINUTE_IN_MILLIS
+        ).toString()
     }
     val chipColors = AssistChipDefaults.assistChipColors(
         disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -366,13 +394,25 @@ private fun HistoryEntryCard(entry: TurnHistoryEntity) {
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(entry.word, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                Text(relativeTime, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    relativeTime,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     AssistChip(onClick = {}, enabled = false, colors = chipColors, label = { Text(entry.team) })
                     val difficultyLabel = entry.difficulty?.let { stringResource(R.string.word_difficulty_value, it) }
                         ?: stringResource(R.string.history_filter_unknown_difficulty)
                     AssistChip(onClick = {}, enabled = false, colors = chipColors, label = { Text(difficultyLabel) })
-                    AssistChip(onClick = {}, enabled = false, colors = chipColors, label = { Text(stringResource(visuals.labelRes)) })
+                    AssistChip(
+                        onClick = {},
+                        enabled = false,
+                        colors = chipColors,
+                        label = { Text(stringResource(visuals.labelRes)) }
+                    )
                 }
             }
         }

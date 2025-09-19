@@ -120,7 +120,14 @@ object PackValidator {
     }
 
     private val PNG_SIGNATURE = byteArrayOf(
-        137.toByte(), 80, 78, 71, 13, 10, 26, 10
+        137.toByte(),
+        80,
+        78,
+        71,
+        13,
+        10,
+        26,
+        10
     )
 
     private fun hasPngSignature(data: ByteArray): Boolean {

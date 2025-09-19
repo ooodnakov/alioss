@@ -28,7 +28,7 @@ fun AppScaffold(
                 }
             }
         },
-    ) { innerPadding ->
-        Box(Modifier.padding(innerPadding)) { content() }
+    ) { scaffoldPadding ->
+        Box(Modifier.padding(scaffoldPadding)) { content() }
     }
 }

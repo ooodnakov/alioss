@@ -20,21 +20,21 @@ fun canonicalizeLocalePreference(raw: String): String {
 fun applyLocalePreference(tag: String) {
     val normalized = canonicalizeLocalePreference(tag)
     val locales =
-            if (normalized == "system") {
-                LocaleListCompat.getEmptyLocaleList()
-            } else {
-                LocaleListCompat.forLanguageTags(normalized)
-            }
+        if (normalized == "system") {
+            LocaleListCompat.getEmptyLocaleList()
+        } else {
+            LocaleListCompat.forLanguageTags(normalized)
+        }
     val current = AppCompatDelegate.getApplicationLocales()
     if (current != locales) {
         AppCompatDelegate.setApplicationLocales(locales)
     }
     val effectiveList =
-            if (locales.isEmpty) {
-                LocaleListCompat.getAdjustedDefault()
-            } else {
-                locales
-            }
+        if (locales.isEmpty) {
+            LocaleListCompat.getAdjustedDefault()
+        } else {
+            locales
+        }
     effectiveList.firstOrNull()?.let(Locale::setDefault)
 }
 
@@ -44,11 +44,11 @@ fun resolveInitialLocalePreference(stored: String): String {
     val defaultTag = canonicalizeLocalePreference(defaultLocales.toLanguageTags())
     val canonicalAppTag = canonicalizeLocalePreference(appLocales.toLanguageTags())
     val appTag =
-            when {
-                appLocales.isEmpty -> "system"
-                canonicalAppTag == defaultTag -> "system"
-                else -> canonicalAppTag
-            }
+        when {
+            appLocales.isEmpty -> "system"
+            canonicalAppTag == defaultTag -> "system"
+            else -> canonicalAppTag
+        }
     return if (appTag != "system") appTag else stored
 }
 

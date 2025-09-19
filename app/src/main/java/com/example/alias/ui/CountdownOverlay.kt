@@ -81,13 +81,15 @@ fun CountdownOverlay(
             }
             // Swallow taps so the game underneath doesn't get accidental clicks.
             .then(
-                if (consumeTouches)
+                if (consumeTouches) {
                     Modifier.clickable(
                         interactionSource = interaction,
                         indication = null,
                         onClick = {}
                     )
-                else Modifier
+                } else {
+                    Modifier
+                }
             )
             // Screen reader announces each tick.
             .semantics {
@@ -100,17 +102,21 @@ fun CountdownOverlay(
             targetState = value,
             transitionSpec = {
                 // Pop in with bounce, then scale/fade out.
-                (scaleIn(
-                    initialScale = 0.6f,
-                    animationSpec = spring(
-                        stiffness = Spring.StiffnessLow,
-                        dampingRatio = Spring.DampingRatioMediumBouncy
-                    )
-                ) + fadeIn()) togetherWith
-                (scaleOut(
-                    targetScale = 1.1f,
-                    animationSpec = tween(200, easing = LinearOutSlowInEasing)
-                ) + fadeOut(tween(150)))
+                (
+                    scaleIn(
+                        initialScale = 0.6f,
+                        animationSpec = spring(
+                            stiffness = Spring.StiffnessLow,
+                            dampingRatio = Spring.DampingRatioMediumBouncy
+                        )
+                    ) + fadeIn()
+                    ) togetherWith
+                    (
+                        scaleOut(
+                            targetScale = 1.1f,
+                            animationSpec = tween(200, easing = LinearOutSlowInEasing)
+                        ) + fadeOut(tween(150))
+                        )
             },
             label = "countdown"
         ) { number ->

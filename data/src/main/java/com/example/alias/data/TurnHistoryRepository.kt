@@ -18,4 +18,3 @@ class TurnHistoryRepositoryImpl(
 
     override fun getRecent(limit: Int): Flow<List<TurnHistoryEntity>> = dao.getRecent(limit)
 }
-

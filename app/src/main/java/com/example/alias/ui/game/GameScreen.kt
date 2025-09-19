@@ -34,11 +34,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalConfiguration
@@ -54,11 +53,11 @@ import com.example.alias.R
 import com.example.alias.data.settings.Settings
 import com.example.alias.domain.GameEngine
 import com.example.alias.domain.GameState
-import com.example.alias.ui.common.Scoreboard
 import com.example.alias.ui.CountdownOverlay
 import com.example.alias.ui.TutorialOverlay
 import com.example.alias.ui.WordCard
 import com.example.alias.ui.WordCardAction
+import com.example.alias.ui.common.Scoreboard
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -91,8 +90,8 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
     val state by engine.state.collectAsState()
     val scope = rememberCoroutineScope()
     val showTutorialOnFirstTurn by vm.showTutorialOnFirstTurn.collectAsState()
-    val seenTutorial by settings.seenTutorial
-    
+    val seenTutorial = settings.seenTutorial
+
     LaunchedEffect(state) {
         if (showTutorialOnFirstTurn && state is GameState.TurnActive && !seenTutorial) {
             // First turn started, tutorial will show below
@@ -101,7 +100,7 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
             vm.dismissTutorialOnFirstTurn()
         }
     }
-    
+
     if (showTutorialOnFirstTurn && state is GameState.TurnActive && !seenTutorial) {
         TutorialOverlay(
             verticalMode = settings.verticalSwipes,
@@ -253,13 +252,29 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                         onAction = {
                             when (it) {
                                 WordCardAction.Correct -> {
-                                    if (settings.soundEnabled) tone.startTone(android.media.ToneGenerator.TONE_PROP_ACK, 100)
-                                    scope.launch { engine.correct(); isProcessing = false }
+                                    if (settings.soundEnabled) {
+                                        tone.startTone(
+                                            android.media.ToneGenerator.TONE_PROP_ACK,
+                                            100
+                                        )
+                                    }
+                                    scope.launch {
+                                        engine.correct()
+                                        isProcessing = false
+                                    }
                                 }
                                 WordCardAction.Skip -> {
                                     if (s.skipsRemaining > 0) {
-                                        if (settings.soundEnabled) tone.startTone(android.media.ToneGenerator.TONE_PROP_NACK, 100)
-                                        scope.launch { engine.skip(); isProcessing = false }
+                                        if (settings.soundEnabled) {
+                                            tone.startTone(
+                                                android.media.ToneGenerator.TONE_PROP_NACK,
+                                                100
+                                            )
+                                        }
+                                        scope.launch {
+                                            engine.skip()
+                                            isProcessing = false
+                                        }
                                     } else { isProcessing = false }
                                 }
                             }
@@ -285,18 +300,42 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                 )
                 Text(stringResource(R.string.team_label, s.team), style = MaterialTheme.typography.titleMedium)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    AssistChip(onClick = {}, enabled = false, label = { Text(stringResource(R.string.remaining_label, s.remaining)) })
-                    AssistChip(onClick = {}, enabled = false, label = { Text(pluralStringResource(R.plurals.score_label, s.score, s.score)) })
-                    AssistChip(onClick = {}, enabled = false, label = { Text(pluralStringResource(R.plurals.skips_label, s.skipsRemaining, s.skipsRemaining)) })
+                    AssistChip(
+                        onClick = {},
+                        enabled = false,
+                        label = { Text(stringResource(R.string.remaining_label, s.remaining)) }
+                    )
+                    AssistChip(
+                        onClick = {},
+                        enabled = false,
+                        label = { Text(pluralStringResource(R.plurals.score_label, s.score, s.score)) }
+                    )
+                    AssistChip(
+                        onClick = {},
+                        enabled = false,
+                        label = {
+                            Text(
+                                pluralStringResource(R.plurals.skips_label, s.skipsRemaining, s.skipsRemaining)
+                            )
+                        }
+                    )
                 }
                 Text(stringResource(R.string.summary_label, s.remaining, s.score, s.skipsRemaining))
             }
 
             if (isLandscape) {
                 Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    LinearProgressIndicator(progress = { progress }, color = barColor, modifier = Modifier.fillMaxWidth())
+                    LinearProgressIndicator(
+                        progress = { progress },
+                        color = barColor,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                     Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Column(
+                            Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
                             Controls()
                             val onCorrect = {
                                 if (settings.hapticsEnabled) {
@@ -321,12 +360,41 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                                 }
                             }
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                                Button(onClick = onCorrect, enabled = !isProcessing, modifier = Modifier.weight(1f).height(60.dp)) { Icon(Icons.Filled.Check, contentDescription = null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.correct)) }
-                                Button(onClick = onSkip, enabled = !isProcessing && s.skipsRemaining > 0, modifier = Modifier.weight(1f).height(60.dp)) { Icon(Icons.Filled.Close, contentDescription = null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.skip)) }
+                                Button(
+                                    onClick = onCorrect,
+                                    enabled = !isProcessing,
+                                    modifier = Modifier.weight(1f).height(60.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Filled.Check,
+                                        contentDescription = null
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(stringResource(R.string.correct))
+                                }
+                                Button(
+                                    onClick = onSkip,
+                                    enabled = !isProcessing && s.skipsRemaining > 0,
+                                    modifier = Modifier.weight(1f).height(60.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Filled.Close,
+                                        contentDescription = null
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(stringResource(R.string.skip))
+                                }
                             }
-                            Button(onClick = { vm.restartMatch() }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.restart_match)) }
+                            Button(
+                                onClick = { vm.restartMatch() },
+                                modifier = Modifier.fillMaxWidth()
+                            ) { Text(stringResource(R.string.restart_match)) }
                         }
-                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+                        Column(
+                            Modifier.weight(1f),
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
                             CardStack()
                         }
                     }
@@ -337,7 +405,11 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                     verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    LinearProgressIndicator(progress = { progress }, color = barColor, modifier = Modifier.fillMaxWidth())
+                    LinearProgressIndicator(
+                        progress = { progress },
+                        color = barColor,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                     Controls()
                     CardStack()
                     if (settings.oneHandedLayout) {
@@ -368,13 +440,26 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                                 onClick = onSkip,
                                 enabled = !isProcessing && s.skipsRemaining > 0,
                                 modifier = Modifier.weight(1f).height(60.dp)
-                            ) { Icon(Icons.Filled.Close, contentDescription = null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.skip)) }
+                            ) {
+                                Icon(
+                                    Icons.Filled.Close,
+                                    contentDescription = null
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Text(stringResource(R.string.skip))
+                            }
                             Button(
                                 onClick = onCorrect,
                                 enabled = !isProcessing,
                                 modifier = Modifier.weight(1f).height(60.dp)
-                            ) { Icon(Icons.Filled.Check, contentDescription = null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.correct)) }
-
+                            ) {
+                                Icon(
+                                    Icons.Filled.Check,
+                                    contentDescription = null
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Text(stringResource(R.string.correct))
+                            }
                         }
                     }
                     Button(onClick = {

@@ -48,20 +48,20 @@ class MainActivity : AppCompatActivity() {
                             return@collect
                         }
                         val duration =
-                                if (ev.actionLabel != null && ev.duration == SnackbarDuration.Short
-                                ) {
-                                    SnackbarDuration.Long
-                                } else {
-                                    ev.duration
-                                }
+                            if (ev.actionLabel != null && ev.duration == SnackbarDuration.Short
+                            ) {
+                                SnackbarDuration.Long
+                            } else {
+                                ev.duration
+                            }
                         val job = launch {
                             val result =
-                                    snack.showSnackbar(
-                                            message = ev.message,
-                                            actionLabel = ev.actionLabel,
-                                            withDismissAction = ev.actionLabel == null,
-                                            duration = duration
-                                    )
+                                snack.showSnackbar(
+                                    message = ev.message,
+                                    actionLabel = ev.actionLabel,
+                                    withDismissAction = ev.actionLabel == null,
+                                    duration = duration
+                                )
                             if (result == SnackbarResult.ActionPerformed) {
                                 ev.onAction?.invoke()
                             }
@@ -76,10 +76,10 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 AliasNavHost(
-                        navController = nav,
-                        snackbarHostState = snack,
-                        settings = settings,
-                        viewModel = vm
+                    navController = nav,
+                    snackbarHostState = snack,
+                    settings = settings,
+                    viewModel = vm
                 )
             }
         }

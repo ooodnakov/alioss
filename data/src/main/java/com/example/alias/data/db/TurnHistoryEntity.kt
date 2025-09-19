@@ -13,4 +13,3 @@ data class TurnHistoryEntity(
     val difficulty: Int?,
     val timestamp: Long,
 )
-

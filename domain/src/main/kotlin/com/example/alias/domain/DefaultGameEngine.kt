@@ -159,7 +159,9 @@ class DefaultGameEngine(
         val team = teams[currentTeam]
         val totalScore = scores.getOrDefault(team, 0) + turnScore
         currentWord = next
-        _state.update { GameState.TurnActive(team, next, remaining, totalScore, skipsRemaining, timeRemaining, config.roundSeconds) }
+        _state.update {
+            GameState.TurnActive(team, next, remaining, totalScore, skipsRemaining, timeRemaining, config.roundSeconds)
+        }
     }
 
     private suspend fun finishTurnLocked(byTimer: Boolean) {

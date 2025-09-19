@@ -3,15 +3,15 @@ package com.example.alias
 import android.app.Application
 import com.example.alias.data.settings.SettingsRepository
 import dagger.hilt.android.HiltAndroidApp
-import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
 @HiltAndroidApp
 class AliasApp : Application() {
@@ -49,4 +49,3 @@ class AliasApp : Application() {
         }
     }
 }
-

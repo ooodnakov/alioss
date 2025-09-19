@@ -9,12 +9,12 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.alias.data.DeckRepository
+import com.example.alias.data.TurnHistoryRepository
 import com.example.alias.data.db.DifficultyBucket
+import com.example.alias.data.db.TurnHistoryEntity
 import com.example.alias.data.db.WordClassCount
 import com.example.alias.data.db.WordDao
 import com.example.alias.data.download.PackDownloader
-import com.example.alias.data.TurnHistoryRepository
-import com.example.alias.data.db.TurnHistoryEntity
 import com.example.alias.data.pack.PackParser
 import com.example.alias.data.pack.ParsedPack
 import com.example.alias.data.settings.Settings
@@ -25,10 +25,11 @@ import com.example.alias.domain.MatchConfig
 import com.example.alias.domain.word.WordClassCatalog
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -41,12 +42,11 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.Locale
 import org.json.JSONObject
+import java.util.Locale
+import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
@@ -91,8 +91,6 @@ class MainViewModel @Inject constructor(
 
     fun recentHistory(limit: Int): Flow<List<TurnHistoryEntity>> =
         historyRepository.getRecent(limit)
-
-    
 
     // General UI events (e.g., snackbars)
     data class UiEvent(
@@ -343,7 +341,9 @@ class MainViewModel @Inject constructor(
                 val fallbackIds = allDecks.map { it.id }.toSet()
                 val resolvedEnabled = if (baseSettings.enabledDeckIds.isEmpty()) {
                     if (preferredIds.isNotEmpty()) preferredIds else fallbackIds
-                } else baseSettings.enabledDeckIds
+                } else {
+                    baseSettings.enabledDeckIds
+                }
                 Log.e(TAG, "Resolved enabled decks: ${resolvedEnabled.size} ids")
                 if (baseSettings.enabledDeckIds.isEmpty()) {
                     try {
@@ -397,7 +397,10 @@ class MainViewModel @Inject constructor(
                         val briefs = briefsDeferred.await()
                         val categories = categoriesDeferred.await().sorted()
                         val classes = classesDeferred.await()
-                        Log.e(TAG, "Metadata: ${briefs.size} briefs, ${categories.size} categories, ${classes.size} classes")
+                        Log.e(
+                            TAG,
+                            "Metadata: ${briefs.size} briefs, ${categories.size} categories, ${classes.size} classes"
+                        )
                         val map = briefs.associateBy({ it.text }) {
                             WordInfo(it.difficulty, it.category, parseClass(it.wordClass))
                         }
@@ -485,7 +488,14 @@ class MainViewModel @Inject constructor(
                 else -> input // bare host
             }
             if (normalized.isNullOrBlank()) {
-                _uiEvents.tryEmit(UiEvent(message = "Invalid host/origin", actionLabel = "Dismiss", duration = SnackbarDuration.Short, isError = true))
+                _uiEvents.tryEmit(
+                    UiEvent(
+                        message = "Invalid host/origin",
+                        actionLabel = "Dismiss",
+                        duration = SnackbarDuration.Short,
+                        isError = true
+                    )
+                )
                 return@launch
             }
             val cur = settingsRepository.settings.first().trustedSources.toMutableSet()
@@ -637,7 +647,9 @@ class MainViewModel @Inject constructor(
                         }
                     }
                 }
-                _uiEvents.tryEmit(UiEvent(message = "Imported deck", actionLabel = "OK", duration = SnackbarDuration.Short))
+                _uiEvents.tryEmit(
+                    UiEvent(message = "Imported deck", actionLabel = "OK", duration = SnackbarDuration.Short)
+                )
                 if (imageError != null) {
                     showCoverImageErrorSnackbar()
                 }
@@ -653,7 +665,6 @@ class MainViewModel @Inject constructor(
             }
         }
     }
-
 
     suspend fun updateSettings(
         roundSeconds: Int,
@@ -687,7 +698,13 @@ class MainViewModel @Inject constructor(
         // Language validation may fail; keep others applied regardless
         val langResult = runCatching { settingsRepository.updateLanguagePreference(language) }
         if (langResult.isFailure) {
-            _uiEvents.tryEmit(UiEvent(message = langResult.exceptionOrNull()?.message ?: "Invalid language", duration = SnackbarDuration.Short, isError = true))
+            _uiEvents.tryEmit(
+                UiEvent(
+                    message = langResult.exceptionOrNull()?.message ?: "Invalid language",
+                    duration = SnackbarDuration.Short,
+                    isError = true
+                )
+            )
         } else {
             val newLang = language.trim().lowercase()
             if (!newLang.equals(before.languagePreference, ignoreCase = true)) {
@@ -720,6 +737,8 @@ class MainViewModel @Inject constructor(
     val availableCategories: StateFlow<List<String>> = _availableCategories.asStateFlow()
     private val _availableWordClasses = MutableStateFlow<List<String>>(emptyList())
     val availableWordClasses: StateFlow<List<String>> = _availableWordClasses.asStateFlow()
+    private val _showTutorialOnFirstTurn = MutableStateFlow(true)
+    val showTutorialOnFirstTurn: StateFlow<Boolean> = _showTutorialOnFirstTurn.asStateFlow()
 
     private fun parseClass(raw: String?): String? {
         return raw
@@ -750,17 +769,21 @@ class MainViewModel @Inject constructor(
             val words = withContext(Dispatchers.IO) { loadWords(filters) }
             // Update word info cache for current filters
             viewModelScope.launch(Dispatchers.IO) {
-                val briefs = if (filters.deckIds.isEmpty()) emptyList() else wordDao.getWordBriefsForDecks(
-                    filters.deckIds,
-                    filters.language,
-                    filters.allowNSFW,
-                    filters.minDifficulty,
-                    filters.maxDifficulty,
-                    filters.categories,
-                    filters.categoryFilterEnabled,
-                    filters.wordClasses,
-                    filters.wordClassFilterEnabled
-                )
+                val briefs = if (filters.deckIds.isEmpty()) {
+                    emptyList()
+                } else {
+                    wordDao.getWordBriefsForDecks(
+                        filters.deckIds,
+                        filters.language,
+                        filters.allowNSFW,
+                        filters.minDifficulty,
+                        filters.maxDifficulty,
+                        filters.categories,
+                        filters.categoryFilterEnabled,
+                        filters.wordClasses,
+                        filters.wordClassFilterEnabled
+                    )
+                }
                 val map = briefs.associateBy({ it.text }) {
                     WordInfo(it.difficulty, it.category, parseClass(it.wordClass))
                 }
@@ -768,16 +791,28 @@ class MainViewModel @Inject constructor(
             }
             // Update available categories
             viewModelScope.launch(Dispatchers.IO) {
-                val list = if (filters.deckIds.isEmpty()) emptyList() else wordDao.getAvailableCategories(
-                    filters.deckIds, filters.language, filters.allowNSFW
-                ).sorted()
+                val list = if (filters.deckIds.isEmpty()) {
+                    emptyList()
+                } else {
+                    wordDao.getAvailableCategories(
+                        filters.deckIds,
+                        filters.language,
+                        filters.allowNSFW
+                    ).sorted()
+                }
                 _availableCategories.value = list
             }
             // Update available word classes
             viewModelScope.launch(Dispatchers.IO) {
-                val list = if (filters.deckIds.isEmpty()) emptyList() else wordDao.getAvailableWordClasses(
-                    filters.deckIds, filters.language, filters.allowNSFW
-                )
+                val list = if (filters.deckIds.isEmpty()) {
+                    emptyList()
+                } else {
+                    wordDao.getAvailableWordClasses(
+                        filters.deckIds,
+                        filters.language,
+                        filters.allowNSFW
+                    )
+                }
                 _availableWordClasses.value = canonicalizeWordClassFilters(list)
             }
             val e = DefaultGameEngine(words, viewModelScope)
