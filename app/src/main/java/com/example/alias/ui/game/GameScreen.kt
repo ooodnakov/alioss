@@ -148,6 +148,16 @@ fun GameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                                 fontWeight = FontWeight.Bold,
                                 textAlign = TextAlign.Center,
                             )
+                            Scoreboard(s.scores)
+                            Text(
+                                text = pluralStringResource(
+                                    R.plurals.turn_pending_status,
+                                    s.remainingToWin,
+                                    s.remainingToWin
+                                ),
+                                style = MaterialTheme.typography.bodyMedium,
+                                textAlign = TextAlign.Center,
+                            )
                             Spacer(Modifier.height(16.dp))
                             Button(
                                 onClick = {

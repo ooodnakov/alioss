@@ -56,6 +56,10 @@
     <string name="restart_match">Restart Match</string>
     <string name="start_new_match">Start a new match from Settings or Restart.</string>
     <string name="start_turn">Start</string>
+    <plurals name="turn_pending_status">
+        <item quantity="one">Only %d correct word to win!</item>
+        <item quantity="other">Only %d correct words to win!</item>
+    </plurals>
     <string name="scoreboard">Scoreboard</string>
     <string name="end_match">End Match</string>
     <string name="next_team">Next Team</string>

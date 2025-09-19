@@ -49,6 +49,28 @@ class DefaultGameEngineTest {
         }
 
     @Test
+    fun `pending state exposes scoreboard and remaining count`() =
+        runTest {
+            val engine = DefaultGameEngine(listOf("a"), this)
+            val cfg = config.copy(targetWords = 2, roundSeconds = 5)
+            engine.startMatch(cfg, teams = listOf("Team"), seed = 0L)
+
+            var pending = assertIs<GameState.TurnPending>(engine.state.value)
+            assertEquals(mapOf("Team" to 0), pending.scores)
+            assertEquals(2, pending.remainingToWin)
+
+            engine.startTurn()
+            engine.correct()
+            val finished = assertIs<GameState.TurnFinished>(engine.state.value)
+            assertEquals(1, finished.deltaScore)
+
+            engine.nextTurn()
+            pending = assertIs<GameState.TurnPending>(engine.state.value)
+            assertEquals(mapOf("Team" to 1), pending.scores)
+            assertEquals(1, pending.remainingToWin)
+        }
+
+    @Test
     fun `skip uses limit and applies penalty`() =
         runTest {
             val engine = DefaultGameEngine(listOf("a", "b", "c"), this)
