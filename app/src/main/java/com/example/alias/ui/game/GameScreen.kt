@@ -35,6 +35,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -70,6 +71,7 @@ import kotlinx.coroutines.launch
 private val LARGE_BUTTON_HEIGHT = 80.dp
 private const val CARD_ASPECT_RATIO = 1.8f
 private const val PRE_TURN_COUNTDOWN_SECONDS = 3
+private const val SOUND_DURATION_SHORT_MS = 150
 private val TIMER_SAFE_COLOR = Color(0xFF4CAF50)
 private val TIMER_WARNING_COLOR = Color(0xFFFFC107)
 private val TIMER_CRITICAL_COLOR = Color(0xFFF44336)
@@ -97,6 +99,32 @@ fun gameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
     val showTutorialOnFirstTurn by vm.showTutorialOnFirstTurn.collectAsState()
     val seenTutorial = settings.seenTutorial
     var cardBounds by remember { mutableStateOf<Rect?>(null) }
+    val soundEnabled by rememberUpdatedState(settings.soundEnabled)
+    val hapticsEnabled by rememberUpdatedState(settings.hapticsEnabled)
+    var previousState by remember { mutableStateOf<GameState?>(null) }
+
+    LaunchedEffect(state) {
+        val previous = previousState
+        when {
+            state is GameState.TurnActive && previous !is GameState.TurnActive -> {
+                if (soundEnabled) {
+                    tone.startTone(
+                        android.media.ToneGenerator.TONE_PROP_ACK,
+                        SOUND_DURATION_SHORT_MS,
+                    )
+                }
+            }
+            state is GameState.TurnFinished && previous !is GameState.TurnFinished -> {
+                if (soundEnabled) {
+                    tone.startTone(
+                        android.media.ToneGenerator.TONE_PROP_BEEP2,
+                        SOUND_DURATION_SHORT_MS,
+                    )
+                }
+            }
+        }
+        previousState = state
+    }
 
     LaunchedEffect(state) {
         if (showTutorialOnFirstTurn && state is GameState.TurnActive && !seenTutorial) {
@@ -179,7 +207,17 @@ fun gameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                                         vibrator?.vibrate(effect)
                                     }
                                     if (!countdownState.isRunning) {
-                                        countdownState.start(onFinished = vm::startTurn)
+                                        countdownState.start(
+                                            onTick = {
+                                                if (soundEnabled) {
+                                                    tone.startTone(
+                                                        android.media.ToneGenerator.TONE_PROP_BEEP,
+                                                        SOUND_DURATION_SHORT_MS,
+                                                    )
+                                                }
+                                            },
+                                            onFinished = vm::startTurn,
+                                        )
                                     }
                                 },
                                 enabled = !countdownState.isRunning,
@@ -218,9 +256,19 @@ fun gameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
             }
             val barColor by animateColorAsState(targetColor, label = "timerColor")
             LaunchedEffect(s.timeRemaining) {
-                if (settings.hapticsEnabled && (s.timeRemaining == 10 || s.timeRemaining == 3)) {
-                    val effect = VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE)
-                    vibrator?.vibrate(effect)
+                val remaining = s.timeRemaining
+                if (remaining in 1..5) {
+                    if (soundEnabled) {
+                        tone.startTone(
+                            android.media.ToneGenerator.TONE_PROP_PROMPT,
+                            SOUND_DURATION_SHORT_MS,
+                        )
+                    }
+                    if (hapticsEnabled) {
+                        val duration = if (remaining == 1) 200 else 120
+                        val effect = VibrationEffect.createOneShot(duration.toLong(), VibrationEffect.DEFAULT_AMPLITUDE)
+                        vibrator?.vibrate(effect)
+                    }
                 }
             }
             var isProcessing by remember { mutableStateOf(false) }
@@ -549,6 +597,7 @@ private class CountdownState(
 
     fun start(
         durationSeconds: Int = PRE_TURN_COUNTDOWN_SECONDS,
+        onTick: (remaining: Int) -> Unit = {},
         onFinished: () -> Unit,
     ) {
         if (isRunning) return
@@ -557,6 +606,7 @@ private class CountdownState(
             try {
                 for (value in durationSeconds downTo 1) {
                     this@CountdownState.value = value
+                    onTick(value)
                     delay(1000)
                 }
                 onFinished()
