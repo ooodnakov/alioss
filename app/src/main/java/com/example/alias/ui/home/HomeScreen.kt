@@ -64,19 +64,19 @@ import com.example.alias.data.db.TurnHistoryEntity
 import com.example.alias.data.settings.Settings
 import com.example.alias.domain.GameState
 
-data class HomeViewState(
+private data class HomeHeroState(
     val gameState: GameState?,
     val settings: Settings,
     val decks: List<DeckEntity>,
     val recentHistory: List<TurnHistoryEntity>,
 )
 
-data class HomeActions(
+private data class HomeHeroActions(
     val onResumeMatch: () -> Unit,
     val onStartNewMatch: () -> Unit,
-    val onDecks: () -> Unit,
-    val onSettings: () -> Unit,
     val onHistory: () -> Unit,
+    val onSettings: () -> Unit,
+    val onDecks: () -> Unit,
 )
 
 @Composable
@@ -84,6 +84,19 @@ fun homeScreen(
     state: HomeViewState,
     actions: HomeActions,
 ) {
+    val heroState = HomeHeroState(
+        gameState = gameState,
+        settings = settings,
+        decks = decks,
+        recentHistory = recentHistory,
+    )
+    val heroActions = HomeHeroActions(
+        onResumeMatch = onResumeMatch,
+        onStartNewMatch = onStartNewMatch,
+        onHistory = onHistory,
+        onDecks = onDecks,
+    )
+    val colors = MaterialTheme.colorScheme
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
@@ -101,9 +114,14 @@ fun homeScreen(
                 modifier = Modifier.weight(1.4f),
                 verticalArrangement = Arrangement.spacedBy(20.dp),
             ) {
-                homeHeroSection(
-                    state = state,
-                    actions = actions,
+                homeHeroSection(state = heroState, actions = heroActions)
+                homeActionCard(
+                    icon = Icons.Filled.PlayArrow,
+                    title = stringResource(R.string.quick_play),
+                    subtitle = stringResource(R.string.quick_play_subtitle),
+                    onClick = onStartNewMatch,
+                    containerColor = colors.primaryContainer,
+                    contentColor = colors.onPrimaryContainer,
                 )
                 quickPlayActionCard(onStartNewMatch = actions.onStartNewMatch)
             }
@@ -123,9 +141,38 @@ fun homeScreen(
             verticalArrangement = Arrangement.spacedBy(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            homeHeroSection(
-                state = state,
-                actions = actions,
+            homeHeroSection(state = heroState, actions = heroActions)
+            homeActionCard(
+                icon = Icons.Filled.PlayArrow,
+                title = stringResource(R.string.quick_play),
+                subtitle = stringResource(R.string.quick_play_subtitle),
+                onClick = onStartNewMatch,
+                containerColor = colors.primaryContainer,
+                contentColor = colors.onPrimaryContainer,
+            )
+            homeActionCard(
+                icon = Icons.AutoMirrored.Filled.LibraryBooks,
+                title = stringResource(R.string.title_decks),
+                subtitle = stringResource(R.string.decks_subtitle),
+                onClick = onDecks,
+                containerColor = colors.secondaryContainer,
+                contentColor = colors.onSecondaryContainer,
+            )
+            homeActionCard(
+                icon = Icons.Filled.Settings,
+                title = stringResource(R.string.title_settings),
+                subtitle = stringResource(R.string.settings_subtitle),
+                onClick = onSettings,
+                containerColor = colors.tertiaryContainer,
+                contentColor = colors.onTertiaryContainer,
+            )
+            homeActionCard(
+                icon = Icons.Filled.History,
+                title = stringResource(R.string.title_history),
+                subtitle = stringResource(R.string.history_subtitle),
+                onClick = onHistory,
+                containerColor = colors.tertiaryContainer,
+                contentColor = colors.onTertiaryContainer,
             )
             quickPlayActionCard(onStartNewMatch = actions.onStartNewMatch)
             navigationActionCards(actions = actions)
@@ -177,9 +224,10 @@ private fun ColumnScope.navigationActionCards(actions: HomeActions) {
 
 @Composable
 private fun homeHeroSection(
-    state: HomeViewState,
-    actions: HomeActions,
+    state: HomeHeroState,
+    actions: HomeHeroActions,
 ) {
+    val (gameState, settings, decks, recentHistory) = state
     val colors = MaterialTheme.colorScheme
     val contentColor = colors.onPrimaryContainer
     val gradient = remember(colors) {
