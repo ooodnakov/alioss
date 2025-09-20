@@ -6,6 +6,8 @@ import com.example.alias.data.settings.Settings
 import com.example.alias.domain.GameEngine
 import com.example.alias.domain.GameState
 import com.example.alias.domain.MatchConfig
+import com.example.alias.domain.MatchGoal
+import com.example.alias.domain.MatchGoalType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import java.security.SecureRandom
@@ -24,8 +26,14 @@ class GameController
         }
 
         suspend fun startMatch(engine: GameEngine, settings: Settings) {
+            val goal =
+                if (settings.scoreTargetEnabled) {
+                    MatchGoal(MatchGoalType.TARGET_SCORE, settings.targetScore)
+                } else {
+                    MatchGoal(MatchGoalType.TARGET_WORDS, settings.targetWords)
+                }
             val config = MatchConfig(
-                targetWords = settings.targetWords,
+                goal = goal,
                 maxSkips = settings.maxSkips,
                 penaltyPerSkip = if (settings.punishSkips) settings.penaltyPerSkip else 0,
                 roundSeconds = settings.roundSeconds,

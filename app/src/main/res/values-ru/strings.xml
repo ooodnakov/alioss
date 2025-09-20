@@ -37,7 +37,8 @@
     <string name="view_history">Открыть историю</string>
     <string name="idle">Ожидание</string>
     <string name="team_label">Команда: %s</string>
-    <string name="remaining_label">Осталось %d</string>
+    <string name="remaining_words_label">Слов до цели: %d</string>
+    <string name="remaining_points_label">Очков до цели: %d</string>
     <string name="countdown_announcement">Обратный отсчёт: %1$d</string>
     <plurals name="score_label">
         <item quantity="one">%d очко</item>
@@ -57,18 +58,25 @@
         <item quantity="many">%d секунд</item>
         <item quantity="other">%d секунд</item>
     </plurals>
-    <string name="summary_label">Осталось: %1$d • Очки: %2$d • Пропуски: %3$d</string>
+    <string name="summary_words_label">Слов до цели: %1$d • Очки: %2$d • Пропуски: %3$d</string>
+    <string name="summary_points_label">Очков до цели: %1$d • Очки: %2$d • Пропуски: %3$d</string>
     <string name="correct">Правильно</string>
     <string name="skip">Пропустить</string>
     <string name="restart_match">Перезапустить матч</string>
     <string name="start_new_match">Новый матч: Настройки или Перезапуск.</string>
     <string name="match_finished_message">🎉 Матч завершён 🎉</string>
     <string name="start_turn">Начать</string>
-    <plurals name="turn_pending_status">
+    <plurals name="turn_pending_status_words">
         <item quantity="one">До победы осталось %d слово!</item>
         <item quantity="few">До победы осталось %d слова!</item>
         <item quantity="many">До победы осталось %d слов!</item>
         <item quantity="other">До победы осталось %d слов!</item>
+    </plurals>
+    <plurals name="turn_pending_status_points">
+        <item quantity="one">До победы осталось %d очко!</item>
+        <item quantity="few">До победы осталось %d очка!</item>
+        <item quantity="many">До победы осталось %d очков!</item>
+        <item quantity="other">До победы осталось %d очка!</item>
     </plurals>
     <string name="scoreboard">Счёт</string>
     <string name="scoreboard_entry">%1$s: %2$d%3$s</string>
@@ -245,6 +253,8 @@
     <string name="round_and_goals">Раунд и цели</string>
     <string name="round_seconds_label">Время раунда</string>
     <string name="target_words_label">Цель по словам</string>
+    <string name="score_target_toggle_label">Использовать цель по очкам</string>
+    <string name="target_score_label">Цель по очкам</string>
     <string name="skips_section">Пропуски</string>
     <string name="max_skips_label">Лимит пропусков</string>
     <string name="penalty_per_skip_label">Штраф за пропуск</string>

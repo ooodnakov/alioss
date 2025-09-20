@@ -70,6 +70,8 @@ class SettingsController
             val before = settingsRepository.settings.first()
             settingsRepository.updateRoundSeconds(request.roundSeconds)
             settingsRepository.updateTargetWords(request.targetWords)
+            settingsRepository.updateTargetScore(request.targetScore)
+            settingsRepository.updateScoreTargetEnabled(request.scoreTargetEnabled)
             settingsRepository.updateSkipPolicy(request.maxSkips, request.penaltyPerSkip)
             settingsRepository.updatePunishSkips(request.punishSkips)
             settingsRepository.updateAllowNSFW(request.allowNSFW)

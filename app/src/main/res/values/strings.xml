@@ -37,7 +37,8 @@
     <string name="view_history">View history</string>
     <string name="idle">Idle</string>
     <string name="team_label">Team: %s</string>
-    <string name="remaining_label">Remaining %d</string>
+    <string name="remaining_words_label">Words to goal: %d</string>
+    <string name="remaining_points_label">Points to goal: %d</string>
     <string name="countdown_announcement">Countdown: %1$d</string>
     <plurals name="score_label">
         <item quantity="one">%d point</item>
@@ -51,16 +52,21 @@
         <item quantity="one">%d second</item>
         <item quantity="other">%d seconds</item>
     </plurals>
-    <string name="summary_label">Remaining: %1$d • Score: %2$d • Skips: %3$d</string>
+    <string name="summary_words_label">Words to goal: %1$d • Score: %2$d • Skips: %3$d</string>
+    <string name="summary_points_label">Points to goal: %1$d • Score: %2$d • Skips: %3$d</string>
     <string name="correct">Correct</string>
     <string name="skip">Skip</string>
     <string name="restart_match">Restart Match</string>
     <string name="start_new_match">Start a new match from Settings or Restart.</string>
     <string name="match_finished_message">🎉 Match over 🎉</string>
     <string name="start_turn">Start</string>
-    <plurals name="turn_pending_status">
+    <plurals name="turn_pending_status_words">
         <item quantity="one">Only %d correct word to win!</item>
         <item quantity="other">Only %d correct words to win!</item>
+    </plurals>
+    <plurals name="turn_pending_status_points">
+        <item quantity="one">Only %d point to win!</item>
+        <item quantity="other">Only %d points to win!</item>
     </plurals>
     <string name="scoreboard">Scoreboard</string>
     <string name="scoreboard_entry">%1$s: %2$d%3$s</string>
@@ -241,6 +247,8 @@
     <string name="round_and_goals">Round &amp; Goals</string>
     <string name="round_seconds_label">Round seconds</string>
     <string name="target_words_label">Target words</string>
+    <string name="score_target_toggle_label">Use score goal</string>
+    <string name="target_score_label">Target score</string>
     <string name="skips_section">Skips</string>
     <string name="max_skips_label">Max skips</string>
     <string name="penalty_per_skip_label">Penalty/skip</string>
