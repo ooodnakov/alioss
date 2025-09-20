@@ -984,12 +984,13 @@ private fun timelineEventBlock(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .border(BorderStroke(1.dp, borderColor), blockShape),
+            .border(BorderStroke(1.dp, borderColor), blockShape)
             .semantics { stateDescription = stateLabel }
             .clickable(role = Role.Button) {
                 val target = !event.outcome.correct
                 onToggle(target)
             },
+        shape = blockShape,
         color = containerColor,
         contentColor = contentColor,
         tonalElevation = 0.dp,
