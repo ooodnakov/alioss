@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
@@ -64,14 +65,14 @@ import com.example.alias.data.db.TurnHistoryEntity
 import com.example.alias.data.settings.Settings
 import com.example.alias.domain.GameState
 
-private data class HomeHeroState(
+data class HomeViewState(
     val gameState: GameState?,
     val settings: Settings,
     val decks: List<DeckEntity>,
     val recentHistory: List<TurnHistoryEntity>,
 )
 
-private data class HomeHeroActions(
+data class HomeActions(
     val onResumeMatch: () -> Unit,
     val onStartNewMatch: () -> Unit,
     val onHistory: () -> Unit,
@@ -84,18 +85,6 @@ fun homeScreen(
     state: HomeViewState,
     actions: HomeActions,
 ) {
-    val heroState = HomeHeroState(
-        gameState = gameState,
-        settings = settings,
-        decks = decks,
-        recentHistory = recentHistory,
-    )
-    val heroActions = HomeHeroActions(
-        onResumeMatch = onResumeMatch,
-        onStartNewMatch = onStartNewMatch,
-        onHistory = onHistory,
-        onDecks = onDecks,
-    )
     val colors = MaterialTheme.colorScheme
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
@@ -105,7 +94,7 @@ fun homeScreen(
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp)
+                .padding(horizontal=24.dp, vertical=4.dp)
                 .verticalScroll(scrollState),
             horizontalArrangement = Arrangement.spacedBy(20.dp),
             verticalAlignment = Alignment.Top,
@@ -114,16 +103,7 @@ fun homeScreen(
                 modifier = Modifier.weight(1.4f),
                 verticalArrangement = Arrangement.spacedBy(20.dp),
             ) {
-                homeHeroSection(state = heroState, actions = heroActions)
-                homeActionCard(
-                    icon = Icons.Filled.PlayArrow,
-                    title = stringResource(R.string.quick_play),
-                    subtitle = stringResource(R.string.quick_play_subtitle),
-                    onClick = onStartNewMatch,
-                    containerColor = colors.primaryContainer,
-                    contentColor = colors.onPrimaryContainer,
-                )
-                quickPlayActionCard(onStartNewMatch = actions.onStartNewMatch)
+                homeHeroSection(state = state, actions = actions, isLandscape = true)
             }
             Column(
                 modifier = Modifier.weight(1f),
@@ -136,66 +116,29 @@ fun homeScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp)
+                .padding(horizontal=24.dp, vertical=12.dp)
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            homeHeroSection(state = heroState, actions = heroActions)
-            homeActionCard(
-                icon = Icons.Filled.PlayArrow,
-                title = stringResource(R.string.quick_play),
-                subtitle = stringResource(R.string.quick_play_subtitle),
-                onClick = onStartNewMatch,
-                containerColor = colors.primaryContainer,
-                contentColor = colors.onPrimaryContainer,
-            )
-            homeActionCard(
-                icon = Icons.AutoMirrored.Filled.LibraryBooks,
-                title = stringResource(R.string.title_decks),
-                subtitle = stringResource(R.string.decks_subtitle),
-                onClick = onDecks,
-                containerColor = colors.secondaryContainer,
-                contentColor = colors.onSecondaryContainer,
-            )
-            homeActionCard(
-                icon = Icons.Filled.Settings,
-                title = stringResource(R.string.title_settings),
-                subtitle = stringResource(R.string.settings_subtitle),
-                onClick = onSettings,
-                containerColor = colors.tertiaryContainer,
-                contentColor = colors.onTertiaryContainer,
-            )
-            homeActionCard(
-                icon = Icons.Filled.History,
-                title = stringResource(R.string.title_history),
-                subtitle = stringResource(R.string.history_subtitle),
-                onClick = onHistory,
-                containerColor = colors.tertiaryContainer,
-                contentColor = colors.onTertiaryContainer,
-            )
-            quickPlayActionCard(onStartNewMatch = actions.onStartNewMatch)
+            homeHeroSection(state = state, actions = actions)
             navigationActionCards(actions = actions)
         }
     }
 }
 
+
 @Composable
-private fun quickPlayActionCard(onStartNewMatch: () -> Unit) {
+private fun ColumnScope.navigationActionCards(actions: HomeActions) {
     val colors = MaterialTheme.colorScheme
     homeActionCard(
         icon = Icons.Filled.PlayArrow,
         title = stringResource(R.string.quick_play),
         subtitle = stringResource(R.string.quick_play_subtitle),
-        onClick = onStartNewMatch,
+        onClick = actions.onStartNewMatch,
         containerColor = colors.primaryContainer,
         contentColor = colors.onPrimaryContainer,
     )
-}
-
-@Composable
-private fun ColumnScope.navigationActionCards(actions: HomeActions) {
-    val colors = MaterialTheme.colorScheme
     homeActionCard(
         icon = Icons.AutoMirrored.Filled.LibraryBooks,
         title = stringResource(R.string.title_decks),
@@ -224,8 +167,9 @@ private fun ColumnScope.navigationActionCards(actions: HomeActions) {
 
 @Composable
 private fun homeHeroSection(
-    state: HomeHeroState,
-    actions: HomeHeroActions,
+    state: HomeViewState,
+    actions: HomeActions,
+    isLandscape: Boolean = false,
 ) {
     val (gameState, settings, decks, recentHistory) = state
     val colors = MaterialTheme.colorScheme
@@ -236,10 +180,6 @@ private fun homeHeroSection(
             1f to Color.Transparent,
         )
     }
-    val gameState = state.gameState
-    val settings = state.settings
-    val decks = state.decks
-    val recentHistory = state.recentHistory
     val liveScores = when (gameState) {
         is GameState.TurnPending -> gameState.scores
         is GameState.TurnFinished -> gameState.scores
@@ -324,6 +264,11 @@ private fun homeHeroSection(
     }
     val showResume = gameState != null && gameState !is GameState.Idle
 
+    // Make hero section more compact in landscape mode
+    val cardPadding = if (isLandscape) 24.dp else 24.dp
+    val sectionSpacing = if (isLandscape) 20.dp else 20.dp
+    val buttonSpacing = if (isLandscape) 12.dp else 12.dp
+
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(28.dp),
@@ -336,39 +281,49 @@ private fun homeHeroSection(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(gradient)
-                .padding(24.dp),
+                .padding(cardPadding),
         ) {
             Column(
-                verticalArrangement = Arrangement.spacedBy(20.dp),
+                verticalArrangement = Arrangement.spacedBy(sectionSpacing),
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    homeLogo(size = 64.dp)
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(heroTitle, style = MaterialTheme.typography.headlineSmall, color = contentColor)
+                    homeLogo(size = if (isLandscape) 48.dp else 64.dp)
+                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text(
+                            heroTitle,
+                            style = if (isLandscape) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineSmall,
+                            color = contentColor
+                        )
                         Text(
                             heroSubtitle,
-                            style = MaterialTheme.typography.bodyLarge,
+                            style = if (isLandscape) MaterialTheme.typography.bodyMedium else MaterialTheme.typography.bodyLarge,
                             color = contentColor.copy(alpha = 0.9f),
                         )
                     }
                 }
                 homeScoreboardSection(scoreboard = scoreboard, hasProgress = hasProgress, contentColor = contentColor)
-                favoriteDecksSection(
-                    favorites = favoriteDecks,
-                    extra = extraDecks,
-                    onDecks = actions.onDecks,
-                    contentColor = contentColor,
-                )
-                recentHighlightSection(
-                    text = highlightText,
-                    icon = highlightIcon,
-                    iconTint = highlightTint,
-                    contentColor = contentColor,
-                )
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+
+                Row(
+                    verticalAlignment = Alignment.Top,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    favoriteDecksSection(
+                        favorites = favoriteDecks,
+                        extra = extraDecks,
+                        onDecks = actions.onDecks,
+                        contentColor = contentColor,
+                    )
+                    recentHighlightSection(
+                        text = highlightText,
+                        icon = highlightIcon,
+                        iconTint = highlightTint,
+                        contentColor = contentColor,
+                    )
+                }
+                Column(verticalArrangement = Arrangement.spacedBy(buttonSpacing)) {
                     if (showResume) {
                         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             Button(
@@ -391,12 +346,6 @@ private fun homeHeroSection(
                         ) {
                             Text(stringResource(R.string.start_new_game))
                         }
-                    }
-                    TextButton(
-                        onClick = actions.onHistory,
-                        colors = ButtonDefaults.textButtonColors(contentColor = contentColor),
-                    ) {
-                        Text(stringResource(R.string.view_history))
                     }
                 }
             }
@@ -523,23 +472,25 @@ private fun recentHighlightSection(
             style = MaterialTheme.typography.titleSmall,
             color = contentColor.copy(alpha = 0.85f),
         )
-        Surface(
-            shape = RoundedCornerShape(24.dp),
-            color = contentColor.copy(alpha = 0.08f),
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                if (icon != null) {
-                    Icon(icon, contentDescription = null, tint = iconTint)
+        AssistChip(
+            onClick = { /* No action needed for highlight */ },
+            label = { Text(text) },
+            leadingIcon = if (icon != null) {
+                {
+                    Icon(
+                        icon,
+                        contentDescription = null,
+                        tint = iconTint,
+                        modifier = Modifier.size(18.dp),
+                    )
                 }
-                Text(text, style = MaterialTheme.typography.bodyMedium, color = contentColor)
-            }
-        }
+            } else null,
+            colors = AssistChipDefaults.assistChipColors(
+                containerColor = contentColor.copy(alpha = 0.08f),
+                labelColor = contentColor,
+                leadingIconContentColor = iconTint,
+            ),
+        )
     }
 }
 
@@ -587,13 +538,13 @@ private fun homeActionCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 18.dp),
+                .padding(horizontal = 14.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Box(
                 modifier = Modifier
-                    .size(44.dp),
+                    .size(36.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(icon, contentDescription = null)
@@ -627,3 +578,4 @@ private val ScoreboardSaver: Saver<SnapshotStateMap<String, Int>, Bundle> = Save
         }
     },
 )
+
