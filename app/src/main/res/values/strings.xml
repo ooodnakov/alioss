@@ -269,7 +269,7 @@
     <string name="filters_hint">Filters apply to the next match (Restart).</string>
     <string name="round_and_goals">Round &amp; Goals</string>
     <string name="round_seconds_label">Round seconds</string>
-    <string name="target_words_label">Target words</string>
+    <string name="target_words_label">Max words</string>
     <string name="score_target_toggle_label">Use score goal</string>
     <string name="target_score_label">Target score</string>
     <string name="skips_section">Skips</string>
