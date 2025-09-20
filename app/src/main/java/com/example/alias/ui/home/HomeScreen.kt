@@ -261,9 +261,9 @@ private fun homeHeroSection(
     val showResume = gameState != null && gameState !is GameState.Idle
 
     // Make hero section more compact in landscape mode
-    val cardPadding = if (isLandscape) 24.dp else 24.dp
-    val sectionSpacing = if (isLandscape) 20.dp else 20.dp
-    val buttonSpacing = if (isLandscape) 12.dp else 12.dp
+    val cardPadding = 20.dp
+    val sectionSpacing = 16.dp
+    val buttonSpacing = 10.dp
 
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
@@ -284,41 +284,56 @@ private fun homeHeroSection(
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
-                    homeLogo(size = if (isLandscape) 48.dp else 64.dp)
+                    homeLogo(size = if (isLandscape) 44.dp else 56.dp)
                     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                         Text(
                             heroTitle,
-                            style = if (isLandscape) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineSmall,
+                            style = if (isLandscape) {
+                                MaterialTheme.typography.titleLarge
+                            } else {
+                                MaterialTheme.typography.headlineSmall
+                            },
                             color = contentColor,
                         )
                         Text(
                             heroSubtitle,
-                            style = if (isLandscape) MaterialTheme.typography.bodyMedium else MaterialTheme.typography.bodyLarge,
+                            style = if (isLandscape) {
+                                MaterialTheme.typography.bodyMedium
+                            } else {
+                                MaterialTheme.typography.bodyLarge
+                            },
                             color = contentColor.copy(alpha = 0.9f),
                         )
                     }
                 }
-                homeScoreboardSection(scoreboard = scoreboard, hasProgress = hasProgress, contentColor = contentColor)
-
                 Row(
+                    modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.Top,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
+                    homeScoreboardSection(
+                        scoreboard = scoreboard,
+                        hasProgress = hasProgress,
+                        contentColor = contentColor,
+                        modifier = Modifier.weight(1f),
+                    )
                     favoriteDecksSection(
                         favorites = favoriteDecks,
                         extra = extraDecks,
                         onDecks = actions.onDecks,
                         contentColor = contentColor,
-                    )
-                    recentHighlightSection(
-                        text = highlightText,
-                        icon = highlightIcon,
-                        iconTint = highlightTint,
-                        contentColor = contentColor,
+                        modifier = Modifier.weight(1f),
                     )
                 }
+
+                recentHighlightSection(
+                    text = highlightText,
+                    icon = highlightIcon,
+                    iconTint = highlightTint,
+                    contentColor = contentColor,
+                )
                 Column(verticalArrangement = Arrangement.spacedBy(buttonSpacing)) {
                     if (showResume) {
                         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -355,8 +370,12 @@ private fun homeScoreboardSection(
     scoreboard: Map<String, Int>,
     hasProgress: Boolean,
     contentColor: Color,
+    modifier: Modifier = Modifier,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
         Text(
             text = stringResource(R.string.scoreboard),
             style = MaterialTheme.typography.titleSmall,
@@ -379,7 +398,7 @@ private fun homeScoreboardSection(
                         color = contentColor.copy(alpha = 0.1f),
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
@@ -404,8 +423,12 @@ private fun favoriteDecksSection(
     extra: Int,
     onDecks: () -> Unit,
     contentColor: Color,
+    modifier: Modifier = Modifier,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
         Text(
             text = stringResource(R.string.home_favorite_decks),
             style = MaterialTheme.typography.titleSmall,
@@ -463,34 +486,43 @@ private fun recentHighlightSection(
     icon: ImageVector?,
     iconTint: Color,
     contentColor: Color,
+    modifier: Modifier = Modifier,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
         Text(
             text = stringResource(R.string.home_recent_highlight),
             style = MaterialTheme.typography.titleSmall,
             color = contentColor.copy(alpha = 0.85f),
         )
-        AssistChip(
-            onClick = { /* No action needed for highlight */ },
-            label = { Text(text) },
-            leadingIcon = if (icon != null) {
-                {
+        Surface(
+            shape = RoundedCornerShape(18.dp),
+            color = contentColor.copy(alpha = 0.08f),
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (icon != null) {
                     Icon(
                         icon,
                         contentDescription = null,
                         tint = iconTint,
-                        modifier = Modifier.size(18.dp),
+                        modifier = Modifier.size(20.dp),
                     )
                 }
-            } else {
-                null
-            },
-            colors = AssistChipDefaults.assistChipColors(
-                containerColor = contentColor.copy(alpha = 0.08f),
-                labelColor = contentColor,
-                leadingIconContentColor = iconTint,
-            ),
-        )
+                Text(
+                    text = text,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = contentColor,
+                )
+            }
+        }
     }
 }
 
