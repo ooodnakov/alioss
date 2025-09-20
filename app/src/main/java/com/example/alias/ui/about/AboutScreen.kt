@@ -24,6 +24,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -70,14 +71,15 @@ fun aboutScreen() {
             ElevatedCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(stringResource(R.string.links_label), style = MaterialTheme.typography.titleMedium)
-                    val sourceCodeLink = stringResource(R.string.about_source_code_link)
-                    val sourceCodeUrl = stringResource(R.string.about_source_code_url)
+                    val context = LocalContext.current
                     ListItem(
                         leadingContent = { Icon(Icons.Filled.Code, contentDescription = null) },
                         headlineContent = { Text(stringResource(R.string.source_code_label)) },
-                        supportingContent = { Text(sourceCodeLink) },
+                        supportingContent = { Text(stringResource(R.string.about_source_code_link)) },
                         trailingContent = { Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = null) },
-                        modifier = Modifier.clickable { uriHandler.openUri(sourceCodeUrl) },
+                        modifier = Modifier.clickable {
+                            uriHandler.openUri(context.getString(R.string.about_source_code_url))
+                        },
                     )
                     HorizontalDivider()
                     ListItem(
