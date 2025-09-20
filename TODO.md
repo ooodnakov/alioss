@@ -1,6 +1,7 @@
 # TODO / Open Tasks
 
 ## Completed
+- Refactor end-of-turn summary UI: relocated turn statistics into the score card, collapsed the detailed breakdown/time graphs, added colored toggle blocks for each word, and surfaced the time-between-word graph.
 - Add toggleable score-to-target regime with configurable goal in Settings and wire it into game flow.
 - Gate bundled deck import to first run (DB empty) to avoid re-imports.
 - Dedupe deck imports by replacing words per deck on import.
@@ -38,7 +39,6 @@
 
 
 ## Backlog
-- Refactor end-of-turn summary UI: relocate turn statistics, collapse detailed breakdown/time graph (taller), per-word blocks with colored backgrounds acting as correct/incorrect toggles, and show time-between-word graph.
 - Tests:
   - Repository: verify re-import of the same deck does not duplicate words (and that updated decks replace content).
   - App-layer: verify last-turn outcomes are persisted when match ends (target reached or timer with no words left).
