@@ -31,6 +31,7 @@ class PackDownloader(
     suspend fun download(
         url: String,
         expectedSha256: String? = null,
+        maxBytes: Long = MAX_BYTES,
         onProgress: (bytesRead: Long, totalBytes: Long?) -> Unit = { _, _ -> },
     ): ByteArray {
         val httpUrl = url.toHttpUrlOrNull() ?: error("Invalid URL")
@@ -56,7 +57,7 @@ class PackDownloader(
                 val body = resp.body ?: error("Empty body")
                 val contentLength = body.contentLength()
                 val totalBytes = contentLength.takeUnless { it == -1L }
-                if (contentLength != -1L) require(contentLength <= MAX_BYTES) { "File too large" }
+                if (contentLength != -1L) require(contentLength <= maxBytes) { "File too large" }
                 val source = body.source()
                 val out = ByteArrayOutputStream()
                 val digest = MessageDigest.getInstance("SHA-256")
@@ -67,7 +68,7 @@ class PackDownloader(
                     val read = source.read(chunk)
                     if (read == -1) break
                     total += read
-                    require(total <= MAX_BYTES) { "File too large" }
+                    require(total <= maxBytes) { "File too large" }
                     out.write(chunk, 0, read)
                     digest.update(chunk, 0, read)
                     onProgress(total, totalBytes)

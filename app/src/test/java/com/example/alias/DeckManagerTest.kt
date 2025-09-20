@@ -20,11 +20,18 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
+import okhttp3.mockwebserver.MockResponse
+import okhttp3.mockwebserver.MockWebServer
+import okhttp3.tls.HandshakeCertificates
+import okhttp3.tls.HeldCertificate
+import okio.Buffer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.security.MessageDigest
+import java.util.Base64
+import org.junit.Assert.assertNotNull
 import kotlin.text.Charsets
 
 class DeckManagerTest {
@@ -214,6 +221,40 @@ class DeckManagerTest {
         assertTrue(result.words.none { it == "alphaWord" })
     }
 
+    @Test
+    fun importPackFromJsonDownloadsCoverImageUrl() = runBlocking {
+        withHttpsServer { server, origin, client ->
+            val imageBytes = Base64.getDecoder().decode(SAMPLE_PNG_BASE64)
+            val buffer = Buffer().write(imageBytes)
+            server.enqueue(MockResponse().setResponseCode(200).setBody(buffer))
+            val httpsUrl = server.url("/cover.png").toString().replace("http://", "https://")
+            settingsRepository.setTrustedSources(setOf(origin, "localhost"))
+            val downloader = PackDownloader(client, settingsRepository)
+            val manager = DeckManager(
+                context = context,
+                deckRepository = deckRepository,
+                wordDao = wordDao,
+                deckDao = FakeDeckDao(),
+                turnHistoryDao = turnHistoryDao,
+                settingsRepository = settingsRepository,
+                downloader = downloader,
+                bundledDeckProvider = bundledDeckProvider,
+                logger = logger,
+            )
+
+            val json = sampleDeckJson(id = "cover_remote", words = listOf("word"), coverImageUrl = httpsUrl)
+
+            val result = manager.importPackFromJson(json)
+
+            assertEquals("cover_remote", result.deckId)
+            assertEquals(null, result.coverImageError)
+            val imported = deckRepository.importedPacks.last()
+            val expected = Base64.getEncoder().encodeToString(imageBytes)
+            assertEquals(expected, imported.deck.coverImageBase64)
+            assertNotNull(imported.deck.coverImageBase64)
+        }
+    }
+
     private fun historyEntry(id: Long, word: String): TurnHistoryEntity =
         TurnHistoryEntity(
             id = id,
@@ -231,10 +272,12 @@ class DeckManagerTest {
         name: String = id.uppercase(),
         version: Int = 1,
         words: List<String>,
+        coverImageUrl: String? = null,
     ): String {
         val wordsJson = words.joinToString(separator = ",") { word ->
             """{"text":"$word","difficulty":1}"""
         }
+        val coverLine = coverImageUrl?.let { ",\n                \"coverImageUrl\":\"$it\"" } ?: ""
         return """
             {
               "format":"alias-deck@1",
@@ -244,11 +287,38 @@ class DeckManagerTest {
                 "language":"$language",
                 "isNSFW":false,
                 "version":$version,
-                "updatedAt":0
+                "updatedAt":0$coverLine
               },
               "words":[ $wordsJson ]
             }
             """.trimIndent()
+    }
+
+    private suspend fun withHttpsServer(
+        block: suspend (server: MockWebServer, origin: String, client: OkHttpClient) -> Unit,
+    ) {
+        val localhostCert = HeldCertificate.Builder().addSubjectAlternativeName("localhost").build()
+        val serverCerts = HandshakeCertificates.Builder().heldCertificate(localhostCert).build()
+        val clientCerts = HandshakeCertificates.Builder()
+            .addTrustedCertificate(localhostCert.certificate)
+            .build()
+        val server = MockWebServer()
+        try {
+            server.useHttps(serverCerts.sslSocketFactory(), false)
+            server.start()
+            val client = OkHttpClient.Builder()
+                .sslSocketFactory(clientCerts.sslSocketFactory(), clientCerts.trustManager)
+                .build()
+            val origin = "https://localhost:${'$'}{server.port}"
+            block(server, origin, client)
+        } finally {
+            server.shutdown()
+        }
+    }
+
+    companion object {
+        private const val SAMPLE_PNG_BASE64 =
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAAWgmWQ0AAAAASUVORK5CYII="
     }
 
     private fun sha256(content: String): String {
