@@ -41,6 +41,7 @@ interface SettingsRepository {
     suspend fun updateSkipPolicy(maxSkips: Int, penaltyPerSkip: Int)
     suspend fun updatePunishSkips(value: Boolean)
     suspend fun setEnabledDeckIds(ids: Set<String>)
+    suspend fun removeEnabledDeckId(deckId: String)
     suspend fun updateAllowNSFW(value: Boolean)
     suspend fun updateStemmingEnabled(value: Boolean)
     suspend fun updateHapticsEnabled(value: Boolean)
@@ -172,6 +173,15 @@ class SettingsRepositoryImpl(
 
     override suspend fun setEnabledDeckIds(ids: Set<String>) {
         dataStore.edit { it[Keys.ENABLED_DECK_IDS] = ids }
+    }
+
+    override suspend fun removeEnabledDeckId(deckId: String) {
+        dataStore.edit { prefs ->
+            val current = prefs[Keys.ENABLED_DECK_IDS] ?: emptySet()
+            if (current.contains(deckId)) {
+                prefs[Keys.ENABLED_DECK_IDS] = current - deckId
+            }
+        }
     }
 
     override suspend fun setDeckLanguagesFilter(languages: Set<String>) {

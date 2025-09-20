@@ -425,8 +425,6 @@ class DeckManager
         }
 
         suspend fun deleteDeck(deck: DeckEntity): DeleteDeckResult {
-            val settingsSnapshot = settingsRepository.settings.first()
-            val updatedIds = settingsSnapshot.enabledDeckIds - deck.id
             val isBundledDeck = deck.isOfficial
             val result = runCatching {
                 withContext(Dispatchers.IO) {
@@ -436,13 +434,11 @@ class DeckManager
                         deckRepository.deleteDeck(deck.id)
                     }
                 }
+                settingsRepository.removeEnabledDeckId(deck.id)
             }
             if (result.isFailure) {
                 val error = result.exceptionOrNull()?.message ?: "Unknown error"
                 return DeleteDeckResult.Failure(error)
-            }
-            if (updatedIds != settingsSnapshot.enabledDeckIds) {
-                settingsRepository.setEnabledDeckIds(updatedIds)
             }
             val message = if (isBundledDeck) {
                 "Hidden deck: ${deck.name}"
@@ -452,11 +448,11 @@ class DeckManager
             return DeleteDeckResult.Success(message)
         }
 
-        suspend fun permanentlyDeleteImportedDeck(deck: DeckEntity): Result<Unit> {
-            return runCatching {
+        suspend fun permanentlyDeleteImportedDeck(deck: DeckEntity): Result<Unit> =
+            runCatching {
                 withContext(Dispatchers.IO) { deckRepository.deleteDeck(deck.id) }
+                settingsRepository.removeEnabledDeckId(deck.id)
             }
-        }
 
         suspend fun restoreDeletedBundledDeck(deckId: String): Result<Unit> {
             return runCatching {

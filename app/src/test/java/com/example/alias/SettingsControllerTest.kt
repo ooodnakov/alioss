@@ -77,6 +77,9 @@ class SettingsControllerTest {
         override suspend fun setEnabledDeckIds(ids: Set<String>) {
             state.value = state.value.copy(enabledDeckIds = ids)
         }
+        override suspend fun removeEnabledDeckId(deckId: String) {
+            state.value = state.value.copy(enabledDeckIds = state.value.enabledDeckIds - deckId)
+        }
         override suspend fun setDeckLanguagesFilter(languages: Set<String>) {
             state.value = state.value.copy(selectedDeckLanguages = languages)
         }
