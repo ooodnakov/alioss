@@ -26,12 +26,12 @@ import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
 import okio.Buffer
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.security.MessageDigest
 import java.util.Base64
-import org.junit.Assert.assertNotNull
 import kotlin.text.Charsets
 
 class DeckManagerTest {

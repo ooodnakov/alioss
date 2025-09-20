@@ -46,16 +46,26 @@ object PackValidator {
         if (trimmed.isEmpty()) {
             return null
         }
-        require(trimmed.length <= MAX_COVER_IMAGE_URL_LENGTH) { "Cover image URL too long" }
+        if (trimmed.length > MAX_COVER_IMAGE_URL_LENGTH) {
+            throw CoverImageException("Cover image URL too long")
+        }
         val uri = try {
             java.net.URI(trimmed)
         } catch (error: Exception) {
-            throw IllegalArgumentException("Invalid cover image URL", error)
+            throw CoverImageException("Invalid cover image URL", error)
         }
-        require(uri.isAbsolute) { "Cover image URL must be absolute" }
-        require(uri.scheme.equals("https", ignoreCase = true)) { "Cover image URL must use HTTPS" }
-        require(!uri.host.isNullOrBlank()) { "Cover image URL missing host" }
-        require(uri.userInfo == null) { "Cover image URL must not contain credentials" }
+        if (!uri.isAbsolute) {
+            throw CoverImageException("Cover image URL must be absolute")
+        }
+        if (!uri.scheme.equals("https", ignoreCase = true)) {
+            throw CoverImageException("Cover image URL must use HTTPS")
+        }
+        if (uri.host.isNullOrBlank()) {
+            throw CoverImageException("Cover image URL missing host")
+        }
+        if (uri.userInfo != null) {
+            throw CoverImageException("Cover image URL must not contain credentials")
+        }
         return uri.toString()
     }
 
@@ -77,19 +87,25 @@ object PackValidator {
         val decoded = try {
             base64MimeDecoder.decode(dataPortion)
         } catch (error: IllegalArgumentException) {
-            throw IllegalArgumentException("Invalid cover image encoding", error)
+            throw CoverImageException("Invalid cover image encoding", error)
         }
         return validateCoverImageBytes(decoded)
     }
 
     fun validateCoverImageBytes(data: ByteArray): String {
-        require(data.isNotEmpty()) { "Cover image is empty" }
-        require(data.size <= MAX_COVER_IMAGE_BYTES) { "Cover image too large" }
+        if (data.isEmpty()) {
+            throw CoverImageException("Cover image is empty")
+        }
+        if (data.size > MAX_COVER_IMAGE_BYTES) {
+            throw CoverImageException("Cover image too large")
+        }
         val (width, height) = decodeImageDimensions(data)
-            ?: throw IllegalArgumentException("Cover image has invalid dimensions")
-        require(width > 0 && height > 0) { "Cover image has invalid dimensions" }
-        require(width <= MAX_COVER_IMAGE_DIMENSION && height <= MAX_COVER_IMAGE_DIMENSION) {
-            "Cover image dimensions too large"
+            ?: throw CoverImageException("Cover image has invalid dimensions")
+        if (width <= 0 || height <= 0) {
+            throw CoverImageException("Cover image has invalid dimensions")
+        }
+        if (width > MAX_COVER_IMAGE_DIMENSION || height > MAX_COVER_IMAGE_DIMENSION) {
+            throw CoverImageException("Cover image dimensions too large")
         }
         return base64Encoder.encodeToString(data)
     }

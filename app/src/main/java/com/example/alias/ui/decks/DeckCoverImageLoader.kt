@@ -23,10 +23,9 @@ object DeckCoverImageLoader {
 
     suspend fun load(base64: String): ImageBitmap? {
         val key = cacheKey(base64)
-        mutex.withLock {
-            cache.get(key)?.let { entry ->
-                return entry.bitmap
-            }
+        val cached = mutex.withLock { cache.get(key) }
+        if (cached != null) {
+            return cached.bitmap
         }
         val bitmap = withContext(Dispatchers.IO) {
             runCatching {
@@ -38,10 +37,15 @@ object DeckCoverImageLoader {
                 }
             }.getOrNull()
         }
-        mutex.withLock {
-            cache.put(key, DeckCoverCacheEntry(bitmap))
+        return mutex.withLock {
+            val existing = cache.get(key)
+            if (existing != null) {
+                existing.bitmap
+            } else {
+                cache.put(key, DeckCoverCacheEntry(bitmap))
+                bitmap
+            }
         }
-        return bitmap
     }
 
     suspend fun clear() {

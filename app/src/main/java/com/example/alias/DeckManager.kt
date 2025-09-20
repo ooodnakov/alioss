@@ -11,6 +11,7 @@ import com.example.alias.data.db.TurnHistoryDao
 import com.example.alias.data.db.WordClassCount
 import com.example.alias.data.db.WordDao
 import com.example.alias.data.download.PackDownloader
+import com.example.alias.data.pack.CoverImageException
 import com.example.alias.data.pack.PackParser
 import com.example.alias.data.pack.PackValidator
 import com.example.alias.data.pack.ParsedPack
@@ -568,8 +569,9 @@ class DeckManager
                     } else {
                         val error = result.exceptionOrNull()
                         if (error is CancellationException) throw error
-                        logger.error("Failed to decode deck cover image for ${pack.deck.id}", error)
-                        coverImageError = error
+                        val wrapped = wrapCoverImageError("Failed to decode cover image", error)
+                        logger.error("Failed to decode deck cover image for ${pack.deck.id}", wrapped)
+                        coverImageError = wrapped
                         pack.deck.copy(coverImageBase64 = null)
                     }
                 }
@@ -593,15 +595,11 @@ class DeckManager
         }
 
         private fun wrapCoverImageError(message: String, error: Throwable?): Throwable {
-            if (error == null) {
-                return IllegalArgumentException(message)
+            return when (error) {
+                null -> CoverImageException(message)
+                is CoverImageException -> error
+                else -> CoverImageException(message, error)
             }
-            if (error is IllegalArgumentException &&
-                error.message?.contains("cover image", ignoreCase = true) == true
-            ) {
-                return error
-            }
-            return IllegalArgumentException(message, error)
         }
 
         private suspend fun parseAndSanitizePack(content: String, isBundledAsset: Boolean = false): SanitizedPack {
@@ -648,7 +646,7 @@ class DeckManager
         }
 
         private fun Throwable.isCoverImageError(): Boolean {
-            if (this is IllegalArgumentException && message?.contains("cover image", ignoreCase = true) == true) {
+            if (this is CoverImageException) {
                 return true
             }
             val cause = cause
