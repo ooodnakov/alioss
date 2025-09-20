@@ -104,4 +104,5 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
 
     testImplementation(libs.bundles.test.unit)
+    testImplementation(libs.okhttp)
 }

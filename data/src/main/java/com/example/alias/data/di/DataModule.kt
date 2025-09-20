@@ -15,8 +15,8 @@ import com.example.alias.data.DeckRepository
 import com.example.alias.data.DeckRepositoryImpl
 import com.example.alias.data.TurnHistoryRepository
 import com.example.alias.data.TurnHistoryRepositoryImpl
-import com.example.alias.data.db.AliasDatabase
 import com.example.alias.data.db.ALL_MIGRATIONS
+import com.example.alias.data.db.AliasDatabase
 import com.example.alias.data.db.DeckDao
 import com.example.alias.data.db.TurnHistoryDao
 import com.example.alias.data.db.WordDao
