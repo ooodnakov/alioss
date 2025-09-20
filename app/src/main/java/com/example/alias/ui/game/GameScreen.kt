@@ -349,15 +349,12 @@ fun gameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                 lerp(TIMER_WARNING_COLOR, TIMER_CRITICAL_COLOR, 1 - t)
             }
             val barColor by animateColorAsState(targetColor, label = "timerColor")
-            val remainingLabelRes =
+            val (remainingLabelRes, summaryRes) =
                 when (s.goal.type) {
-                    MatchGoalType.TARGET_WORDS -> R.string.remaining_words_label
-                    MatchGoalType.TARGET_SCORE -> R.string.remaining_points_label
-                }
-            val summaryRes =
-                when (s.goal.type) {
-                    MatchGoalType.TARGET_WORDS -> R.string.summary_words_label
-                    MatchGoalType.TARGET_SCORE -> R.string.summary_points_label
+                    MatchGoalType.TARGET_WORDS ->
+                        R.string.remaining_words_label to R.string.summary_words_label
+                    MatchGoalType.TARGET_SCORE ->
+                        R.string.remaining_points_label to R.string.summary_points_label
                 }
             LaunchedEffect(s.timeRemaining) {
                 val remaining = s.timeRemaining

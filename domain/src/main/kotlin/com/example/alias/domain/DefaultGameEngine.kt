@@ -47,7 +47,7 @@ class DefaultGameEngine(
                 if (includeCurrentTurn) {
                     val teamName = teams[currentTeam]
                     val projected = scores.getOrDefault(teamName, 0) + turnScore
-                    projected >= target || scores.values.any { it >= target }
+                    projected >= target
                 } else {
                     scores.values.any { it >= target }
                 }
