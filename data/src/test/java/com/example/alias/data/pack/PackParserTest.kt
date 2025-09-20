@@ -4,6 +4,7 @@ import java.util.Base64
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class PackParserTest {
@@ -61,6 +62,31 @@ class PackParserTest {
             Base64.getMimeDecoder().decode(base64Image.substringAfter(',')),
         )
         assertEquals(expected, parsed.deck.coverImageBase64)
+        assertNull(parsed.coverImageUrl)
+    }
+
+    @Test
+    fun parses_cover_image_url() {
+        val json = """
+            {
+              "format": "alias-deck@1",
+              "deck": {
+                "id": "cover_url",
+                "name": "Cover URL",
+                "language": "en",
+                "version": 1,
+                "coverImageUrl": "https://example.com/cover.png"
+              },
+              "words": [
+                { "text": "One" }
+              ]
+            }
+        """.trimIndent()
+
+        val parsed = PackParser.fromJson(json)
+
+        assertEquals("https://example.com/cover.png", parsed.coverImageUrl)
+        assertEquals(null, parsed.deck.coverImageBase64)
     }
 
     @Test
@@ -119,6 +145,47 @@ class PackParserTest {
         """.trimIndent()
 
         assertFailsWith<IllegalArgumentException> { PackParser.fromJson(json) }
+    }
+
+    @Test
+    fun rejects_cover_image_with_both_inline_and_url() {
+        val json = """
+            {
+              "format": "alias-deck@1",
+              "deck": {
+                "id": "x",
+                "name": "X",
+                "language": "en",
+                "version": 1,
+                "coverImage": "data:image/png;base64,aGVsbG8=",
+                "coverImageUrl": "https://example.com/cover.png"
+              },
+              "words": [{"text": "Ok", "difficulty": 1}]
+            }
+        """.trimIndent()
+
+        val error = assertFailsWith<IllegalArgumentException> { PackParser.fromJson(json) }
+        assertTrue(error.message?.contains("Cover image") == true)
+    }
+
+    @Test
+    fun rejects_cover_image_url_when_not_https() {
+        val json = """
+            {
+              "format": "alias-deck@1",
+              "deck": {
+                "id": "x",
+                "name": "X",
+                "language": "en",
+                "version": 1,
+                "coverImageUrl": "http://example.com/cover.png"
+              },
+              "words": [{"text": "Ok", "difficulty": 1}]
+            }
+        """.trimIndent()
+
+        val error = assertFailsWith<IllegalArgumentException> { PackParser.fromJson(json) }
+        assertTrue(error.message?.contains("Cover image") == true)
     }
 
     @Test

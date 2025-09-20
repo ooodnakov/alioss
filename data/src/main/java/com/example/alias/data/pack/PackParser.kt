@@ -26,6 +26,7 @@ private data class DeckDto(
     val updatedAt: Long = 0L,
     val isOfficial: Boolean = false,
     @SerialName("coverImage") val coverImageBase64: String? = null,
+    @SerialName("coverImageUrl") val coverImageUrl: String? = null,
 )
 
 @Serializable
@@ -69,6 +70,7 @@ data class ParsedPack(
     val deck: DeckEntity,
     val words: List<WordEntity>,
     val wordClasses: List<WordClassEntity>,
+    val coverImageUrl: String? = null,
 )
 
 /** Simple JSON pack parser based on kotlinx.serialization. */
@@ -80,6 +82,9 @@ object PackParser {
         // Basic input validation to avoid malformed or oversized packs.
         PackValidator.validateFormat(dto.format)
         val normalizedDeckLanguage = PackValidator.normalizeLanguageTag(dto.deck.language)
+        require(dto.deck.coverImageBase64 == null || dto.deck.coverImageUrl == null) {
+            "Cover image cannot be both embedded and referenced via URL"
+        }
         val coverImageBase64 = PackValidator.validateDeck(
             id = dto.deck.id,
             language = normalizedDeckLanguage,
@@ -88,6 +93,7 @@ object PackParser {
             isNSFW = dto.deck.isNsfw,
             coverImageBase64 = dto.deck.coverImageBase64,
         )
+        val coverImageUrl = PackValidator.normalizeCoverImageUrl(dto.deck.coverImageUrl)
         PackValidator.validateWordCount(dto.words.size)
         val deckEntity = DeckEntity(
             id = dto.deck.id,
@@ -141,6 +147,6 @@ object PackParser {
         if (normalizedDeckLanguage == PackValidator.MULTI_LANGUAGE_TAG) {
             PackValidator.validateMultiLanguageContent(languagesEncountered)
         }
-        return ParsedPack(deckEntity, wordEntities, classEntities)
+        return ParsedPack(deckEntity, wordEntities, classEntities, coverImageUrl)
     }
 }

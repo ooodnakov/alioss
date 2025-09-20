@@ -1,7 +1,6 @@
 package com.example.alias
 
 import android.content.Context
-import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Base64
 import com.example.alias.data.DeckRepository
@@ -12,7 +11,9 @@ import com.example.alias.data.db.TurnHistoryDao
 import com.example.alias.data.db.WordClassCount
 import com.example.alias.data.db.WordDao
 import com.example.alias.data.download.PackDownloader
+import com.example.alias.data.pack.CoverImageException
 import com.example.alias.data.pack.PackParser
+import com.example.alias.data.pack.PackValidator
 import com.example.alias.data.pack.ParsedPack
 import com.example.alias.data.settings.Settings
 import com.example.alias.data.settings.SettingsRepository
@@ -537,29 +538,68 @@ class DeckManager
         }
 
         private suspend fun sanitizeCoverImage(pack: ParsedPack): SanitizedPack {
-            val coverError = withContext(Dispatchers.IO) {
-                pack.deck.coverImageBase64?.let { encoded ->
-                    try {
-                        val decoded = Base64.decode(encoded, Base64.DEFAULT)
-                        require(decoded.isNotEmpty()) { "Cover image is empty" }
-                        val opts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-                        BitmapFactory.decodeByteArray(decoded, 0, decoded.size, opts)
-                        require(opts.outWidth > 0 && opts.outHeight > 0) { "Cover image has invalid dimensions" }
-                        null
-                    } catch (c: CancellationException) {
-                        throw c
-                    } catch (t: Throwable) {
-                        logger.error("Failed to decode deck cover image for ${pack.deck.id}", t)
-                        t
+            var coverImageError: Throwable? = null
+            val sanitizedDeck = when {
+                pack.coverImageUrl != null -> {
+                    val coverUrl = checkNotNull(pack.coverImageUrl)
+                    val result = fetchCoverImageFromUrl(coverUrl)
+                    if (result.isSuccess) {
+                        pack.deck.copy(coverImageBase64 = result.getOrThrow())
+                    } else {
+                        val error = result.exceptionOrNull()
+                        if (error is CancellationException) throw error
+                        val wrapped = wrapCoverImageError("Failed to download cover image", error)
+                        logger.error(
+                            "Failed to download deck cover image for ${pack.deck.id}",
+                            wrapped,
+                        )
+                        coverImageError = wrapped
+                        pack.deck.copy(coverImageBase64 = null)
                     }
                 }
+                pack.deck.coverImageBase64 != null -> {
+                    val result = withContext(Dispatchers.IO) {
+                        runCatching {
+                            val decoded = Base64.decode(pack.deck.coverImageBase64, Base64.DEFAULT)
+                            PackValidator.validateCoverImageBytes(decoded)
+                        }
+                    }
+                    if (result.isSuccess) {
+                        pack.deck.copy(coverImageBase64 = result.getOrThrow())
+                    } else {
+                        val error = result.exceptionOrNull()
+                        if (error is CancellationException) throw error
+                        val wrapped = wrapCoverImageError("Failed to decode cover image", error)
+                        logger.error("Failed to decode deck cover image for ${pack.deck.id}", wrapped)
+                        coverImageError = wrapped
+                        pack.deck.copy(coverImageBase64 = null)
+                    }
+                }
+                else -> pack.deck
             }
-            val sanitized = if (coverError != null) {
-                pack.copy(deck = pack.deck.copy(coverImageBase64 = null))
-            } else {
-                pack
+            val sanitized = pack.copy(deck = sanitizedDeck, coverImageUrl = null)
+            return SanitizedPack(sanitized, coverImageError)
+        }
+
+        private suspend fun fetchCoverImageFromUrl(url: String): Result<String> {
+            return withContext(Dispatchers.IO) {
+                runCatching {
+                    val bytes = downloader.download(
+                        url.trim(),
+                        expectedSha256 = null,
+                        maxBytes = PackValidator.MAX_COVER_IMAGE_BYTES.toLong(),
+                    )
+                    PackValidator.validateCoverImageBytes(bytes)
+                }
             }
-            return SanitizedPack(sanitized, coverError)
+        }
+
+        private fun wrapCoverImageError(message: String, error: Throwable?): Throwable {
+            return when (error) {
+                null -> CoverImageException(message)
+                is CoverImageException -> error
+                else -> CoverImageException(message, error)
+            }
         }
 
         private suspend fun parseAndSanitizePack(content: String, isBundledAsset: Boolean = false): SanitizedPack {
@@ -580,12 +620,12 @@ class DeckManager
             return try {
                 val root = bundleJson.parseToJsonElement(content).jsonObject
                 val deck = root["deck"]?.jsonObject ?: return null
-                if (!deck.containsKey("coverImage")) {
+                if (!deck.containsKey("coverImage") && !deck.containsKey("coverImageUrl")) {
                     return null
                 }
                 val sanitizedDeck = buildJsonObject {
                     deck.forEach { (key, value) ->
-                        if (key != "coverImage") {
+                        if (key != "coverImage" && key != "coverImageUrl") {
                             put(key, value)
                         }
                     }
@@ -606,7 +646,7 @@ class DeckManager
         }
 
         private fun Throwable.isCoverImageError(): Boolean {
-            if (this is IllegalArgumentException && message?.contains("cover image", ignoreCase = true) == true) {
+            if (this is CoverImageException) {
                 return true
             }
             val cause = cause

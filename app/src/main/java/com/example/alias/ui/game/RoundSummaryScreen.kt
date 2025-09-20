@@ -7,6 +7,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -735,9 +736,8 @@ private fun ExpandableSection(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .semantics { stateDescription = stateLabel },
-        onClick = { expanded = !expanded },
-        role = Role.Button,
+            .semantics { stateDescription = stateLabel }
+            .clickable(role = Role.Button) { expanded = !expanded },
         shape = RoundedCornerShape(20.dp),
         color = colors.surfaceVariant.copy(alpha = if (expanded) 0.6f else 0.45f),
         tonalElevation = if (expanded) 2.dp else 0.dp,
@@ -906,16 +906,15 @@ private fun timelineEventBlock(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .semantics { stateDescription = stateLabel },
+            .semantics { stateDescription = stateLabel }
+            .clickable(role = Role.Button) {
+                val target = !event.outcome.correct
+                onToggle(target)
+            },
         color = containerColor,
         contentColor = contentColor,
         shape = RoundedCornerShape(20.dp),
         tonalElevation = 0.dp,
-        onClick = {
-            val target = !event.outcome.correct
-            onToggle(target)
-        },
-        role = Role.Button,
     ) {
         Row(
             modifier = Modifier

@@ -105,4 +105,6 @@ dependencies {
 
     testImplementation(libs.bundles.test.unit)
     testImplementation(libs.okhttp)
+    testImplementation(libs.okhttp.mockwebserver)
+    testImplementation(libs.okhttp.tls)
 }
