@@ -3,9 +3,9 @@ package com.example.alias.navigation
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
@@ -31,6 +31,8 @@ import com.example.alias.ui.decks.deckDetailScreen
 import com.example.alias.ui.decks.decksScreen
 import com.example.alias.ui.game.gameScreen
 import com.example.alias.ui.historyScreen
+import com.example.alias.ui.home.HomeActions
+import com.example.alias.ui.home.HomeViewState
 import com.example.alias.ui.home.homeScreen
 import com.example.alias.ui.settings.settingsScreen
 
@@ -61,18 +63,22 @@ fun aliasNavHost(
             val recentHistory by recentHistoryFlow.collectAsState(initial = emptyList())
             appScaffold(snackbarHostState = snackbarHostState) {
                 homeScreen(
-                    gameState = gameState,
-                    settings = settings,
-                    decks = decks,
-                    recentHistory = recentHistory,
-                    onResumeMatch = { navController.navigate("game") },
-                    onStartNewMatch = {
-                        viewModel.restartMatch()
-                        navController.navigate("game")
-                    },
-                    onDecks = { navController.navigate("decks") },
-                    onSettings = { navController.navigate("settings") },
-                    onHistory = { navController.navigate("history") },
+                    state = HomeViewState(
+                        gameState = gameState,
+                        settings = settings,
+                        decks = decks,
+                        recentHistory = recentHistory,
+                    ),
+                    actions = HomeActions(
+                        onResumeMatch = { navController.navigate("game") },
+                        onStartNewMatch = {
+                            viewModel.restartMatch()
+                            navController.navigate("game")
+                        },
+                        onDecks = { navController.navigate("decks") },
+                        onSettings = { navController.navigate("settings") },
+                        onHistory = { navController.navigate("history") },
+                    ),
                 )
             }
         }
@@ -80,14 +86,18 @@ fun aliasNavHost(
             val engine by viewModel.engine.collectAsState()
             val currentSettings by viewModel.settings.collectAsState()
             appScaffold(snackbarHostState = snackbarHostState) {
-                if (engine == null) {
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(MaterialTheme.colorScheme.surfaceVariant),
-                    ) {}
-                } else {
-                    gameScreen(viewModel, engine!!, currentSettings)
+                engine?.let { gameEngine ->
+                    gameScreen(viewModel, gameEngine, currentSettings)
+                } ?: Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                ) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        CircularProgressIndicator()
+                    }
                 }
             }
         }

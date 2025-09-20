@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -74,20 +75,14 @@ private data class HomeHeroActions(
     val onResumeMatch: () -> Unit,
     val onStartNewMatch: () -> Unit,
     val onHistory: () -> Unit,
+    val onSettings: () -> Unit,
     val onDecks: () -> Unit,
 )
 
 @Composable
 fun homeScreen(
-    gameState: GameState?,
-    settings: Settings,
-    decks: List<DeckEntity>,
-    recentHistory: List<TurnHistoryEntity>,
-    onResumeMatch: () -> Unit,
-    onStartNewMatch: () -> Unit,
-    onDecks: () -> Unit,
-    onSettings: () -> Unit,
-    onHistory: () -> Unit,
+    state: HomeViewState,
+    actions: HomeActions,
 ) {
     val heroState = HomeHeroState(
         gameState = gameState,
@@ -128,35 +123,13 @@ fun homeScreen(
                     containerColor = colors.primaryContainer,
                     contentColor = colors.onPrimaryContainer,
                 )
+                quickPlayActionCard(onStartNewMatch = actions.onStartNewMatch)
             }
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                homeActionCard(
-                    icon = Icons.AutoMirrored.Filled.LibraryBooks,
-                    title = stringResource(R.string.title_decks),
-                    subtitle = stringResource(R.string.decks_subtitle),
-                    onClick = onDecks,
-                    containerColor = colors.secondaryContainer,
-                    contentColor = colors.onSecondaryContainer,
-                )
-                homeActionCard(
-                    icon = Icons.Filled.Settings,
-                    title = stringResource(R.string.title_settings),
-                    subtitle = stringResource(R.string.settings_subtitle),
-                    onClick = onSettings,
-                    containerColor = colors.tertiaryContainer,
-                    contentColor = colors.onTertiaryContainer,
-                )
-                homeActionCard(
-                    icon = Icons.Filled.History,
-                    title = stringResource(R.string.title_history),
-                    subtitle = stringResource(R.string.history_subtitle),
-                    onClick = onHistory,
-                    containerColor = colors.tertiaryContainer,
-                    contentColor = colors.onTertiaryContainer,
-                )
+                navigationActionCards(actions = actions)
             }
         }
     } else {
@@ -201,8 +174,52 @@ fun homeScreen(
                 containerColor = colors.tertiaryContainer,
                 contentColor = colors.onTertiaryContainer,
             )
+            quickPlayActionCard(onStartNewMatch = actions.onStartNewMatch)
+            navigationActionCards(actions = actions)
         }
     }
+}
+
+@Composable
+private fun quickPlayActionCard(onStartNewMatch: () -> Unit) {
+    val colors = MaterialTheme.colorScheme
+    homeActionCard(
+        icon = Icons.Filled.PlayArrow,
+        title = stringResource(R.string.quick_play),
+        subtitle = stringResource(R.string.quick_play_subtitle),
+        onClick = onStartNewMatch,
+        containerColor = colors.primaryContainer,
+        contentColor = colors.onPrimaryContainer,
+    )
+}
+
+@Composable
+private fun ColumnScope.navigationActionCards(actions: HomeActions) {
+    val colors = MaterialTheme.colorScheme
+    homeActionCard(
+        icon = Icons.AutoMirrored.Filled.LibraryBooks,
+        title = stringResource(R.string.title_decks),
+        subtitle = stringResource(R.string.decks_subtitle),
+        onClick = actions.onDecks,
+        containerColor = colors.secondaryContainer,
+        contentColor = colors.onSecondaryContainer,
+    )
+    homeActionCard(
+        icon = Icons.Filled.Settings,
+        title = stringResource(R.string.title_settings),
+        subtitle = stringResource(R.string.settings_subtitle),
+        onClick = actions.onSettings,
+        containerColor = colors.tertiaryContainer,
+        contentColor = colors.onTertiaryContainer,
+    )
+    homeActionCard(
+        icon = Icons.Filled.History,
+        title = stringResource(R.string.title_history),
+        subtitle = stringResource(R.string.history_subtitle),
+        onClick = actions.onHistory,
+        containerColor = colors.tertiaryContainer,
+        contentColor = colors.onTertiaryContainer,
+    )
 }
 
 @Composable
@@ -219,6 +236,10 @@ private fun homeHeroSection(
             1f to Color.Transparent,
         )
     }
+    val gameState = state.gameState
+    val settings = state.settings
+    val decks = state.decks
+    val recentHistory = state.recentHistory
     val liveScores = when (gameState) {
         is GameState.TurnPending -> gameState.scores
         is GameState.TurnFinished -> gameState.scores

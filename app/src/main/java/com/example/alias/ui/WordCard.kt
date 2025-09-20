@@ -187,10 +187,16 @@ fun wordCard(
                             if (commit && allowed) {
                                 onActionStart()
                                 if (verticalMode) {
-                                    val targetY = if (dir == WordCardAction.Correct) -commitPx * SWIPE_AWAY_MULTIPLIER else commitPx * SWIPE_AWAY_MULTIPLIER
+                                    val targetY = commitPx * SWIPE_AWAY_MULTIPLIER * when (dir) {
+                                        WordCardAction.Correct -> -1
+                                        else -> 1
+                                    }
                                     animY.animateTo(targetY, tween(200))
                                 } else {
-                                    val targetX = if (dir == WordCardAction.Correct) commitPx * SWIPE_AWAY_MULTIPLIER else -commitPx * SWIPE_AWAY_MULTIPLIER
+                                    val targetX = commitPx * SWIPE_AWAY_MULTIPLIER * when (dir) {
+                                        WordCardAction.Correct -> 1
+                                        else -> -1
+                                    }
                                     animX.animateTo(targetX, tween(200))
                                 }
                                 onAction(dir)

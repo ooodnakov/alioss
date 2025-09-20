@@ -21,9 +21,10 @@ fun appScaffold(
             snackbarHostState?.let { state ->
                 SnackbarHost(hostState = state) { data ->
                     val msg = data.visuals.message
-                    val isError = msg.startsWith("Failed", ignoreCase = true) || msg.contains("error", ignoreCase = true)
-                    val container = if (isError) MaterialTheme.colorScheme.errorContainer else SnackbarDefaults.color
-                    val content = if (isError) MaterialTheme.colorScheme.onErrorContainer else SnackbarDefaults.contentColor
+                    val isError = msg.isErrorSnackbarMessage()
+                    val colorScheme = MaterialTheme.colorScheme
+                    val container = if (isError) colorScheme.errorContainer else SnackbarDefaults.color
+                    val content = if (isError) colorScheme.onErrorContainer else SnackbarDefaults.contentColor
                     Snackbar(snackbarData = data, containerColor = container, contentColor = content)
                 }
             }
@@ -32,3 +33,6 @@ fun appScaffold(
         Box(Modifier.padding(scaffoldPadding)) { content() }
     }
 }
+
+private fun String.isErrorSnackbarMessage(): Boolean =
+    startsWith("Failed", ignoreCase = true) || contains("error", ignoreCase = true)
