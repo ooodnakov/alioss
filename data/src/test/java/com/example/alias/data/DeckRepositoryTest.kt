@@ -281,7 +281,7 @@ class DeckRepositoryTest {
                     (allowNSFW || !word.isNSFW) &&
                     word.difficulty in minDifficulty..maxDifficulty &&
                     (hasCategories == 0 || (word.category != null && categories?.contains(word.category) == true)) &&
-                    (hasClasses == 0 || classesForWord(word).any { requiredClasses.contains(it) })
+                    (hasClasses == 0 || classesForWord(word).any { requiredClasses.contains(it) }) &&
                     (hasLanguages == 0 || allowedLanguages.contains(word.language))
             }.map { word ->
                 val joinedClasses = classesForWord(word)

@@ -291,11 +291,11 @@ class DeckManager
                 minDifficulty = settings.minDifficulty,
                 maxDifficulty = settings.maxDifficulty,
                 categories = categories,
-                categoryFilterEnabled = if (categories == null) 0 else 1,
+                categoryFilterEnabled = if ((categories == null) || categories.isEmpty()) 0 else 1,
                 wordClasses = classes,
-                wordClassFilterEnabled = if (classes == null) 0 else 1
+                wordClassFilterEnabled = if ((classes == null) || classes.isEmpty()) 0 else 1,
                 languages = languages,
-                languageFilterEnabled = if (languages.isEmpty()) 0 else 1,
+                languageFilterEnabled = if ((languages == null) || languages.isEmpty()) 0 else 1,
             )
         }
 
