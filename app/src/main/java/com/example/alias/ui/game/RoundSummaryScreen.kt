@@ -201,43 +201,35 @@ private fun timelineCard(
                     title = stringResource(R.string.timeline_graphs_title),
                     subtitle = stringResource(R.string.timeline_graphs_subtitle),
                     modifier = Modifier.padding(horizontal = 20.dp),
+                    contentArrangement = Arrangement.spacedBy(16.dp),
                 ) {
-                    Column(
+                    scoreProgressGraph(
+                        events = timeline.events,
                         modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(16.dp),
-                    ) {
-                        scoreProgressGraph(
-                            events = timeline.events,
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                        timeBetweenWordsGraph(
-                            events = timeline.events,
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                    }
+                    )
+                    timeBetweenWordsGraph(
+                        events = timeline.events,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
                 }
                 ExpandableSection(
                     title = stringResource(R.string.timeline_breakdown_title),
                     subtitle = stringResource(R.string.timeline_breakdown_subtitle),
                     modifier = Modifier.padding(horizontal = 20.dp),
+                    contentArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        timeline.segments.forEach { segment ->
+                    timeline.segments.forEach { segment ->
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            timelineSegmentHeader(
+                                segment = segment,
+                                penaltyPerSkip = penaltyPerSkip,
+                            )
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                timelineSegmentHeader(
-                                    segment = segment,
-                                    penaltyPerSkip = penaltyPerSkip,
-                                )
-                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    segment.events.forEach { event ->
-                                        timelineEventBlock(
-                                            event = event,
-                                            onToggle = { isCorrect -> onOverride(event.index, isCorrect) },
-                                        )
-                                    }
+                                segment.events.forEach { event ->
+                                    timelineEventBlock(
+                                        event = event,
+                                        onToggle = { isCorrect -> onOverride(event.index, isCorrect) },
+                                    )
                                 }
                             }
                         }
@@ -729,6 +721,7 @@ private fun ExpandableSection(
     subtitle: String?,
     modifier: Modifier = Modifier,
     initiallyExpanded: Boolean = false,
+    contentArrangement: Arrangement.Vertical = Arrangement.spacedBy(12.dp),
     content: @Composable ColumnScope.() -> Unit,
 ) {
     var expanded by rememberSaveable { mutableStateOf(initiallyExpanded) }
@@ -785,7 +778,7 @@ private fun ExpandableSection(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = contentArrangement,
             content = content,
         )
     }
