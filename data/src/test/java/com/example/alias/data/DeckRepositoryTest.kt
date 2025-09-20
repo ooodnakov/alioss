@@ -275,7 +275,7 @@ class DeckRepositoryTest {
             hasLanguages: Int,
         ): List<WordBrief> {
             val requiredClasses = classes.map { it.uppercase() }
-            val allowedLanguages = if (hasLanguages == 0) emptySet() else languages.toSet()
+            val allowedLanguages = languages.toSet()
             return words.filter { word ->
                 deckIds.contains(word.deckId) &&
                     (allowNSFW || !word.isNSFW) &&
