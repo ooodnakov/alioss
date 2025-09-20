@@ -93,7 +93,7 @@ class DeckManagerTest {
     fun buildWordQueryFiltersSetsFlagsBasedOnSelections() {
         val settings = Settings(
             enabledDeckIds = setOf("a", "b"),
-            selectedCategories = setOf("party"),
+            selectedCategories = setOf("party", "  ", " game "),
             selectedWordClasses = setOf("verb"),
             allowNSFW = true,
             minDifficulty = 2,
@@ -105,7 +105,7 @@ class DeckManagerTest {
         assertEquals(listOf("a", "b"), filters.deckIds)
         assertEquals(1, filters.categoryFilterEnabled)
         assertEquals(1, filters.wordClassFilterEnabled)
-        assertEquals(listOf("party"), filters.categories)
+        assertEquals(listOf("party", "game"), filters.categories)
         assertEquals(listOf("VERB"), filters.wordClasses)
     }
 
@@ -123,6 +123,20 @@ class DeckManagerTest {
         assertEquals(0, filters.wordClassFilterEnabled)
         assertNull(filters.categories)
         assertNull(filters.wordClasses)
+    }
+
+    @Test
+    fun buildWordQueryFiltersDisablesCategoryFilterWhenSelectionsBlank() {
+        val settings = Settings(
+            enabledDeckIds = setOf("deck"),
+            selectedCategories = setOf("   "),
+            selectedWordClasses = emptySet(),
+        )
+
+        val filters = deckManager.buildWordQueryFilters(settings)
+
+        assertEquals(0, filters.categoryFilterEnabled)
+        assertNull(filters.categories)
     }
 
     @Test

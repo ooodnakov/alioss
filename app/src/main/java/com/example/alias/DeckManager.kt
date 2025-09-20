@@ -277,7 +277,9 @@ class DeckManager
 
         fun buildWordQueryFilters(settings: Settings, deckIdsOverride: Set<String>? = null): WordQueryFilters {
             val deckIds = (deckIdsOverride ?: settings.enabledDeckIds).toList()
-            val categories = settings.selectedCategories.toList().takeIf { it.isNotEmpty() }
+            val categories = settings.selectedCategories
+                .mapNotNull { it.trim().takeIf(String::isNotEmpty) }
+                .takeIf { it.isNotEmpty() }
             val classes = canonicalizeWordClassFilters(settings.selectedWordClasses).takeIf { it.isNotEmpty() }
             return WordQueryFilters(
                 deckIds = deckIds,
