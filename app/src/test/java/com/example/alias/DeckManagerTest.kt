@@ -7,6 +7,7 @@ import com.example.alias.data.db.DeckDao
 import com.example.alias.data.db.DeckEntity
 import com.example.alias.data.db.DifficultyBucket
 import com.example.alias.data.db.TurnHistoryDao
+import com.example.alias.data.db.TurnHistoryEntity
 import com.example.alias.data.db.WordBrief
 import com.example.alias.data.db.WordClassCount
 import com.example.alias.data.db.WordDao
@@ -32,6 +33,7 @@ class DeckManagerTest {
     private lateinit var settingsRepository: FakeSettingsRepository
     private lateinit var wordDao: FakeWordDao
     private lateinit var deckRepository: FakeDeckRepository
+    private lateinit var turnHistoryDao: FakeTurnHistoryDao
     private lateinit var bundledDeckProvider: FakeBundledDeckProvider
     private lateinit var logger: FakeDeckManagerLogger
 
@@ -43,12 +45,13 @@ class DeckManagerTest {
         deckRepository = FakeDeckRepository(wordDao)
         bundledDeckProvider = FakeBundledDeckProvider()
         logger = FakeDeckManagerLogger()
+        turnHistoryDao = FakeTurnHistoryDao(wordDao)
         deckManager = DeckManager(
             context = context,
             deckRepository = deckRepository,
             wordDao = wordDao,
             deckDao = FakeDeckDao(),
-            turnHistoryDao = FakeTurnHistoryDao(),
+            turnHistoryDao = turnHistoryDao,
             settingsRepository = settingsRepository,
             downloader = PackDownloader(OkHttpClient(), settingsRepository),
             bundledDeckProvider = bundledDeckProvider,
@@ -95,6 +98,22 @@ class DeckManagerTest {
         assertEquals(1, filters.categoryFilterEnabled)
         assertEquals(1, filters.wordClassFilterEnabled)
         assertEquals(listOf("VERB"), filters.wordClasses)
+    }
+
+    @Test
+    fun getDeckRecentWordsFiltersByDeckHistory() = runBlocking {
+        wordDao.setDeckWords("alpha", language = "en", isNsfw = false, words = listOf("apple", "banana"))
+        wordDao.setDeckWords("beta", language = "en", isNsfw = false, words = listOf("durian"))
+        turnHistoryDao.setHistory(
+            historyEntry(id = 1, word = "apple"),
+            historyEntry(id = 2, word = "durian"),
+            historyEntry(id = 3, word = "banana"),
+            historyEntry(id = 4, word = "kiwi"),
+        )
+
+        val result = deckManager.getDeckRecentWords("alpha", limit = 2)
+
+        assertEquals(listOf("banana", "apple"), result)
     }
 
     @Test
@@ -194,6 +213,17 @@ class DeckManagerTest {
         assertTrue(result.words.contains("betaWord"))
         assertTrue(result.words.none { it == "alphaWord" })
     }
+
+    private fun historyEntry(id: Long, word: String): TurnHistoryEntity =
+        TurnHistoryEntity(
+            id = id,
+            team = "team",
+            word = word,
+            correct = true,
+            skipped = false,
+            difficulty = null,
+            timestamp = id * 1_000L,
+        )
 
     private fun sampleDeckJson(
         id: String,
@@ -306,6 +336,8 @@ class DeckManagerTest {
             deckWords.remove(deckId)
         }
 
+        fun wordsForDeck(deckId: String): Set<String> = deckWords[deckId]?.words?.toSet() ?: emptySet()
+
         override suspend fun insertWords(words: List<com.example.alias.data.db.WordEntity>) =
             throw UnsupportedOperationException()
 
@@ -401,15 +433,39 @@ class DeckManagerTest {
         override suspend fun deleteAll() = Unit
     }
 
-    private class FakeTurnHistoryDao : TurnHistoryDao {
-        override suspend fun insertAll(
-            entries: List<com.example.alias.data.db.TurnHistoryEntity>,
-        ) = throw UnsupportedOperationException()
-        override fun getRecent(
-            limit: Int,
-        ): Flow<List<com.example.alias.data.db.TurnHistoryEntity>> =
-            MutableStateFlow(emptyList())
-        override suspend fun deleteAll() = Unit
+    private class FakeTurnHistoryDao(
+        private val wordDao: FakeWordDao,
+    ) : TurnHistoryDao {
+        private val history = mutableListOf<TurnHistoryEntity>()
+
+        fun setHistory(vararg entries: TurnHistoryEntity) {
+            history.clear()
+            history.addAll(entries.toList())
+        }
+
+        override suspend fun insertAll(entries: List<TurnHistoryEntity>) {
+            history += entries
+        }
+
+        override fun getRecent(limit: Int): Flow<List<TurnHistoryEntity>> =
+            MutableStateFlow(history.asReversed().take(limit))
+
+        override suspend fun getRecentWordsForDeck(deckId: String, limit: Int): List<String> {
+            if (limit <= 0) return emptyList()
+            val allowed = wordDao.wordsForDeck(deckId)
+            if (allowed.isEmpty()) return emptyList()
+            return history
+                .asReversed()
+                .asSequence()
+                .map { it.word }
+                .filter { allowed.contains(it) }
+                .take(limit)
+                .toList()
+        }
+
+        override suspend fun deleteAll() {
+            history.clear()
+        }
     }
 
     private class FakeSettingsRepository : SettingsRepository {
