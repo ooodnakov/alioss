@@ -92,12 +92,17 @@
         <item quantity="one">%d bonus streak</item>
         <item quantity="other">%d bonus streaks</item>
     </plurals>
+    <string name="turn_summary_stats_title">Turn stats</string>
     <string name="turn_summary_stat_time_label">Time used</string>
     <string name="turn_summary_stat_time_value">%1$.1fs</string>
     <string name="turn_summary_stat_time_under_second_value">&lt;1s</string>
     <string name="turn_timeline_title">Turn timeline</string>
     <string name="timeline_score_breakdown">See how the team built this round\'s score.</string>
+    <string name="timeline_graphs_title">Turn graphs</string>
+    <string name="timeline_graphs_subtitle">View score trends and pacing.</string>
     <string name="timeline_score_graph_label">Score over time</string>
+    <string name="timeline_time_between_graph_label">Time between words</string>
+    <string name="timeline_time_between_graph_average">Avg %1$.1fs between words</string>
     <string name="timeline_no_events">No words were recorded this turn.</string>
     <string name="timeline_bonus_label">Bonus</string>
     <string name="timeline_change">%1$+d</string>
@@ -110,6 +115,13 @@
     <string name="timeline_header_skip_no_penalty">No penalty applied</string>
     <string name="timeline_mark_correct">Mark correct</string>
     <string name="timeline_mark_incorrect">Mark incorrect</string>
+    <string name="timeline_breakdown_title">Word breakdown</string>
+    <string name="timeline_breakdown_subtitle">Tap any word to toggle correct or skipped.</string>
+    <string name="timeline_section_state_expanded">Expanded</string>
+    <string name="timeline_section_state_collapsed">Collapsed</string>
+    <string name="timeline_word_state_correct">Correct</string>
+    <string name="timeline_word_state_skipped">Skipped</string>
+    <string name="timeline_word_state_pending">Needs review</string>
     <plurals name="timeline_correct">
         <item quantity="one">Correct word</item>
         <item quantity="other">Correct streak ×%d</item>

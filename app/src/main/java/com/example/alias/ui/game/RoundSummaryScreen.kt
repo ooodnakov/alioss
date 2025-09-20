@@ -2,29 +2,30 @@
 
 package com.example.alias.ui.game
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AssistChip
@@ -32,16 +33,22 @@ import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -50,6 +57,9 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -82,11 +92,11 @@ fun roundSummaryScreen(vm: MainViewModel, s: GameState.TurnFinished, settings: S
                 team = s.team,
                 deltaScore = s.deltaScore,
                 matchOver = s.matchOver,
-                stats = stats,
                 deltaColor = deltaColor,
             )
         }
         item { scoreboardCard(scores = s.scores) }
+        item { turnSummaryStatsCard(stats = stats) }
         item {
             timelineCard(
                 timeline = timeline,
@@ -119,6 +129,31 @@ private fun scoreboardCard(
 }
 
 @Composable
+private fun turnSummaryStatsCard(
+    stats: TurnSummaryStats,
+    modifier: Modifier = Modifier,
+) {
+    ElevatedCard(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            Text(
+                text = stringResource(R.string.turn_summary_stats_title),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            turnSummaryStatsRow(stats = stats)
+        }
+    }
+}
+
+@Composable
 private fun timelineCard(
     timeline: TimelineData,
     penaltyPerSkip: Int,
@@ -146,7 +181,7 @@ private fun timelineCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 Column(
                     modifier = Modifier.padding(horizontal = 20.dp),
@@ -161,29 +196,51 @@ private fun timelineCard(
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.onSurfaceVariant,
                     )
-                    scoreProgressGraph(
-                        events = timeline.events,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
                 }
-                timeline.segments.forEachIndexed { segmentIndex, segment ->
-                    timelineSegmentHeader(
-                        segment = segment,
-                        modifier = Modifier.padding(horizontal = 20.dp),
-                        penaltyPerSkip = penaltyPerSkip,
-                    )
-                    segment.events.forEachIndexed { eventIndex, event ->
-                        val hasPrev = segmentIndex > 0 || eventIndex > 0
-                        val isLastSegment = segmentIndex == timeline.segments.lastIndex
-                        val isLastEventInSegment = eventIndex == segment.events.lastIndex
-                        val hasNext = !(isLastSegment && isLastEventInSegment)
-                        timelineEventRow(
-                            event = event,
-                            hasPrev = hasPrev,
-                            hasNext = hasNext,
-                            onOverride = { isCorrect -> onOverride(event.index, isCorrect) },
-                            modifier = Modifier.padding(horizontal = 20.dp),
+                ExpandableSection(
+                    title = stringResource(R.string.timeline_graphs_title),
+                    subtitle = stringResource(R.string.timeline_graphs_subtitle),
+                    modifier = Modifier.padding(horizontal = 20.dp),
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                    ) {
+                        scoreProgressGraph(
+                            events = timeline.events,
+                            modifier = Modifier.fillMaxWidth(),
                         )
+                        timeBetweenWordsGraph(
+                            events = timeline.events,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                }
+                ExpandableSection(
+                    title = stringResource(R.string.timeline_breakdown_title),
+                    subtitle = stringResource(R.string.timeline_breakdown_subtitle),
+                    modifier = Modifier.padding(horizontal = 20.dp),
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        timeline.segments.forEach { segment ->
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                timelineSegmentHeader(
+                                    segment = segment,
+                                    penaltyPerSkip = penaltyPerSkip,
+                                )
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    segment.events.forEach { event ->
+                                        timelineEventBlock(
+                                            event = event,
+                                            onToggle = { isCorrect -> onOverride(event.index, isCorrect) },
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -192,10 +249,6 @@ private fun timelineCard(
 }
 
 private const val BONUS_STREAK_THRESHOLD = 3
-private val TIMELINE_INDICATOR_CANVAS_WIDTH = 12.dp
-private val TIMELINE_INDICATOR_NODE_RADIUS = 6.dp
-private val TIMELINE_INDICATOR_VERTICAL_PADDING = 4.dp
-private const val TIMELINE_INDICATOR_CONNECTOR_ALPHA = 0.35f
 
 private enum class TimelineSegmentType { CORRECT, SKIP, PENDING }
 
@@ -228,6 +281,7 @@ private data class TurnSummaryStats(
 )
 
 private data class ScoreTimelinePoint(val time: Float, val score: Float)
+private data class TimeBetweenWordPoint(val index: Int, val seconds: Float)
 
 private fun buildTimelineData(outcomes: List<TurnOutcome>, penaltyPerSkip: Int): TimelineData {
     if (outcomes.isEmpty()) return TimelineData(emptyList(), emptyList())
@@ -324,12 +378,21 @@ private fun buildScoreProgressPoints(events: List<TimelineEvent>): List<ScoreTim
     }
 }
 
+private fun buildTimeBetweenPoints(events: List<TimelineEvent>): List<TimeBetweenWordPoint> {
+    if (events.isEmpty()) return emptyList()
+    var previous = 0L
+    return events.mapIndexed { index, event ->
+        val delta = (event.elapsedMillis - previous).coerceAtLeast(0L)
+        previous = event.elapsedMillis
+        TimeBetweenWordPoint(index = index, seconds = delta / 1000f)
+    }
+}
+
 @Composable
 private fun turnSummaryHeader(
     team: String,
     deltaScore: Int,
     matchOver: Boolean,
-    stats: TurnSummaryStats,
     deltaColor: Color,
     modifier: Modifier = Modifier,
 ) {
@@ -360,7 +423,6 @@ private fun turnSummaryHeader(
                 )
             }
             scoreChangeHighlight(deltaScore = deltaScore, deltaColor = deltaColor)
-            turnSummaryStatsRow(stats = stats)
         }
     }
 }
@@ -526,10 +588,10 @@ private fun scoreProgressGraph(events: List<TimelineEvent>, modifier: Modifier =
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(64.dp)
+                .height(180.dp)
                 .clip(RoundedCornerShape(12.dp))
                 .background(colors.surfaceVariant.copy(alpha = 0.6f))
-                .padding(horizontal = 12.dp, vertical = 8.dp),
+                .padding(horizontal = 12.dp, vertical = 12.dp),
         ) {
             Canvas(Modifier.fillMaxSize()) {
                 val xMin = points.minOf { it.time }
@@ -600,6 +662,132 @@ private fun scoreProgressGraph(events: List<TimelineEvent>, modifier: Modifier =
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun timeBetweenWordsGraph(events: List<TimelineEvent>, modifier: Modifier = Modifier) {
+    val points = remember(events) { buildTimeBetweenPoints(events) }
+    if (points.isEmpty()) return
+    val colors = MaterialTheme.colorScheme
+    val maxSeconds = (points.maxOfOrNull { it.seconds } ?: 0f).coerceAtLeast(0.5f)
+    val average = if (points.isNotEmpty()) {
+        points.sumOf { it.seconds.toDouble() }.toFloat() / points.size
+    } else {
+        0f
+    }
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(
+            text = stringResource(R.string.timeline_time_between_graph_label),
+            style = MaterialTheme.typography.labelLarge,
+            color = colors.onSurfaceVariant,
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(180.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(colors.surfaceVariant.copy(alpha = 0.6f))
+                .padding(horizontal = 12.dp, vertical = 12.dp),
+        ) {
+            Canvas(Modifier.fillMaxSize()) {
+                val count = points.size
+                val slotWidth = if (count > 0) size.width / (count * 2f) else 0f
+                val barWidth = slotWidth
+                val spacing = slotWidth
+                val heightFactor = size.height / maxSeconds
+                val averageY = size.height - (average * heightFactor).coerceIn(0f, size.height)
+                drawLine(
+                    color = colors.primary.copy(alpha = 0.35f),
+                    start = Offset(0f, averageY),
+                    end = Offset(size.width, averageY),
+                    strokeWidth = 1.dp.toPx(),
+                )
+                points.forEachIndexed { index, point ->
+                    val barHeight = (point.seconds * heightFactor).coerceIn(0f, size.height)
+                    val x = spacing / 2f + index * (barWidth + spacing)
+                    drawRoundRect(
+                        color = colors.primary,
+                        topLeft = Offset(x, size.height - barHeight),
+                        size = Size(width = barWidth, height = barHeight),
+                        cornerRadius = CornerRadius(12f, 12f),
+                    )
+                }
+            }
+        }
+        Text(
+            text = stringResource(R.string.timeline_time_between_graph_average, average),
+            style = MaterialTheme.typography.bodySmall,
+            color = colors.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
+private fun ExpandableSection(
+    title: String,
+    subtitle: String?,
+    modifier: Modifier = Modifier,
+    initiallyExpanded: Boolean = false,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    var expanded by rememberSaveable { mutableStateOf(initiallyExpanded) }
+    val rotation by animateFloatAsState(targetValue = if (expanded) 180f else 0f, label = "timelineSectionRotation")
+    val colors = MaterialTheme.colorScheme
+    val stateLabel = if (expanded) {
+        stringResource(R.string.timeline_section_state_expanded)
+    } else {
+        stringResource(R.string.timeline_section_state_collapsed)
+    }
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .semantics { stateDescription = stateLabel },
+        onClick = { expanded = !expanded },
+        role = Role.Button,
+        shape = RoundedCornerShape(20.dp),
+        color = colors.surfaceVariant.copy(alpha = if (expanded) 0.6f else 0.45f),
+        tonalElevation = if (expanded) 2.dp else 0.dp,
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                subtitle?.let {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.onSurfaceVariant,
+                    )
+                }
+            }
+            Icon(
+                imageVector = Icons.Filled.ExpandMore,
+                contentDescription = null,
+                modifier = Modifier.rotate(rotation),
+            )
+        }
+    }
+    AnimatedVisibility(visible = expanded) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            content = content,
+        )
     }
 }
 
@@ -693,119 +881,116 @@ private fun timelineSegmentHeader(
 }
 
 @Composable
-private fun timelineEventRow(
+private fun timelineEventBlock(
     event: TimelineEvent,
-    hasPrev: Boolean,
-    hasNext: Boolean,
-    onOverride: (Boolean) -> Unit,
+    onToggle: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val color = timelineColor(event.type)
+    val colors = MaterialTheme.colorScheme
+    val (containerColor, contentColor) = when (event.type) {
+        TimelineSegmentType.CORRECT -> colors.tertiaryContainer to colors.onTertiaryContainer
+        TimelineSegmentType.SKIP -> colors.errorContainer to colors.onErrorContainer
+        TimelineSegmentType.PENDING -> colors.surfaceVariant to colors.onSurface
+    }
+    val supportColor = contentColor.copy(alpha = 0.8f)
     val timeLabel = if (event.elapsedMillis <= 0L) {
         stringResource(R.string.timeline_elapsed_time_start)
     } else {
         val seconds = event.elapsedMillis / 1000f
         stringResource(R.string.timeline_elapsed_time, seconds)
     }
+    val stateLabel = when {
+        event.outcome.correct -> stringResource(R.string.timeline_word_state_correct)
+        event.outcome.skipped -> stringResource(R.string.timeline_word_state_skipped)
+        else -> stringResource(R.string.timeline_word_state_pending)
+    }
+    val stateIcon = when {
+        event.outcome.correct -> Icons.Filled.Check
+        event.outcome.skipped -> Icons.Filled.Close
+        else -> Icons.Filled.Schedule
+    }
 
-    Row(
+    Surface(
         modifier = modifier
             .fillMaxWidth()
-            .padding(top = 4.dp)
-            .height(IntrinsicSize.Min),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.Top,
+            .semantics { stateDescription = stateLabel },
+        color = containerColor,
+        contentColor = contentColor,
+        shape = RoundedCornerShape(20.dp),
+        tonalElevation = 0.dp,
+        onClick = {
+            val target = !event.outcome.correct
+            onToggle(target)
+        },
+        role = Role.Button,
     ) {
-        timelineIndicator(
-            color = color,
-            showTopConnector = hasPrev,
-            showBottomConnector = hasNext,
-        )
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                Text(
-                    event.outcome.word,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                if (event.isBonus) {
-                    AssistChip(
-                        onClick = {},
-                        enabled = false,
-                        leadingIcon = {
-                            Icon(Icons.Filled.Star, contentDescription = null, modifier = Modifier.size(14.dp))
-                        },
-                        label = { Text(stringResource(R.string.timeline_bonus_label)) },
-                        colors = AssistChipDefaults.assistChipColors(
-                            disabledContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                            disabledLabelColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                        ),
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Text(
+                        event.outcome.word,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    if (event.isBonus) {
+                        AssistChip(
+                            onClick = {},
+                            enabled = false,
+                            leadingIcon = {
+                                Icon(Icons.Filled.Star, contentDescription = null, modifier = Modifier.size(16.dp))
+                            },
+                            label = { Text(stringResource(R.string.timeline_bonus_label)) },
+                            colors = AssistChipDefaults.assistChipColors(
+                                disabledContainerColor = colors.tertiaryContainer,
+                                disabledLabelColor = colors.onTertiaryContainer,
+                            ),
+                        )
+                    }
+                }
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(R.string.timeline_change, event.change),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium,
+                    )
+                    Text(
+                        text = stringResource(R.string.timeline_running_total, event.cumulative),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = supportColor,
                     )
                 }
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = stringResource(R.string.timeline_change, event.change),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = color,
-                    fontWeight = FontWeight.Medium,
-                )
-                Text(
-                    text = stringResource(R.string.timeline_running_total, event.cumulative),
+                    text = timeLabel,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = supportColor,
                 )
             }
-            Text(
-                timeLabel,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            IconButton(onClick = { onOverride(true) }) {
-                Icon(Icons.Filled.Check, contentDescription = stringResource(R.string.timeline_mark_correct))
-            }
-            IconButton(onClick = { onOverride(false) }) {
-                Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.timeline_mark_incorrect))
-            }
-        }
-    }
-}
-
-@Composable
-private fun timelineIndicator(color: Color, showTopConnector: Boolean, showBottomConnector: Boolean) {
-    Box(
-        modifier = Modifier
-            .width(24.dp)
-            .fillMaxHeight(),
-        contentAlignment = Alignment.TopCenter,
-    ) {
-        Canvas(modifier = Modifier.fillMaxHeight().width(TIMELINE_INDICATOR_CANVAS_WIDTH)) {
-            val centerX = size.width / 2f
-            val circleRadius = TIMELINE_INDICATOR_NODE_RADIUS.toPx()
-            val centerY = circleRadius + TIMELINE_INDICATOR_VERTICAL_PADDING.toPx()
-            if (showTopConnector) {
-                drawLine(
-                    color = color.copy(alpha = TIMELINE_INDICATOR_CONNECTOR_ALPHA),
-                    start = Offset(centerX, 0f),
-                    end = Offset(centerX, centerY - circleRadius),
-                )
-            }
-            drawCircle(color = color, radius = circleRadius, center = Offset(centerX, centerY))
-            if (showBottomConnector) {
-                drawLine(
-                    color = color.copy(alpha = TIMELINE_INDICATOR_CONNECTOR_ALPHA),
-                    start = Offset(centerX, centerY + circleRadius),
-                    end = Offset(centerX, size.height),
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Icon(stateIcon, contentDescription = null, modifier = Modifier.size(20.dp))
+                Text(
+                    text = stateLabel,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Medium,
                 )
             }
         }
