@@ -153,6 +153,7 @@
     <string name="manage_trusted_sources">Trusted hosts</string>
     <string name="import_decks_action">Import decks</string>
     <string name="no_decks_call_to_action">Import a deck to start playing.</string>
+    <string name="deleted_decks">Deleted Decks</string>
     <string name="deck_filters_description">Choose which words appear in the next match.</string>
     <string name="import_sheet_title">Import decks</string>
     <string name="import_sheet_hint">Install decks from files or a trusted link.</string>

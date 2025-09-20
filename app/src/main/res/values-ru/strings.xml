@@ -175,6 +175,7 @@
     <string name="manage_trusted_sources">Доверенные хосты</string>
     <string name="import_decks_action">Импорт колод</string>
     <string name="no_decks_call_to_action">Импортируйте колоду, чтобы начать игру.</string>
+    <string name="deleted_decks">Удаленные колоды</string>
     <string name="deck_filters_description">Выберите слова для следующего матча.</string>
     <string name="import_sheet_title">Импорт колод</string>
     <string name="import_sheet_hint">Установите колоды из файлов или доверенных ссылок.</string>
