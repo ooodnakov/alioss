@@ -70,12 +70,14 @@ fun aboutScreen() {
             ElevatedCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(stringResource(R.string.links_label), style = MaterialTheme.typography.titleMedium)
+                    val sourceCodeLink = stringResource(R.string.about_source_code_link)
+                    val sourceCodeUrl = stringResource(R.string.about_source_code_url)
                     ListItem(
                         leadingContent = { Icon(Icons.Filled.Code, contentDescription = null) },
                         headlineContent = { Text(stringResource(R.string.source_code_label)) },
-                        supportingContent = { Text("github.com/ooodnakov/alias-game") },
+                        supportingContent = { Text(sourceCodeLink) },
                         trailingContent = { Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = null) },
-                        modifier = Modifier.clickable { uriHandler.openUri("https://github.com/ooodnakov/alias-game") },
+                        modifier = Modifier.clickable { uriHandler.openUri(sourceCodeUrl) },
                     )
                     HorizontalDivider()
                     ListItem(

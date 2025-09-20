@@ -443,7 +443,9 @@ private fun favoriteDecksSection(
                 if (extra > 0) {
                     AssistChip(
                         onClick = onDecks,
-                        label = { Text("+$extra") },
+                        label = {
+                            Text(stringResource(R.string.home_more_favorites, extra))
+                        },
                         colors = AssistChipDefaults.assistChipColors(
                             containerColor = contentColor.copy(alpha = 0.08f),
                             labelColor = contentColor,

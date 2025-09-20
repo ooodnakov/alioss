@@ -286,11 +286,13 @@ fun decksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
         if (deckToPermanentlyDelete != null) {
             AlertDialog(
                 onDismissRequest = { deckPendingPermanentDelete = null },
-                title = { Text("Permanently Delete Deck") },
+                title = { Text(stringResource(R.string.deck_permanent_delete_dialog_title)) },
                 text = {
                     Text(
-                        "Are you sure you want to permanently delete " +
-                            "\"${deckToPermanentlyDelete.name}\"? This action cannot be undone.",
+                        stringResource(
+                            R.string.deck_permanent_delete_dialog_message,
+                            deckToPermanentlyDelete.name,
+                        ),
                     )
                 },
                 confirmButton = {
@@ -298,7 +300,7 @@ fun decksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
                         vm.permanentlyDeleteImportedDeck(deckToPermanentlyDelete)
                         deckPendingPermanentDelete = null
                     }) {
-                        Text("Delete Permanently")
+                        Text(stringResource(R.string.deck_delete_permanently_action))
                     }
                 },
                 dismissButton = {
@@ -471,7 +473,7 @@ private fun deckCard(
                                 ) {
                                     if (deck.isOfficial) {
                                         DropdownMenuItem(
-                                            text = { Text("Hide Deck") },
+                                            text = { Text(stringResource(R.string.deck_hide_action)) },
                                             leadingIcon = {
                                                 Icon(
                                                     imageVector = Icons.Filled.Delete,
@@ -485,7 +487,9 @@ private fun deckCard(
                                         )
                                     } else {
                                         DropdownMenuItem(
-                                            text = { Text("Delete Permanently") },
+                                            text = {
+                                                Text(stringResource(R.string.deck_delete_permanently_action))
+                                            },
                                             leadingIcon = {
                                                 Icon(
                                                     imageVector = Icons.Filled.Delete,
@@ -926,19 +930,19 @@ private fun deckDeletedDecksSheet(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Text(
-            text = "Deleted Decks",
+            text = stringResource(R.string.deleted_decks),
             style = MaterialTheme.typography.titleLarge,
         )
 
         if (deletedBundledDeckIds.isEmpty()) {
             Text(
-                text = "No deleted decks",
+                text = stringResource(R.string.deck_deleted_empty),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         } else {
             Text(
-                text = "Deleted Bundled Decks (tap to restore):",
+                text = stringResource(R.string.deck_deleted_bundled_hint),
                 style = MaterialTheme.typography.titleMedium,
             )
 
@@ -947,10 +951,12 @@ private fun deckDeletedDecksSheet(
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     ListItem(
-                        headlineContent = { Text("Bundled Deck: $deckId") },
+                        headlineContent = {
+                            Text(stringResource(R.string.deck_deleted_bundled_label, deckId))
+                        },
                         trailingContent = {
                             TextButton(onClick = { onRestoreDeck(deckId) }) {
-                                Text("Restore")
+                                Text(stringResource(R.string.restore))
                             }
                         },
                         modifier = Modifier.padding(8.dp),
@@ -961,7 +967,7 @@ private fun deckDeletedDecksSheet(
             HorizontalDivider()
 
             Text(
-                text = "Note: Imported decks that are deleted are permanently removed and cannot be restored.",
+                text = stringResource(R.string.deck_deleted_imported_hint),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
