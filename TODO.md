@@ -35,10 +35,10 @@
 - Engine: add property-like tests for multi-team rotation and cumulative scoring across many turns.
 - Deck details: ensure recent words pull from games played with the selected deck.
 - Update History screen: hide filters/stats by default, add Reset History action, and align detailed game view with end-of-turn summary layout.
+- Refactor game image loading pipeline for robustness/performance. Add support for deck image as url, download it at deck import and cache it if neccesary.
 
 
 ## Backlog
-- Refactor game image loading pipeline for robustness/performance. Add support for deck image as url, download it at deck import and cache it if neccesary.
 - Tests:
   - Repository: verify re-import of the same deck does not duplicate words (and that updated decks replace content).
   - App-layer: verify last-turn outcomes are persisted when match ends (target reached or timer with no words left).

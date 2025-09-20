@@ -727,7 +727,10 @@ private fun ExpandableSection(
         stringResource(R.string.timeline_section_state_collapsed)
     }
     Surface(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .semantics { stateDescription = stateLabel }
+            .clickable(role = Role.Button) { expanded = !expanded },
         shape = RoundedCornerShape(20.dp),
         color = colors.surfaceVariant.copy(alpha = if (expanded) 0.6f else 0.45f),
         tonalElevation = if (expanded) 2.dp else 0.dp,
@@ -902,7 +905,11 @@ private fun timelineEventBlock(
         modifier = modifier
             .fillMaxWidth()
             .border(BorderStroke(1.dp, borderColor), blockShape),
-        shape = blockShape,
+            .semantics { stateDescription = stateLabel }
+            .clickable(role = Role.Button) {
+                val target = !event.outcome.correct
+                onToggle(target)
+            },
         color = containerColor,
         contentColor = contentColor,
         tonalElevation = 0.dp,

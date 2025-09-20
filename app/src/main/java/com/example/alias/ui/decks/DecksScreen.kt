@@ -1,7 +1,5 @@
 package com.example.alias.ui.decks
 
-import android.graphics.BitmapFactory
-import android.util.Base64
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -62,7 +60,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -71,8 +68,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -81,8 +76,6 @@ import androidx.compose.ui.unit.dp
 import com.example.alias.MainViewModel
 import com.example.alias.R
 import com.example.alias.data.db.DeckEntity
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.util.Locale
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
@@ -628,25 +621,6 @@ fun rememberDeckCoverBrush(deckId: String): Brush {
         listOf(DeckCoverPalette[baseIndex], DeckCoverPalette[nextIndex])
     }
     return remember(colors) { Brush.linearGradient(colors) }
-}
-
-@Composable
-fun rememberDeckCoverImage(base64: String?): ImageBitmap? {
-    val imageState = produceState<ImageBitmap?>(initialValue = null, base64) {
-        value = base64?.let { encoded ->
-            withContext(Dispatchers.IO) {
-                runCatching {
-                    val bytes = Base64.decode(encoded, Base64.DEFAULT)
-                    if (bytes.isEmpty()) {
-                        null
-                    } else {
-                        BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap()
-                    }
-                }.getOrNull()
-            }
-        }
-    }
-    return imageState.value
 }
 
 @Composable
