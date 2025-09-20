@@ -41,4 +41,3 @@
   - Repository: verify re-import of the same deck does not duplicate words (and that updated decks replace content).
   - App-layer: verify last-turn outcomes are persisted when match ends (target reached or timer with no words left).
   - Engine: property-like tests for multi-team rotation and cumulative scoring across many turns.
-- Deck language handling: remove deck language setting from Settings, add per-deck language filters in Decks, and enforce language metadata rules for mono/multi-lingual packs.

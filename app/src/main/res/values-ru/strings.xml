@@ -183,6 +183,7 @@
     <string name="deck_languages_summary">Языки в ротации: %1$s</string>
     <string name="deck_languages_none">Включите колоду, чтобы добавить её в ротацию.</string>
     <string name="open_filters">Фильтры</string>
+    <string name="languages_label">Языки</string>
     <string name="manage_trusted_sources">Доверенные хосты</string>
     <string name="import_decks_action">Импорт колод</string>
     <string name="no_decks_call_to_action">Импортируйте колоду, чтобы начать игру.</string>
@@ -192,6 +193,7 @@
     <string name="deck_deleted_bundled_label">Встроенная колода: %1$s</string>
     <string name="deck_deleted_imported_hint">Важно: импортированные колоды при удалении стираются окончательно и не могут быть восстановлены.</string>
     <string name="deck_filters_description">Выберите слова для следующего матча.</string>
+    <string name="deck_filters_no_results">Нет колод, соответствующих выбранным фильтрам.</string>
     <string name="import_sheet_title">Импорт колод</string>
     <string name="import_sheet_hint">Установите колоды из файлов или доверенных ссылок.</string>
     <string name="trusted_sources_sheet_hint">Загрузки разрешены только с доверенных хостов.</string>
@@ -260,7 +262,6 @@
     <string name="penalty_per_skip_label">Штраф за пропуск</string>
     <string name="punish_skips_label">Штраф за пропуски</string>
     <string name="language_and_content">Язык и содержимое</string>
-    <string name="language_hint">Язык (например, en или ru)</string>
     <string name="allow_nsfw_label">Разрешить 18+</string>
     <string name="feedback_and_layout">Отклик и интерфейс</string>
     <string name="haptics_label">Виброотклик</string>

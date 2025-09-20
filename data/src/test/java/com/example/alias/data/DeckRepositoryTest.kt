@@ -75,7 +75,6 @@ class DeckRepositoryTest {
         assertEquals(listOf("Gamma"), storedWords)
         val briefs = wordDao.getWordBriefsForDecks(
             deckIds = listOf(deckId),
-            language = "en",
             allowNSFW = true,
             minDifficulty = 1,
             maxDifficulty = 10,
@@ -239,7 +238,6 @@ class DeckRepositoryTest {
 
         override suspend fun getWordTextsForDecks(
             deckIds: List<String>,
-            language: String,
             allowNSFW: Boolean,
             minDifficulty: Int,
             maxDifficulty: Int,
@@ -249,7 +247,6 @@ class DeckRepositoryTest {
             hasClasses: Int,
         ): List<String> = getWordBriefsForDecks(
             deckIds = deckIds,
-            language = language,
             allowNSFW = allowNSFW,
             minDifficulty = minDifficulty,
             maxDifficulty = maxDifficulty,
@@ -261,7 +258,6 @@ class DeckRepositoryTest {
 
         override suspend fun getWordBriefsForDecks(
             deckIds: List<String>,
-            language: String,
             allowNSFW: Boolean,
             minDifficulty: Int,
             maxDifficulty: Int,
@@ -273,7 +269,6 @@ class DeckRepositoryTest {
             val requiredClasses = classes.map { it.uppercase() }
             return words.filter { word ->
                 deckIds.contains(word.deckId) &&
-                    word.language == language &&
                     (allowNSFW || !word.isNSFW) &&
                     word.difficulty in minDifficulty..maxDifficulty &&
                     (hasCategories == 0 || (word.category != null && categories.contains(word.category))) &&
@@ -298,22 +293,19 @@ class DeckRepositoryTest {
 
         override suspend fun getAvailableCategories(
             deckIds: List<String>,
-            language: String,
             allowNSFW: Boolean,
         ): List<String> =
-            words.filter { deckIds.contains(it.deckId) && it.language == language && (allowNSFW || !it.isNSFW) }
+            words.filter { deckIds.contains(it.deckId) && (allowNSFW || !it.isNSFW) }
                 .mapNotNull { it.category }
                 .distinct()
 
         override suspend fun getAvailableWordClasses(
             deckIds: List<String>,
-            language: String,
             allowNSFW: Boolean,
         ): List<String> {
             val relevantWords = words
                 .filter {
                     deckIds.contains(it.deckId) &&
-                        it.language == language &&
                         (allowNSFW || !it.isNSFW)
                 }
                 .map { it.deckId to it.text }

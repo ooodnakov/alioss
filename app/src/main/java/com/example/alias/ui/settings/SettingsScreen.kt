@@ -95,7 +95,6 @@ fun settingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () -> Unit) {
     var useScoreTarget by rememberSaveable(s) { mutableStateOf(s.scoreTargetEnabled) }
     var maxSkips by rememberSaveable(s) { mutableStateOf(s.maxSkips.toString()) }
     var penalty by rememberSaveable(s) { mutableStateOf(s.penaltyPerSkip.toString()) }
-    var lang by rememberSaveable(s) { mutableStateOf(s.languagePreference) }
     var uiLang by rememberSaveable(s) { mutableStateOf(s.uiLanguage) }
     var punishSkips by rememberSaveable(s) { mutableStateOf(s.punishSkips) }
     var nsfw by rememberSaveable(s) { mutableStateOf(s.allowNSFW) }
@@ -196,12 +195,10 @@ fun settingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () -> Unit) {
     )
     val advancedUiState = AdvancedUiState(
         uiLanguage = uiLang,
-        language = lang,
         allowNsfw = nsfw,
     )
     val advancedActions = AdvancedActions(
         onUiLanguageChange = { uiLang = it },
-        onLanguageChange = { lang = it },
         onAllowNsfwChange = { nsfw = it },
         onShowTutorialAgain = { vm.updateSeenTutorial(false) },
         onAbout = onAbout,
@@ -218,7 +215,6 @@ fun settingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () -> Unit) {
                     maxSkips = maxSkips.toIntOrNull() ?: s.maxSkips,
                     penaltyPerSkip = penalty.toIntOrNull() ?: s.penaltyPerSkip,
                     punishSkips = punishSkips,
-                    language = lang.ifBlank { s.languagePreference },
                     uiLanguage = uiLang,
                     allowNSFW = nsfw,
                     haptics = haptics,
@@ -394,13 +390,11 @@ private data class TeamsActions(
 
 private data class AdvancedUiState(
     val uiLanguage: String,
-    val language: String,
     val allowNsfw: Boolean,
 )
 
 private data class AdvancedActions(
     val onUiLanguageChange: (String) -> Unit,
-    val onLanguageChange: (String) -> Unit,
     val onAllowNsfwChange: (Boolean) -> Unit,
     val onShowTutorialAgain: () -> Unit,
     val onAbout: () -> Unit,
@@ -816,12 +810,6 @@ private fun advancedTab(
                             label = { Text(stringResource(R.string.russian_label)) },
                         )
                     }
-                    OutlinedTextField(
-                        value = state.language,
-                        onValueChange = actions.onLanguageChange,
-                        label = { Text(stringResource(R.string.language_hint)) },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
                     settingsToggleRow(
                         label = stringResource(R.string.allow_nsfw_label),
                         checked = state.allowNsfw,

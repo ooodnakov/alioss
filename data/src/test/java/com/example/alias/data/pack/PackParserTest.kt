@@ -143,6 +143,55 @@ class PackParserTest {
     }
 
     @Test
+    fun parses_multi_language_pack_with_per_word_languages() {
+        val json = """
+            {
+              "format": "alias-deck@1",
+              "deck": {"id": "multi", "name": "Multi", "language": "mul", "version": 1},
+              "words": [
+                {"text": "Hello", "language": "en"},
+                {"text": "Privet", "language": "ru"}
+              ]
+            }
+        """.trimIndent()
+
+        val parsed = PackParser.fromJson(json)
+
+        assertEquals(setOf("en", "ru"), parsed.words.map { it.language }.toSet())
+        assertEquals("mul", parsed.deck.language)
+    }
+
+    @Test
+    fun rejects_multi_language_pack_without_word_languages() {
+        val json = """
+            {
+              "format": "alias-deck@1",
+              "deck": {"id": "multi", "name": "Multi", "language": "mul", "version": 1},
+              "words": [
+                {"text": "Hello"}
+              ]
+            }
+        """.trimIndent()
+
+        assertFailsWith<IllegalArgumentException> { PackParser.fromJson(json) }
+    }
+
+    @Test
+    fun rejects_word_language_mismatch_for_single_language_pack() {
+        val json = """
+            {
+              "format": "alias-deck@1",
+              "deck": {"id": "x", "name": "X", "language": "en", "version": 1},
+              "words": [
+                {"text": "Hola", "language": "es"}
+              ]
+            }
+        """.trimIndent()
+
+        assertFailsWith<IllegalArgumentException> { PackParser.fromJson(json) }
+    }
+
+    @Test
     fun rejects_cover_image_with_excessive_dimensions() {
         val encoded = LARGE_COVER_IMAGE_BASE64
         val json = """

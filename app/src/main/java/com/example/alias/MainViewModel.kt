@@ -262,6 +262,10 @@ class MainViewModel
             viewModelScope.launch { settingsController.updateCategoriesFilter(categories) }
         }
 
+        fun updateDeckLanguagesFilter(languages: Set<String>) {
+            viewModelScope.launch { settingsController.updateDeckLanguagesFilter(languages) }
+        }
+
         fun updateWordClassesFilter(classes: Set<String>) {
             viewModelScope.launch { settingsController.updateWordClassesFilter(classes) }
         }
@@ -323,6 +327,16 @@ class MainViewModel
                     _deckDownloadProgress.value = DeckDownloadProgress(step = DeckDownloadStep.IMPORTING)
                     val text = bytes.toString(Charsets.UTF_8)
                     val result = deckManager.importPackFromJson(text)
+                    runCatching {
+                        val s = settingsController.settings.first()
+                        val canEnable = !result.isNsfw || s.allowNSFW
+                        if (canEnable) {
+                            val ids = s.enabledDeckIds.toMutableSet()
+                            if (ids.add(result.deckId)) {
+                                settingsController.setEnabledDeckIds(ids)
+                            }
+                        }
+                    }
                     _uiEvents.tryEmit(
                         UiEvent(
                             message = "Imported deck from URL",
@@ -356,7 +370,8 @@ class MainViewModel
                     val result = deckManager.importDeckFromUri(uri)
                     runCatching {
                         val s = settingsController.settings.first()
-                        if (result.language.equals(s.languagePreference, ignoreCase = true)) {
+                        val canEnable = !result.isNsfw || s.allowNSFW
+                        if (canEnable) {
                             val ids = s.enabledDeckIds.toMutableSet()
                             if (ids.add(result.deckId)) {
                                 settingsController.setEnabledDeckIds(ids)
@@ -383,25 +398,7 @@ class MainViewModel
         }
 
         suspend fun updateSettings(request: SettingsUpdateRequest) {
-            val result = settingsController.applySettingsUpdate(request)
-            result.languageErrorMessage?.let { error ->
-                _uiEvents.tryEmit(
-                    UiEvent(
-                        message = error,
-                        duration = SnackbarDuration.Short,
-                        isError = true,
-                    ),
-                )
-            }
-            result.languageChange?.let { change ->
-                _uiEvents.tryEmit(
-                    UiEvent(
-                        message = "Enabled ${change.newDeckIds.size} deck(s) for ${change.language}",
-                        actionLabel = "Undo",
-                        onAction = { settingsController.setEnabledDeckIds(change.previousDeckIds) },
-                    ),
-                )
-            }
+            settingsController.applySettingsUpdate(request)
             _uiEvents.tryEmit(UiEvent(message = "Settings updated", actionLabel = "Dismiss"))
         }
 
