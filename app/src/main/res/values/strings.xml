@@ -103,6 +103,10 @@
     <string name="timeline_score_graph_label">Score over time</string>
     <string name="timeline_time_between_graph_label">Time between words</string>
     <string name="timeline_time_between_graph_average">Avg %1$.1fs between words</string>
+    <string name="timeline_graph_axis_word_order">Word order</string>
+    <string name="timeline_graph_axis_elapsed_seconds">Elapsed time (s)</string>
+    <string name="timeline_graph_axis_cumulative_score">Cumulative score</string>
+    <string name="timeline_graph_axis_seconds_per_word">Seconds per word</string>
     <string name="timeline_no_events">No words were recorded this turn.</string>
     <string name="timeline_bonus_label">Bonus</string>
     <string name="timeline_change">%1$+d</string>
