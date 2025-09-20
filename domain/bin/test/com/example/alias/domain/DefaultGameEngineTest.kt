@@ -4,6 +4,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
+import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -14,11 +15,13 @@ import kotlin.test.assertTrue
 class DefaultGameEngineTest {
     private val config =
         MatchConfig(
-            targetWords = 4,
+            goal = MatchGoal(MatchGoalType.TARGET_WORDS, target = 4),
             maxSkips = 1,
             penaltyPerSkip = 1,
             roundSeconds = 5,
         )
+
+    private fun wordGoal(target: Int) = MatchGoal(MatchGoalType.TARGET_WORDS, target)
 
     @Test
     fun `shuffles deterministically`() =
@@ -52,12 +55,13 @@ class DefaultGameEngineTest {
     fun `pending state exposes scoreboard and remaining count`() =
         runTest {
             val engine = DefaultGameEngine(listOf("a", "b", "c"), this)
-            val cfg = config.copy(targetWords = 2, roundSeconds = 5)
+            val cfg = config.copy(goal = wordGoal(2), roundSeconds = 5)
             engine.startMatch(cfg, teams = listOf("Team"), seed = 0L)
 
             var pending = assertIs<GameState.TurnPending>(engine.state.value)
             assertEquals(mapOf("Team" to 0), pending.scores)
-            assertEquals(2, pending.remainingToWin)
+            assertEquals(MatchGoalType.TARGET_WORDS, pending.goal.type)
+            assertEquals(2, pending.remainingToGoal)
 
             engine.startTurn()
             engine.correct()
@@ -69,7 +73,7 @@ class DefaultGameEngineTest {
             engine.nextTurn()
             pending = assertIs<GameState.TurnPending>(engine.state.value)
             assertEquals(mapOf("Team" to 1), pending.scores)
-            assertEquals(1, pending.remainingToWin)
+            assertEquals(1, pending.remainingToGoal)
         }
 
     @Test
@@ -101,7 +105,7 @@ class DefaultGameEngineTest {
     fun `timer counts down and finishes`() =
         runTest {
             val engine = DefaultGameEngine(listOf("a"), this)
-            val shortConfig = config.copy(targetWords = 1, roundSeconds = 2)
+            val shortConfig = config.copy(goal = wordGoal(1), roundSeconds = 2)
             engine.startMatch(shortConfig, teams = listOf("t"), seed = 0L)
 
             engine.startTurn()
@@ -118,7 +122,7 @@ class DefaultGameEngineTest {
     fun `override from skip to correct restores penalty`() =
         runTest {
             val engine = DefaultGameEngine(listOf("a"), this)
-            val cfg = config.copy(targetWords = 1, maxSkips = 1, penaltyPerSkip = 2, roundSeconds = 5)
+            val cfg = config.copy(goal = wordGoal(1), maxSkips = 1, penaltyPerSkip = 2, roundSeconds = 5)
             engine.startMatch(cfg, teams = listOf("t"), seed = 0L)
 
             engine.startTurn()
@@ -134,14 +138,14 @@ class DefaultGameEngineTest {
             // Change should be +3 (restore 2 penalty + 1 correct) -> total +1
             assertEquals(1, updated.deltaScore)
             assertEquals(1, updated.scores["t"]) // team total
-            assertTrue(updated.matchOver) // reached targetWords
+            assertTrue(updated.matchOver) // reached goal
         }
 
     @Test
     fun `override from correct to incorrect applies penalty`() =
         runTest {
             val engine = DefaultGameEngine(listOf("a"), this)
-            val cfg = config.copy(targetWords = 2, maxSkips = 1, penaltyPerSkip = 2, roundSeconds = 5)
+            val cfg = config.copy(goal = wordGoal(2), maxSkips = 1, penaltyPerSkip = 2, roundSeconds = 5)
             engine.startMatch(cfg, teams = listOf("t"), seed = 0L)
 
             engine.startTurn()
@@ -162,7 +166,7 @@ class DefaultGameEngineTest {
     fun `timer appends pending word without penalty`() =
         runTest {
             val engine = DefaultGameEngine(listOf("a"), this)
-            val cfg = config.copy(targetWords = 2, maxSkips = 1, penaltyPerSkip = 1, roundSeconds = 1)
+            val cfg = config.copy(goal = wordGoal(2), maxSkips = 1, penaltyPerSkip = 1, roundSeconds = 1)
             engine.startMatch(cfg, teams = listOf("t"), seed = 0L)
 
             engine.startTurn()
@@ -183,7 +187,7 @@ class DefaultGameEngineTest {
         runTest {
             val words = listOf("a", "b", "c", "d")
             val engine = DefaultGameEngine(words, this)
-            val short = config.copy(targetWords = 2, roundSeconds = 1)
+            val short = config.copy(goal = wordGoal(2), roundSeconds = 1)
             engine.startMatch(short, teams = listOf("A", "B"), seed = 0L)
 
             engine.startTurn()
@@ -210,7 +214,7 @@ class DefaultGameEngineTest {
         runTest {
             val words = listOf("apple", "banana")
             val engine = DefaultGameEngine(words, this)
-            val short = config.copy(targetWords = 2, roundSeconds = 10)
+            val short = config.copy(goal = wordGoal(2), roundSeconds = 10)
             engine.startMatch(short, teams = listOf("Team"), seed = 0L)
 
             engine.startTurn()
@@ -239,7 +243,7 @@ class DefaultGameEngineTest {
     fun `override to correct finishes match when crossing target`() =
         runTest {
             val engine = DefaultGameEngine(listOf("apple", "banana"), this)
-            val cfg = config.copy(targetWords = 1, maxSkips = 1, penaltyPerSkip = 1, roundSeconds = 5)
+            val cfg = config.copy(goal = wordGoal(1), maxSkips = 1, penaltyPerSkip = 1, roundSeconds = 5)
             engine.startMatch(cfg, teams = listOf("Team"), seed = 0L)
 
             engine.startTurn()
@@ -278,7 +282,7 @@ class DefaultGameEngineTest {
     fun `override to incorrect reopens match when dropping below target`() =
         runTest {
             val engine = DefaultGameEngine(listOf("apple", "banana"), this)
-            val cfg = config.copy(targetWords = 1, maxSkips = 1, penaltyPerSkip = 1, roundSeconds = 5)
+            val cfg = config.copy(goal = wordGoal(1), maxSkips = 1, penaltyPerSkip = 1, roundSeconds = 5)
             engine.startMatch(cfg, teams = listOf("Team"), seed = 0L)
 
             engine.startTurn()
@@ -306,7 +310,7 @@ class DefaultGameEngineTest {
         runTest {
             val engine = DefaultGameEngine(listOf("a", "b"), this)
             val cfg =
-                config.copy(targetWords = 2, maxSkips = 0, penaltyPerSkip = 0, roundSeconds = 1)
+                config.copy(goal = wordGoal(2), maxSkips = 0, penaltyPerSkip = 0, roundSeconds = 1)
             engine.startMatch(cfg, teams = listOf("Team"), seed = 0L)
 
             engine.startTurn()
@@ -324,11 +328,57 @@ class DefaultGameEngineTest {
         }
 
     @Test
+    fun `score goal ends match when target reached`() =
+        runTest {
+            val engine = DefaultGameEngine(listOf("a", "b", "c"), this)
+            val cfg = config.copy(goal = MatchGoal(MatchGoalType.TARGET_SCORE, target = 2))
+            engine.startMatch(cfg, teams = listOf("Team"), seed = 0L)
+
+            val pending = assertIs<GameState.TurnPending>(engine.state.value)
+            assertEquals(MatchGoalType.TARGET_SCORE, pending.goal.type)
+            assertEquals(2, pending.remainingToGoal)
+
+            engine.startTurn()
+            var active = assertIs<GameState.TurnActive>(engine.state.value)
+            assertEquals(MatchGoalType.TARGET_SCORE, active.goal.type)
+
+            engine.correct()
+            active = assertIs<GameState.TurnActive>(engine.state.value)
+            assertEquals(1, active.score)
+            assertEquals(1, active.remainingToGoal)
+
+            engine.correct()
+            val finished = assertIs<GameState.TurnFinished>(engine.state.value)
+            assertTrue(finished.matchOver)
+            assertEquals(2, finished.scores["Team"])
+        }
+
+    @Test
+    fun `score goal override to incorrect reopens match`() =
+        runTest {
+            val engine = DefaultGameEngine(listOf("a", "b", "c"), this)
+            val cfg = config.copy(goal = MatchGoal(MatchGoalType.TARGET_SCORE, target = 2), penaltyPerSkip = 0)
+            engine.startMatch(cfg, teams = listOf("Team"), seed = 0L)
+
+            engine.startTurn()
+            engine.correct()
+            engine.correct()
+
+            val finished = assertIs<GameState.TurnFinished>(engine.state.value)
+            assertTrue(finished.matchOver)
+
+            engine.overrideOutcome(0, false)
+            val updated = assertIs<GameState.TurnFinished>(engine.state.value)
+            assertFalse(updated.matchOver)
+            assertEquals(1, updated.scores["Team"])
+        }
+
+    @Test
     fun `match finishes when queue empties before reaching target`() =
         runTest {
             val words = listOf("apple", "banana")
             val engine = DefaultGameEngine(words, this)
-            val cfg = config.copy(targetWords = 3, roundSeconds = 10)
+            val cfg = config.copy(goal = wordGoal(3), roundSeconds = 10)
             engine.startMatch(cfg, teams = listOf("Solo"), seed = 0L)
 
             engine.startTurn()
@@ -344,5 +394,101 @@ class DefaultGameEngineTest {
 
             engine.nextTurn()
             assertIs<GameState.MatchFinished>(engine.state.value)
+        }
+
+    @Test
+    fun `rotates teams consistently across many turns`() =
+        runTest {
+            val teams = listOf("Red", "Blue", "Green")
+            val words = List(120) { "word$it" }
+            val engine = DefaultGameEngine(words, this)
+            val cfg =
+                config.copy(
+                    goal = MatchGoal(MatchGoalType.TARGET_SCORE, target = 999),
+                    maxSkips = 0,
+                    penaltyPerSkip = 0,
+                    roundSeconds = 1,
+                )
+            engine.startMatch(cfg, teams = teams, seed = 42L)
+
+            val observedOrder = mutableListOf<String>()
+            val rounds = 10
+            val expectedOrder = List(rounds * teams.size) { teams[it % teams.size] }
+
+            repeat(rounds * teams.size) {
+                val pending = assertIs<GameState.TurnPending>(engine.state.value)
+                observedOrder += pending.team
+
+                engine.startTurn()
+                advanceTimeBy(cfg.roundSeconds * 1000L)
+                runCurrent()
+
+                val finished = assertIs<GameState.TurnFinished>(engine.state.value)
+                assertEquals(pending.team, finished.team)
+                assertFalse(finished.matchOver)
+
+                engine.nextTurn()
+            }
+
+            assertEquals(expectedOrder, observedOrder)
+            val nextPending = assertIs<GameState.TurnPending>(engine.state.value)
+            assertEquals(teams[0], nextPending.team)
+        }
+
+    @Test
+    fun `cumulative scores stay in sync across many turns`() =
+        runTest {
+            val teams = listOf("Alpha", "Beta")
+            val random = Random(1234)
+            val words = List(500) { "word$it" }
+            val engine = DefaultGameEngine(words, this)
+            val cfg =
+                config.copy(
+                    goal = MatchGoal(MatchGoalType.TARGET_SCORE, target = 500),
+                    maxSkips = 2,
+                    penaltyPerSkip = 2,
+                    roundSeconds = 2,
+                )
+            engine.startMatch(cfg, teams = teams, seed = 99L)
+
+            val cumulative = mutableMapOf<String, Int>()
+            teams.forEach { cumulative[it] = 0 }
+
+            repeat(40) {
+                val pending = assertIs<GameState.TurnPending>(engine.state.value)
+                val team = pending.team
+
+                engine.startTurn()
+
+                var correctCount = 0
+                var skipCount = 0
+                val actions = random.nextInt(from = 1, until = 5)
+                repeat(actions) {
+                    assertIs<GameState.TurnActive>(engine.state.value)
+                    val useSkip = skipCount < cfg.maxSkips && random.nextBoolean()
+                    if (useSkip) {
+                        engine.skip()
+                        skipCount++
+                    } else {
+                        engine.correct()
+                        correctCount++
+                    }
+                }
+
+                advanceTimeBy(cfg.roundSeconds * 1000L)
+                runCurrent()
+
+                val finished = assertIs<GameState.TurnFinished>(engine.state.value)
+                assertEquals(team, finished.team)
+
+                val expectedDelta = correctCount - (skipCount * cfg.penaltyPerSkip)
+                assertEquals(expectedDelta, finished.deltaScore)
+
+                cumulative[team] = cumulative.getValue(team) + expectedDelta
+                teams.forEach { name -> assertEquals(cumulative.getValue(name), finished.scores.getValue(name)) }
+
+                assertFalse(finished.matchOver)
+                engine.nextTurn()
+            }
         }
 }
