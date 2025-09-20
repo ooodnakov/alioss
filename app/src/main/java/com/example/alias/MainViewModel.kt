@@ -336,6 +336,8 @@ class MainViewModel
                                 settingsController.setEnabledDeckIds(ids)
                             }
                         }
+                    }.onFailure {
+                        Log.e(TAG, "Failed to auto-enable deck after URL import", it)
                     }
                     _uiEvents.tryEmit(
                         UiEvent(

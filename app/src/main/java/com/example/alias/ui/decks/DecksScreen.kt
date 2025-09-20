@@ -112,19 +112,19 @@ fun decksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
     var selectedLanguages by rememberSaveable(settings) { mutableStateOf(settings.selectedDeckLanguages) }
 
     val normalizedLanguageFilter = remember(selectedLanguages) {
-        selectedLanguages.map { it.lowercase(Locale.getDefault()) }.toSet()
+        selectedLanguages.map { it.lowercase(Locale.ROOT) }.toSet()
     }
     val filteredDecks = remember(decks, normalizedLanguageFilter) {
         if (normalizedLanguageFilter.isEmpty()) {
             decks
         } else {
             decks.filter { deck ->
-                normalizedLanguageFilter.contains(deck.language.lowercase(Locale.getDefault()))
+                normalizedLanguageFilter.contains(deck.language.lowercase(Locale.ROOT))
             }
         }
     }
     val availableLanguages = remember(decks) {
-        decks.map { it.language.lowercase(Locale.getDefault()) }
+        decks.map { it.language.lowercase(Locale.ROOT) }
             .filter { it.isNotBlank() }
             .toSet()
             .sorted()
@@ -256,13 +256,13 @@ fun decksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
                     deckDownloadCard(progress)
                 }
             }
-            if (filteredDecks.isEmpty()) {
+            if (decks.isEmpty()) {
                 item(span = { GridItemSpan(maxLineSpan) }) {
-                    if (decks.isEmpty()) {
-                        emptyDecksState(onImportClick = { activeSheet = DeckSheet.IMPORT })
-                    } else {
-                        filteredDecksEmptyState(onAdjustFilters = { activeSheet = DeckSheet.FILTERS })
-                    }
+                    emptyDecksState(onImportClick = { activeSheet = DeckSheet.IMPORT })
+                }
+            } else if (filteredDecks.isEmpty()) {
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    filteredDecksEmptyState(onAdjustFilters = { activeSheet = DeckSheet.FILTERS })
                 }
             } else {
                 items(filteredDecks, key = { it.id }) { deck ->
