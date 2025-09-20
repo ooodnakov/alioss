@@ -145,7 +145,10 @@ fun aliasNavHost(
             appScaffold(snackbarHostState = snackbarHostState) {
                 val historyFlow = remember { viewModel.recentHistory(HISTORY_LIMIT) }
                 val history by historyFlow.collectAsState(initial = emptyList())
-                historyScreen(history)
+                historyScreen(
+                    history = history,
+                    onResetHistory = { viewModel.resetHistory() },
+                )
             }
         }
         composable("about") {

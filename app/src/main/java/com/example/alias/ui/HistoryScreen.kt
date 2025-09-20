@@ -3,6 +3,7 @@ package com.example.alias.ui
 import android.text.format.DateUtils
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,19 +21,21 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -54,6 +57,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.alias.R
 import com.example.alias.data.db.TurnHistoryEntity
@@ -65,7 +69,35 @@ private const val SPARKLINE_STROKE_WIDTH = 4f
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun historyScreen(history: List<TurnHistoryEntity>) {
+fun historyScreen(
+    history: List<TurnHistoryEntity>,
+    onResetHistory: () -> Unit,
+) {
+    var showResetDialog by rememberSaveable { mutableStateOf(false) }
+
+    if (showResetDialog) {
+        AlertDialog(
+            onDismissRequest = { showResetDialog = false },
+            title = { Text(stringResource(R.string.history_reset_dialog_title)) },
+            text = { Text(stringResource(R.string.history_reset_dialog_message)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showResetDialog = false
+                        onResetHistory()
+                    },
+                ) {
+                    Text(stringResource(R.string.history_reset_dialog_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showResetDialog = false }) {
+                    Text(stringResource(R.string.history_reset_dialog_cancel))
+                }
+            },
+        )
+    }
+
     if (history.isEmpty()) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text(stringResource(R.string.no_history))
@@ -79,7 +111,7 @@ fun historyScreen(history: List<TurnHistoryEntity>) {
 
     val filterState = rememberHistoryFilterState()
     val filterListener = rememberHistoryFilterListener(filterState)
-    var headerExpanded by rememberSaveable { mutableStateOf(true) }
+    var headerExpanded by rememberSaveable { mutableStateOf(false) }
 
     val filtered = remember(
         sorted,
@@ -109,23 +141,35 @@ fun historyScreen(history: List<TurnHistoryEntity>) {
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(stringResource(R.string.title_history), style = MaterialTheme.typography.headlineSmall)
-            TextButton(onClick = { headerExpanded = !headerExpanded }) {
-                val (labelRes, icon) = if (headerExpanded) {
-                    R.string.history_hide_header to Icons.Filled.KeyboardArrowUp
-                } else {
-                    R.string.history_show_header to Icons.Filled.KeyboardArrowDown
+            Text(
+                stringResource(R.string.title_history),
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.headlineSmall,
+            )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                TextButton(onClick = { headerExpanded = !headerExpanded }) {
+                    val (labelRes, icon) = if (headerExpanded) {
+                        R.string.history_hide_header to Icons.Filled.KeyboardArrowUp
+                    } else {
+                        R.string.history_show_header to Icons.Filled.KeyboardArrowDown
+                    }
+                    val toggleLabel = stringResource(labelRes)
+                    Text(toggleLabel)
+                    Spacer(Modifier.width(4.dp))
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = toggleLabel,
+                    )
                 }
-                val toggleLabel = stringResource(labelRes)
-                Text(toggleLabel)
-                Spacer(Modifier.width(4.dp))
-                Icon(
-                    imageVector = icon,
-                    contentDescription = toggleLabel,
-                )
+                TextButton(onClick = { showResetDialog = true }) {
+                    Text(stringResource(R.string.history_reset_action))
+                }
             }
         }
         AnimatedVisibility(visible = headerExpanded) {
@@ -381,23 +425,21 @@ private fun sparkline(values: List<Float>, modifier: Modifier = Modifier) {
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun historyEntryCard(entry: TurnHistoryEntity) {
+    val colors = MaterialTheme.colorScheme
     val visuals = when {
-        entry.correct -> ResultVisuals(
+        entry.correct -> HistoryEntryVisuals(
             icon = Icons.Filled.Check,
-            container = MaterialTheme.colorScheme.tertiaryContainer,
-            content = MaterialTheme.colorScheme.onTertiaryContainer,
+            accent = colors.tertiary,
             labelRes = R.string.history_result_correct,
         )
-        entry.skipped -> ResultVisuals(
+        entry.skipped -> HistoryEntryVisuals(
             icon = Icons.Filled.Close,
-            container = MaterialTheme.colorScheme.errorContainer,
-            content = MaterialTheme.colorScheme.onErrorContainer,
+            accent = colors.error,
             labelRes = R.string.history_result_skipped,
         )
-        else -> ResultVisuals(
+        else -> HistoryEntryVisuals(
             icon = Icons.Filled.Close,
-            container = MaterialTheme.colorScheme.secondaryContainer,
-            content = MaterialTheme.colorScheme.onSecondaryContainer,
+            accent = colors.outline,
             labelRes = R.string.history_result_missed,
         )
     }
@@ -409,55 +451,67 @@ private fun historyEntryCard(entry: TurnHistoryEntity) {
         ).toString()
     }
     val chipColors = AssistChipDefaults.assistChipColors(
-        disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-        disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        disabledContainerColor = colors.surfaceVariant,
+        disabledLabelColor = colors.onSurfaceVariant,
     )
+    val containerColor = visuals.accent.copy(alpha = 0.12f)
+    val borderColor = visuals.accent.copy(alpha = 0.35f)
 
-    ElevatedCard {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.Top,
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        color = containerColor,
+        contentColor = colors.onSurface,
+        tonalElevation = 1.dp,
+        border = BorderStroke(1.dp, borderColor),
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .padding(top = 4.dp),
-                contentAlignment = Alignment.Center,
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                ElevatedCard(colors = CardDefaults.elevatedCardColors(containerColor = visuals.container)) {
-                    Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
-                        Icon(visuals.icon, contentDescription = null, tint = visuals.content)
-                    }
-                }
-            }
-            Spacer(Modifier.width(16.dp))
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Text(entry.word, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                Text(
-                    relativeTime,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                Icon(
+                    imageVector = visuals.icon,
+                    contentDescription = null,
+                    tint = visuals.accent,
+                    modifier = Modifier.size(28.dp),
                 )
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
-                    AssistChip(onClick = {}, enabled = false, colors = chipColors, label = { Text(entry.team) })
-                    val difficultyLabel = entry.difficulty?.let { stringResource(R.string.word_difficulty_value, it) }
-                        ?: stringResource(R.string.history_filter_unknown_difficulty)
-                    AssistChip(onClick = {}, enabled = false, colors = chipColors, label = { Text(difficultyLabel) })
-                    AssistChip(
-                        onClick = {},
-                        enabled = false,
-                        colors = chipColors,
-                        label = { Text(stringResource(visuals.labelRes)) },
+                    Text(
+                        entry.word,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(
+                        relativeTime,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.onSurfaceVariant,
                     )
                 }
+                Text(
+                    text = stringResource(visuals.labelRes),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = visuals.accent,
+                    fontWeight = FontWeight.Medium,
+                )
+            }
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                AssistChip(onClick = {}, enabled = false, colors = chipColors, label = { Text(entry.team) })
+                val difficultyLabel = entry.difficulty?.let { stringResource(R.string.word_difficulty_value, it) }
+                    ?: stringResource(R.string.history_filter_unknown_difficulty)
+                AssistChip(onClick = {}, enabled = false, colors = chipColors, label = { Text(difficultyLabel) })
             }
         }
     }
@@ -546,9 +600,8 @@ private enum class ResultFilter(
     Missed(R.string.history_result_missed),
 }
 
-private data class ResultVisuals(
+private data class HistoryEntryVisuals(
     val icon: ImageVector,
-    val container: Color,
-    val content: Color,
+    val accent: Color,
     @StringRes val labelRes: Int,
 )

@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.Flow
 interface TurnHistoryRepository {
     suspend fun save(entries: List<TurnHistoryEntity>)
     fun getRecent(limit: Int): Flow<List<TurnHistoryEntity>>
+    suspend fun clear()
 }
 
 class TurnHistoryRepositoryImpl(
@@ -17,4 +18,8 @@ class TurnHistoryRepositoryImpl(
     }
 
     override fun getRecent(limit: Int): Flow<List<TurnHistoryEntity>> = dao.getRecent(limit)
+
+    override suspend fun clear() {
+        dao.deleteAll()
+    }
 }
