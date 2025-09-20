@@ -69,6 +69,8 @@ class DeckManager
             val categoryFilterEnabled: Int,
             val wordClasses: List<String>,
             val wordClassFilterEnabled: Int,
+            val languages: List<String>,
+            val languageFilterEnabled: Int,
         )
 
         data class PackImportResult(
@@ -216,6 +218,7 @@ class DeckManager
         data class WordClassAvailabilityKey(
             val deckIds: Set<String>,
             val allowNSFW: Boolean,
+            val languages: Set<String>,
         )
 
         fun observeDecks(): Flow<List<DeckEntity>> {
@@ -279,6 +282,7 @@ class DeckManager
             val deckIds = (deckIdsOverride ?: settings.enabledDeckIds).toList()
             val categories = settings.selectedCategories.toList()
             val classes = canonicalizeWordClassFilters(settings.selectedWordClasses)
+            val languages = settings.selectedDeckLanguages.toList()
             return WordQueryFilters(
                 deckIds = deckIds,
                 allowNSFW = settings.allowNSFW,
@@ -288,6 +292,8 @@ class DeckManager
                 categoryFilterEnabled = if (categories.isEmpty()) 0 else 1,
                 wordClasses = classes,
                 wordClassFilterEnabled = if (classes.isEmpty()) 0 else 1,
+                languages = languages,
+                languageFilterEnabled = if (languages.isEmpty()) 0 else 1,
             )
         }
 
@@ -303,6 +309,8 @@ class DeckManager
                     filters.categoryFilterEnabled,
                     filters.wordClasses,
                     filters.wordClassFilterEnabled,
+                    filters.languages,
+                    filters.languageFilterEnabled,
                 )
             }
         }
@@ -323,13 +331,25 @@ class DeckManager
                             filters.categoryFilterEnabled,
                             filters.wordClasses,
                             filters.wordClassFilterEnabled,
+                            filters.languages,
+                            filters.languageFilterEnabled,
                         )
                     }
                     val categoriesDeferred = async {
-                        wordDao.getAvailableCategories(filters.deckIds, filters.allowNSFW)
+                        wordDao.getAvailableCategories(
+                            filters.deckIds,
+                            filters.allowNSFW,
+                            filters.languages,
+                            filters.languageFilterEnabled,
+                        )
                     }
                     val classesDeferred = async {
-                        wordDao.getAvailableWordClasses(filters.deckIds, filters.allowNSFW)
+                        wordDao.getAvailableWordClasses(
+                            filters.deckIds,
+                            filters.allowNSFW,
+                            filters.languages,
+                            filters.languageFilterEnabled,
+                        )
                     }
                     val briefs = briefsDeferred.await()
                     val categories = categoriesDeferred.await().sorted()
@@ -501,13 +521,20 @@ class DeckManager
             WordClassAvailabilityKey(
                 deckIds = settings.enabledDeckIds,
                 allowNSFW = settings.allowNSFW,
+                languages = settings.selectedDeckLanguages,
             )
 
         suspend fun loadAvailableWordClasses(key: WordClassAvailabilityKey): List<String> {
             val ids = key.deckIds.toList()
             if (ids.isEmpty()) return emptyList()
+            val languages = key.languages.toList()
             val classes = withContext(Dispatchers.IO) {
-                wordDao.getAvailableWordClasses(ids, key.allowNSFW)
+                wordDao.getAvailableWordClasses(
+                    ids,
+                    key.allowNSFW,
+                    languages,
+                    if (languages.isEmpty()) 0 else 1,
+                )
             }
             return canonicalizeWordClassFilters(classes)
         }

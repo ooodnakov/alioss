@@ -81,7 +81,7 @@ class DeckManagerTest {
     @Test
     fun loadAvailableWordClassesCanonicalizesValues() = runBlocking {
         wordDao.availableWordClasses = listOf("verb", "unknown", "Adj")
-        val key = DeckManager.WordClassAvailabilityKey(setOf("deck"), allowNSFW = false)
+        val key = DeckManager.WordClassAvailabilityKey(setOf("deck"), allowNSFW = false, languages = emptySet())
 
         val classes = deckManager.loadAvailableWordClasses(key)
 
@@ -94,6 +94,7 @@ class DeckManagerTest {
             enabledDeckIds = setOf("a", "b"),
             selectedCategories = setOf("party"),
             selectedWordClasses = setOf("verb"),
+            selectedDeckLanguages = setOf("en"),
             allowNSFW = true,
             minDifficulty = 2,
             maxDifficulty = 4,
@@ -105,6 +106,24 @@ class DeckManagerTest {
         assertEquals(1, filters.categoryFilterEnabled)
         assertEquals(1, filters.wordClassFilterEnabled)
         assertEquals(listOf("VERB"), filters.wordClasses)
+        assertEquals(listOf("en"), filters.languages)
+        assertEquals(1, filters.languageFilterEnabled)
+    }
+
+    @Test
+    fun loadWordsRespectsLanguageFilter() = runBlocking {
+        wordDao.setDeckWords("english", language = "en", isNsfw = false, words = listOf("apple"))
+        wordDao.setDeckWords("french", language = "fr", isNsfw = false, words = listOf("pomme"))
+
+        val settings = Settings(
+            enabledDeckIds = linkedSetOf("english", "french"),
+            selectedDeckLanguages = setOf("en"),
+        )
+
+        val filters = deckManager.buildWordQueryFilters(settings)
+        val words = deckManager.loadWords(filters)
+
+        assertEquals(listOf("apple"), words)
     }
 
     @Test
@@ -432,12 +451,17 @@ class DeckManagerTest {
             hasCategories: Int,
             classes: List<String>,
             hasClasses: Int,
+            languages: List<String>,
+            hasLanguages: Int,
         ): List<String> {
+            val allowedLanguages = if (hasLanguages == 0) emptySet() else languages.toSet()
             return deckIds.flatMap { id ->
                 val info = deckWords[id]
                 if (info == null) {
                     emptyList()
                 } else if (!allowNSFW && info.isNsfw) {
+                    emptyList()
+                } else if (hasLanguages == 1 && !allowedLanguages.contains(info.language)) {
                     emptyList()
                 } else {
                     info.words
@@ -454,18 +478,24 @@ class DeckManagerTest {
             hasCategories: Int,
             classes: List<String>,
             hasClasses: Int,
+            languages: List<String>,
+            hasLanguages: Int,
         ): List<WordBrief> =
             throw UnsupportedOperationException()
 
         override suspend fun getAvailableCategories(
             deckIds: List<String>,
             allowNSFW: Boolean,
+            languages: List<String>,
+            hasLanguages: Int,
         ): List<String> =
             throw UnsupportedOperationException()
 
         override suspend fun getAvailableWordClasses(
             deckIds: List<String>,
             allowNSFW: Boolean,
+            languages: List<String>,
+            hasLanguages: Int,
         ): List<String> =
             availableWordClasses
 
