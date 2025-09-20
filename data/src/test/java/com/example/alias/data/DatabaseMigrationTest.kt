@@ -7,7 +7,8 @@ import com.example.alias.data.db.MIGRATION_3_4
 import com.example.alias.data.db.MIGRATION_4_5
 import com.example.alias.data.db.MIGRATION_5_6
 import com.example.alias.data.db.MIGRATION_6_7
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4

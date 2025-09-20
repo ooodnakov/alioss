@@ -218,7 +218,7 @@ class DeckManagerTest {
               },
               "words":[ $wordsJson ]
             }
-        """.trimIndent()
+            """.trimIndent()
     }
 
     private fun sha256(content: String): String {

@@ -12,10 +12,6 @@ processors:
 
 console-reports:
   active: true
-  exclude:
-    - 'ProjectStatisticsReport'
-    - 'ComplexityReport'
-    - 'NotificationReport'
 
 # ===== RULE SETS =====
 

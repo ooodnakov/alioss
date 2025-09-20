@@ -12,6 +12,10 @@ plugins {
     alias(libs.plugins.spotless)
 }
 
+dependencies {
+    detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.23.8")
+}
+
 subprojects {
     apply(plugin = "io.gitlab.arturbosch.detekt")
 
@@ -50,20 +54,17 @@ subprojects {
             kotlin {
                 target("src/**/*.kt")
                 targetExclude("**/build/**", "**/generated/**")
-                ktlint().editorConfigOverride(
-                    mapOf(
-                        "ktlint_standard_function-naming" to "disabled",
-                        "ktlint_standard_max-line-length" to "disabled",
-                        "ktlint_standard_property-naming" to "disabled",
-                        "ktlint_standard_no-wildcard-imports" to "disabled",
-                    ),
-                )
+                ktlint("0.50.0")
+                    .setEditorConfigPath("$rootDir/.editorconfig")
+                    .editorConfigOverride(mapOf("ktlint_standard_max-line-length" to "disabled"))
             }
 
             kotlinGradle {
                 target("*.gradle.kts", "src/**/*.gradle.kts")
                 targetExclude("**/build/**", "**/generated/**")
-                ktlint()
+                ktlint("0.50.0")
+                    .setEditorConfigPath("$rootDir/.editorconfig")
+                    .editorConfigOverride(mapOf("ktlint_standard_max-line-length" to "disabled"))
             }
         }
     }
@@ -99,8 +100,22 @@ tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
 }
 
 spotless {
+    kotlin {
+        target("src/**/*.kt")
+        targetExclude("**/build/**", "**/generated/**")
+        ktlint("0.50.0")
+            .setEditorConfigPath("$rootDir/.editorconfig")
+            .editorConfigOverride(mapOf("ktlint_standard_max-line-length" to "disabled"))
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
     kotlinGradle {
         target("*.gradle.kts", "gradle/**/*.gradle.kts")
-        ktlint()
+        targetExclude("**/build/**", "**/generated/**")
+        ktlint("0.50.0")
+            .setEditorConfigPath("$rootDir/.editorconfig")
+            .editorConfigOverride(mapOf("ktlint_standard_max-line-length" to "disabled"))
+        trimTrailingWhitespace()
+        endWithNewline()
     }
 }

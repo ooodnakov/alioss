@@ -322,7 +322,9 @@ fun settingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () -> Unit) {
     }
 }
 
-private enum class SettingsTab(@StringRes val titleRes: Int) {
+private enum class SettingsTab(
+    @StringRes val titleRes: Int,
+) {
     MATCH_RULES(R.string.match_rules_tab),
     INPUT_FEEDBACK(R.string.input_feedback_tab),
     TEAMS(R.string.teams_tab),

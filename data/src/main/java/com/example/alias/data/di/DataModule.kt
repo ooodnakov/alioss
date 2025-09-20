@@ -35,7 +35,9 @@ import javax.inject.Singleton
 object DataModule {
     @Provides
     @Singleton
-    fun provideDatabase(@ApplicationContext context: Context): AliasDatabase {
+    fun provideDatabase(
+        @ApplicationContext context: Context,
+    ): AliasDatabase {
         Log.i("DataModule", "Creating database with name: alias.db")
         Log.i("DataModule", "Database schema version: 7")
         Log.i("DataModule", "Number of migrations: ${ALL_MIGRATIONS.size}")
@@ -135,7 +137,9 @@ object DataModule {
 
     @Provides
     @Singleton
-    fun providePreferencesDataStore(@ApplicationContext context: Context): DataStore<Preferences> =
+    fun providePreferencesDataStore(
+        @ApplicationContext context: Context,
+    ): DataStore<Preferences> =
         PreferenceDataStoreFactory.create(
             corruptionHandler = ReplaceFileCorruptionHandler { emptyPreferences() },
             produceFile = { context.preferencesDataStoreFile("alias_settings") },

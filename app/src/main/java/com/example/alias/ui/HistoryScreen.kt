@@ -537,7 +537,9 @@ private class DefaultHistoryFilterListener(
     }
 }
 
-private enum class ResultFilter(@StringRes val labelRes: Int) {
+private enum class ResultFilter(
+    @StringRes val labelRes: Int,
+) {
     All(R.string.history_filter_all_results),
     Correct(R.string.history_result_correct),
     Skipped(R.string.history_result_skipped),
