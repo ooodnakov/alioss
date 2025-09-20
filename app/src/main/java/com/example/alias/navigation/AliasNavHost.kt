@@ -31,6 +31,8 @@ import com.example.alias.ui.decks.deckDetailScreen
 import com.example.alias.ui.decks.decksScreen
 import com.example.alias.ui.game.gameScreen
 import com.example.alias.ui.historyScreen
+import com.example.alias.ui.home.HomeActions
+import com.example.alias.ui.home.HomeViewState
 import com.example.alias.ui.home.homeScreen
 import com.example.alias.ui.settings.settingsScreen
 
@@ -61,18 +63,22 @@ fun aliasNavHost(
             val recentHistory by recentHistoryFlow.collectAsState(initial = emptyList())
             appScaffold(snackbarHostState = snackbarHostState) {
                 homeScreen(
-                    gameState = gameState,
-                    settings = settings,
-                    decks = decks,
-                    recentHistory = recentHistory,
-                    onResumeMatch = { navController.navigate("game") },
-                    onStartNewMatch = {
-                        viewModel.restartMatch()
-                        navController.navigate("game")
-                    },
-                    onDecks = { navController.navigate("decks") },
-                    onSettings = { navController.navigate("settings") },
-                    onHistory = { navController.navigate("history") },
+                    state = HomeViewState(
+                        gameState = gameState,
+                        settings = settings,
+                        decks = decks,
+                        recentHistory = recentHistory,
+                    ),
+                    actions = HomeActions(
+                        onResumeMatch = { navController.navigate("game") },
+                        onStartNewMatch = {
+                            viewModel.restartMatch()
+                            navController.navigate("game")
+                        },
+                        onDecks = { navController.navigate("decks") },
+                        onSettings = { navController.navigate("settings") },
+                        onHistory = { navController.navigate("history") },
+                    ),
                 )
             }
         }
