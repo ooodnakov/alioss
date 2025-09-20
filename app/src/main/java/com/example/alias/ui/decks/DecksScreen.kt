@@ -117,6 +117,7 @@ fun decksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
     var activeSheet by rememberSaveable { mutableStateOf<DeckSheet?>(null) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var deckPendingDelete by remember { mutableStateOf<DeckEntity?>(null) }
+    var deckPendingPermanentDelete by remember { mutableStateOf<DeckEntity?>(null) }
 
     val sheet = activeSheet
     if (sheet != null) {
@@ -187,6 +188,11 @@ fun decksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
                         }
                     },
                 )
+
+                DeckSheet.DELETED_DECKS -> deckDeletedDecksSheet(
+                    deletedBundledDeckIds = settings.deletedBundledDeckIds,
+                    onRestoreDeck = { deckId -> vm.restoreDeletedBundledDeck(deckId) },
+                )
             }
         }
     }
@@ -215,6 +221,7 @@ fun decksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
                         onEnableAll = { vm.setAllDecksEnabled(true) },
                         onDisableAll = { vm.setAllDecksEnabled(false) },
                         onManageSources = { activeSheet = DeckSheet.TRUSTED },
+                        onManageDeleted = { activeSheet = DeckSheet.DELETED_DECKS },
                     ),
                 )
             }
@@ -235,6 +242,7 @@ fun decksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
                         onToggle = { toggled -> vm.setDeckEnabled(deck.id, toggled) },
                         onClick = { onDeckSelected(deck) },
                         onDelete = { deckPendingDelete = deck },
+                        onPermanentDelete = if (!deck.isOfficial) ({ deckPendingPermanentDelete = deck }) else null,
                     )
                 }
             }
@@ -273,10 +281,34 @@ fun decksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
                 },
             )
         }
+    
+        val deckToPermanentlyDelete = deckPendingPermanentDelete
+        if (deckToPermanentlyDelete != null) {
+            AlertDialog(
+                onDismissRequest = { deckPendingPermanentDelete = null },
+                title = { Text("Permanently Delete Deck") },
+                text = {
+                    Text("Are you sure you want to permanently delete \"${deckToPermanentlyDelete.name}\"? This action cannot be undone.")
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        vm.permanentlyDeleteImportedDeck(deckToPermanentlyDelete)
+                        deckPendingPermanentDelete = null
+                    }) {
+                        Text("Delete Permanently")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { deckPendingPermanentDelete = null }) {
+                        Text(stringResource(R.string.cancel))
+                    }
+                },
+            )
+        }
     }
 }
 
-private enum class DeckSheet { FILTERS, IMPORT, TRUSTED }
+private enum class DeckSheet { FILTERS, IMPORT, TRUSTED, DELETED_DECKS }
 
 private data class DecksHeroSummaryState(
     val decks: List<DeckEntity>,
@@ -288,6 +320,7 @@ private data class DecksHeroSummaryActions(
     val onEnableAll: () -> Unit,
     val onDisableAll: () -> Unit,
     val onManageSources: () -> Unit,
+    val onManageDeleted: () -> Unit,
 )
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -320,21 +353,32 @@ private fun decksHeroSummary(state: DecksHeroSummaryState, actions: DecksHeroSum
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
             )
-            deckLanguagesSummary(languages = languages)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically,
-            ) {
+                ) {
+                deckLanguagesSummary(languages = languages)
                 FilledTonalButton(onClick = actions.onFiltersClick) {
                     Icon(Icons.Filled.Tune, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
                     Text(stringResource(R.string.open_filters))
                 }
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 OutlinedButton(onClick = actions.onManageSources) {
                     Icon(Icons.Filled.Verified, contentDescription = null)
-                    Spacer(Modifier.width(8.dp))
+                    Spacer(Modifier.width(4.dp))
                     Text(stringResource(R.string.manage_trusted_sources))
+                }
+                OutlinedButton(onClick = actions.onManageDeleted) {
+                    Icon(Icons.Filled.Delete, contentDescription = null)
+                    Spacer(Modifier.width(4.dp))
+                    Text(stringResource(R.string.deleted_decks))
                 }
             }
             Row(
@@ -356,11 +400,6 @@ private fun decksHeroSummary(state: DecksHeroSummaryState, actions: DecksHeroSum
 @Composable
 private fun deckLanguagesSummary(languages: List<String>, modifier: Modifier = Modifier) {
     if (languages.isNotEmpty()) {
-        Text(
-            text = stringResource(R.string.deck_languages_summary, languages.joinToString(" • ")),
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = modifier,
-        )
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             languages.forEach { language ->
                 AssistChip(onClick = {}, enabled = false, label = { Text(language) })
@@ -384,6 +423,7 @@ private fun deckCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     onDelete: (() -> Unit)? = null,
+    onPermanentDelete: (() -> Unit)? = null,
 ) {
     ElevatedCard(
         onClick = onClick,
@@ -400,43 +440,67 @@ private fun deckCard(
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
-                    Text(
-                        text = deck.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f, fill = false),
-                    )
-                    if (onDelete != null) {
-                        var menuExpanded by remember { mutableStateOf(false) }
-                        Box {
-                            IconButton(onClick = { menuExpanded = true }) {
-                                Icon(
-                                    imageVector = Icons.Filled.MoreVert,
-                                    contentDescription = stringResource(R.string.deck_more_actions),
-                                )
-                            }
-                            DropdownMenu(
-                                expanded = menuExpanded,
-                                onDismissRequest = { menuExpanded = false },
-                            ) {
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(R.string.deck_delete_action)) },
-                                    leadingIcon = {
-                                        Icon(
-                                            imageVector = Icons.Filled.Delete,
-                                            contentDescription = null,
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Text(
+                            text = deck.name,
+                            style = MaterialTheme.typography.titleMedium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false),
+                        )
+                        if (onDelete != null) {
+                            var menuExpanded by remember { mutableStateOf(false) }
+                            Box {
+                                IconButton(onClick = { menuExpanded = true }) {
+                                    Icon(
+                                        imageVector = Icons.Filled.MoreVert,
+                                        contentDescription = stringResource(R.string.deck_more_actions),
+                                    )
+                                }
+                                DropdownMenu(
+                                    expanded = menuExpanded,
+                                    onDismissRequest = { menuExpanded = false },
+                                ) {
+                                    if (deck.isOfficial) {
+                                        DropdownMenuItem(
+                                            text = { Text("Hide Deck") },
+                                            leadingIcon = {
+                                                Icon(
+                                                    imageVector = Icons.Filled.Delete,
+                                                    contentDescription = null,
+                                                )
+                                            },
+                                            onClick = {
+                                                menuExpanded = false
+                                                onDelete()
+                                            },
                                         )
-                                    },
-                                    onClick = {
-                                        menuExpanded = false
-                                        onDelete()
-                                    },
-                                )
+                                    } else {
+                                        DropdownMenuItem(
+                                            text = { Text("Delete Permanently") },
+                                            leadingIcon = {
+                                                Icon(
+                                                    imageVector = Icons.Filled.Delete,
+                                                    contentDescription = null,
+                                                )
+                                            },
+                                            onClick = {
+                                                menuExpanded = false
+                                                onPermanentDelete?.invoke()
+                                            },
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
+
+                    Switch(checked = enabled, onCheckedChange = onToggle)
                 }
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     AssistChip(
@@ -459,28 +523,6 @@ private fun deckCard(
                         )
                     }
                 }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    Text(
-                        text = if (enabled) {
-                            stringResource(
-                                R.string.deck_card_enabled,
-                            )
-                        } else {
-                            stringResource(R.string.deck_card_disabled)
-                        },
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                    Switch(checked = enabled, onCheckedChange = onToggle)
-                }
-                Text(
-                    text = stringResource(R.string.deck_card_view_details),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                )
             }
         }
     }
@@ -497,7 +539,7 @@ private fun deckCoverArt(deck: DeckEntity, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .aspectRatio(4f / 3f)
+            .aspectRatio(2f / 1f)
             .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
             .background(gradient),
     ) {
@@ -865,6 +907,61 @@ private fun adjustDifficultyRange(range: IntRange, level: Int): IntRange {
         when {
             level < range.first -> IntRange(level, range.last)
             else -> IntRange(range.first, level)
+        }
+    }
+}
+
+@Composable
+private fun deckDeletedDecksSheet(
+    deletedBundledDeckIds: Set<String>,
+    onRestoreDeck: (String) -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(24.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Text(
+            text = "Deleted Decks",
+            style = MaterialTheme.typography.titleLarge
+        )
+
+        if (deletedBundledDeckIds.isEmpty()) {
+            Text(
+                text = "No deleted decks",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        } else {
+            Text(
+                text = "Deleted Bundled Decks (tap to restore):",
+                style = MaterialTheme.typography.titleMedium
+            )
+
+            deletedBundledDeckIds.forEach { deckId ->
+                ElevatedCard(
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    ListItem(
+                        headlineContent = { Text("Bundled Deck: $deckId") },
+                        trailingContent = {
+                            TextButton(onClick = { onRestoreDeck(deckId) }) {
+                                Text("Restore")
+                            }
+                        },
+                        modifier = Modifier.padding(8.dp),
+                    )
+                }
+            }
+
+            HorizontalDivider()
+
+            Text(
+                text = "Note: Imported decks that are deleted are permanently removed and cannot be restored.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }

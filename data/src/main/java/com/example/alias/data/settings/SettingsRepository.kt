@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.util.Locale
+import android.util.Log
 
 private val DEFAULT_TEAMS = listOf("Red", "Blue")
 
@@ -59,6 +60,11 @@ interface SettingsRepository {
     suspend fun readBundledDeckHashes(): Set<String>
     suspend fun writeBundledDeckHashes(entries: Set<String>)
 
+    // Track bundled decks that have been explicitly deleted by the user
+    suspend fun readDeletedBundledDeckIds(): Set<String>
+    suspend fun addDeletedBundledDeckId(deckId: String)
+    suspend fun removeDeletedBundledDeckId(deckId: String)
+
     suspend fun updateSeenTutorial(value: Boolean)
     suspend fun clearAll()
 
@@ -90,6 +96,7 @@ data class Settings(
     val selectedWordClasses: Set<String> = emptySet(),
     val orientation: String = "system",
     val trustedSources: Set<String> = emptySet(),
+    val deletedBundledDeckIds: Set<String> = emptySet(),
     val seenTutorial: Boolean = false,
 )
 
@@ -122,6 +129,7 @@ class SettingsRepositoryImpl(
             selectedWordClasses = normalizeWordClasses(p[Keys.WORD_CLASSES_FILTER] ?: emptySet()),
             orientation = p[Keys.ORIENTATION] ?: "system",
             trustedSources = p[Keys.TRUSTED_SOURCES] ?: emptySet(),
+            deletedBundledDeckIds = p[Keys.DELETED_BUNDLED_DECK_IDS] ?: emptySet(),
             seenTutorial = p[Keys.SEEN_TUTORIAL] ?: false,
         )
     }
@@ -233,6 +241,29 @@ class SettingsRepositoryImpl(
         dataStore.edit { it[Keys.BUNDLED_DECK_HASHES] = entries }
     }
 
+    override suspend fun readDeletedBundledDeckIds(): Set<String> {
+        val result = dataStore.data.first()[Keys.DELETED_BUNDLED_DECK_IDS] ?: emptySet()
+        Log.d("SettingsRepository", "Reading deleted bundled deck IDs: $result")
+        return result
+    }
+
+    override suspend fun addDeletedBundledDeckId(deckId: String) {
+        Log.d("SettingsRepository", "Adding deleted bundled deck ID: $deckId")
+        dataStore.edit {
+            val current = it[Keys.DELETED_BUNDLED_DECK_IDS] ?: emptySet()
+            Log.d("SettingsRepository", "Current deleted deck IDs: $current")
+            it[Keys.DELETED_BUNDLED_DECK_IDS] = current + deckId
+            Log.d("SettingsRepository", "Updated deleted deck IDs: ${current + deckId}")
+        }
+    }
+
+    override suspend fun removeDeletedBundledDeckId(deckId: String) {
+        dataStore.edit {
+            val current = it[Keys.DELETED_BUNDLED_DECK_IDS] ?: emptySet()
+            it[Keys.DELETED_BUNDLED_DECK_IDS] = current - deckId
+        }
+    }
+
     override suspend fun clearAll() {
         dataStore.edit { it.clear() }
     }
@@ -261,5 +292,6 @@ class SettingsRepositoryImpl(
         val TRUSTED_SOURCES = stringSetPreferencesKey("trusted_sources")
         val SEEN_TUTORIAL = booleanPreferencesKey("seen_tutorial")
         val BUNDLED_DECK_HASHES = stringSetPreferencesKey("bundled_deck_hashes")
+        val DELETED_BUNDLED_DECK_IDS = stringSetPreferencesKey("deleted_bundled_deck_ids")
     }
 }

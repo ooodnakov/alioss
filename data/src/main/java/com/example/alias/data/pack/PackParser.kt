@@ -74,7 +74,7 @@ data class ParsedPack(
 object PackParser {
     private val json = Json { ignoreUnknownKeys = true }
 
-    fun fromJson(content: String): ParsedPack {
+    fun fromJson(content: String, isBundledAsset: Boolean = false): ParsedPack {
         val dto = json.decodeFromString<PackDto>(content)
         // Basic input validation to avoid malformed or oversized packs.
         PackValidator.validateFormat(dto.format)
@@ -91,7 +91,7 @@ object PackParser {
             id = dto.deck.id,
             name = dto.deck.name,
             language = dto.deck.language,
-            isOfficial = dto.deck.isOfficial,
+            isOfficial = isBundledAsset || dto.deck.isOfficial,
             isNSFW = dto.deck.isNsfw,
             version = dto.deck.version,
             updatedAt = dto.deck.updatedAt,

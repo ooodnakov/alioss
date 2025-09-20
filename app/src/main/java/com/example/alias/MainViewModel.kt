@@ -39,6 +39,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -81,6 +82,14 @@ class MainViewModel @Inject constructor(
 
     // Expose decks and enabled ids for Decks screen
     val decks = deckRepository.getDecks()
+        .combine(settingsRepository.settings.map { it.deletedBundledDeckIds }) { allDecks, deletedIds ->
+            Log.d(TAG, "Filtering decks: allDecks=${allDecks.size}, deletedIds=${deletedIds.size}")
+            val filtered = allDecks.filter { deck ->
+                !deletedIds.contains(deck.id)
+            }
+            Log.d(TAG, "Filtered decks: ${filtered.size} (removed ${allDecks.size - filtered.size})")
+            filtered
+        }
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
     val enabledDeckIds = settingsRepository.settings
         .map { it.enabledDeckIds }
@@ -213,15 +222,15 @@ class MainViewModel @Inject constructor(
         return SanitizedPack(sanitized, coverError)
     }
 
-    private suspend fun parseAndSanitizePack(content: String): SanitizedPack {
+    private suspend fun parseAndSanitizePack(content: String, isBundledAsset: Boolean = false): SanitizedPack {
         return try {
-            val parsed = PackParser.fromJson(content)
+            val parsed = PackParser.fromJson(content, isBundledAsset)
             sanitizeCoverImage(parsed)
         } catch (error: Throwable) {
             if (error is CancellationException) throw error
             if (!error.isCoverImageError()) throw error
             val sanitizedJson = removeCoverImageField(content) ?: throw error
-            val parsed = PackParser.fromJson(sanitizedJson)
+            val parsed = PackParser.fromJson(sanitizedJson, isBundledAsset)
             val sanitized = sanitizeCoverImage(parsed)
             sanitized.copy(coverImageError = sanitized.coverImageError ?: error)
         }
@@ -285,7 +294,7 @@ class MainViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            Log.e(TAG, "Starting MainViewModel init block")
+            Log.i(TAG, "Starting MainViewModel init block")
             val initial = withContext(Dispatchers.IO) {
                 Log.e(TAG, "Entering IO dispatcher for bundled deck import")
                 // Import bundled JSON decks from assets/decks/ when changed (by checksum) or on first run
@@ -326,11 +335,12 @@ class MainViewModel @Inject constructor(
                         val fileEntry = "$f:$fileHash"
                         currentDeckEntries += fileEntry
 
-                        // Check if any deck in this file needs importing
+                        // Check if any deck in this file needs importing (skip user-deleted decks)
+                        val deletedBundledDeckIds = settingsRepository.readDeletedBundledDeckIds()
                         val fileNeedsImport = prev.none { it.startsWith("$f:") } || !prev.contains(fileEntry)
                         val decksNeedImport = deckIds.any { deckId ->
                             val deckEntry = "$deckId:$fileHash"
-                            prev.none { it.startsWith("$deckId:") } || !prev.contains(deckEntry)
+                            !deletedBundledDeckIds.contains(deckId) && (prev.none { it.startsWith("$deckId:") } || !prev.contains(deckEntry))
                         }
 
                         if (fileNeedsImport || decksNeedImport) {
@@ -342,11 +352,21 @@ class MainViewModel @Inject constructor(
                     }
                 }
 
-                // Prune decks that are no longer in bundled assets
+                // Prune decks that are no longer in bundled assets (but not user-deleted ones)
+                Log.i(TAG, "Checking for decks to prune...")
                 val allDecks = deckRepository.getDecks().first()
+                Log.i(TAG, "Found ${allDecks.size} total decks in database")
+                val deletedBundledDeckIdsForPruning = settingsRepository.readDeletedBundledDeckIds()
+                Log.i(TAG, "Found ${deletedBundledDeckIdsForPruning.size} deleted bundled deck IDs: $deletedBundledDeckIdsForPruning")
+
+                // Debug: Check what settings are actually stored
+                val allSettings = settingsRepository.settings.first()
+                Log.i(TAG, "Current enabled deck IDs: ${allSettings.enabledDeckIds}")
+                Log.i(TAG, "Settings object: $allSettings")
                 val decksToPrune = allDecks.filter { deck ->
-                    deck.isOfficial && !currentBundledDeckIds.contains(deck.id)
+                    deck.isOfficial && currentBundledDeckIds.contains(deck.id) && !deletedBundledDeckIdsForPruning.contains(deck.id)
                 }
+                Log.i(TAG, "Found ${decksToPrune.size} decks to prune")
                 Log.e(TAG, "Found ${decksToPrune.size} decks to prune: ${decksToPrune.map { it.id }}")
 
                 decksToPrune.forEach { deck ->
@@ -367,11 +387,11 @@ class MainViewModel @Inject constructor(
                     Log.e(TAG, "First run: importing all ${assetFiles.size} files")
                 }
                 val hadDecks = deckRepository.getDecks().first().isNotEmpty()
-                Log.e(TAG, "Had decks before import: $hadDecks")
+                Log.i(TAG, "Had decks before import: $hadDecks")
                 if (!hadDecks && assetFiles.isNotEmpty()) {
                     toImport.clear()
                     toImport.addAll(assetFiles)
-                    Log.e(TAG, "No decks found, forcing import of all files")
+                    Log.i(TAG, "No decks found, forcing import of all files")
                 }
                 for (f in toImport) {
                     try {
@@ -379,7 +399,7 @@ class MainViewModel @Inject constructor(
                         val content = assetContents[f]
                             ?: context.assets.open("decks/$f").bufferedReader().use { it.readText() }
                         Log.e(TAG, "Read content for $f, length: ${content.length}")
-                        val (sanitizedPack, coverError) = parseAndSanitizePack(content)
+                        val (sanitizedPack, coverError) = parseAndSanitizePack(content, isBundledAsset = true)
                         Log.e(TAG, "Parsed and sanitized pack for $f, coverError: ${coverError != null}")
                         deckRepository.importPack(sanitizedPack)
                         Log.e(TAG, "Successfully imported pack for $f")
@@ -393,23 +413,26 @@ class MainViewModel @Inject constructor(
                 // Persist current checksums if any
                 runCatching {
                     settingsRepository.writeBundledDeckHashes(currentDeckEntries)
-                    Log.e(TAG, "Persisted bundled deck hashes: $currentDeckEntries")
+                    Log.i(TAG, "Persisted bundled deck hashes: $currentDeckEntries")
                 }
                 // Resolve enabled deck ids; if none set, pick available decks matching language preference
                 val baseSettings = settingsRepository.settings.first()
                 Log.e(TAG, "Base settings: ${baseSettings.enabledDeckIds.size} enabled decks")
                 val allDecksAfterImport = deckRepository.getDecks().first()
+                val deletedBundledDeckIds = settingsRepository.readDeletedBundledDeckIds()
                 Log.e(TAG, "All decks after import: ${allDecksAfterImport.size}")
-                val preferredIds = allDecksAfterImport
+                val availableDecks = allDecksAfterImport.filter { !deletedBundledDeckIds.contains(it.id) }
+                val preferredIds = availableDecks
                     .filter { it.language == baseSettings.languagePreference }
                     .map { it.id }
                     .toSet()
-                val fallbackIds = allDecksAfterImport.map { it.id }.toSet()
+                val fallbackIds = availableDecks.map { it.id }.toSet()
                 val resolvedEnabled = if (baseSettings.enabledDeckIds.isEmpty()) {
                     if (preferredIds.isNotEmpty()) preferredIds else fallbackIds
                 } else {
-                    baseSettings.enabledDeckIds
-                }
+                    // Filter out any deleted bundled decks from the user's enabled list
+                    baseSettings.enabledDeckIds.filter { !deletedBundledDeckIds.contains(it) }
+                }.toSet()
                 Log.e(TAG, "Resolved enabled decks: ${resolvedEnabled.size} ids")
                 if (baseSettings.enabledDeckIds.isEmpty()) {
                     try {
@@ -540,8 +563,26 @@ class MainViewModel @Inject constructor(
             val id = deck.id
             val settingsSnapshot = settingsRepository.settings.first()
             val updatedIds = settingsSnapshot.enabledDeckIds - id
+
+            // Check if this is a bundled deck (official deck)
+            val isBundledDeck = deck.isOfficial
+            Log.i(TAG, "Deleting deck: ${deck.name} (ID: $id, isOfficial: $isBundledDeck)")
+
             val result = runCatching {
-                withContext(Dispatchers.IO) { deckRepository.deleteDeck(id) }
+                withContext(Dispatchers.IO) {
+                    if (isBundledDeck) {
+                        // For bundled decks, mark as deleted instead of actually deleting
+                        Log.i(TAG, "Marking bundled deck as deleted: $id")
+                        settingsRepository.addDeletedBundledDeckId(id)
+                        // Remove from enabled decks
+                        settingsRepository.setEnabledDeckIds(updatedIds)
+                        Log.i(TAG, "Successfully marked bundled deck as deleted: $id")
+                    } else {
+                        // For user-imported decks, actually delete them
+                        Log.i(TAG, "Actually deleting user-imported deck: $id")
+                        deckRepository.deleteDeck(id)
+                    }
+                }
             }
             if (result.isFailure) {
                 val error = result.exceptionOrNull()?.message ?: "Unknown error"
@@ -559,9 +600,74 @@ class MainViewModel @Inject constructor(
             if (updatedIds != settingsSnapshot.enabledDeckIds) {
                 settingsRepository.setEnabledDeckIds(updatedIds)
             }
+            val actionMessage = if (isBundledDeck) "Hidden deck: ${deck.name}" else "Deleted deck: ${deck.name}"
             _uiEvents.tryEmit(
                 UiEvent(
-                    message = "Deleted deck: ${deck.name}",
+                    message = actionMessage,
+                    actionLabel = "OK",
+                    dismissCurrent = true,
+                ),
+            )
+        }
+    }
+
+    fun restoreDeletedBundledDeck(deckId: String) {
+        viewModelScope.launch {
+            Log.i(TAG, "Restoring deleted bundled deck: $deckId")
+            val result = runCatching {
+                withContext(Dispatchers.IO) {
+                    settingsRepository.removeDeletedBundledDeckId(deckId)
+                }
+            }
+            if (result.isFailure) {
+                val error = result.exceptionOrNull()?.message ?: "Unknown error"
+                _uiEvents.tryEmit(
+                    UiEvent(
+                        message = "Failed to restore deck: $error",
+                        actionLabel = "Dismiss",
+                        duration = SnackbarDuration.Long,
+                        isError = true,
+                        dismissCurrent = true,
+                    ),
+                )
+                return@launch
+            }
+            _uiEvents.tryEmit(
+                UiEvent(
+                    message = "Restored deck",
+                    actionLabel = "OK",
+                    dismissCurrent = true,
+                ),
+            )
+        }
+    }
+
+    fun permanentlyDeleteImportedDeck(deck: DeckEntity) {
+        viewModelScope.launch {
+            val id = deck.id
+            Log.i(TAG, "Permanently deleting imported deck: $id")
+
+            val result = runCatching {
+                withContext(Dispatchers.IO) {
+                    deckRepository.deleteDeck(id)
+                }
+            }
+            if (result.isFailure) {
+                val error = result.exceptionOrNull()?.message ?: "Unknown error"
+                _uiEvents.tryEmit(
+                    UiEvent(
+                        message = "Failed to permanently delete deck: $error",
+                        actionLabel = "Dismiss",
+                        duration = SnackbarDuration.Long,
+                        isError = true,
+                        dismissCurrent = true,
+                    ),
+                )
+                return@launch
+            }
+            _uiEvents.tryEmit(
+                UiEvent(
+                    message = "Permanently deleted deck: ${deck.name}",
                     actionLabel = "OK",
                     dismissCurrent = true,
                 ),
