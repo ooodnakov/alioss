@@ -72,6 +72,9 @@ private val LARGE_BUTTON_HEIGHT = 80.dp
 private const val CARD_ASPECT_RATIO = 1.8f
 private const val PRE_TURN_COUNTDOWN_SECONDS = 3
 private const val SOUND_DURATION_SHORT_MS = 150
+private const val TURN_END_COUNTDOWN_PROMPT_SECONDS = 5
+private const val VIBRATION_DURATION_FINAL_TICK_MS = 200L
+private const val VIBRATION_DURATION_COUNTDOWN_TICK_MS = 120L
 private val TIMER_SAFE_COLOR = Color(0xFF4CAF50)
 private val TIMER_WARNING_COLOR = Color(0xFFFFC107)
 private val TIMER_CRITICAL_COLOR = Color(0xFFF44336)
@@ -123,10 +126,6 @@ fun gameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                 }
             }
         }
-        previousState = state
-    }
-
-    LaunchedEffect(state) {
         if (showTutorialOnFirstTurn && state is GameState.TurnActive && !seenTutorial) {
             // First turn started, tutorial will show below
         } else if (showTutorialOnFirstTurn) {
@@ -136,6 +135,7 @@ fun gameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
         if (state !is GameState.TurnActive) {
             cardBounds = null
         }
+        previousState = state
     }
 
     val activeState = state as? GameState.TurnActive
@@ -257,7 +257,7 @@ fun gameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
             val barColor by animateColorAsState(targetColor, label = "timerColor")
             LaunchedEffect(s.timeRemaining) {
                 val remaining = s.timeRemaining
-                if (remaining in 1..5) {
+                if (remaining in 1..TURN_END_COUNTDOWN_PROMPT_SECONDS) {
                     if (soundEnabled) {
                         tone.startTone(
                             android.media.ToneGenerator.TONE_PROP_PROMPT,
@@ -265,8 +265,15 @@ fun gameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                         )
                     }
                     if (hapticsEnabled) {
-                        val duration = if (remaining == 1) 200 else 120
-                        val effect = VibrationEffect.createOneShot(duration.toLong(), VibrationEffect.DEFAULT_AMPLITUDE)
+                        val durationMs = if (remaining == 1) {
+                            VIBRATION_DURATION_FINAL_TICK_MS
+                        } else {
+                            VIBRATION_DURATION_COUNTDOWN_TICK_MS
+                        }
+                        val effect = VibrationEffect.createOneShot(
+                            durationMs,
+                            VibrationEffect.DEFAULT_AMPLITUDE,
+                        )
                         vibrator?.vibrate(effect)
                     }
                 }
