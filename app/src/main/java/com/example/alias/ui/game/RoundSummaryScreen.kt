@@ -896,11 +896,13 @@ private fun timelineEventBlock(
         else -> Icons.Filled.Schedule
     }
 
+    val blockShape = RoundedCornerShape(20.dp)
+
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .border(BorderStroke(1.dp, borderColor), RoundedCornerShape(20.dp)),
-        shape = RoundedCornerShape(20.dp),
+            .border(BorderStroke(1.dp, borderColor), blockShape),
+        shape = blockShape,
         color = containerColor,
         contentColor = contentColor,
         tonalElevation = 0.dp,
