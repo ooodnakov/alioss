@@ -566,6 +566,10 @@ class DeckManagerTest {
             flow.value = flow.value.copy(enabledDeckIds = ids)
         }
 
+        override suspend fun removeEnabledDeckId(deckId: String) {
+            flow.value = flow.value.copy(enabledDeckIds = flow.value.enabledDeckIds - deckId)
+        }
+
         override suspend fun setDeckLanguagesFilter(languages: Set<String>) {
             flow.value = flow.value.copy(selectedDeckLanguages = languages)
         }
