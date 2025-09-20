@@ -77,6 +77,12 @@ class SettingsControllerTest {
         override suspend fun updateTargetWords(value: Int) {
             state.value = state.value.copy(targetWords = value)
         }
+        override suspend fun updateTargetScore(value: Int) {
+            state.value = state.value.copy(targetScore = value)
+        }
+        override suspend fun updateScoreTargetEnabled(value: Boolean) {
+            state.value = state.value.copy(scoreTargetEnabled = value)
+        }
         override suspend fun updateSkipPolicy(maxSkips: Int, penaltyPerSkip: Int) {
             state.value = state.value.copy(maxSkips = maxSkips, penaltyPerSkip = penaltyPerSkip)
         }

@@ -36,6 +36,8 @@ interface SettingsRepository {
 
     suspend fun updateRoundSeconds(value: Int)
     suspend fun updateTargetWords(value: Int)
+    suspend fun updateTargetScore(value: Int)
+    suspend fun updateScoreTargetEnabled(value: Boolean)
     suspend fun updateSkipPolicy(maxSkips: Int, penaltyPerSkip: Int)
     suspend fun updatePunishSkips(value: Boolean)
     suspend fun updateLanguagePreference(language: String)
@@ -77,6 +79,8 @@ interface SettingsRepository {
 data class Settings(
     val roundSeconds: Int = 60,
     val targetWords: Int = 20,
+    val scoreTargetEnabled: Boolean = false,
+    val targetScore: Int = 20,
     val maxSkips: Int = 3,
     val penaltyPerSkip: Int = 1,
     val punishSkips: Boolean = true,
@@ -108,6 +112,8 @@ class SettingsRepositoryImpl(
         Settings(
             roundSeconds = p[Keys.ROUND_SECONDS] ?: 60,
             targetWords = p[Keys.TARGET_WORDS] ?: 20,
+            scoreTargetEnabled = p[Keys.SCORE_TARGET_ENABLED] ?: false,
+            targetScore = p[Keys.TARGET_SCORE] ?: 20,
             maxSkips = p[Keys.MAX_SKIPS] ?: 3,
             penaltyPerSkip = p[Keys.PENALTY_PER_SKIP] ?: 1,
             punishSkips = p[Keys.PUNISH_SKIPS] ?: true,
@@ -140,6 +146,14 @@ class SettingsRepositoryImpl(
 
     override suspend fun updateTargetWords(value: Int) {
         dataStore.edit { it[Keys.TARGET_WORDS] = value.coerceIn(5, 200) }
+    }
+
+    override suspend fun updateTargetScore(value: Int) {
+        dataStore.edit { it[Keys.TARGET_SCORE] = value.coerceIn(5, 200) }
+    }
+
+    override suspend fun updateScoreTargetEnabled(value: Boolean) {
+        dataStore.edit { it[Keys.SCORE_TARGET_ENABLED] = value }
     }
 
     override suspend fun updateSkipPolicy(maxSkips: Int, penaltyPerSkip: Int) {
@@ -271,6 +285,8 @@ class SettingsRepositoryImpl(
     private object Keys {
         val ROUND_SECONDS = intPreferencesKey("round_seconds")
         val TARGET_WORDS = intPreferencesKey("target_words")
+        val SCORE_TARGET_ENABLED = booleanPreferencesKey("score_target_enabled")
+        val TARGET_SCORE = intPreferencesKey("target_score")
         val MAX_SKIPS = intPreferencesKey("max_skips")
         val PENALTY_PER_SKIP = intPreferencesKey("penalty_per_skip")
         val PUNISH_SKIPS = booleanPreferencesKey("punish_skips")

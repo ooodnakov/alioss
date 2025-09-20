@@ -37,6 +37,46 @@ class DefaultGameEngine(
     private var matchOver: Boolean = false
     private val mutex = Mutex()
 
+    private fun goalTarget(): Int = config.goal.target
+
+    private fun goalReached(includeCurrentTurn: Boolean): Boolean {
+        return when (config.goal.type) {
+            MatchGoalType.TARGET_WORDS -> correctTotal >= goalTarget()
+            MatchGoalType.TARGET_SCORE -> {
+                val target = goalTarget()
+                if (includeCurrentTurn) {
+                    val teamName = teams[currentTeam]
+                    val projected = scores.getOrDefault(teamName, 0) + turnScore
+                    projected >= target || scores.values.any { it >= target }
+                } else {
+                    scores.values.any { it >= target }
+                }
+            }
+        }
+    }
+
+    private fun remainingForPendingTeam(): Int {
+        return when (config.goal.type) {
+            MatchGoalType.TARGET_WORDS -> (goalTarget() - correctTotal).coerceAtLeast(0)
+            MatchGoalType.TARGET_SCORE -> {
+                val teamName = teams[currentTeam]
+                val base = scores.getOrDefault(teamName, 0)
+                (goalTarget() - base).coerceAtLeast(0)
+            }
+        }
+    }
+
+    private fun remainingForActiveTeam(): Int {
+        return when (config.goal.type) {
+            MatchGoalType.TARGET_WORDS -> (goalTarget() - correctTotal).coerceAtLeast(0)
+            MatchGoalType.TARGET_SCORE -> {
+                val teamName = teams[currentTeam]
+                val projected = scores.getOrDefault(teamName, 0) + turnScore
+                (goalTarget() - projected).coerceAtLeast(0)
+            }
+        }
+    }
+
     override suspend fun startMatch(
         config: MatchConfig,
         teams: List<String>,
@@ -108,6 +148,7 @@ class DefaultGameEngine(
             val item = outcomes.getOrNull(index) ?: return@withLock
             if (item.correct == correct) return@withLock
             val team = current.team
+            val goalReachedBeforeOverride = goalReached(includeCurrentTurn = false)
             val change =
                 if (correct) {
                     val penalty = if (!item.correct && item.skipped) config.penaltyPerSkip else 0
@@ -118,38 +159,37 @@ class DefaultGameEngine(
             turnScore += change
             scores[team] = scores.getOrDefault(team, 0) + change
             // Update total correct words across the match based on override
-            val reachedTargetBeforeOverride = correctTotal >= config.targetWords
-            if (item.correct != correct) {
+            if (config.goal.type == MatchGoalType.TARGET_WORDS && item.correct != correct) {
                 if (correct) correctTotal++ else correctTotal--
             }
             outcomes[index] = item.copy(correct = correct, skipped = !correct)
 
             val noWordsLeft = queue.isEmpty()
-            val nowMatchOver = correctTotal >= config.targetWords || noWordsLeft
+            val nowMatchOver = goalReached(includeCurrentTurn = false) || noWordsLeft
             val preserveExistingCompletion =
-                current.matchOver && !reachedTargetBeforeOverride && queue.isEmpty()
+                current.matchOver && !goalReachedBeforeOverride && queue.isEmpty()
             matchOver = nowMatchOver || preserveExistingCompletion
             _state.update { GameState.TurnFinished(team, turnScore, scores.toMap(), outcomes.toList(), matchOver) }
         }
     }
 
     private suspend fun prepareTurnLocked() {
-        if (correctTotal >= config.targetWords) {
+        if (goalReached(includeCurrentTurn = false)) {
             finishMatchLocked()
             return
         }
-        val remainingToWin = (config.targetWords - correctTotal).coerceAtLeast(0)
         _state.update {
             GameState.TurnPending(
                 team = teams[currentTeam],
                 scores = scores.toMap(),
-                remainingToWin = remainingToWin,
+                goal = config.goal,
+                remainingToGoal = remainingForPendingTeam(),
             )
         }
     }
 
     private suspend fun startTurnLocked() {
-        if (correctTotal >= config.targetWords) {
+        if (goalReached(includeCurrentTurn = false)) {
             finishMatchLocked()
             return
         }
@@ -163,25 +203,33 @@ class DefaultGameEngine(
     }
 
     private suspend fun advanceLocked() {
-        if (correctTotal >= config.targetWords || queue.isEmpty()) {
+        if (goalReached(includeCurrentTurn = true) || queue.isEmpty()) {
             finishTurnLocked(byTimer = false)
             return
         }
         val next = queue.removeFirst()
-        val remaining = (config.targetWords - correctTotal).coerceAtLeast(0)
         val team = teams[currentTeam]
         val totalScore = scores.getOrDefault(team, 0) + turnScore
         currentWord = next
         _state.update {
-            GameState.TurnActive(team, next, remaining, totalScore, skipsRemaining, timeRemaining, config.roundSeconds)
+            GameState.TurnActive(
+                team = team,
+                word = next,
+                goal = config.goal,
+                remainingToGoal = remainingForActiveTeam(),
+                score = totalScore,
+                skipsRemaining = skipsRemaining,
+                timeRemaining = timeRemaining,
+                totalSeconds = config.roundSeconds,
+            )
         }
     }
 
     private suspend fun finishTurnLocked(byTimer: Boolean) {
         timerJob?.cancel()
         val team = teams[currentTeam]
-        scores[team] = scores.getOrDefault(team, 0) + turnScore
-        val reachedTarget = correctTotal >= config.targetWords
+        val updatedScore = scores.getOrDefault(team, 0) + turnScore
+        scores[team] = updatedScore
         val noWordsLeft = queue.isEmpty()
         // If timer expired while a word was shown, include it as pending (no penalty applied yet)
         if (byTimer) {
@@ -190,6 +238,7 @@ class DefaultGameEngine(
                 outcomes.add(TurnOutcome(currentWord, false, System.currentTimeMillis(), skipped = false))
             }
         }
+        val reachedTarget = goalReached(includeCurrentTurn = false)
         matchOver = reachedTarget || noWordsLeft
         // Always end the turn first; if matchOver, UI can finalize via nextTurn()
         _state.update { GameState.TurnFinished(team, turnScore, scores.toMap(), outcomes.toList(), matchOver) }

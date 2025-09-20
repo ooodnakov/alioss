@@ -1,6 +1,7 @@
 # TODO / Open Tasks
 
 ## Completed
+- Add toggleable score-to-target regime with configurable goal in Settings and wire it into game flow.
 - Gate bundled deck import to first run (DB empty) to avoid re-imports.
 - Dedupe deck imports by replacing words per deck on import.
 - Emit TurnFinished before MatchFinished; updated timer test accordingly.
@@ -31,7 +32,6 @@
 - Audio UX: add sound hooks for countdown, turn start, final 5 seconds with vibration, and turn end (no assets committed).
 
 ## Backlog
-- Add toggleable score-to-target regime with configurable goal in Settings and wire it into game flow.
 - Localization: ensure *all* strings (including Settings, About, and any new UI) are fully externalized.
 - Refactor end-of-turn summary UI: relocate turn statistics, collapse detailed breakdown/time graph (taller), per-word blocks with colored backgrounds acting as correct/incorrect toggles, and show time-between-word graph.
 - Update History screen: hide filters/stats by default, add Reset History action, and align detailed game view with end-of-turn summary layout.

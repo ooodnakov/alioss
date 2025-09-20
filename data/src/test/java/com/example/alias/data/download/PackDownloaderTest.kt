@@ -22,6 +22,8 @@ private class FakeSettingsRepo(origins: Set<String>) : SettingsRepository {
     override val settings: Flow<Settings> = flow
     override suspend fun updateRoundSeconds(value: Int) = Unit
     override suspend fun updateTargetWords(value: Int) = Unit
+    override suspend fun updateTargetScore(value: Int) = Unit
+    override suspend fun updateScoreTargetEnabled(value: Boolean) = Unit
     override suspend fun updateSkipPolicy(maxSkips: Int, penaltyPerSkip: Int) = Unit
     override suspend fun updatePunishSkips(value: Boolean) = Unit
     override suspend fun updateLanguagePreference(language: String) = Unit

@@ -91,6 +91,8 @@ fun settingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () -> Unit) {
 
     var round by rememberSaveable(s) { mutableStateOf(s.roundSeconds.toString()) }
     var target by rememberSaveable(s) { mutableStateOf(s.targetWords.toString()) }
+    var scoreTarget by rememberSaveable(s) { mutableStateOf(s.targetScore.toString()) }
+    var useScoreTarget by rememberSaveable(s) { mutableStateOf(s.scoreTargetEnabled) }
     var maxSkips by rememberSaveable(s) { mutableStateOf(s.maxSkips.toString()) }
     var penalty by rememberSaveable(s) { mutableStateOf(s.penaltyPerSkip.toString()) }
     var lang by rememberSaveable(s) { mutableStateOf(s.languagePreference) }
@@ -120,6 +122,8 @@ fun settingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () -> Unit) {
     val matchRulesUiState = MatchRulesUiState(
         round = round,
         target = target,
+        scoreTarget = scoreTarget,
+        scoreTargetEnabled = useScoreTarget,
         maxSkips = maxSkips,
         penalty = penalty,
         punishSkips = punishSkips,
@@ -127,6 +131,8 @@ fun settingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () -> Unit) {
     val matchRulesActions = MatchRulesActions(
         onRoundChange = { round = it },
         onTargetChange = { target = it },
+        onScoreTargetChange = { scoreTarget = it },
+        onScoreTargetEnabledChange = { useScoreTarget = it },
         onMaxSkipsChange = { maxSkips = it },
         onPenaltyChange = { penalty = it },
         onPunishSkipsChange = { punishSkips = it },
@@ -207,6 +213,8 @@ fun settingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () -> Unit) {
                 SettingsUpdateRequest(
                     roundSeconds = round.toIntOrNull() ?: s.roundSeconds,
                     targetWords = target.toIntOrNull() ?: s.targetWords,
+                    targetScore = scoreTarget.toIntOrNull() ?: s.targetScore,
+                    scoreTargetEnabled = useScoreTarget,
                     maxSkips = maxSkips.toIntOrNull() ?: s.maxSkips,
                     penaltyPerSkip = penalty.toIntOrNull() ?: s.penaltyPerSkip,
                     punishSkips = punishSkips,
@@ -336,6 +344,8 @@ private data class TeamEditorEntry(val id: Long, val name: String)
 private data class MatchRulesUiState(
     val round: String,
     val target: String,
+    val scoreTarget: String,
+    val scoreTargetEnabled: Boolean,
     val maxSkips: String,
     val penalty: String,
     val punishSkips: Boolean,
@@ -344,6 +354,8 @@ private data class MatchRulesUiState(
 private data class MatchRulesActions(
     val onRoundChange: (String) -> Unit,
     val onTargetChange: (String) -> Unit,
+    val onScoreTargetChange: (String) -> Unit,
+    val onScoreTargetEnabledChange: (Boolean) -> Unit,
     val onMaxSkipsChange: (String) -> Unit,
     val onPenaltyChange: (String) -> Unit,
     val onPunishSkipsChange: (Boolean) -> Unit,
@@ -435,6 +447,25 @@ private fun matchRulesTab(
                         label = { Text(stringResource(R.string.target_words_label)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = stringResource(R.string.score_target_toggle_label),
+                            modifier = Modifier.weight(1f),
+                        )
+                        Switch(
+                            checked = state.scoreTargetEnabled,
+                            onCheckedChange = actions.onScoreTargetEnabledChange,
+                        )
+                    }
+                    OutlinedTextField(
+                        value = state.scoreTarget,
+                        onValueChange = actions.onScoreTargetChange,
+                        label = { Text(stringResource(R.string.target_score_label)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        enabled = state.scoreTargetEnabled,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     )
                 }

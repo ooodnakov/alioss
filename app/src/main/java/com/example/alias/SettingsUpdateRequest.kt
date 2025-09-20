@@ -8,6 +8,8 @@ import com.example.alias.data.settings.Settings
 data class SettingsUpdateRequest(
     val roundSeconds: Int,
     val targetWords: Int,
+    val targetScore: Int,
+    val scoreTargetEnabled: Boolean,
     val maxSkips: Int,
     val penaltyPerSkip: Int,
     val punishSkips: Boolean,
@@ -26,6 +28,8 @@ data class SettingsUpdateRequest(
             SettingsUpdateRequest(
                 roundSeconds = settings.roundSeconds,
                 targetWords = settings.targetWords,
+                targetScore = settings.targetScore,
+                scoreTargetEnabled = settings.scoreTargetEnabled,
                 maxSkips = settings.maxSkips,
                 penaltyPerSkip = settings.penaltyPerSkip,
                 punishSkips = settings.punishSkips,

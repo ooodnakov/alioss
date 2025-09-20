@@ -58,6 +58,7 @@ import com.example.alias.R
 import com.example.alias.data.settings.Settings
 import com.example.alias.domain.GameEngine
 import com.example.alias.domain.GameState
+import com.example.alias.domain.MatchGoalType
 import com.example.alias.ui.WordCardAction
 import com.example.alias.ui.common.scoreboard
 import com.example.alias.ui.countdownOverlay
@@ -161,6 +162,22 @@ fun gameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
 
             val configuration = LocalConfiguration.current
             val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+            val pendingStatus =
+                when (s.goal.type) {
+                    MatchGoalType.TARGET_WORDS ->
+                        pluralStringResource(
+                            R.plurals.turn_pending_status_words,
+                            s.remainingToGoal,
+                            s.remainingToGoal,
+                        )
+
+                    MatchGoalType.TARGET_SCORE ->
+                        pluralStringResource(
+                            R.plurals.turn_pending_status_points,
+                            s.remainingToGoal,
+                            s.remainingToGoal,
+                        )
+                }
 
             if (isLandscape) {
                 // Landscape layout for TurnPending
@@ -188,11 +205,7 @@ fun gameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                         )
                         scoreboard(s.scores)
                         Text(
-                            text = pluralStringResource(
-                                R.plurals.turn_pending_status,
-                                s.remainingToWin,
-                                s.remainingToWin,
-                            ),
+                            text = pendingStatus,
                             style = MaterialTheme.typography.bodyMedium,
                             textAlign = TextAlign.Center,
                         )
@@ -270,11 +283,7 @@ fun gameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                                 )
                                 scoreboard(s.scores)
                                 Text(
-                                    text = pluralStringResource(
-                                        R.plurals.turn_pending_status,
-                                        s.remainingToWin,
-                                        s.remainingToWin,
-                                    ),
+                                    text = pendingStatus,
                                     style = MaterialTheme.typography.bodyMedium,
                                     textAlign = TextAlign.Center,
                                 )
@@ -340,6 +349,16 @@ fun gameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                 lerp(TIMER_WARNING_COLOR, TIMER_CRITICAL_COLOR, 1 - t)
             }
             val barColor by animateColorAsState(targetColor, label = "timerColor")
+            val remainingLabelRes =
+                when (s.goal.type) {
+                    MatchGoalType.TARGET_WORDS -> R.string.remaining_words_label
+                    MatchGoalType.TARGET_SCORE -> R.string.remaining_points_label
+                }
+            val summaryRes =
+                when (s.goal.type) {
+                    MatchGoalType.TARGET_WORDS -> R.string.summary_words_label
+                    MatchGoalType.TARGET_SCORE -> R.string.summary_points_label
+                }
             LaunchedEffect(s.timeRemaining) {
                 val remaining = s.timeRemaining
                 if (remaining in 1..TURN_END_COUNTDOWN_PROMPT_SECONDS) {
@@ -477,7 +496,7 @@ fun gameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                     AssistChip(
                         onClick = {},
                         enabled = false,
-                        label = { Text(stringResource(R.string.remaining_label, s.remaining)) },
+                        label = { Text(stringResource(remainingLabelRes, s.remainingToGoal)) },
                     )
                     AssistChip(
                         onClick = {},
@@ -494,7 +513,7 @@ fun gameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                         },
                     )
                 }
-                Text(stringResource(R.string.summary_label, s.remaining, s.score, s.skipsRemaining))
+                Text(stringResource(summaryRes, s.remainingToGoal, s.score, s.skipsRemaining))
             }
 
             if (isLandscape) {

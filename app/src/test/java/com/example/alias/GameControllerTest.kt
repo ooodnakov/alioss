@@ -6,6 +6,7 @@ import com.example.alias.data.settings.Settings
 import com.example.alias.domain.GameEngine
 import com.example.alias.domain.GameState
 import com.example.alias.domain.MatchConfig
+import com.example.alias.domain.MatchGoalType
 import com.example.alias.domain.TurnOutcome
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,6 +37,19 @@ class GameControllerTest {
         val config = engine.lastConfig
         requireNotNull(config)
         assertEquals(0, config.penaltyPerSkip)
+    }
+
+    @Test
+    fun startMatchUsesScoreGoalWhenEnabled() = runBlocking {
+        val engine = FakeGameEngine()
+        val settings = Settings(scoreTargetEnabled = true, targetScore = 42)
+
+        controller.startMatch(engine, settings)
+
+        val goal = engine.lastConfig?.goal
+        requireNotNull(goal)
+        assertEquals(MatchGoalType.TARGET_SCORE, goal.type)
+        assertEquals(42, goal.target)
     }
 
     @Test

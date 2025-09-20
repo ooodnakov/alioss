@@ -426,6 +426,14 @@ class DeckManagerTest {
             flow.value = flow.value.copy(targetWords = value)
         }
 
+        override suspend fun updateTargetScore(value: Int) {
+            flow.value = flow.value.copy(targetScore = value)
+        }
+
+        override suspend fun updateScoreTargetEnabled(value: Boolean) {
+            flow.value = flow.value.copy(scoreTargetEnabled = value)
+        }
+
         override suspend fun updateSkipPolicy(maxSkips: Int, penaltyPerSkip: Int) {
             flow.value = flow.value.copy(maxSkips = maxSkips, penaltyPerSkip = penaltyPerSkip)
         }
