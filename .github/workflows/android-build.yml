@@ -76,9 +76,9 @@ jobs:
         with:
           name: unit-test-reports
           path: |
-            app/domain/build/reports/tests/**
-            app/data/build/reports/tests/**
-            app/build/reports/tests/**
+            domain/build/reports/tests/**
+            data/build/reports/tests/**
+            build/reports/tests/**
           if-no-files-found: warn
 
   build-apk:
