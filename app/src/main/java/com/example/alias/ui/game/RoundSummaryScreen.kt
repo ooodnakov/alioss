@@ -7,6 +7,8 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,6 +34,7 @@ import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -95,8 +98,7 @@ fun roundSummaryScreen(vm: MainViewModel, s: GameState.TurnFinished, settings: S
                 deltaColor = deltaColor,
             )
         }
-        item { scoreboardCard(scores = s.scores) }
-        item { turnSummaryStatsCard(stats = stats) }
+        item { scoreboardCard(scores = s.scores, stats = stats) }
         item {
             timelineCard(
                 timeline = timeline,
@@ -115,6 +117,7 @@ fun roundSummaryScreen(vm: MainViewModel, s: GameState.TurnFinished, settings: S
 @Composable
 private fun scoreboardCard(
     scores: Map<String, Int>,
+    stats: TurnSummaryStats,
     modifier: Modifier = Modifier,
 ) {
     Surface(
@@ -122,33 +125,22 @@ private fun scoreboardCard(
         shape = RoundedCornerShape(24.dp),
         tonalElevation = 2.dp,
     ) {
-        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp)) {
-            scoreboard(scores)
-        }
-    }
-}
-
-@Composable
-private fun turnSummaryStatsCard(
-    stats: TurnSummaryStats,
-    modifier: Modifier = Modifier,
-) {
-    ElevatedCard(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-    ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp, vertical = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
-            Text(
-                text = stringResource(R.string.turn_summary_stats_title),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            turnSummaryStatsRow(stats = stats)
+            scoreboard(scores)
+            HorizontalDivider()
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    text = stringResource(R.string.turn_summary_stats_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                turnSummaryStatsRow(stats = stats)
+            }
         }
     }
 }
@@ -201,7 +193,8 @@ private fun timelineCard(
                     title = stringResource(R.string.timeline_graphs_title),
                     subtitle = stringResource(R.string.timeline_graphs_subtitle),
                     modifier = Modifier.padding(horizontal = 20.dp),
-                    contentArrangement = Arrangement.spacedBy(16.dp),
+                    initiallyExpanded = false,
+                    contentArrangement = Arrangement.spacedBy(20.dp),
                 ) {
                     scoreProgressGraph(
                         events = timeline.events,
@@ -216,6 +209,7 @@ private fun timelineCard(
                     title = stringResource(R.string.timeline_breakdown_title),
                     subtitle = stringResource(R.string.timeline_breakdown_subtitle),
                     modifier = Modifier.padding(horizontal = 20.dp),
+                    initiallyExpanded = false,
                     contentArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     timeline.segments.forEach { segment ->
@@ -580,7 +574,7 @@ private fun scoreProgressGraph(events: List<TimelineEvent>, modifier: Modifier =
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(180.dp)
+                .height(220.dp)
                 .clip(RoundedCornerShape(12.dp))
                 .background(colors.surfaceVariant.copy(alpha = 0.6f))
                 .padding(horizontal = 12.dp, vertical = 12.dp),
@@ -677,7 +671,7 @@ private fun timeBetweenWordsGraph(events: List<TimelineEvent>, modifier: Modifie
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(180.dp)
+                .height(220.dp)
                 .clip(RoundedCornerShape(12.dp))
                 .background(colors.surfaceVariant.copy(alpha = 0.6f))
                 .padding(horizontal = 12.dp, vertical = 12.dp),
@@ -733,11 +727,7 @@ private fun ExpandableSection(
         stringResource(R.string.timeline_section_state_collapsed)
     }
     Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .semantics { stateDescription = stateLabel },
-        onClick = { expanded = !expanded },
-        role = Role.Button,
+        modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
         color = colors.surfaceVariant.copy(alpha = if (expanded) 0.6f else 0.45f),
         tonalElevation = if (expanded) 2.dp else 0.dp,
@@ -745,6 +735,8 @@ private fun ExpandableSection(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .semantics { stateDescription = stateLabel }
+                .clickable(role = Role.Button) { expanded = !expanded }
                 .padding(horizontal = 16.dp, vertical = 14.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -885,6 +877,7 @@ private fun timelineEventBlock(
         TimelineSegmentType.SKIP -> colors.errorContainer to colors.onErrorContainer
         TimelineSegmentType.PENDING -> colors.surfaceVariant to colors.onSurface
     }
+    val borderColor = timelineColor(event.type).copy(alpha = 0.4f)
     val supportColor = contentColor.copy(alpha = 0.8f)
     val timeLabel = if (event.elapsedMillis <= 0L) {
         stringResource(R.string.timeline_elapsed_time_start)
@@ -906,20 +899,20 @@ private fun timelineEventBlock(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .semantics { stateDescription = stateLabel },
+            .border(BorderStroke(1.dp, borderColor), RoundedCornerShape(20.dp)),
+        shape = RoundedCornerShape(20.dp),
         color = containerColor,
         contentColor = contentColor,
-        shape = RoundedCornerShape(20.dp),
         tonalElevation = 0.dp,
-        onClick = {
-            val target = !event.outcome.correct
-            onToggle(target)
-        },
-        role = Role.Button,
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .semantics { stateDescription = stateLabel }
+                .clickable(role = Role.Button) {
+                    val target = !event.outcome.correct
+                    onToggle(target)
+                }
                 .padding(horizontal = 16.dp, vertical = 14.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically,
