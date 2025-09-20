@@ -3,9 +3,9 @@ package com.example.alias.navigation
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
@@ -80,14 +80,18 @@ fun aliasNavHost(
             val engine by viewModel.engine.collectAsState()
             val currentSettings by viewModel.settings.collectAsState()
             appScaffold(snackbarHostState = snackbarHostState) {
-                if (engine == null) {
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(MaterialTheme.colorScheme.surfaceVariant),
-                    ) {}
-                } else {
-                    gameScreen(viewModel, engine!!, currentSettings)
+                engine?.let { gameEngine ->
+                    gameScreen(viewModel, gameEngine, currentSettings)
+                } ?: Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                ) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        CircularProgressIndicator()
+                    }
                 }
             }
         }
