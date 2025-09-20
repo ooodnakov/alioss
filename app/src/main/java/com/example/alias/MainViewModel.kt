@@ -711,67 +711,56 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    suspend fun updateSettings(
-        roundSeconds: Int,
-        targetWords: Int,
-        maxSkips: Int,
-        penaltyPerSkip: Int,
-        punishSkips: Boolean,
-        language: String,
-        uiLanguage: String,
-        allowNSFW: Boolean,
-        haptics: Boolean,
-        sound: Boolean,
-        oneHanded: Boolean,
-        verticalSwipes: Boolean,
-        orientation: String,
-        teams: List<String>,
-    ) {
+    suspend fun updateSettings(request: SettingsUpdateRequest) {
         // Persist all settings synchronously so callers can chain actions reliably (e.g., Save & Restart)
         val before = settingsRepository.settings.first()
-        settingsRepository.updateRoundSeconds(roundSeconds)
-        settingsRepository.updateTargetWords(targetWords)
-        settingsRepository.updateSkipPolicy(maxSkips, penaltyPerSkip)
-        settingsRepository.updatePunishSkips(punishSkips)
-        settingsRepository.updateAllowNSFW(allowNSFW)
-        settingsRepository.updateHapticsEnabled(haptics)
-        settingsRepository.updateSoundEnabled(sound)
-        settingsRepository.updateOneHandedLayout(oneHanded)
-        settingsRepository.updateVerticalSwipes(verticalSwipes)
-        settingsRepository.updateOrientation(orientation)
-        settingsRepository.updateUiLanguage(canonicalizeLocalePreference(uiLanguage))
+        settingsRepository.updateRoundSeconds(request.roundSeconds)
+        settingsRepository.updateTargetWords(request.targetWords)
+        settingsRepository.updateSkipPolicy(request.maxSkips, request.penaltyPerSkip)
+        settingsRepository.updatePunishSkips(request.punishSkips)
+        settingsRepository.updateAllowNSFW(request.allowNSFW)
+        settingsRepository.updateHapticsEnabled(request.haptics)
+        settingsRepository.updateSoundEnabled(request.sound)
+        settingsRepository.updateOneHandedLayout(request.oneHanded)
+        settingsRepository.updateVerticalSwipes(request.verticalSwipes)
+        settingsRepository.updateOrientation(request.orientation)
+        settingsRepository.updateUiLanguage(canonicalizeLocalePreference(request.uiLanguage))
         // Language validation may fail; keep others applied regardless
-        val langResult = runCatching { settingsRepository.updateLanguagePreference(language) }
-        if (langResult.isFailure) {
+        val langResult = runCatching { settingsRepository.updateLanguagePreference(request.language) }
+        langResult.onFailure { error ->
             _uiEvents.tryEmit(
                 UiEvent(
-                    message = langResult.exceptionOrNull()?.message ?: "Invalid language",
+                    message = error.message ?: "Invalid language",
                     duration = SnackbarDuration.Short,
                     isError = true,
                 ),
             )
-        } else {
-            val newLang = language.trim().lowercase()
-            if (!newLang.equals(before.languagePreference, ignoreCase = true)) {
-                val decksAll = deckRepository.getDecks().first()
-                val preferred = decksAll.filter { it.language.equals(newLang, ignoreCase = true) }.map { it.id }.toSet()
-                if (preferred.isNotEmpty()) {
-                    val prevEnabled = before.enabledDeckIds
-                    if (prevEnabled != preferred) {
-                        settingsRepository.setEnabledDeckIds(preferred)
-                        _uiEvents.tryEmit(
-                            UiEvent(
-                                message = "Enabled ${preferred.size} deck(s) for $newLang",
-                                actionLabel = "Undo",
-                                onAction = { settingsRepository.setEnabledDeckIds(prevEnabled) },
-                            ),
-                        )
-                    }
-                }
-            }
+        }
+        langResult.onSuccess {
+            val newLang = request.language.trim().lowercase()
+            val languageUnchanged = newLang.equals(before.languagePreference, ignoreCase = true)
+            if (languageUnchanged) return@onSuccess
+
+            val preferredDeckIds = deckRepository
+                .getDecks()
+                .first()
+                .filter { it.language.equals(newLang, ignoreCase = true) }
+                .map { it.id }
+                .toSet()
+            val preferredDecksChanged = preferredDeckIds.isNotEmpty() && preferredDeckIds != before.enabledDeckIds
+            if (!preferredDecksChanged) return@onSuccess
+
+            settingsRepository.setEnabledDeckIds(preferredDeckIds)
+            _uiEvents.tryEmit(
+                UiEvent(
+                    message = "Enabled ${preferredDeckIds.size} deck(s) for $newLang",
+                    actionLabel = "Undo",
+                    onAction = { settingsRepository.setEnabledDeckIds(before.enabledDeckIds) },
+                ),
+            )
         }
         // Ensure teams are saved
-        settingsRepository.setTeams(teams)
+        settingsRepository.setTeams(request.teams)
         _uiEvents.tryEmit(UiEvent(message = "Settings updated", actionLabel = "Dismiss"))
     }
 
