@@ -345,7 +345,10 @@ class MainViewModel @Inject constructor(
                 Log.e(TAG, "Base settings: ${baseSettings.enabledDeckIds.size} enabled decks")
                 val allDecks = deckRepository.getDecks().first()
                 Log.e(TAG, "All decks after import: ${allDecks.size}")
-                val preferredIds = allDecks.filter { it.language == baseSettings.languagePreference }.map { it.id }.toSet()
+                val preferredIds = allDecks
+                    .filter { it.language == baseSettings.languagePreference }
+                    .map { it.id }
+                    .toSet()
                 val fallbackIds = allDecks.map { it.id }.toSet()
                 val resolvedEnabled = if (baseSettings.enabledDeckIds.isEmpty()) {
                     if (preferredIds.isNotEmpty()) preferredIds else fallbackIds
