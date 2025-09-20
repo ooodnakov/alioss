@@ -27,6 +27,7 @@ import okhttp3.tls.HeldCertificate
 import okio.Buffer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -92,7 +93,7 @@ class DeckManagerTest {
     fun buildWordQueryFiltersSetsFlagsBasedOnSelections() {
         val settings = Settings(
             enabledDeckIds = setOf("a", "b"),
-            selectedCategories = setOf("party"),
+            selectedCategories = setOf("party", "  ", " game "),
             selectedWordClasses = setOf("verb"),
             selectedDeckLanguages = setOf("en"),
             allowNSFW = true,
@@ -105,6 +106,7 @@ class DeckManagerTest {
         assertEquals(listOf("a", "b"), filters.deckIds)
         assertEquals(1, filters.categoryFilterEnabled)
         assertEquals(1, filters.wordClassFilterEnabled)
+        assertEquals(listOf("party", "game"), filters.categories)
         assertEquals(listOf("VERB"), filters.wordClasses)
         assertEquals(listOf("en"), filters.languages)
         assertEquals(1, filters.languageFilterEnabled)
@@ -124,6 +126,36 @@ class DeckManagerTest {
         val words = deckManager.loadWords(filters)
 
         assertEquals(listOf("apple"), words)
+    }
+
+    @Test
+    fun buildWordQueryFiltersDisablesFiltersWhenSelectionsEmpty() {
+        val settings = Settings(
+            enabledDeckIds = setOf("deck"),
+            selectedCategories = emptySet(),
+            selectedWordClasses = emptySet(),
+        )
+
+        val filters = deckManager.buildWordQueryFilters(settings)
+
+        assertEquals(0, filters.categoryFilterEnabled)
+        assertEquals(0, filters.wordClassFilterEnabled)
+        assertNull(filters.categories)
+        assertNull(filters.wordClasses)
+    }
+
+    @Test
+    fun buildWordQueryFiltersDisablesCategoryFilterWhenSelectionsBlank() {
+        val settings = Settings(
+            enabledDeckIds = setOf("deck"),
+            selectedCategories = setOf("   "),
+            selectedWordClasses = emptySet(),
+        )
+
+        val filters = deckManager.buildWordQueryFilters(settings)
+
+        assertEquals(0, filters.categoryFilterEnabled)
+        assertNull(filters.categories)
     }
 
     @Test
@@ -447,9 +479,9 @@ class DeckManagerTest {
             allowNSFW: Boolean,
             minDifficulty: Int,
             maxDifficulty: Int,
-            categories: List<String>,
+            categories: List<String>?,
             hasCategories: Int,
-            classes: List<String>,
+            classes: List<String>?,
             hasClasses: Int,
             languages: List<String>,
             hasLanguages: Int,
@@ -474,9 +506,9 @@ class DeckManagerTest {
             allowNSFW: Boolean,
             minDifficulty: Int,
             maxDifficulty: Int,
-            categories: List<String>,
+            categories: List<String>?,
             hasCategories: Int,
-            classes: List<String>,
+            classes: List<String>?,
             hasClasses: Int,
             languages: List<String>,
             hasLanguages: Int,

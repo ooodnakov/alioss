@@ -65,9 +65,9 @@ class DeckManager
             val allowNSFW: Boolean,
             val minDifficulty: Int,
             val maxDifficulty: Int,
-            val categories: List<String>,
+            val categories: List<String>?,
             val categoryFilterEnabled: Int,
-            val wordClasses: List<String>,
+            val wordClasses: List<String>?,
             val wordClassFilterEnabled: Int,
             val languages: List<String>,
             val languageFilterEnabled: Int,
@@ -280,8 +280,10 @@ class DeckManager
 
         fun buildWordQueryFilters(settings: Settings, deckIdsOverride: Set<String>? = null): WordQueryFilters {
             val deckIds = (deckIdsOverride ?: settings.enabledDeckIds).toList()
-            val categories = settings.selectedCategories.toList()
-            val classes = canonicalizeWordClassFilters(settings.selectedWordClasses)
+            val categories = settings.selectedCategories
+                .mapNotNull { it.trim().takeIf(String::isNotEmpty) }
+                .takeIf { it.isNotEmpty() }
+            val classes = canonicalizeWordClassFilters(settings.selectedWordClasses).takeIf { it.isNotEmpty() }
             val languages = settings.selectedDeckLanguages.toList()
             return WordQueryFilters(
                 deckIds = deckIds,
@@ -289,9 +291,9 @@ class DeckManager
                 minDifficulty = settings.minDifficulty,
                 maxDifficulty = settings.maxDifficulty,
                 categories = categories,
-                categoryFilterEnabled = if (categories.isEmpty()) 0 else 1,
+                categoryFilterEnabled = if (categories == null) 0 else 1,
                 wordClasses = classes,
-                wordClassFilterEnabled = if (classes.isEmpty()) 0 else 1,
+                wordClassFilterEnabled = if (classes == null) 0 else 1
                 languages = languages,
                 languageFilterEnabled = if (languages.isEmpty()) 0 else 1,
             )

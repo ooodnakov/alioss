@@ -22,6 +22,7 @@ interface WordDao {
     @Query("DELETE FROM words WHERE deckId = :deckId")
     suspend fun deleteByDeck(deckId: String)
 
+    @Suppress("LongParameterList")
     @Query(
         "SELECT DISTINCT w.text FROM words w " +
             "WHERE w.deckId IN (:deckIds) " +
@@ -39,14 +40,15 @@ interface WordDao {
         allowNSFW: Boolean,
         minDifficulty: Int,
         maxDifficulty: Int,
-        categories: List<String>,
+        categories: List<String>?,
         hasCategories: Int,
-        classes: List<String>,
+        classes: List<String>?,
         hasClasses: Int,
         languages: List<String>,
         hasLanguages: Int,
     ): List<String>
 
+    @Suppress("LongParameterList")
     @Query(
         "SELECT w.text, w.difficulty, w.category, GROUP_CONCAT(DISTINCT UPPER(wc.wordClass)) AS wordClass " +
             "FROM words w " +
@@ -67,9 +69,9 @@ interface WordDao {
         allowNSFW: Boolean,
         minDifficulty: Int,
         maxDifficulty: Int,
-        categories: List<String>,
+        categories: List<String>?,
         hasCategories: Int,
-        classes: List<String>,
+        classes: List<String>?,
         hasClasses: Int,
         languages: List<String>,
         hasLanguages: Int,
