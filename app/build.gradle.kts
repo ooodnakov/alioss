@@ -17,6 +17,9 @@ android {
         targetSdk = 34
         versionCode = 2
         versionName = "0.2"
+
+        // Build configuration for database migrations
+        buildConfigField("boolean", "ENABLE_DESTRUCTIVE_MIGRATION_FALLBACK", "true")
     }
 
     buildFeatures {
@@ -47,6 +50,17 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField("boolean", "ENABLE_DESTRUCTIVE_MIGRATION_FALLBACK", "true")
+        }
+
+        release {
+            buildConfigField("boolean", "ENABLE_DESTRUCTIVE_MIGRATION_FALLBACK", "false")
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        }
+
         // Installable, release-like build signed with the debug keystore for local testing
         create("devRelease") {
             initWith(getByName("release"))
@@ -56,6 +70,7 @@ android {
             isMinifyEnabled = false
             isShrinkResources = false
             isDebuggable = false
+            buildConfigField("boolean", "ENABLE_DESTRUCTIVE_MIGRATION_FALLBACK", "true")
             matchingFallbacks += listOf("release")
         }
     }

@@ -12,6 +12,13 @@ android {
 
     defaultConfig {
         minSdk = 24
+
+        // Build configuration for database migrations
+        buildConfigField("boolean", "ENABLE_DESTRUCTIVE_MIGRATION_FALLBACK", "true")
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 
     compileOptions {
@@ -37,6 +44,9 @@ dependencies {
 
     implementation(libs.bundles.room)
     kapt(libs.androidx.room.compiler)
+
+    // Room testing dependencies
+    testImplementation(libs.androidx.room.testing)
 
     implementation(libs.kotlinx.serialization.json)
 

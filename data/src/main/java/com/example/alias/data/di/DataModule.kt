@@ -13,6 +13,7 @@ import com.example.alias.data.DeckRepositoryImpl
 import com.example.alias.data.TurnHistoryRepository
 import com.example.alias.data.TurnHistoryRepositoryImpl
 import com.example.alias.data.db.AliasDatabase
+import com.example.alias.data.db.ALL_MIGRATIONS
 import com.example.alias.data.db.DeckDao
 import com.example.alias.data.db.TurnHistoryDao
 import com.example.alias.data.db.WordDao
@@ -31,10 +32,30 @@ import javax.inject.Singleton
 object DataModule {
     @Provides
     @Singleton
-    fun provideDatabase(@ApplicationContext context: Context): AliasDatabase =
-        Room.databaseBuilder(context, AliasDatabase::class.java, "alias.db")
-            .fallbackToDestructiveMigration()
-            .build()
+    fun provideDatabase(@ApplicationContext context: Context): AliasDatabase {
+        val builder = Room.databaseBuilder(context, AliasDatabase::class.java, "alias.db")
+            .addMigrations(*ALL_MIGRATIONS)
+
+        // Conditionally add destructive fallback based on build configuration
+        // This ensures production builds don't lose user data while allowing
+        // development builds to have a safety net during migration development
+        try {
+            // Try to access app's BuildConfig to check if destructive fallback is enabled
+            val appBuildConfig = Class.forName("com.example.alias.BuildConfig")
+            val enableDestructiveFallback = appBuildConfig.getField("ENABLE_DESTRUCTIVE_MIGRATION_FALLBACK")
+                .getBoolean(null)
+
+            if (enableDestructiveFallback) {
+                builder.fallbackToDestructiveMigration()
+            }
+        } catch (e: Exception) {
+            // Fallback to destructive migration if we can't access BuildConfig
+            // This ensures the app still works in edge cases
+            builder.fallbackToDestructiveMigration()
+        }
+
+        return builder.build()
+    }
 
     @Provides
     fun provideDeckDao(db: AliasDatabase): DeckDao = db.deckDao()

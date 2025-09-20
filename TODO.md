@@ -27,9 +27,9 @@
 - Add word metadata storage (difficulty, category, classes), display chips on the word card, and provide deck filters for categories and word classes.
 - Snackbar UX: replace manual 1s autohide with built-in durations for non-indefinite events.
 - Bundled assets change detection: implemented; consider per-deck id tracking and pruning removed assets.
+- Room migrations: implement proper migrations for DB version upgrades; remove destructive fallback in production builds.
 
 ## Backlog
-- Room migrations: implement proper migrations for DB version upgrades; remove destructive fallback in production builds.
 - Add toggleable score-to-target regime with configurable goal in Settings and wire it into game flow.
 - Localization: ensure *all* strings (including Settings, About, and any new UI) are fully externalized.
 - Refactor end-of-turn summary UI: relocate turn statistics, collapse detailed breakdown/time graph (taller), per-word blocks with colored backgrounds acting as correct/incorrect toggles, and show time-between-word graph.
