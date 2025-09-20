@@ -148,6 +148,21 @@ class MainViewModel @Inject constructor(
         val coverImageError: Throwable?,
     )
 
+    private fun parseDeckIdsFromContent(content: String): List<String> {
+        return try {
+            val root = org.json.JSONObject(content)
+            val deck = root.optJSONObject("deck")
+            if (deck != null && deck.has("id")) {
+                listOf(deck.getString("id"))
+            } else {
+                emptyList()
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to parse deck IDs from content", e)
+            emptyList()
+        }
+    }
+
     private fun canonicalizeWordClassFilters(raw: Collection<String>): List<String> {
         val normalized = raw
             .asSequence()
@@ -280,9 +295,13 @@ class MainViewModel @Inject constructor(
                 Log.e(TAG, "Previous bundled deck hashes: $prev")
                 val digest = java.security.MessageDigest.getInstance("SHA-256")
                 fun sha256(bytes: ByteArray): String = digest.digest(bytes).joinToString("") { b -> "%02x".format(b) }
+
+                // Parse deck IDs from asset files for per-deck tracking
                 val assetContents = mutableMapOf<String, String>()
-                val currentEntries = mutableSetOf<String>()
+                val currentDeckEntries = mutableSetOf<String>()
                 val toImport = mutableListOf<String>()
+                val currentBundledDeckIds = mutableSetOf<String>()
+
                 for (f in assetFiles) {
                     Log.e(TAG, "Processing asset file: $f")
                     val content = runCatching {
@@ -291,21 +310,57 @@ class MainViewModel @Inject constructor(
                     if (content != null) {
                         assetContents[f] = content
                         val bytes = content.toByteArray(Charsets.UTF_8)
-                        val h = sha256(bytes)
-                        val entry = "$f:$h"
-                        currentEntries += entry
-                        if (prev.none { it.startsWith("$f:") } || !prev.contains(entry)) {
+                        val fileHash = sha256(bytes)
+
+                        // Parse deck IDs from the JSON content for per-deck tracking
+                        val deckIds = parseDeckIdsFromContent(content)
+                        currentBundledDeckIds += deckIds
+
+                        // Create per-deck hash entries: "deckId:fileHash"
+                        deckIds.forEach { deckId ->
+                            val deckEntry = "$deckId:$fileHash"
+                            currentDeckEntries += deckEntry
+                        }
+
+                        // Legacy file-level tracking for backward compatibility
+                        val fileEntry = "$f:$fileHash"
+                        currentDeckEntries += fileEntry
+
+                        // Check if any deck in this file needs importing
+                        val fileNeedsImport = prev.none { it.startsWith("$f:") } || !prev.contains(fileEntry)
+                        val decksNeedImport = deckIds.any { deckId ->
+                            val deckEntry = "$deckId:$fileHash"
+                            prev.none { it.startsWith("$deckId:") } || !prev.contains(deckEntry)
+                        }
+
+                        if (fileNeedsImport || decksNeedImport) {
                             toImport += f
                         }
-                        Log.e(TAG, "Hash for $f: $h, toImport: ${toImport.size} files")
+                        Log.e(TAG, "File $f has decks: $deckIds, fileHash: $fileHash, toImport: ${toImport.size} files")
                     } else {
                         Log.e(TAG, "Failed to read bundled deck $f")
                     }
                 }
-                if (prev.isEmpty() && currentEntries.isEmpty()) {
+
+                // Prune decks that are no longer in bundled assets
+                val allDecks = deckRepository.getDecks().first()
+                val decksToPrune = allDecks.filter { deck ->
+                    deck.isOfficial && !currentBundledDeckIds.contains(deck.id)
+                }
+                Log.e(TAG, "Found ${decksToPrune.size} decks to prune: ${decksToPrune.map { it.id }}")
+
+                decksToPrune.forEach { deck ->
+                    try {
+                        Log.e(TAG, "Pruning removed bundled deck: ${deck.id}")
+                        deckRepository.deleteDeck(deck.id)
+                    } catch (t: Throwable) {
+                        Log.e(TAG, "Failed to prune deck ${deck.id}", t)
+                    }
+                }
+                if (prev.isEmpty() && currentDeckEntries.isEmpty()) {
                     // No bundled content found; nothing to import
                     Log.e(TAG, "No bundled content found")
-                } else if (prev.isEmpty() && currentEntries.isNotEmpty()) {
+                } else if (prev.isEmpty() && currentDeckEntries.isNotEmpty()) {
                     // First run: import all
                     toImport.clear()
                     toImport.addAll(assetFiles)
@@ -337,19 +392,19 @@ class MainViewModel @Inject constructor(
                 }
                 // Persist current checksums if any
                 runCatching {
-                    settingsRepository.writeBundledDeckHashes(currentEntries)
-                    Log.e(TAG, "Persisted bundled deck hashes: $currentEntries")
+                    settingsRepository.writeBundledDeckHashes(currentDeckEntries)
+                    Log.e(TAG, "Persisted bundled deck hashes: $currentDeckEntries")
                 }
                 // Resolve enabled deck ids; if none set, pick available decks matching language preference
                 val baseSettings = settingsRepository.settings.first()
                 Log.e(TAG, "Base settings: ${baseSettings.enabledDeckIds.size} enabled decks")
-                val allDecks = deckRepository.getDecks().first()
-                Log.e(TAG, "All decks after import: ${allDecks.size}")
-                val preferredIds = allDecks
+                val allDecksAfterImport = deckRepository.getDecks().first()
+                Log.e(TAG, "All decks after import: ${allDecksAfterImport.size}")
+                val preferredIds = allDecksAfterImport
                     .filter { it.language == baseSettings.languagePreference }
                     .map { it.id }
                     .toSet()
-                val fallbackIds = allDecks.map { it.id }.toSet()
+                val fallbackIds = allDecksAfterImport.map { it.id }.toSet()
                 val resolvedEnabled = if (baseSettings.enabledDeckIds.isEmpty()) {
                     if (preferredIds.isNotEmpty()) preferredIds else fallbackIds
                 } else {
