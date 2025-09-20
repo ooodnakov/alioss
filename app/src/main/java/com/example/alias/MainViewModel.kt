@@ -413,6 +413,13 @@ class MainViewModel
             }
         }
 
+        fun resetHistory() {
+            viewModelScope.launch {
+                gameController.clearHistory()
+                _uiEvents.tryEmit(UiEvent(message = "History cleared", actionLabel = "OK"))
+            }
+        }
+
         fun restartMatch() {
             viewModelScope.launch {
                 val currentSettings = settingsController.settings.first()

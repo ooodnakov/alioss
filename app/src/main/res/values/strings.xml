@@ -205,6 +205,11 @@
     <string name="history_section_recent_turns">Recent turns</string>
     <string name="history_hide_header">Hide filters &amp; stats</string>
     <string name="history_show_header">Show filters &amp; stats</string>
+    <string name="history_reset_action">Reset history</string>
+    <string name="history_reset_dialog_title">Reset history?</string>
+    <string name="history_reset_dialog_message">Clear all saved turns? This cannot be undone.</string>
+    <string name="history_reset_dialog_confirm">Reset</string>
+    <string name="history_reset_dialog_cancel">Cancel</string>
     <string name="history_recent_count">%1$d of %2$d turns</string>
     <string name="history_no_entries_for_filters">No turns match your filters yet.</string>
     <string name="history_performance_summary">%1$d/%2$d correct (%3$d%%)</string>
