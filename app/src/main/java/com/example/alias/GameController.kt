@@ -70,4 +70,8 @@ class GameController
         }
 
         fun recentHistory(limit: Int): Flow<List<TurnHistoryEntity>> = historyRepository.getRecent(limit)
+
+        suspend fun clearHistory() {
+            historyRepository.clear()
+        }
     }

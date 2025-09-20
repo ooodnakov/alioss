@@ -110,12 +110,17 @@
         <item quantity="many">%d бонусных серий</item>
         <item quantity="other">%d бонусные серии</item>
     </plurals>
+    <string name="turn_summary_stats_title">Статистика хода</string>
     <string name="turn_summary_stat_time_label">Затраченное время</string>
     <string name="turn_summary_stat_time_value">%1$.1f с</string>
     <string name="turn_summary_stat_time_under_second_value">&lt;1 с</string>
     <string name="turn_timeline_title">Хронология хода</string>
     <string name="timeline_score_breakdown">Посмотрите, как команда набрала очки в этом раунде.</string>
+    <string name="timeline_graphs_title">Графики хода</string>
+    <string name="timeline_graphs_subtitle">Следите за динамикой счёта и темпа.</string>
     <string name="timeline_score_graph_label">Очки по времени</string>
+    <string name="timeline_time_between_graph_label">Интервал между словами</string>
+    <string name="timeline_time_between_graph_average">Среднее %1$.1f с между словами</string>
     <string name="timeline_no_events">В этом ходу слова не записывались.</string>
     <string name="timeline_bonus_label">Бонус</string>
     <string name="timeline_change">%1$+d</string>
@@ -128,6 +133,13 @@
     <string name="timeline_header_skip_no_penalty">Штраф не применён</string>
     <string name="timeline_mark_correct">Отметить как верное</string>
     <string name="timeline_mark_incorrect">Отметить как неверное</string>
+    <string name="timeline_breakdown_title">Разбор слов</string>
+    <string name="timeline_breakdown_subtitle">Нажмите на слово, чтобы отметить верное или пропущенное.</string>
+    <string name="timeline_section_state_expanded">Развернуто</string>
+    <string name="timeline_section_state_collapsed">Свернуто</string>
+    <string name="timeline_word_state_correct">Верно</string>
+    <string name="timeline_word_state_skipped">Пропущено</string>
+    <string name="timeline_word_state_pending">Проверить</string>
     <plurals name="timeline_correct">
         <item quantity="one">Верное слово</item>
         <item quantity="few">Серия верных ×%d</item>

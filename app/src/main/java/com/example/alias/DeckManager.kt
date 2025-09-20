@@ -478,7 +478,7 @@ class DeckManager
             withContext(Dispatchers.IO) { deckRepository.getDifficultyHistogram(deckId) }
 
         suspend fun getDeckRecentWords(deckId: String, limit: Int = 8): List<String> =
-            withContext(Dispatchers.IO) { deckRepository.getRecentWords(deckId, limit) }
+            withContext(Dispatchers.IO) { turnHistoryDao.getRecentWordsForDeck(deckId, limit) }
 
         suspend fun getDeckWordClassCounts(deckId: String): List<WordClassCount> =
             withContext(Dispatchers.IO) {
