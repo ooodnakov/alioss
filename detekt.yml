@@ -130,10 +130,10 @@ comments:
 formatting:
   active: true
   android: true
-  autoCorrect: true
+  autoCorrect: false
   ImportOrdering:
     active: true
-    autoCorrect: true
+    autoCorrect: false
   MaximumLineLength:
     active: true
     maxLineLength: 120
