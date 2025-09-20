@@ -171,6 +171,7 @@
     <string name="deck_languages_summary">Languages in rotation: %1$s</string>
     <string name="deck_languages_none">Enable a deck to add it to rotation.</string>
     <string name="open_filters">Filters</string>
+    <string name="languages_label">Languages</string>
     <string name="manage_trusted_sources">Trusted hosts</string>
     <string name="import_decks_action">Import decks</string>
     <string name="no_decks_call_to_action">Import a deck to start playing.</string>
@@ -180,6 +181,7 @@
     <string name="deck_deleted_bundled_label">Bundled deck: %1$s</string>
     <string name="deck_deleted_imported_hint">Note: Imported decks that are deleted are permanently removed and cannot be restored.</string>
     <string name="deck_filters_description">Choose which words appear in the next match.</string>
+    <string name="deck_filters_no_results">No decks match the current filters.</string>
     <string name="import_sheet_title">Import decks</string>
     <string name="import_sheet_hint">Install decks from files or a trusted link.</string>
     <string name="trusted_sources_sheet_hint">Only downloads from trusted hosts are allowed.</string>
@@ -275,7 +277,6 @@
     <string name="teams_tab">Teams</string>
     <string name="advanced_tab">Advanced</string>
     <string name="language_and_content">Language &amp; Content</string>
-    <string name="language_hint">Language (e.g., en, ru)</string>
     <string name="allow_nsfw_label">Allow NSFW</string>
     <string name="feedback_and_layout">Feedback &amp; Layout</string>
     <string name="haptics_label">Haptics</string>

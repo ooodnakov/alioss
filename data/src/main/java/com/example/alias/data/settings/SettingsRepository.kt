@@ -40,7 +40,6 @@ interface SettingsRepository {
     suspend fun updateScoreTargetEnabled(value: Boolean)
     suspend fun updateSkipPolicy(maxSkips: Int, penaltyPerSkip: Int)
     suspend fun updatePunishSkips(value: Boolean)
-    suspend fun updateLanguagePreference(language: String)
     suspend fun setEnabledDeckIds(ids: Set<String>)
     suspend fun updateAllowNSFW(value: Boolean)
     suspend fun updateStemmingEnabled(value: Boolean)
@@ -50,6 +49,7 @@ interface SettingsRepository {
     suspend fun updateOrientation(value: String)
     suspend fun updateUiLanguage(language: String)
     suspend fun updateDifficultyFilter(min: Int, max: Int)
+    suspend fun setDeckLanguagesFilter(languages: Set<String>)
     suspend fun setCategoriesFilter(categories: Set<String>)
     suspend fun setWordClassesFilter(classes: Set<String>)
     suspend fun setTeams(teams: List<String>)
@@ -84,9 +84,9 @@ data class Settings(
     val maxSkips: Int = 3,
     val penaltyPerSkip: Int = 1,
     val punishSkips: Boolean = true,
-    val languagePreference: String = "en",
     val uiLanguage: String = "system",
     val enabledDeckIds: Set<String> = emptySet(),
+    val selectedDeckLanguages: Set<String> = emptySet(),
     val teams: List<String> = DEFAULT_TEAMS,
     val allowNSFW: Boolean = false,
     val stemmingEnabled: Boolean = false,
@@ -117,9 +117,12 @@ class SettingsRepositoryImpl(
             maxSkips = p[Keys.MAX_SKIPS] ?: 3,
             penaltyPerSkip = p[Keys.PENALTY_PER_SKIP] ?: 1,
             punishSkips = p[Keys.PUNISH_SKIPS] ?: true,
-            languagePreference = p[Keys.LANGUAGE] ?: "en",
             uiLanguage = p[Keys.UI_LANGUAGE] ?: "system",
             enabledDeckIds = p[Keys.ENABLED_DECK_IDS] ?: emptySet(),
+            selectedDeckLanguages = p[Keys.DECK_LANGUAGES_FILTER]?.map { it.trim().lowercase(Locale.ROOT) }
+                ?.filter { it.isNotEmpty() }
+                ?.toSet()
+                ?: emptySet(),
             teams = p[Keys.TEAMS]?.split("|")?.filter { it.isNotBlank() }?.take(SettingsRepository.MAX_TEAMS)?.let {
                 if (it.size >= SettingsRepository.MIN_TEAMS) it else DEFAULT_TEAMS
             } ?: DEFAULT_TEAMS,
@@ -167,15 +170,22 @@ class SettingsRepositoryImpl(
         dataStore.edit { it[Keys.PUNISH_SKIPS] = value }
     }
 
-    override suspend fun updateLanguagePreference(language: String) {
-        // Lightweight validation for BCP-47-ish tags
-        val lc = language.trim()
-        require(Regex("^[A-Za-z]{2,8}(-[A-Za-z0-9]{1,8})*$").matches(lc)) { "Invalid language tag" }
-        dataStore.edit { it[Keys.LANGUAGE] = lc }
-    }
-
     override suspend fun setEnabledDeckIds(ids: Set<String>) {
         dataStore.edit { it[Keys.ENABLED_DECK_IDS] = ids }
+    }
+
+    override suspend fun setDeckLanguagesFilter(languages: Set<String>) {
+        val normalized = languages
+            .mapNotNull { value ->
+                val trimmed = value.trim()
+                if (trimmed.isEmpty()) {
+                    null
+                } else {
+                    trimmed.lowercase(Locale.ROOT)
+                }
+            }
+            .toSet()
+        dataStore.edit { it[Keys.DECK_LANGUAGES_FILTER] = normalized }
     }
 
     override suspend fun updateAllowNSFW(value: Boolean) {
@@ -290,9 +300,9 @@ class SettingsRepositoryImpl(
         val MAX_SKIPS = intPreferencesKey("max_skips")
         val PENALTY_PER_SKIP = intPreferencesKey("penalty_per_skip")
         val PUNISH_SKIPS = booleanPreferencesKey("punish_skips")
-        val LANGUAGE = stringPreferencesKey("language_preference")
         val UI_LANGUAGE = stringPreferencesKey("ui_language")
         val ENABLED_DECK_IDS = stringSetPreferencesKey("enabled_deck_ids")
+        val DECK_LANGUAGES_FILTER = stringSetPreferencesKey("deck_languages_filter")
         val ALLOW_NSFW = booleanPreferencesKey("allow_nsfw")
         val STEMMING_ENABLED = booleanPreferencesKey("stemming_enabled")
         val HAPTICS_ENABLED = booleanPreferencesKey("haptics_enabled")

@@ -2,11 +2,13 @@ package com.example.alias.data.pack
 
 import com.example.alias.domain.word.WordClassCatalog
 import java.util.Base64
+import java.util.Locale
 
 /**
  * Validates pack metadata and words to enforce basic constraints.
  */
 object PackValidator {
+    const val MULTI_LANGUAGE_TAG = "mul"
     private const val MAX_WORDS = 200_000
     private const val MAX_COVER_IMAGE_BYTES = 256_000
     private const val MAX_COVER_IMAGE_DIMENSION = 2_048
@@ -33,6 +35,12 @@ object PackValidator {
         require(version >= 1) { "Invalid version" }
         // isNSFW: no constraint (boolean)
         return normalizeCoverImage(coverImageBase64)
+    }
+
+    fun normalizeLanguageTag(language: String): String {
+        val trimmed = language.trim()
+        require(LANG_REGEX.matches(trimmed)) { "Invalid language tag" }
+        return trimmed.lowercase(Locale.ROOT)
     }
 
     private fun normalizeCoverImage(coverImageBase64: String?): String? {
@@ -149,6 +157,8 @@ object PackValidator {
 
     fun validateWord(
         text: String,
+        deckLanguage: String,
+        wordLanguage: String?,
         difficulty: Int,
         category: String?,
         tabooStems: List<String>?,
@@ -156,6 +166,11 @@ object PackValidator {
     ) {
         require(text.isNotBlank() && text.trim().length <= 120) { "Invalid word text" }
         require(difficulty in 1..5) { "Invalid difficulty: $difficulty" }
+        if (deckLanguage == MULTI_LANGUAGE_TAG) {
+            require(!wordLanguage.isNullOrBlank()) { "Multi-language decks require per-word language" }
+        } else if (wordLanguage != null) {
+            require(wordLanguage == deckLanguage) { "Word language must match deck language" }
+        }
         if (category != null) {
             require(category.trim().length <= 64) { "Invalid category length" }
         }
@@ -169,5 +184,10 @@ object PackValidator {
             val normalized = WordClassCatalog.normalizeOrNull(wordClass)
             require(normalized != null) { "Unsupported word class: $wordClass" }
         }
+    }
+
+    fun validateMultiLanguageContent(languages: Set<String>) {
+        require(languages.isNotEmpty()) { "Multi-language deck must include languages" }
+        require(languages.size >= 2) { "Multi-language deck must include at least two languages" }
     }
 }

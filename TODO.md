@@ -31,9 +31,10 @@
 - Room migrations: implement proper migrations for DB version upgrades; remove destructive fallback in production builds.
 - Audio UX: add sound hooks for countdown, turn start, final 5 seconds with vibration, and turn end (no assets committed).
 - Localization: ensure *all* strings (including Settings, About, and any new UI) are fully externalized.
+- Engine: add property-like tests for multi-team rotation and cumulative scoring across many turns.
 - Deck details: ensure recent words pull from games played with the selected deck.
-
 - Update History screen: hide filters/stats by default, add Reset History action, and align detailed game view with end-of-turn summary layout.
+
 
 ## Backlog
 - Refactor end-of-turn summary UI: relocate turn statistics, collapse detailed breakdown/time graph (taller), per-word blocks with colored backgrounds acting as correct/incorrect toggles, and show time-between-word graph.
@@ -41,5 +42,3 @@
 - Tests:
   - Repository: verify re-import of the same deck does not duplicate words (and that updated decks replace content).
   - App-layer: verify last-turn outcomes are persisted when match ends (target reached or timer with no words left).
-  - Engine: property-like tests for multi-team rotation and cumulative scoring across many turns.
-- Deck language handling: remove deck language setting from Settings, add per-deck language filters in Decks, and enforce language metadata rules for mono/multi-lingual packs.

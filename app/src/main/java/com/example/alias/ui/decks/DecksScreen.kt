@@ -109,6 +109,26 @@ fun decksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
 
     var selectedCategories by rememberSaveable(settings) { mutableStateOf(settings.selectedCategories) }
     var selectedWordClasses by rememberSaveable(settings) { mutableStateOf(settings.selectedWordClasses) }
+    var selectedLanguages by rememberSaveable(settings) { mutableStateOf(settings.selectedDeckLanguages) }
+
+    val normalizedLanguageFilter = remember(selectedLanguages) {
+        selectedLanguages.map { it.lowercase(Locale.ROOT) }.toSet()
+    }
+    val filteredDecks = remember(decks, normalizedLanguageFilter) {
+        if (normalizedLanguageFilter.isEmpty()) {
+            decks
+        } else {
+            decks.filter { deck ->
+                normalizedLanguageFilter.contains(deck.language.lowercase(Locale.ROOT))
+            }
+        }
+    }
+    val availableLanguages = remember(decks) {
+        decks.map { it.language.lowercase(Locale.ROOT) }
+            .filter { it.isNotBlank() }
+            .toSet()
+            .sorted()
+    }
 
     val filePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let { vm.importDeckFromFile(it) }
@@ -131,6 +151,10 @@ fun decksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
                         difficulty = DifficultyFilterState(
                             selectedLevels = IntRange(minDifficulty, maxDifficulty).toSet(),
                         ),
+                        languages = FilterSelectionState(
+                            available = availableLanguages,
+                            selected = selectedLanguages,
+                        ),
                         categories = FilterSelectionState(
                             available = availableCategories,
                             selected = selectedCategories,
@@ -147,10 +171,12 @@ fun decksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
                             minDifficulty = newRange.first
                             maxDifficulty = newRange.last
                         },
+                        onLanguagesChange = { selectedLanguages = it },
                         onCategoriesChange = { selectedCategories = it },
                         onWordClassesChange = { selectedWordClasses = it },
                         onApply = {
                             vm.updateDifficultyFilter(minDifficulty, maxDifficulty)
+                            vm.updateDeckLanguagesFilter(selectedLanguages)
                             vm.updateCategoriesFilter(selectedCategories)
                             vm.updateWordClassesFilter(selectedWordClasses)
                             activeSheet = null
@@ -213,7 +239,7 @@ fun decksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
             item(span = { GridItemSpan(maxLineSpan) }) {
                 decksHeroSummary(
                     state = DecksHeroSummaryState(
-                        decks = decks,
+                        decks = filteredDecks,
                         enabledDeckIds = enabled,
                     ),
                     actions = DecksHeroSummaryActions(
@@ -234,8 +260,12 @@ fun decksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     emptyDecksState(onImportClick = { activeSheet = DeckSheet.IMPORT })
                 }
+            } else if (filteredDecks.isEmpty()) {
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    filteredDecksEmptyState(onAdjustFilters = { activeSheet = DeckSheet.FILTERS })
+                }
             } else {
-                items(decks, key = { it.id }) { deck ->
+                items(filteredDecks, key = { it.id }) { deck ->
                     deckCard(
                         deck = deck,
                         enabled = enabled.contains(deck.id),
@@ -332,8 +362,10 @@ private data class DecksHeroSummaryActions(
 @Composable
 private fun decksHeroSummary(state: DecksHeroSummaryState, actions: DecksHeroSummaryActions) {
     val activeCount = state.decks.count { state.enabledDeckIds.contains(it.id) }
-    val languages = remember(state.decks) {
-        state.decks.map { it.language.uppercase(Locale.getDefault()) }
+    val languages = remember(state.decks, state.enabledDeckIds) {
+        state.decks
+            .filter { state.enabledDeckIds.contains(it.id) }
+            .map { it.language.uppercase(Locale.getDefault()) }
             .toSet()
             .sorted()
     }
@@ -632,6 +664,20 @@ private fun emptyDecksState(onImportClick: () -> Unit, modifier: Modifier = Modi
 }
 
 @Composable
+private fun filteredDecksEmptyState(onAdjustFilters: () -> Unit, modifier: Modifier = Modifier) {
+    ElevatedCard(modifier = modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text(stringResource(R.string.deck_filters_no_results), style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.filters_hint), style = MaterialTheme.typography.bodyMedium)
+            Button(onClick = onAdjustFilters) { Text(stringResource(R.string.open_filters)) }
+        }
+    }
+}
+
+@Composable
 private fun deckDownloadCard(progress: MainViewModel.DeckDownloadProgress) {
     ElevatedCard(modifier = Modifier.fillMaxWidth()) {
         Column(
@@ -740,6 +786,13 @@ private fun deckFiltersSheet(
         Text(stringResource(R.string.deck_filters_description), style = MaterialTheme.typography.bodyMedium)
         difficultyFilter(state.difficulty, callbacks.onDifficultyToggle)
         filterChipGroup(
+            title = stringResource(R.string.languages_label),
+            items = state.languages.available,
+            selectedItems = state.languages.selected,
+            onSelectionChanged = callbacks.onLanguagesChange,
+            labelMapper = { it.uppercase(Locale.getDefault()) },
+        )
+        filterChipGroup(
             title = stringResource(R.string.categories_label),
             items = state.categories.available,
             selectedItems = state.categories.selected,
@@ -778,6 +831,7 @@ private fun difficultyFilter(state: DifficultyFilterState, onToggle: (Int) -> Un
 
 private data class DeckFiltersSheetState(
     val difficulty: DifficultyFilterState,
+    val languages: FilterSelectionState,
     val categories: FilterSelectionState,
     val wordClasses: FilterSelectionState,
 )
@@ -791,6 +845,7 @@ private data class FilterSelectionState(
 
 private class DeckFiltersSheetCallbacks(
     val onDifficultyToggle: (Int) -> Unit,
+    val onLanguagesChange: (Set<String>) -> Unit,
     val onCategoriesChange: (Set<String>) -> Unit,
     val onWordClassesChange: (Set<String>) -> Unit,
     val onApply: () -> Unit,
@@ -867,6 +922,7 @@ private fun filterChipGroup(
     selectedItems: Set<String>,
     onSelectionChanged: (Set<String>) -> Unit,
     modifier: Modifier = Modifier,
+    labelMapper: (String) -> String = { it },
 ) {
     if (items.isEmpty()) return
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -883,7 +939,7 @@ private fun filterChipGroup(
                         val updatedSelection = if (selected) selectedItems - item else selectedItems + item
                         onSelectionChanged(updatedSelection)
                     },
-                    label = { Text(item) },
+                    label = { Text(labelMapper(item)) },
                 )
             }
         }

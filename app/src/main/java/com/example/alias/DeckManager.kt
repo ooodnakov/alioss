@@ -61,7 +61,6 @@ class DeckManager
 
         data class WordQueryFilters(
             val deckIds: List<String>,
-            val language: String,
             val allowNSFW: Boolean,
             val minDifficulty: Int,
             val maxDifficulty: Int,
@@ -74,6 +73,7 @@ class DeckManager
         data class PackImportResult(
             val deckId: String,
             val language: String,
+            val isNsfw: Boolean,
             val coverImageError: Throwable?,
         )
 
@@ -200,21 +200,20 @@ class DeckManager
             availableDecks: List<DeckEntity>,
             deletedBundledDeckIds: Set<String>,
         ): Set<String> {
-            val preferredIds = availableDecks
-                .filter { it.language == baseSettings.languagePreference }
-                .map { it.id }
+            val availableIds = availableDecks.map { it.id }.toSet()
+            val retainedIds = baseSettings.enabledDeckIds
+                .filterNot { deletedBundledDeckIds.contains(it) }
+                .filter { availableIds.contains(it) }
                 .toSet()
-            val fallbackIds = availableDecks.map { it.id }.toSet()
-            return if (baseSettings.enabledDeckIds.isEmpty()) {
-                if (preferredIds.isNotEmpty()) preferredIds else fallbackIds
-            } else {
-                baseSettings.enabledDeckIds.filterNot { deletedBundledDeckIds.contains(it) }.toSet()
+            return when {
+                baseSettings.enabledDeckIds.isEmpty() -> availableIds
+                retainedIds.isEmpty() -> availableIds
+                else -> retainedIds
             }
         }
 
         data class WordClassAvailabilityKey(
             val deckIds: Set<String>,
-            val language: String,
             val allowNSFW: Boolean,
         )
 
@@ -281,7 +280,6 @@ class DeckManager
             val classes = canonicalizeWordClassFilters(settings.selectedWordClasses)
             return WordQueryFilters(
                 deckIds = deckIds,
-                language = settings.languagePreference,
                 allowNSFW = settings.allowNSFW,
                 minDifficulty = settings.minDifficulty,
                 maxDifficulty = settings.maxDifficulty,
@@ -297,7 +295,6 @@ class DeckManager
             return withContext(Dispatchers.IO) {
                 wordDao.getWordTextsForDecks(
                     filters.deckIds,
-                    filters.language,
                     filters.allowNSFW,
                     filters.minDifficulty,
                     filters.maxDifficulty,
@@ -318,7 +315,6 @@ class DeckManager
                     val briefsDeferred = async {
                         wordDao.getWordBriefsForDecks(
                             filters.deckIds,
-                            filters.language,
                             filters.allowNSFW,
                             filters.minDifficulty,
                             filters.maxDifficulty,
@@ -329,10 +325,10 @@ class DeckManager
                         )
                     }
                     val categoriesDeferred = async {
-                        wordDao.getAvailableCategories(filters.deckIds, filters.language, filters.allowNSFW)
+                        wordDao.getAvailableCategories(filters.deckIds, filters.allowNSFW)
                     }
                     val classesDeferred = async {
-                        wordDao.getAvailableWordClasses(filters.deckIds, filters.language, filters.allowNSFW)
+                        wordDao.getAvailableWordClasses(filters.deckIds, filters.allowNSFW)
                     }
                     val briefs = briefsDeferred.await()
                     val categories = categoriesDeferred.await().sorted()
@@ -410,6 +406,7 @@ class DeckManager
             return PackImportResult(
                 deckId = sanitized.pack.deck.id,
                 language = sanitized.pack.deck.language,
+                isNsfw = sanitized.pack.deck.isNSFW,
                 coverImageError = sanitized.coverImageError,
             )
         }
@@ -506,7 +503,6 @@ class DeckManager
         fun buildWordClassAvailabilityKey(settings: Settings): WordClassAvailabilityKey =
             WordClassAvailabilityKey(
                 deckIds = settings.enabledDeckIds,
-                language = settings.languagePreference,
                 allowNSFW = settings.allowNSFW,
             )
 
@@ -514,7 +510,7 @@ class DeckManager
             val ids = key.deckIds.toList()
             if (ids.isEmpty()) return emptyList()
             val classes = withContext(Dispatchers.IO) {
-                wordDao.getAvailableWordClasses(ids, key.language, key.allowNSFW)
+                wordDao.getAvailableWordClasses(ids, key.allowNSFW)
             }
             return canonicalizeWordClassFilters(classes)
         }

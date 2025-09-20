@@ -74,7 +74,7 @@ class DeckManagerTest {
     @Test
     fun loadAvailableWordClassesCanonicalizesValues() = runBlocking {
         wordDao.availableWordClasses = listOf("verb", "unknown", "Adj")
-        val key = DeckManager.WordClassAvailabilityKey(setOf("deck"), language = "en", allowNSFW = false)
+        val key = DeckManager.WordClassAvailabilityKey(setOf("deck"), allowNSFW = false)
 
         val classes = deckManager.loadAvailableWordClasses(key)
 
@@ -355,7 +355,6 @@ class DeckManagerTest {
 
         override suspend fun getWordTextsForDecks(
             deckIds: List<String>,
-            language: String,
             allowNSFW: Boolean,
             minDifficulty: Int,
             maxDifficulty: Int,
@@ -368,8 +367,6 @@ class DeckManagerTest {
                 val info = deckWords[id]
                 if (info == null) {
                     emptyList()
-                } else if (info.language != language) {
-                    emptyList()
                 } else if (!allowNSFW && info.isNsfw) {
                     emptyList()
                 } else {
@@ -380,7 +377,6 @@ class DeckManagerTest {
 
         override suspend fun getWordBriefsForDecks(
             deckIds: List<String>,
-            language: String,
             allowNSFW: Boolean,
             minDifficulty: Int,
             maxDifficulty: Int,
@@ -393,14 +389,12 @@ class DeckManagerTest {
 
         override suspend fun getAvailableCategories(
             deckIds: List<String>,
-            language: String,
             allowNSFW: Boolean,
         ): List<String> =
             throw UnsupportedOperationException()
 
         override suspend fun getAvailableWordClasses(
             deckIds: List<String>,
-            language: String,
             allowNSFW: Boolean,
         ): List<String> =
             availableWordClasses
@@ -498,12 +492,12 @@ class DeckManagerTest {
             flow.value = flow.value.copy(punishSkips = value)
         }
 
-        override suspend fun updateLanguagePreference(language: String) {
-            flow.value = flow.value.copy(languagePreference = language)
-        }
-
         override suspend fun setEnabledDeckIds(ids: Set<String>) {
             flow.value = flow.value.copy(enabledDeckIds = ids)
+        }
+
+        override suspend fun setDeckLanguagesFilter(languages: Set<String>) {
+            flow.value = flow.value.copy(selectedDeckLanguages = languages)
         }
 
         override suspend fun updateAllowNSFW(value: Boolean) {

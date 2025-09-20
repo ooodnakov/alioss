@@ -4,6 +4,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
+import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -393,5 +394,101 @@ class DefaultGameEngineTest {
 
             engine.nextTurn()
             assertIs<GameState.MatchFinished>(engine.state.value)
+        }
+
+    @Test
+    fun `rotates teams consistently across many turns`() =
+        runTest {
+            val teams = listOf("Red", "Blue", "Green")
+            val words = List(120) { "word$it" }
+            val engine = DefaultGameEngine(words, this)
+            val cfg =
+                config.copy(
+                    goal = MatchGoal(MatchGoalType.TARGET_SCORE, target = 999),
+                    maxSkips = 0,
+                    penaltyPerSkip = 0,
+                    roundSeconds = 1,
+                )
+            engine.startMatch(cfg, teams = teams, seed = 42L)
+
+            val observedOrder = mutableListOf<String>()
+            val rounds = 10
+            val expectedOrder = List(rounds * teams.size) { teams[it % teams.size] }
+
+            repeat(rounds * teams.size) {
+                val pending = assertIs<GameState.TurnPending>(engine.state.value)
+                observedOrder += pending.team
+
+                engine.startTurn()
+                advanceTimeBy(cfg.roundSeconds * 1000L)
+                runCurrent()
+
+                val finished = assertIs<GameState.TurnFinished>(engine.state.value)
+                assertEquals(pending.team, finished.team)
+                assertFalse(finished.matchOver)
+
+                engine.nextTurn()
+            }
+
+            assertEquals(expectedOrder, observedOrder)
+            val nextPending = assertIs<GameState.TurnPending>(engine.state.value)
+            assertEquals(teams[0], nextPending.team)
+        }
+
+    @Test
+    fun `cumulative scores stay in sync across many turns`() =
+        runTest {
+            val teams = listOf("Alpha", "Beta")
+            val random = Random(1234)
+            val words = List(500) { "word$it" }
+            val engine = DefaultGameEngine(words, this)
+            val cfg =
+                config.copy(
+                    goal = MatchGoal(MatchGoalType.TARGET_SCORE, target = 500),
+                    maxSkips = 2,
+                    penaltyPerSkip = 2,
+                    roundSeconds = 2,
+                )
+            engine.startMatch(cfg, teams = teams, seed = 99L)
+
+            val cumulative = mutableMapOf<String, Int>()
+            teams.forEach { cumulative[it] = 0 }
+
+            repeat(40) {
+                val pending = assertIs<GameState.TurnPending>(engine.state.value)
+                val team = pending.team
+
+                engine.startTurn()
+
+                var correctCount = 0
+                var skipCount = 0
+                val actions = random.nextInt(from = 1, until = 5)
+                repeat(actions) {
+                    assertIs<GameState.TurnActive>(engine.state.value)
+                    val useSkip = skipCount < cfg.maxSkips && random.nextBoolean()
+                    if (useSkip) {
+                        engine.skip()
+                        skipCount++
+                    } else {
+                        engine.correct()
+                        correctCount++
+                    }
+                }
+
+                advanceTimeBy(cfg.roundSeconds * 1000L)
+                runCurrent()
+
+                val finished = assertIs<GameState.TurnFinished>(engine.state.value)
+                assertEquals(team, finished.team)
+
+                val expectedDelta = correctCount - (skipCount * cfg.penaltyPerSkip)
+                assertEquals(expectedDelta, finished.deltaScore)
+
+                cumulative[team] = cumulative.getValue(team) + expectedDelta
+                teams.forEach { name -> assertEquals(cumulative.getValue(name), finished.scores.getValue(name)) }
+
+                assertFalse(finished.matchOver)
+                engine.nextTurn()
+            }
         }
 }

@@ -1,8 +1,5 @@
 package com.example.alias
 
-import com.example.alias.data.DeckRepository
-import com.example.alias.data.db.DeckEntity
-import com.example.alias.data.pack.ParsedPack
 import com.example.alias.data.settings.Settings
 import com.example.alias.data.settings.SettingsRepository
 import kotlinx.coroutines.flow.Flow
@@ -14,15 +11,13 @@ import org.junit.Before
 import org.junit.Test
 
 class SettingsControllerTest {
-    private lateinit var deckRepository: FakeDeckRepository
     private lateinit var settingsRepository: FakeSettingsRepository
     private lateinit var controller: SettingsController
 
     @Before
     fun setUp() {
-        deckRepository = FakeDeckRepository()
         settingsRepository = FakeSettingsRepository()
-        controller = SettingsController(settingsRepository, deckRepository)
+        controller = SettingsController(settingsRepository)
     }
 
     @Test
@@ -32,39 +27,29 @@ class SettingsControllerTest {
     }
 
     @Test
-    fun applySettingsUpdateChangesLanguageDecks() = runBlocking {
+    fun applySettingsUpdatePersistsChanges() = runBlocking {
         val initialSettings = Settings(
-            languagePreference = "en",
-            enabledDeckIds = setOf("en-1"),
+            allowNSFW = false,
         )
         settingsRepository.state.value = initialSettings
-        deckRepository.state.value = listOf(
-            DeckEntity("es-1", "Spanish", "es", isOfficial = true, isNSFW = false, version = 1, updatedAt = 0L),
+
+        val request = SettingsUpdateRequest.from(initialSettings).copy(
+            allowNSFW = true,
+            uiLanguage = "ru",
         )
 
-        val request = SettingsUpdateRequest.from(initialSettings).copy(language = "es")
-        val result = controller.applySettingsUpdate(request)
+        controller.applySettingsUpdate(request)
 
-        assertEquals("es", settingsRepository.state.value.languagePreference)
-        val change = result.languageChange
-        assertEquals(setOf("es-1"), change?.newDeckIds)
-        assertEquals(setOf("en-1"), change?.previousDeckIds)
-        assertEquals(setOf("es-1"), settingsRepository.state.value.enabledDeckIds)
+        val updated = settingsRepository.state.value
+        assertTrue(updated.allowNSFW)
+        assertEquals("ru", updated.uiLanguage)
     }
 
-    private class FakeDeckRepository : DeckRepository {
-        val state = MutableStateFlow<List<DeckEntity>>(emptyList())
-        override fun getDecks(): Flow<List<DeckEntity>> = state
-        override suspend fun getWordCount(deckId: String): Int = throw UnsupportedOperationException()
-        override suspend fun getDifficultyHistogram(deckId: String): List<com.example.alias.data.db.DifficultyBucket> =
-            throw UnsupportedOperationException()
-        override suspend fun getRecentWords(
-            deckId: String,
-            limit: Int,
-        ): List<String> = throw UnsupportedOperationException()
-        override suspend fun importJson(content: String) = throw UnsupportedOperationException()
-        override suspend fun importPack(pack: ParsedPack) = throw UnsupportedOperationException()
-        override suspend fun deleteDeck(deckId: String) = throw UnsupportedOperationException()
+    @Test
+    fun updateDeckLanguagesFilterPersistsSelection() = runBlocking {
+        controller.updateDeckLanguagesFilter(setOf("en", "ru"))
+
+        assertEquals(setOf("en", "ru"), settingsRepository.state.value.selectedDeckLanguages)
     }
 
     private class FakeSettingsRepository : SettingsRepository {
@@ -89,12 +74,11 @@ class SettingsControllerTest {
         override suspend fun updatePunishSkips(value: Boolean) {
             state.value = state.value.copy(punishSkips = value)
         }
-        override suspend fun updateLanguagePreference(language: String) {
-            require(language.matches(Regex("^[A-Za-z]{2,8}(-[A-Za-z0-9]{1,8})*$")))
-            state.value = state.value.copy(languagePreference = language)
-        }
         override suspend fun setEnabledDeckIds(ids: Set<String>) {
             state.value = state.value.copy(enabledDeckIds = ids)
+        }
+        override suspend fun setDeckLanguagesFilter(languages: Set<String>) {
+            state.value = state.value.copy(selectedDeckLanguages = languages)
         }
         override suspend fun updateAllowNSFW(value: Boolean) {
             state.value = state.value.copy(allowNSFW = value)

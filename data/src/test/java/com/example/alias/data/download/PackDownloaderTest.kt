@@ -26,8 +26,8 @@ private class FakeSettingsRepo(origins: Set<String>) : SettingsRepository {
     override suspend fun updateScoreTargetEnabled(value: Boolean) = Unit
     override suspend fun updateSkipPolicy(maxSkips: Int, penaltyPerSkip: Int) = Unit
     override suspend fun updatePunishSkips(value: Boolean) = Unit
-    override suspend fun updateLanguagePreference(language: String) = Unit
     override suspend fun setEnabledDeckIds(ids: Set<String>) = Unit
+    override suspend fun setDeckLanguagesFilter(languages: Set<String>) = Unit
     override suspend fun updateAllowNSFW(value: Boolean) = Unit
     override suspend fun updateStemmingEnabled(value: Boolean) = Unit
     override suspend fun updateHapticsEnabled(value: Boolean) = Unit

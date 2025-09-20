@@ -32,6 +32,7 @@ private data class DeckDto(
 private data class WordDto(
     val text: String,
     val difficulty: Int? = null,
+    val language: String? = null,
     val category: String? = null,
     @SerialName("wordClass") val wordClass: String? = null,
     @SerialName("wordClasses") val legacyWordClasses: List<String>? = null,
@@ -78,9 +79,10 @@ object PackParser {
         val dto = json.decodeFromString<PackDto>(content)
         // Basic input validation to avoid malformed or oversized packs.
         PackValidator.validateFormat(dto.format)
+        val normalizedDeckLanguage = PackValidator.normalizeLanguageTag(dto.deck.language)
         val coverImageBase64 = PackValidator.validateDeck(
             id = dto.deck.id,
-            language = dto.deck.language,
+            language = normalizedDeckLanguage,
             name = dto.deck.name,
             version = dto.deck.version,
             isNSFW = dto.deck.isNsfw,
@@ -90,7 +92,7 @@ object PackParser {
         val deckEntity = DeckEntity(
             id = dto.deck.id,
             name = dto.deck.name,
-            language = dto.deck.language,
+            language = normalizedDeckLanguage,
             isOfficial = isBundledAsset || dto.deck.isOfficial,
             isNSFW = dto.deck.isNsfw,
             version = dto.deck.version,
@@ -99,21 +101,29 @@ object PackParser {
         )
         val wordEntities = mutableListOf<WordEntity>()
         val classEntities = mutableListOf<WordClassEntity>()
+        val languagesEncountered = mutableSetOf<String>()
         dto.words.forEach { word ->
             val difficulty = word.normalizedDifficulty()
             val category = word.normalizedCategory()
             val normalizedClass = word.resolvedWordClass()
+            val normalizedWordLanguage = word.language?.let { PackValidator.normalizeLanguageTag(it) }
             PackValidator.validateWord(
                 text = word.text,
+                deckLanguage = normalizedDeckLanguage,
+                wordLanguage = normalizedWordLanguage,
                 difficulty = difficulty,
                 category = category,
                 tabooStems = word.tabooStems,
                 wordClass = normalizedClass,
             )
+            val storedLanguage = normalizedWordLanguage ?: normalizedDeckLanguage
+            if (normalizedDeckLanguage == PackValidator.MULTI_LANGUAGE_TAG) {
+                languagesEncountered += storedLanguage
+            }
             wordEntities += WordEntity(
                 deckId = dto.deck.id,
                 text = word.text,
-                language = dto.deck.language,
+                language = storedLanguage,
                 stems = null,
                 category = category,
                 difficulty = difficulty,
@@ -127,6 +137,9 @@ object PackParser {
                     wordClass = cls,
                 )
             }
+        }
+        if (normalizedDeckLanguage == PackValidator.MULTI_LANGUAGE_TAG) {
+            PackValidator.validateMultiLanguageContent(languagesEncountered)
         }
         return ParsedPack(deckEntity, wordEntities, classEntities)
     }
