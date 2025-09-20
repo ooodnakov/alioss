@@ -55,7 +55,9 @@ val MIGRATION_4_5 = Migration(4, 5) { database ->
 
     // Add indexes for word_classes table
     database.execSQL("CREATE INDEX IF NOT EXISTS `index_word_classes_wordClass` ON `word_classes` (`wordClass`)")
-    database.execSQL("CREATE INDEX IF NOT EXISTS `index_word_classes_deckId_wordText` ON `word_classes` (`deckId`, `wordText`)")
+    database.execSQL(
+        "CREATE INDEX IF NOT EXISTS `index_word_classes_deckId_wordText` ON `word_classes` (`deckId`, `wordText`)",
+    )
 
     // Add unique constraint to prevent duplicate words in same deck
     database.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_words_deckId_text` ON `words` (`deckId`, `text`)")

@@ -58,7 +58,10 @@ class SettingsControllerTest {
         override suspend fun getWordCount(deckId: String): Int = throw UnsupportedOperationException()
         override suspend fun getDifficultyHistogram(deckId: String): List<com.example.alias.data.db.DifficultyBucket> =
             throw UnsupportedOperationException()
-        override suspend fun getRecentWords(deckId: String, limit: Int): List<String> = throw UnsupportedOperationException()
+        override suspend fun getRecentWords(
+            deckId: String,
+            limit: Int,
+        ): List<String> = throw UnsupportedOperationException()
         override suspend fun importJson(content: String) = throw UnsupportedOperationException()
         override suspend fun importPack(pack: ParsedPack) = throw UnsupportedOperationException()
         override suspend fun deleteDeck(deckId: String) = throw UnsupportedOperationException()

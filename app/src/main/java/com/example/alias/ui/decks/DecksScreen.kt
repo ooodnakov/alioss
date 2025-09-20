@@ -288,7 +288,9 @@ fun decksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
                 onDismissRequest = { deckPendingPermanentDelete = null },
                 title = { Text("Permanently Delete Deck") },
                 text = {
-                    Text("Are you sure you want to permanently delete \"${deckToPermanentlyDelete.name}\"? This action cannot be undone.")
+                    Text(
+                        "Are you sure you want to permanently delete \"${deckToPermanentlyDelete.name}\"? This action cannot be undone.",
+                    )
                 },
                 confirmButton = {
                     TextButton(onClick = {

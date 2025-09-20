@@ -15,9 +15,10 @@ import javax.inject.Singleton
 @Singleton
 class GameController @Inject constructor(
     private val historyRepository: TurnHistoryRepository,
+    private val gameEngineFactory: GameEngineFactory,
 ) {
     fun createEngine(words: List<String>, scope: CoroutineScope): GameEngine {
-        return com.example.alias.domain.DefaultGameEngine(words, scope)
+        return gameEngineFactory.create(words, scope)
     }
 
     suspend fun startMatch(engine: GameEngine, settings: Settings) {

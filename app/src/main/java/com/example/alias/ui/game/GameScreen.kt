@@ -306,7 +306,10 @@ fun gameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                                 ) {
                                     Icon(Icons.Filled.PlayArrow, contentDescription = null)
                                     Spacer(Modifier.width(8.dp))
-                                    Text(stringResource(R.string.start_turn), style = MaterialTheme.typography.titleMedium)
+                                    Text(
+                                        stringResource(R.string.start_turn),
+                                        style = MaterialTheme.typography.titleMedium,
+                                    )
                                 }
                             }
                         }
@@ -603,7 +606,10 @@ fun gameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                                     }
                                 }
                             }
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            ) {
                                 Button(
                                     onClick = onSkip,
                                     enabled = !isProcessing && s.skipsRemaining > 0,

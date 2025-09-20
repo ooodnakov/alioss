@@ -4,7 +4,6 @@ import android.content.Context
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Base64
-import android.util.Log
 import com.example.alias.data.DeckRepository
 import com.example.alias.data.db.DeckDao
 import com.example.alias.data.db.DeckEntity
@@ -27,12 +26,19 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
-import org.json.JSONObject
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.put
 import java.security.MessageDigest
 import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.text.Charsets
 
 @Singleton
 class DeckManager @Inject constructor(
@@ -43,6 +49,8 @@ class DeckManager @Inject constructor(
     private val turnHistoryDao: TurnHistoryDao,
     private val settingsRepository: SettingsRepository,
     private val downloader: PackDownloader,
+    private val bundledDeckProvider: BundledDeckProvider,
+    private val logger: DeckManagerLogger,
 ) {
     data class InitialLoadResult(
         val words: List<String>,
@@ -72,6 +80,136 @@ class DeckManager @Inject constructor(
         data class Failure(val errorMessage: String) : DeleteDeckResult()
     }
 
+    private data class BundledDeckScanResult(
+        val assetContents: Map<String, String>,
+        val toImport: List<String>,
+        val currentDeckEntries: Set<String>,
+        val currentBundledDeckIds: Set<String>,
+    )
+
+    private fun determineBundledDecksToImport(
+        assetFiles: List<String>,
+        previousHashes: Set<String>,
+        deletedBundledDeckIds: Set<String>,
+        hadDecks: Boolean,
+    ): BundledDeckScanResult {
+        val digest = MessageDigest.getInstance("SHA-256")
+        val assetContents = mutableMapOf<String, String>()
+        val currentDeckEntries = mutableSetOf<String>()
+        val currentBundledDeckIds = mutableSetOf<String>()
+        val toImport = mutableListOf<String>()
+        val deckIdsByFile = mutableMapOf<String, List<String>>()
+
+        assetFiles.forEach { file ->
+            val content = bundledDeckProvider.readDeckAsset(file)
+            if (content != null) {
+                assetContents[file] = content
+                val bytes = content.toByteArray(Charsets.UTF_8)
+                val fileHash = digest.digest(bytes).joinToString("") { b -> "%02x".format(b) }
+                digest.reset()
+                val deckIds = parseDeckIdsFromContent(content)
+                deckIdsByFile[file] = deckIds
+                currentBundledDeckIds += deckIds
+
+                deckIds.forEach { deckId ->
+                    currentDeckEntries += "$deckId:$fileHash"
+                }
+                currentDeckEntries += "$file:$fileHash"
+
+                val hasRestorableDeck = deckIds.any { deckId -> !deletedBundledDeckIds.contains(deckId) }
+                if (!hasRestorableDeck) {
+                    return@forEach
+                }
+
+                val fileNeedsImport = previousHashes.none { it.startsWith("$file:") } || !previousHashes.contains("$file:$fileHash")
+                val decksNeedImport = deckIds.any { deckId ->
+                    if (deletedBundledDeckIds.contains(deckId)) {
+                        false
+                    } else {
+                        val deckEntry = "$deckId:$fileHash"
+                        previousHashes.none { it.startsWith("$deckId:") } || !previousHashes.contains(deckEntry)
+                    }
+                }
+                if (fileNeedsImport || decksNeedImport) {
+                    toImport += file
+                }
+            } else {
+                logger.error("Failed to read bundled deck $file")
+            }
+        }
+
+        val restorableFiles = assetFiles.filter { file ->
+            val deckIds = deckIdsByFile[file].orEmpty()
+            deckIds.any { deckId -> !deletedBundledDeckIds.contains(deckId) }
+        }
+        if ((previousHashes.isEmpty() || !hadDecks) && restorableFiles.isNotEmpty()) {
+            toImport.clear()
+            toImport.addAll(restorableFiles)
+        }
+
+        return BundledDeckScanResult(
+            assetContents = assetContents,
+            toImport = toImport,
+            currentDeckEntries = currentDeckEntries,
+            currentBundledDeckIds = currentBundledDeckIds,
+        )
+    }
+
+    private suspend fun pruneOrphanedBundledDecks(
+        existingDecks: List<DeckEntity>,
+        currentBundledDeckIds: Set<String>,
+        deletedBundledDeckIds: Set<String>,
+    ) {
+        existingDecks
+            .asSequence()
+            .filter { it.isOfficial }
+            .filterNot { currentBundledDeckIds.contains(it.id) }
+            .filterNot { deletedBundledDeckIds.contains(it.id) }
+            .forEach { deck ->
+                runCatching { deckRepository.deleteDeck(deck.id) }
+                    .onFailure { logger.error("Failed to prune deck ${deck.id}", it) }
+            }
+    }
+
+    private suspend fun importBundledDecks(filesToImport: List<String>, assetContents: Map<String, String>) {
+        filesToImport.forEach { file ->
+            runCatching {
+                val content = assetContents[file] ?: bundledDeckProvider.readDeckAsset(file)
+                if (content == null) {
+                    logger.error("Missing bundled deck content for $file")
+                    return@forEach
+                }
+                val sanitized = parseAndSanitizePack(content, isBundledAsset = true)
+                deckRepository.importPack(sanitized.pack)
+                sanitized.coverImageError?.let {
+                    logger.warn("Bundled deck $file cover art discarded", it)
+                }
+            }.onFailure { logger.error("Failed to import bundled deck $file", it) }
+        }
+    }
+
+    private suspend fun persistBundledDeckHashes(entries: Set<String>) {
+        runCatching { settingsRepository.writeBundledDeckHashes(entries) }
+            .onFailure { logger.error("Failed to persist bundled deck hashes", it) }
+    }
+
+    private fun resolveInitialEnabledDecks(
+        baseSettings: Settings,
+        availableDecks: List<DeckEntity>,
+        deletedBundledDeckIds: Set<String>,
+    ): Set<String> {
+        val preferredIds = availableDecks
+            .filter { it.language == baseSettings.languagePreference }
+            .map { it.id }
+            .toSet()
+        val fallbackIds = availableDecks.map { it.id }.toSet()
+        return if (baseSettings.enabledDeckIds.isEmpty()) {
+            if (preferredIds.isNotEmpty()) preferredIds else fallbackIds
+        } else {
+            baseSettings.enabledDeckIds.filterNot { deletedBundledDeckIds.contains(it) }.toSet()
+        }
+    }
+
     data class WordClassAvailabilityKey(
         val deckIds: Set<String>,
         val language: String,
@@ -82,7 +220,7 @@ class DeckManager @Inject constructor(
         return deckRepository.getDecks()
             .combine(settingsRepository.settings.map { it.deletedBundledDeckIds }) { allDecks, deletedIds ->
                 val filtered = allDecks.filter { deck -> !deletedIds.contains(deck.id) }
-                Log.d(TAG, "Filtered decks: ${filtered.size} (removed ${allDecks.size - filtered.size})")
+                logger.debug("Filtered decks: ${filtered.size} (removed ${allDecks.size - filtered.size})")
                 filtered
             }
     }
@@ -95,98 +233,34 @@ class DeckManager @Inject constructor(
 
     suspend fun prepareInitialLoad(): InitialLoadResult {
         return withContext(Dispatchers.IO) {
-            val assetFiles = context.assets.list("decks")?.filter { it.endsWith(".json") } ?: emptyList()
+            val assetFiles = bundledDeckProvider.listBundledDeckFiles()
             val previousHashes = settingsRepository.readBundledDeckHashes()
-            val digest = MessageDigest.getInstance("SHA-256")
-            fun sha256(bytes: ByteArray): String = digest.digest(bytes).joinToString("") { b -> "%02x".format(b) }
-
-            val assetContents = mutableMapOf<String, String>()
-            val currentDeckEntries = mutableSetOf<String>()
-            val toImport = mutableListOf<String>()
-            val currentBundledDeckIds = mutableSetOf<String>()
             val deletedBundledDeckIds = settingsRepository.readDeletedBundledDeckIds()
 
-            assetFiles.forEach { file ->
-                val content = runCatching {
-                    context.assets.open("decks/$file").bufferedReader().use { it.readText() }
-                }.getOrNull()
-                if (content != null) {
-                    assetContents[file] = content
-                    val bytes = content.toByteArray(Charsets.UTF_8)
-                    val fileHash = sha256(bytes)
-                    val deckIds = parseDeckIdsFromContent(content)
-                    currentBundledDeckIds += deckIds
+            val existingDecks = deckRepository.getDecks().first()
+            val hadDecks = existingDecks.isNotEmpty()
 
-                    deckIds.forEach { deckId ->
-                        currentDeckEntries += "$deckId:$fileHash"
-                    }
-                    currentDeckEntries += "$file:$fileHash"
+            val scanResult = determineBundledDecksToImport(
+                assetFiles = assetFiles,
+                previousHashes = previousHashes,
+                deletedBundledDeckIds = deletedBundledDeckIds,
+                hadDecks = hadDecks,
+            )
 
-                    val fileNeedsImport = previousHashes.none { it.startsWith("$file:") } || !previousHashes.contains("$file:$fileHash")
-                    val decksNeedImport = deckIds.any { deckId ->
-                        val deckEntry = "$deckId:$fileHash"
-                        !deletedBundledDeckIds.contains(deckId) &&
-                            (previousHashes.none { it.startsWith("$deckId:") } || !previousHashes.contains(deckEntry))
-                    }
-                    if (fileNeedsImport || decksNeedImport) {
-                        toImport += file
-                    }
-                } else {
-                    Log.e(TAG, "Failed to read bundled deck $file")
-                }
-            }
+            pruneOrphanedBundledDecks(existingDecks, scanResult.currentBundledDeckIds, deletedBundledDeckIds)
 
-            val allDecks = deckRepository.getDecks().first()
-            val decksToPrune = allDecks.filter { deck ->
-                deck.isOfficial && currentBundledDeckIds.contains(deck.id) && !deletedBundledDeckIds.contains(deck.id)
-            }
-            decksToPrune.forEach { deck ->
-                runCatching { deckRepository.deleteDeck(deck.id) }
-                    .onFailure { Log.e(TAG, "Failed to prune deck ${deck.id}", it) }
-            }
+            importBundledDecks(scanResult.toImport, scanResult.assetContents)
 
-            if (previousHashes.isEmpty() && currentDeckEntries.isNotEmpty()) {
-                toImport.clear()
-                toImport.addAll(assetFiles)
-            }
-            val hadDecks = allDecks.isNotEmpty()
-            if (!hadDecks && assetFiles.isNotEmpty()) {
-                toImport.clear()
-                toImport.addAll(assetFiles)
-            }
-
-            toImport.forEach { file ->
-                runCatching {
-                    val content = assetContents[file]
-                        ?: context.assets.open("decks/$file").bufferedReader().use { it.readText() }
-                    val sanitized = parseAndSanitizePack(content, isBundledAsset = true)
-                    deckRepository.importPack(sanitized.pack)
-                    sanitized.coverImageError?.let {
-                        Log.w(TAG, "Bundled deck $file cover art discarded", it)
-                    }
-                }.onFailure { Log.e(TAG, "Failed to import bundled deck $file", it) }
-            }
-
-            runCatching { settingsRepository.writeBundledDeckHashes(currentDeckEntries) }
-                .onFailure { Log.e(TAG, "Failed to persist bundled deck hashes", it) }
+            persistBundledDeckHashes(scanResult.currentDeckEntries)
 
             val baseSettings = settingsRepository.settings.first()
             val allDecksAfterImport = deckRepository.getDecks().first()
             val availableDecks = allDecksAfterImport.filter { !deletedBundledDeckIds.contains(it.id) }
-            val preferredIds = availableDecks
-                .filter { it.language == baseSettings.languagePreference }
-                .map { it.id }
-                .toSet()
-            val fallbackIds = availableDecks.map { it.id }.toSet()
-            val resolvedEnabled = if (baseSettings.enabledDeckIds.isEmpty()) {
-                if (preferredIds.isNotEmpty()) preferredIds else fallbackIds
-            } else {
-                baseSettings.enabledDeckIds.filterNot { deletedBundledDeckIds.contains(it) }.toSet()
-            }
+            val resolvedEnabled = resolveInitialEnabledDecks(baseSettings, availableDecks, deletedBundledDeckIds)
 
             if (baseSettings.enabledDeckIds.isEmpty()) {
                 runCatching { settingsRepository.setEnabledDeckIds(resolvedEnabled) }
-                    .onFailure { Log.e(TAG, "Failed to persist enabled deck ids", it) }
+                    .onFailure { logger.error("Failed to persist enabled deck ids", it) }
             }
 
             val filters = buildWordQueryFilters(baseSettings, resolvedEnabled)
@@ -358,7 +432,6 @@ class DeckManager @Inject constructor(
             withContext(Dispatchers.IO) {
                 if (isBundledDeck) {
                     settingsRepository.addDeletedBundledDeckId(deck.id)
-                    settingsRepository.setEnabledDeckIds(updatedIds)
                 } else {
                     deckRepository.deleteDeck(deck.id)
                 }
@@ -395,7 +468,9 @@ class DeckManager @Inject constructor(
 
     suspend fun getWordCount(deckId: String): Int = deckRepository.getWordCount(deckId)
 
-    suspend fun getDeckCategories(deckId: String): List<String> = withContext(Dispatchers.IO) { wordDao.getDeckCategories(deckId) }
+    suspend fun getDeckCategories(deckId: String): List<String> = withContext(Dispatchers.IO) {
+        wordDao.getDeckCategories(deckId)
+    }
 
     suspend fun getDeckWordSamples(deckId: String, limit: Int = 5): List<String> =
         withContext(Dispatchers.IO) { wordDao.getRandomWordSamples(deckId, limit) }
@@ -449,15 +524,16 @@ class DeckManager @Inject constructor(
 
     private fun parseDeckIdsFromContent(content: String): List<String> {
         return try {
-            val root = JSONObject(content)
-            val deck = root.optJSONObject("deck")
-            if (deck != null && deck.has("id")) {
-                listOf(deck.getString("id"))
-            } else {
-                emptyList()
-            }
+            val root = bundleJson.parseToJsonElement(content)
+            val deckId = root
+                .jsonObject["deck"]
+                ?.jsonObject
+                ?.get("id")
+                ?.jsonPrimitive
+                ?.contentOrNull
+            if (deckId.isNullOrBlank()) emptyList() else listOf(deckId)
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to parse deck IDs from content", e)
+            logger.error("Failed to parse deck IDs from content", e)
             emptyList()
         }
     }
@@ -475,7 +551,7 @@ class DeckManager @Inject constructor(
                 } catch (c: CancellationException) {
                     throw c
                 } catch (t: Throwable) {
-                    Log.e(TAG, "Failed to decode deck cover image for ${pack.deck.id}", t)
+                    logger.error("Failed to decode deck cover image for ${pack.deck.id}", t)
                     t
                 }
             }
@@ -504,14 +580,28 @@ class DeckManager @Inject constructor(
 
     private fun removeCoverImageField(content: String): String? {
         return try {
-            val root = JSONObject(content)
-            val deck = root.optJSONObject("deck") ?: return null
-            if (!deck.has("coverImage")) {
-                null
-            } else {
-                deck.remove("coverImage")
-                root.toString()
+            val root = bundleJson.parseToJsonElement(content).jsonObject
+            val deck = root["deck"]?.jsonObject ?: return null
+            if (!deck.containsKey("coverImage")) {
+                return null
             }
+            val sanitizedDeck = buildJsonObject {
+                deck.forEach { (key, value) ->
+                    if (key != "coverImage") {
+                        put(key, value)
+                    }
+                }
+            }
+            val sanitizedRoot = buildJsonObject {
+                root.forEach { (key, value) ->
+                    if (key == "deck") {
+                        put(key, sanitizedDeck)
+                    } else {
+                        put(key, value)
+                    }
+                }
+            }
+            bundleJson.encodeToString(JsonObject.serializer(), sanitizedRoot)
         } catch (error: Exception) {
             null
         }
@@ -525,7 +615,7 @@ class DeckManager @Inject constructor(
         return cause != null && cause !== this && cause.isCoverImageError()
     }
 
-    companion object {
-        private const val TAG = "DeckManager"
+    private companion object {
+        val bundleJson: Json = Json { ignoreUnknownKeys = true }
     }
 }

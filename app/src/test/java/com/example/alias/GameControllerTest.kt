@@ -7,6 +7,7 @@ import com.example.alias.domain.GameEngine
 import com.example.alias.domain.GameState
 import com.example.alias.domain.MatchConfig
 import com.example.alias.domain.TurnOutcome
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.runBlocking
@@ -22,7 +23,7 @@ class GameControllerTest {
     @Before
     fun setUp() {
         historyRepository = FakeTurnHistoryRepository()
-        controller = GameController(historyRepository)
+        controller = GameController(historyRepository, FakeGameEngineFactory())
     }
 
     @Test
@@ -51,7 +52,10 @@ class GameControllerTest {
             ),
         )
 
-        controller.completeTurn(engine, mapOf("word" to WordInfo(difficulty = 2, category = "party", wordClass = "NOUN")))
+        controller.completeTurn(
+            engine,
+            mapOf("word" to WordInfo(difficulty = 2, category = "party", wordClass = "NOUN")),
+        )
 
         assertEquals(1, historyRepository.saved.size)
         val entry = historyRepository.saved.single()
@@ -97,6 +101,12 @@ class GameControllerTest {
 
         fun updateState(newState: GameState) {
             backingState.value = newState
+        }
+    }
+
+    private class FakeGameEngineFactory : GameEngineFactory {
+        override fun create(words: List<String>, scope: CoroutineScope): GameEngine {
+            throw UnsupportedOperationException()
         }
     }
 }
