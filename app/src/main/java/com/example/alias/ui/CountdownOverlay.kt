@@ -53,7 +53,8 @@ fun countdownOverlay(
     modifier: Modifier = Modifier,
     scrimColor: Color = MaterialTheme.colorScheme.scrim,
     scrimAlpha: Float = 0.7f,
-    textStyle: TextStyle = MaterialTheme.typography.displayLarge.copy(fontWeight = FontWeight.ExtraBold),
+    textStyle: TextStyle =
+        MaterialTheme.typography.displayLarge.copy(fontWeight = FontWeight.ExtraBold),
     textColor: Color = MaterialTheme.colorScheme.onBackground,
     consumeTouches: Boolean = true,
     performHaptics: Boolean = true,
@@ -75,30 +76,36 @@ fun countdownOverlay(
     val screenHeightPx = with(density) { configuration.screenHeightDp.dp.toPx() }
 
     Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(scrimColor.copy(alpha = scrimAlpha))
-            .onSizeChanged { size ->
-                Log.d("countdownOverlay", "Overlay size: ${size.width}x${size.height}")
-                Log.d("countdownOverlay", "Screen size: ${screenWidthPx.toInt()}x${screenHeightPx.toInt()}")
-            }
-            // Swallow taps so the game underneath doesn't get accidental clicks.
-            .then(
-                if (consumeTouches) {
-                    Modifier.clickable(
-                        interactionSource = interaction,
-                        indication = null,
-                        onClick = {},
+        modifier =
+            modifier.fillMaxSize()
+                .background(scrimColor.copy(alpha = scrimAlpha))
+                .onSizeChanged { size ->
+                    Log.d(
+                        "countdownOverlay",
+                        "Overlay size: ${size.width}x${size.height}",
                     )
-                } else {
-                    Modifier
+                    Log.d(
+                        "countdownOverlay",
+                        "Screen size: ${screenWidthPx.toInt()}x${screenHeightPx.toInt()}",
+                    )
+                }
+                // Swallow taps so the game underneath doesn't get accidental clicks.
+                .then(
+                    if (consumeTouches) {
+                        Modifier.clickable(
+                            interactionSource = interaction,
+                            indication = null,
+                            onClick = {},
+                        )
+                    } else {
+                        Modifier
+                    },
+                )
+                // Screen reader announces each tick.
+                .semantics {
+                    contentDescription = announcement
+                    liveRegion = LiveRegionMode.Assertive
                 },
-            )
-            // Screen reader announces each tick.
-            .semantics {
-                contentDescription = announcement
-                liveRegion = LiveRegionMode.Assertive
-            },
         contentAlignment = Alignment.Center,
     ) {
         AnimatedContent(
@@ -108,10 +115,11 @@ fun countdownOverlay(
                 (
                     scaleIn(
                         initialScale = 0.6f,
-                        animationSpec = spring(
-                            stiffness = Spring.StiffnessLow,
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                        ),
+                        animationSpec =
+                            spring(
+                                stiffness = Spring.StiffnessLow,
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                            ),
                     ) + fadeIn()
                     ) togetherWith
                     (
