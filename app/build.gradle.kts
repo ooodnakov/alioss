@@ -51,7 +51,7 @@ android {
 
     buildTypes {
         debug {
-            buildConfigField("boolean", "ENABLE_DESTRUCTIVE_MIGRATION_FALLBACK", "true")
+            buildConfigField("boolean", "ENABLE_DESTRUCTIVE_MIGRATION_FALLBACK", "false")
         }
 
         release {
@@ -70,7 +70,8 @@ android {
             isMinifyEnabled = false
             isShrinkResources = false
             isDebuggable = false
-            buildConfigField("boolean", "ENABLE_DESTRUCTIVE_MIGRATION_FALLBACK", "true")
+            // Preserve user data like release builds - don't enable destructive migration
+            buildConfigField("boolean", "ENABLE_DESTRUCTIVE_MIGRATION_FALLBACK", "false")
             matchingFallbacks += listOf("release")
         }
     }
