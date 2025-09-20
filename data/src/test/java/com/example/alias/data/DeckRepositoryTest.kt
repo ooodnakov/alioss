@@ -241,9 +241,9 @@ class DeckRepositoryTest {
             allowNSFW: Boolean,
             minDifficulty: Int,
             maxDifficulty: Int,
-            categories: List<String>,
+            categories: List<String>?,
             hasCategories: Int,
-            classes: List<String>,
+            classes: List<String>?,
             hasClasses: Int,
         ): List<String> = getWordBriefsForDecks(
             deckIds = deckIds,
@@ -261,17 +261,17 @@ class DeckRepositoryTest {
             allowNSFW: Boolean,
             minDifficulty: Int,
             maxDifficulty: Int,
-            categories: List<String>,
+            categories: List<String>?,
             hasCategories: Int,
-            classes: List<String>,
+            classes: List<String>?,
             hasClasses: Int,
         ): List<WordBrief> {
-            val requiredClasses = classes.map { it.uppercase() }
+            val requiredClasses = classes?.map { it.uppercase() } ?: emptyList()
             return words.filter { word ->
                 deckIds.contains(word.deckId) &&
                     (allowNSFW || !word.isNSFW) &&
                     word.difficulty in minDifficulty..maxDifficulty &&
-                    (hasCategories == 0 || (word.category != null && categories.contains(word.category))) &&
+                    (hasCategories == 0 || (word.category != null && categories?.contains(word.category) == true)) &&
                     (hasClasses == 0 || classesForWord(word).any { requiredClasses.contains(it) })
             }.map { word ->
                 val joinedClasses = classesForWord(word)

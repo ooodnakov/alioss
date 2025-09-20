@@ -27,6 +27,7 @@ import okhttp3.tls.HeldCertificate
 import okio.Buffer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -104,7 +105,24 @@ class DeckManagerTest {
         assertEquals(listOf("a", "b"), filters.deckIds)
         assertEquals(1, filters.categoryFilterEnabled)
         assertEquals(1, filters.wordClassFilterEnabled)
+        assertEquals(listOf("party"), filters.categories)
         assertEquals(listOf("VERB"), filters.wordClasses)
+    }
+
+    @Test
+    fun buildWordQueryFiltersDisablesFiltersWhenSelectionsEmpty() {
+        val settings = Settings(
+            enabledDeckIds = setOf("deck"),
+            selectedCategories = emptySet(),
+            selectedWordClasses = emptySet(),
+        )
+
+        val filters = deckManager.buildWordQueryFilters(settings)
+
+        assertEquals(0, filters.categoryFilterEnabled)
+        assertEquals(0, filters.wordClassFilterEnabled)
+        assertNull(filters.categories)
+        assertNull(filters.wordClasses)
     }
 
     @Test
@@ -428,9 +446,9 @@ class DeckManagerTest {
             allowNSFW: Boolean,
             minDifficulty: Int,
             maxDifficulty: Int,
-            categories: List<String>,
+            categories: List<String>?,
             hasCategories: Int,
-            classes: List<String>,
+            classes: List<String>?,
             hasClasses: Int,
         ): List<String> {
             return deckIds.flatMap { id ->
@@ -450,9 +468,9 @@ class DeckManagerTest {
             allowNSFW: Boolean,
             minDifficulty: Int,
             maxDifficulty: Int,
-            categories: List<String>,
+            categories: List<String>?,
             hasCategories: Int,
-            classes: List<String>,
+            classes: List<String>?,
             hasClasses: Int,
         ): List<WordBrief> =
             throw UnsupportedOperationException()
