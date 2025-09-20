@@ -86,6 +86,10 @@ class GameControllerTest {
 
         override fun getRecent(limit: Int): kotlinx.coroutines.flow.Flow<List<TurnHistoryEntity>> =
             MutableStateFlow(emptyList())
+
+        override suspend fun clear() {
+            saved.clear()
+        }
     }
 
     private class FakeGameEngine : GameEngine {
