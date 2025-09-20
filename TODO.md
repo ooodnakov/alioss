@@ -32,9 +32,10 @@
 - Audio UX: add sound hooks for countdown, turn start, final 5 seconds with vibration, and turn end (no assets committed).
 - Localization: ensure *all* strings (including Settings, About, and any new UI) are fully externalized.
 
+- Update History screen: hide filters/stats by default, add Reset History action, and align detailed game view with end-of-turn summary layout.
+
 ## Backlog
 - Refactor end-of-turn summary UI: relocate turn statistics, collapse detailed breakdown/time graph (taller), per-word blocks with colored backgrounds acting as correct/incorrect toggles, and show time-between-word graph.
-- Update History screen: hide filters/stats by default, add Reset History action, and align detailed game view with end-of-turn summary layout.
 - Deck details: ensure recent words pull from games played with the selected deck.
 - Refactor game image loading pipeline for robustness/performance. Add support for deck image as url, download it at deck import and cache it if neccesary.
 - Tests:

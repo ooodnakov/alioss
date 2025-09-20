@@ -415,8 +415,19 @@ class MainViewModel
 
         fun resetHistory() {
             viewModelScope.launch {
-                gameController.clearHistory()
-                _uiEvents.tryEmit(UiEvent(message = "History cleared", actionLabel = "OK"))
+                try {
+                    gameController.clearHistory()
+                    _uiEvents.tryEmit(UiEvent(message = "History cleared", actionLabel = "OK"))
+                } catch (t: Throwable) {
+                    _uiEvents.tryEmit(
+                        UiEvent(
+                            message = "Failed to clear history: ${t.message ?: "Unknown error"}",
+                            actionLabel = "Dismiss",
+                            duration = SnackbarDuration.Long,
+                            isError = true,
+                        ),
+                    )
+                }
             }
         }
 
