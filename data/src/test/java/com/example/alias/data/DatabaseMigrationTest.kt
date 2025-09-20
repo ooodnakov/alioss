@@ -7,8 +7,8 @@ import com.example.alias.data.db.MIGRATION_3_4
 import com.example.alias.data.db.MIGRATION_4_5
 import com.example.alias.data.db.MIGRATION_5_6
 import com.example.alias.data.db.MIGRATION_6_7
-import org.junit.Test
 import org.junit.Assert.*
+import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
@@ -60,8 +60,11 @@ class DatabaseMigrationTest {
         for (i in 0 until versionRanges.size - 1) {
             val currentEnd = versionRanges[i].second
             val nextStart = versionRanges[i + 1].first
-            assertEquals("Migration $i end version should match migration ${i + 1} start version",
-                currentEnd, nextStart)
+            assertEquals(
+                "Migration $i end version should match migration ${i + 1} start version",
+                currentEnd,
+                nextStart,
+            )
         }
     }
 

@@ -1,5 +1,6 @@
 package com.example.alias.data.settings
 
+import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
@@ -11,7 +12,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.util.Locale
-import android.util.Log
 
 private val DEFAULT_TEAMS = listOf("Red", "Blue")
 

@@ -1,7 +1,6 @@
 package com.example.alias.data.db
 
 import androidx.room.migration.Migration
-import androidx.sqlite.db.SupportSQLiteDatabase
 
 /**
  * Database migrations for AliasDatabase.
@@ -15,7 +14,8 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 // Migration 1→2: Add turn_history table for game history tracking
 val MIGRATION_1_2 = Migration(1, 2) { database ->
-    database.execSQL("""
+    database.execSQL(
+        """
         CREATE TABLE IF NOT EXISTS `turn_history` (
             `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
             `team` TEXT NOT NULL,
@@ -23,7 +23,8 @@ val MIGRATION_1_2 = Migration(1, 2) { database ->
             `correct` INTEGER NOT NULL,
             `timestamp` INTEGER NOT NULL
         )
-    """)
+    """,
+    )
 }
 
 // Migration 2→3: Add indexes to words table for better query performance
@@ -40,7 +41,8 @@ val MIGRATION_3_4 = Migration(3, 4) { database ->
 // Migration 4→5: Add word_classes table and unique constraint on words
 val MIGRATION_4_5 = Migration(4, 5) { database ->
     // Create word_classes table for word classification
-    database.execSQL("""
+    database.execSQL(
+        """
         CREATE TABLE IF NOT EXISTS `word_classes` (
             `deckId` TEXT NOT NULL,
             `wordText` TEXT NOT NULL,
@@ -48,11 +50,14 @@ val MIGRATION_4_5 = Migration(4, 5) { database ->
             PRIMARY KEY(`deckId`, `wordText`, `wordClass`),
             FOREIGN KEY(`deckId`, `wordText`) REFERENCES `words`(`deckId`, `text`) ON UPDATE CASCADE ON DELETE CASCADE
         )
-    """)
+    """,
+    )
 
     // Add indexes for word_classes table
     database.execSQL("CREATE INDEX IF NOT EXISTS `index_word_classes_wordClass` ON `word_classes` (`wordClass`)")
-    database.execSQL("CREATE INDEX IF NOT EXISTS `index_word_classes_deckId_wordText` ON `word_classes` (`deckId`, `wordText`)")
+    database.execSQL(
+        "CREATE INDEX IF NOT EXISTS `index_word_classes_deckId_wordText` ON `word_classes` (`deckId`, `wordText`)",
+    )
 
     // Add unique constraint to prevent duplicate words in same deck
     database.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_words_deckId_text` ON `words` (`deckId`, `text`)")
@@ -78,5 +83,5 @@ val ALL_MIGRATIONS = arrayOf(
     MIGRATION_3_4,
     MIGRATION_4_5,
     MIGRATION_5_6,
-    MIGRATION_6_7
+    MIGRATION_6_7,
 )

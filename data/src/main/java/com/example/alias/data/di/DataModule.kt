@@ -15,8 +15,8 @@ import com.example.alias.data.DeckRepository
 import com.example.alias.data.DeckRepositoryImpl
 import com.example.alias.data.TurnHistoryRepository
 import com.example.alias.data.TurnHistoryRepositoryImpl
-import com.example.alias.data.db.AliasDatabase
 import com.example.alias.data.db.ALL_MIGRATIONS
+import com.example.alias.data.db.AliasDatabase
 import com.example.alias.data.db.DeckDao
 import com.example.alias.data.db.TurnHistoryDao
 import com.example.alias.data.db.WordDao
@@ -87,7 +87,11 @@ object DataModule {
                 // This preserves user data in release and devRelease builds
                 isDebuggable
             } catch (e2: Exception) {
-                Log.e("DataModule", "Could not determine if app is debuggable, preserving user data by default. Error: ${e2.message}", e2)
+                Log.e(
+                    "DataModule",
+                    "Could not determine if app is debuggable, preserving user data by default. Error: ${e2.message}",
+                    e2,
+                )
                 // If we can't determine anything, preserve user data
                 false
             }
@@ -102,7 +106,10 @@ object DataModule {
         }
 
         // Additional safety: Log the final database configuration
-        Log.i("DataModule", "Database configuration complete. Destructive fallback enabled: $shouldEnableDestructiveFallback")
+        Log.i(
+            "DataModule",
+            "Database configuration complete. Destructive fallback enabled: $shouldEnableDestructiveFallback",
+        )
 
         return builder.build()
     }

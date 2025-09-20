@@ -36,4 +36,3 @@ fun appScaffold(
 
 private fun String.isErrorSnackbarMessage(): Boolean =
     startsWith("Failed", ignoreCase = true) || contains("error", ignoreCase = true)
-

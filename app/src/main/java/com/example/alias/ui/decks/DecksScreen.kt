@@ -281,14 +281,16 @@ fun decksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
                 },
             )
         }
-    
+
         val deckToPermanentlyDelete = deckPendingPermanentDelete
         if (deckToPermanentlyDelete != null) {
             AlertDialog(
                 onDismissRequest = { deckPendingPermanentDelete = null },
                 title = { Text("Permanently Delete Deck") },
                 text = {
-                    Text("Are you sure you want to permanently delete \"${deckToPermanentlyDelete.name}\"? This action cannot be undone.")
+                    Text(
+                        "Are you sure you want to permanently delete \"${deckToPermanentlyDelete.name}\"? This action cannot be undone.",
+                    )
                 },
                 confirmButton = {
                     TextButton(onClick = {
@@ -357,7 +359,7 @@ private fun decksHeroSummary(state: DecksHeroSummaryState, actions: DecksHeroSum
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                ) {
+            ) {
                 deckLanguagesSummary(languages = languages)
                 FilledTonalButton(onClick = actions.onFiltersClick) {
                     Icon(Icons.Filled.Tune, contentDescription = null)
@@ -924,19 +926,19 @@ private fun deckDeletedDecksSheet(
     ) {
         Text(
             text = "Deleted Decks",
-            style = MaterialTheme.typography.titleLarge
+            style = MaterialTheme.typography.titleLarge,
         )
 
         if (deletedBundledDeckIds.isEmpty()) {
             Text(
                 text = "No deleted decks",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         } else {
             Text(
                 text = "Deleted Bundled Decks (tap to restore):",
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.titleMedium,
             )
 
             deletedBundledDeckIds.forEach { deckId ->
@@ -960,7 +962,7 @@ private fun deckDeletedDecksSheet(
             Text(
                 text = "Note: Imported decks that are deleted are permanently removed and cannot be restored.",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }

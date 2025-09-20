@@ -30,9 +30,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
@@ -40,7 +38,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateMapOf
@@ -94,7 +91,7 @@ fun homeScreen(
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal=24.dp, vertical=4.dp)
+                .padding(horizontal = 24.dp, vertical = 4.dp)
                 .verticalScroll(scrollState),
             horizontalArrangement = Arrangement.spacedBy(20.dp),
             verticalAlignment = Alignment.Top,
@@ -116,7 +113,7 @@ fun homeScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal=24.dp, vertical=12.dp)
+                .padding(horizontal = 24.dp, vertical = 12.dp)
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -126,7 +123,6 @@ fun homeScreen(
         }
     }
 }
-
 
 @Composable
 private fun ColumnScope.navigationActionCards(actions: HomeActions) {
@@ -295,7 +291,7 @@ private fun homeHeroSection(
                         Text(
                             heroTitle,
                             style = if (isLandscape) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineSmall,
-                            color = contentColor
+                            color = contentColor,
                         )
                         Text(
                             heroSubtitle,
@@ -484,7 +480,9 @@ private fun recentHighlightSection(
                         modifier = Modifier.size(18.dp),
                     )
                 }
-            } else null,
+            } else {
+                null
+            },
             colors = AssistChipDefaults.assistChipColors(
                 containerColor = contentColor.copy(alpha = 0.08f),
                 labelColor = contentColor,
@@ -578,4 +576,3 @@ private val ScoreboardSaver: Saver<SnapshotStateMap<String, Int>, Bundle> = Save
         }
     },
 )
-
