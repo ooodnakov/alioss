@@ -158,88 +158,170 @@ fun gameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
             DisposableEffect(Unit) {
                 onDispose { countdownState.cancel() }
             }
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center,
-            ) {
+
+            val configuration = LocalConfiguration.current
+            val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+
+            if (isLandscape) {
+                // Landscape layout for TurnPending
+                Row(
+                    modifier = Modifier.fillMaxSize().padding(24.dp),
+                    horizontalArrangement = Arrangement.spacedBy(24.dp),
+                ) {
+                    // Left side - Team info and scoreboard
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Text(
+                            text = stringResource(R.string.next_team),
+                            style = MaterialTheme.typography.titleLarge,
+                            textAlign = TextAlign.Center,
+                        )
+                        Text(
+                            text = s.team,
+                            style = MaterialTheme.typography.headlineLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center,
+                        )
+                        scoreboard(s.scores)
+                        Text(
+                            text = pluralStringResource(
+                                R.plurals.turn_pending_status,
+                                s.remainingToWin,
+                                s.remainingToWin,
+                            ),
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
+
+                    // Right side - Start button
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Button(
+                            onClick = {
+                                if (settings.hapticsEnabled) {
+                                    val effect = VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK)
+                                    vibrator?.vibrate(effect)
+                                }
+                                if (!countdownState.isRunning) {
+                                    countdownState.start(
+                                        onTick = {
+                                            if (soundEnabled) {
+                                                tone.startTone(
+                                                    android.media.ToneGenerator.TONE_PROP_BEEP,
+                                                    SOUND_DURATION_SHORT_MS,
+                                                )
+                                            }
+                                        },
+                                        onFinished = vm::startTurn,
+                                    )
+                                }
+                            },
+                            enabled = !countdownState.isRunning,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(LARGE_BUTTON_HEIGHT),
+                        ) {
+                            Icon(Icons.Filled.PlayArrow, contentDescription = null)
+                            Spacer(Modifier.width(8.dp))
+                            Text(stringResource(R.string.start_turn), style = MaterialTheme.typography.titleMedium)
+                        }
+                    }
+                }
+            } else {
+                // Portrait layout for TurnPending
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(24.dp)
-                        .zIndex(0f),
+                    modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center,
                 ) {
-                    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-                        Column(
-                            modifier = Modifier
-                                .padding(horizontal = 24.dp, vertical = 32.dp)
-                                .fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(16.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                        ) {
-                            Text(
-                                text = stringResource(R.string.next_team),
-                                style = MaterialTheme.typography.titleLarge,
-                                textAlign = TextAlign.Center,
-                            )
-                            Text(
-                                text = s.team,
-                                style = MaterialTheme.typography.headlineLarge,
-                                color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center,
-                            )
-                            scoreboard(s.scores)
-                            Text(
-                                text = pluralStringResource(
-                                    R.plurals.turn_pending_status,
-                                    s.remainingToWin,
-                                    s.remainingToWin,
-                                ),
-                                style = MaterialTheme.typography.bodyMedium,
-                                textAlign = TextAlign.Center,
-                            )
-                            Spacer(Modifier.height(16.dp))
-                            Button(
-                                onClick = {
-                                    if (settings.hapticsEnabled) {
-                                        val effect = VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK)
-                                        vibrator?.vibrate(effect)
-                                    }
-                                    if (!countdownState.isRunning) {
-                                        countdownState.start(
-                                            onTick = {
-                                                if (soundEnabled) {
-                                                    tone.startTone(
-                                                        android.media.ToneGenerator.TONE_PROP_BEEP,
-                                                        SOUND_DURATION_SHORT_MS,
-                                                    )
-                                                }
-                                            },
-                                            onFinished = vm::startTurn,
-                                        )
-                                    }
-                                },
-                                enabled = !countdownState.isRunning,
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(24.dp)
+                            .zIndex(0f),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                            Column(
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(LARGE_BUTTON_HEIGHT),
+                                    .padding(horizontal = 24.dp, vertical = 32.dp)
+                                    .fillMaxWidth(),
+                                verticalArrangement = Arrangement.spacedBy(16.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
                             ) {
-                                Icon(Icons.Filled.PlayArrow, contentDescription = null)
-                                Spacer(Modifier.width(8.dp))
-                                Text(stringResource(R.string.start_turn), style = MaterialTheme.typography.titleMedium)
+                                Text(
+                                    text = stringResource(R.string.next_team),
+                                    style = MaterialTheme.typography.titleLarge,
+                                    textAlign = TextAlign.Center,
+                                )
+                                Text(
+                                    text = s.team,
+                                    style = MaterialTheme.typography.headlineLarge,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    fontWeight = FontWeight.Bold,
+                                    textAlign = TextAlign.Center,
+                                )
+                                scoreboard(s.scores)
+                                Text(
+                                    text = pluralStringResource(
+                                        R.plurals.turn_pending_status,
+                                        s.remainingToWin,
+                                        s.remainingToWin,
+                                    ),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    textAlign = TextAlign.Center,
+                                )
+                                Spacer(Modifier.height(16.dp))
+                                Button(
+                                    onClick = {
+                                        if (settings.hapticsEnabled) {
+                                            val effect = VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK)
+                                            vibrator?.vibrate(effect)
+                                        }
+                                        if (!countdownState.isRunning) {
+                                            countdownState.start(
+                                                onTick = {
+                                                    if (soundEnabled) {
+                                                        tone.startTone(
+                                                            android.media.ToneGenerator.TONE_PROP_BEEP,
+                                                            SOUND_DURATION_SHORT_MS,
+                                                        )
+                                                    }
+                                                },
+                                                onFinished = vm::startTurn,
+                                            )
+                                        }
+                                    },
+                                    enabled = !countdownState.isRunning,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(LARGE_BUTTON_HEIGHT),
+                                ) {
+                                    Icon(Icons.Filled.PlayArrow, contentDescription = null)
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(stringResource(R.string.start_turn), style = MaterialTheme.typography.titleMedium)
+                                }
                             }
                         }
                     }
                 }
-                countdownState.value?.let { value ->
-                    countdownOverlay(
-                        value = value,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .zIndex(1f),
-                    )
-                }
+            }
+
+            // Countdown overlay (works the same for both orientations)
+            countdownState.value?.let { value ->
+                countdownOverlay(
+                    value = value,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .zIndex(1f),
+                )
             }
         }
         is GameState.TurnActive -> {
@@ -474,10 +556,6 @@ fun gameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                                     Text(stringResource(R.string.skip))
                                 }
                             }
-                            Button(
-                                onClick = { vm.restartMatch() },
-                                modifier = Modifier.fillMaxWidth(),
-                            ) { Text(stringResource(R.string.restart_match)) }
                         }
                         Column(
                             Modifier.weight(1f),
@@ -489,75 +567,78 @@ fun gameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                     }
                 }
             } else {
-                Column(
-                    modifier = Modifier.fillMaxSize().padding(24.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    LinearProgressIndicator(
-                        progress = { progress },
-                        color = barColor,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    Controls()
-                    CardStack()
-                    if (settings.oneHandedLayout) {
-                        val onCorrect = {
-                            if (settings.hapticsEnabled) {
-                                val effect = VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK)
-                                vibrator?.vibrate(effect)
-                            }
-                            if (!isProcessing) {
-                                isProcessing = true
-                                scope.launch { engine.correct() }
-                            }
-                        }
-                        val onSkip = {
-                            if (settings.hapticsEnabled) {
-                                val effect = VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK)
-                                vibrator?.vibrate(effect)
-                            }
-                            if (!isProcessing) {
-                                if (s.skipsRemaining > 0) {
+                Column(modifier = Modifier.fillMaxSize().padding(24.dp)) {
+                    // Top section - timer and controls
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.Top),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        LinearProgressIndicator(
+                            progress = { progress },
+                            color = barColor,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        Controls()
+                        if (settings.oneHandedLayout) {
+                            val onCorrect = {
+                                if (settings.hapticsEnabled) {
+                                    val effect = VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK)
+                                    vibrator?.vibrate(effect)
+                                }
+                                if (!isProcessing) {
                                     isProcessing = true
-                                    scope.launch { engine.skip() }
+                                    scope.launch { engine.correct() }
+                                }
+                            }
+                            val onSkip = {
+                                if (settings.hapticsEnabled) {
+                                    val effect = VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK)
+                                    vibrator?.vibrate(effect)
+                                }
+                                if (!isProcessing) {
+                                    if (s.skipsRemaining > 0) {
+                                        isProcessing = true
+                                        scope.launch { engine.skip() }
+                                    }
+                                }
+                            }
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                                Button(
+                                    onClick = onSkip,
+                                    enabled = !isProcessing && s.skipsRemaining > 0,
+                                    modifier = Modifier.weight(1f).height(60.dp),
+                                ) {
+                                    Icon(
+                                        Icons.Filled.Close,
+                                        contentDescription = null,
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(stringResource(R.string.skip))
+                                }
+                                Button(
+                                    onClick = onCorrect,
+                                    enabled = !isProcessing,
+                                    modifier = Modifier.weight(1f).height(60.dp),
+                                ) {
+                                    Icon(
+                                        Icons.Filled.Check,
+                                        contentDescription = null,
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(stringResource(R.string.correct))
                                 }
                             }
                         }
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                            Button(
-                                onClick = onSkip,
-                                enabled = !isProcessing && s.skipsRemaining > 0,
-                                modifier = Modifier.weight(1f).height(60.dp),
-                            ) {
-                                Icon(
-                                    Icons.Filled.Close,
-                                    contentDescription = null,
-                                )
-                                Spacer(Modifier.width(8.dp))
-                                Text(stringResource(R.string.skip))
-                            }
-                            Button(
-                                onClick = onCorrect,
-                                enabled = !isProcessing,
-                                modifier = Modifier.weight(1f).height(60.dp),
-                            ) {
-                                Icon(
-                                    Icons.Filled.Check,
-                                    contentDescription = null,
-                                )
-                                Spacer(Modifier.width(8.dp))
-                                Text(stringResource(R.string.correct))
-                            }
-                        }
                     }
-                    Button(onClick = {
-                        if (settings.hapticsEnabled) {
-                            val effect = VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK)
-                            vibrator?.vibrate(effect)
-                        }
-                        vm.restartMatch()
-                    }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.restart_match)) }
+
+                    // Bottom section - card taking lower third
+                    Box(
+                        modifier = Modifier.weight(1f),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        CardStack()
+                    }
                 }
             }
         }
