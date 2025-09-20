@@ -673,7 +673,10 @@ fun gameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                 verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Text("🎉 Match over 🎉", style = MaterialTheme.typography.headlineSmall)
+                Text(
+                    stringResource(R.string.match_finished_message),
+                    style = MaterialTheme.typography.headlineSmall,
+                )
                 scoreboard(s.scores)
                 Text(stringResource(R.string.start_new_match))
                 Button(onClick = {

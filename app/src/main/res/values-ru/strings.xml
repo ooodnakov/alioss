@@ -28,6 +28,7 @@
     <string name="home_favorite_decks">Любимые колоды</string>
     <string name="home_empty_favorites">Включите колоды, чтобы увидеть их здесь.</string>
     <string name="home_recent_highlight">Последний момент</string>
+    <string name="home_more_favorites">+%1$d</string>
     <string name="home_highlight_correct">Команда %1$s угадала «%2$s».</string>
     <string name="home_highlight_skip">Команда %1$s пропустила «%2$s».</string>
     <string name="home_highlight_empty">Сыграйте раунд, чтобы собрать лучшие моменты.</string>
@@ -63,6 +64,7 @@
     <string name="skip">Пропустить</string>
     <string name="restart_match">Перезапустить матч</string>
     <string name="start_new_match">Новый матч: Настройки или Перезапуск.</string>
+    <string name="match_finished_message">🎉 Матч завершён 🎉</string>
     <string name="start_turn">Начать</string>
     <plurals name="turn_pending_status_words">
         <item quantity="one">До победы осталось %d слово!</item>
@@ -77,6 +79,7 @@
         <item quantity="other">До победы осталось %d очка!</item>
     </plurals>
     <string name="scoreboard">Счёт</string>
+    <string name="scoreboard_entry">%1$s: %2$d%3$s</string>
     <string name="end_match">Завершить матч</string>
     <string name="next_team">Следующая команда</string>
     <string name="turn_summary">Ход: %s</string>
@@ -184,6 +187,10 @@
     <string name="import_decks_action">Импорт колод</string>
     <string name="no_decks_call_to_action">Импортируйте колоду, чтобы начать игру.</string>
     <string name="deleted_decks">Удаленные колоды</string>
+    <string name="deck_deleted_empty">Удалённых колод нет</string>
+    <string name="deck_deleted_bundled_hint">Удалённые встроенные колоды (нажмите, чтобы восстановить):</string>
+    <string name="deck_deleted_bundled_label">Встроенная колода: %1$s</string>
+    <string name="deck_deleted_imported_hint">Важно: импортированные колоды при удалении стираются окончательно и не могут быть восстановлены.</string>
     <string name="deck_filters_description">Выберите слова для следующего матча.</string>
     <string name="import_sheet_title">Импорт колод</string>
     <string name="import_sheet_hint">Установите колоды из файлов или доверенных ссылок.</string>
@@ -194,8 +201,12 @@
     <string name="deck_card_view_details">Подробнее</string>
     <string name="deck_more_actions">Опции колоды</string>
     <string name="deck_delete_action">Удалить колоду</string>
+    <string name="deck_hide_action">Скрыть колоду</string>
+    <string name="deck_delete_permanently_action">Удалить навсегда</string>
     <string name="deck_delete_dialog_title">Удалить колоду?</string>
     <string name="deck_delete_dialog_message">Удалить"%1$s" и слова в ней? Это действие не может быть отменено.</string>
+    <string name="deck_permanent_delete_dialog_title">Удалить колоду навсегда?</string>
+    <string name="deck_permanent_delete_dialog_message">Вы уверены, что хотите навсегда удалить «%1$s»? Это действие нельзя отменить.</string>
     <string name="deck_difficulty_title">Распределение сложности</string>
     <string name="deck_difficulty_empty">Данные о сложности недоступны.</string>
     <string name="deck_recent_words_title">Недавние слова</string>
@@ -225,6 +236,7 @@
     <string name="version_label">Версия %1$s</string>
     <string name="links_label">Ссылки</string>
     <string name="source_code_label">Исходный код</string>
+    <string name="about_source_code_link">github.com/ooodnakov/alias-game</string>
     <string name="report_issue_label">Сообщить о баге</string>
     <string name="open_github_issues_label">Открыть задачи GitHub</string>
     <string name="author_line">Автор: Aleksandr Odnakov</string>
@@ -272,4 +284,5 @@
     <string name="reset_confirm_message">Удалит колоды, слова, историю и настройки. Отменить нельзя.</string>
     <string name="cancel">Отмена</string>
     <string name="confirm">Подтвердить</string>
+    <string name="restore">Восстановить</string>
 </resources>

@@ -28,6 +28,7 @@
     <string name="home_favorite_decks">Favorite decks</string>
     <string name="home_empty_favorites">Enable decks to feature them here.</string>
     <string name="home_recent_highlight">Recent highlight</string>
+    <string name="home_more_favorites">+%1$d</string>
     <string name="home_highlight_correct">%1$s nailed “%2$s”.</string>
     <string name="home_highlight_skip">%1$s passed on “%2$s”.</string>
     <string name="home_highlight_empty">Play a round to build your highlight reel.</string>
@@ -57,6 +58,7 @@
     <string name="skip">Skip</string>
     <string name="restart_match">Restart Match</string>
     <string name="start_new_match">Start a new match from Settings or Restart.</string>
+    <string name="match_finished_message">🎉 Match over 🎉</string>
     <string name="start_turn">Start</string>
     <plurals name="turn_pending_status_words">
         <item quantity="one">Only %d correct word to win!</item>
@@ -67,6 +69,7 @@
         <item quantity="other">Only %d points to win!</item>
     </plurals>
     <string name="scoreboard">Scoreboard</string>
+    <string name="scoreboard_entry">%1$s: %2$d%3$s</string>
     <string name="end_match">End Match</string>
     <string name="next_team">Next Team</string>
     <string name="turn_summary">Turn summary for %s</string>
@@ -160,6 +163,10 @@
     <string name="import_decks_action">Import decks</string>
     <string name="no_decks_call_to_action">Import a deck to start playing.</string>
     <string name="deleted_decks">Deleted Decks</string>
+    <string name="deck_deleted_empty">No deleted decks</string>
+    <string name="deck_deleted_bundled_hint">Deleted bundled decks (tap to restore):</string>
+    <string name="deck_deleted_bundled_label">Bundled deck: %1$s</string>
+    <string name="deck_deleted_imported_hint">Note: Imported decks that are deleted are permanently removed and cannot be restored.</string>
     <string name="deck_filters_description">Choose which words appear in the next match.</string>
     <string name="import_sheet_title">Import decks</string>
     <string name="import_sheet_hint">Install decks from files or a trusted link.</string>
@@ -170,8 +177,12 @@
     <string name="deck_card_view_details">View details</string>
     <string name="deck_more_actions">Deck options</string>
     <string name="deck_delete_action">Delete deck</string>
+    <string name="deck_hide_action">Hide deck</string>
+    <string name="deck_delete_permanently_action">Delete permanently</string>
     <string name="deck_delete_dialog_title">Delete deck?</string>
     <string name="deck_delete_dialog_message">Remove "%1$s" and its words? This cannot be undone.</string>
+    <string name="deck_permanent_delete_dialog_title">Permanently delete deck?</string>
+    <string name="deck_permanent_delete_dialog_message">Are you sure you want to permanently delete "%1$s"? This action cannot be undone.</string>
     <string name="deck_difficulty_title">Difficulty spread</string>
     <string name="deck_difficulty_empty">Difficulty data unavailable.</string>
     <string name="deck_recent_words_title">Recent words</string>
@@ -218,6 +229,8 @@
     <string name="version_label">Version %1$s</string>
     <string name="links_label">Links</string>
     <string name="source_code_label">Source code</string>
+    <string name="about_source_code_link">github.com/ooodnakov/alias-game</string>
+    <string name="about_source_code_url" translatable="false">https://github.com/ooodnakov/alias-game</string>
     <string name="report_issue_label">Report an issue</string>
     <string name="open_github_issues_label">Open GitHub issues</string>
     <string name="author_line">Author: Aleksandr Odnakov</string>
@@ -274,6 +287,7 @@
     <string name="reset_confirm_message">This clears decks, words, history, and settings. This cannot be undone.</string>
     <string name="cancel">Cancel</string>
     <string name="confirm">Confirm</string>
+    <string name="restore">Restore</string>
     <string name="support_and_data_label">Support &amp; data</string>
 
     <string-array name="team_name_suggestions">

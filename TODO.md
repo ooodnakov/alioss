@@ -30,9 +30,9 @@
 - Bundled assets change detection: implemented; consider per-deck id tracking and pruning removed assets.
 - Room migrations: implement proper migrations for DB version upgrades; remove destructive fallback in production builds.
 - Audio UX: add sound hooks for countdown, turn start, final 5 seconds with vibration, and turn end (no assets committed).
+- Localization: ensure *all* strings (including Settings, About, and any new UI) are fully externalized.
 
 ## Backlog
-- Localization: ensure *all* strings (including Settings, About, and any new UI) are fully externalized.
 - Refactor end-of-turn summary UI: relocate turn statistics, collapse detailed breakdown/time graph (taller), per-word blocks with colored backgrounds acting as correct/incorrect toggles, and show time-between-word graph.
 - Update History screen: hide filters/stats by default, add Reset History action, and align detailed game view with end-of-turn summary layout.
 - Deck details: ensure recent words pull from games played with the selected deck.

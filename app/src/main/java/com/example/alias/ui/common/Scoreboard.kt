@@ -54,7 +54,7 @@ fun scoreboard(scores: Map<String, Int>) {
                     Spacer(modifier = Modifier.width(28.dp))
                 }
                 Text(
-                    text = "$team: $score$suffix",
+                    text = stringResource(R.string.scoreboard_entry, team, score, suffix),
                     style = textStyle,
                     color = textColor,
                 )
