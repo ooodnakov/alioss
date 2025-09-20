@@ -454,7 +454,11 @@ class DeckManager
 
         suspend fun permanentlyDeleteImportedDeck(deck: DeckEntity): Result<Unit> {
             return runCatching {
+                val settingsSnapshot = settingsRepository.settings.first()
                 withContext(Dispatchers.IO) { deckRepository.deleteDeck(deck.id) }
+                if (settingsSnapshot.enabledDeckIds.contains(deck.id)) {
+                    settingsRepository.setEnabledDeckIds(settingsSnapshot.enabledDeckIds - deck.id)
+                }
             }
         }
 
