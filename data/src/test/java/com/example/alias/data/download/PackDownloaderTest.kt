@@ -45,6 +45,9 @@ private class FakeSettingsRepo(origins: Set<String>) : SettingsRepository {
     }
     override suspend fun readBundledDeckHashes(): Set<String> = emptySet()
     override suspend fun writeBundledDeckHashes(entries: Set<String>) = Unit
+    override suspend fun readDeletedBundledDeckIds(): Set<String> = emptySet()
+    override suspend fun addDeletedBundledDeckId(deckId: String) = Unit
+    override suspend fun removeDeletedBundledDeckId(deckId: String) = Unit
     override suspend fun updateSeenTutorial(value: Boolean) = Unit
     override suspend fun clearAll() = Unit
 }
