@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -561,10 +562,17 @@ private fun turnSummaryStatCard(
 private fun scoreProgressGraph(events: List<TimelineEvent>, modifier: Modifier = Modifier) {
     val points = remember(events) { buildScoreProgressPoints(events) }
     if (points.size <= 1) return
+    val hasElapsedData = remember(events) { events.any { it.elapsedMillis > 0L } }
     val colors = MaterialTheme.colorScheme
     val strokeColor = if (events.lastOrNull()?.cumulative ?: 0 >= 0) colors.tertiary else colors.error
     val fillColor = strokeColor.copy(alpha = 0.2f)
     val baselineColor = colors.outline.copy(alpha = 0.5f)
+    val xAxisTitle = if (hasElapsedData) {
+        stringResource(R.string.timeline_graph_axis_elapsed_seconds)
+    } else {
+        stringResource(R.string.timeline_graph_axis_word_order)
+    }
+    val yAxisTitle = stringResource(R.string.timeline_graph_axis_cumulative_score)
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(
             text = stringResource(R.string.timeline_score_graph_label),
@@ -576,75 +584,112 @@ private fun scoreProgressGraph(events: List<TimelineEvent>, modifier: Modifier =
                 .fillMaxWidth()
                 .height(220.dp)
                 .clip(RoundedCornerShape(12.dp))
-                .background(colors.surfaceVariant.copy(alpha = 0.6f))
-                .padding(horizontal = 12.dp, vertical = 12.dp),
+                .background(colors.surfaceVariant.copy(alpha = 0.6f)),
         ) {
-            Canvas(Modifier.fillMaxSize()) {
-                val xMin = points.minOf { it.time }
-                val xMax = points.maxOf { it.time }
-                val xRange = (xMax - xMin)
-                val useIndex = xRange <= 0f
-                val yMin = points.minOf { it.score }
-                val yMax = points.maxOf { it.score }
-                val yRange = (yMax - yMin)
-                val offsets = points.mapIndexed { index, point ->
-                    val xFraction = if (useIndex) {
-                        index.toFloat() / points.lastIndex.toFloat()
-                    } else {
-                        (point.time - xMin) / xRange
-                    }
-                    val yFraction = if (yRange > 0f) {
-                        (point.score - yMin) / yRange
-                    } else {
-                        0.5f
-                    }
-                    Offset(
-                        x = xFraction.coerceIn(0f, 1f) * size.width,
-                        y = size.height - yFraction.coerceIn(0f, 1f) * size.height,
-                    )
-                }
-                val zeroLineY = when {
-                    yRange > 0f && yMin <= 0f && yMax >= 0f -> {
-                        val zeroFraction = (0f - yMin) / yRange
-                        size.height - zeroFraction * size.height
-                    }
-                    yRange == 0f && yMin == 0f -> size.height * 0.5f
-                    else -> null
-                }
-                if (zeroLineY != null) {
-                    drawLine(
-                        color = baselineColor,
-                        start = Offset(0f, zeroLineY),
-                        end = Offset(size.width, zeroLineY),
-                        strokeWidth = 1.dp.toPx(),
-                    )
-                }
-                if (offsets.size >= 2) {
-                    val fillPath = Path().apply {
-                        moveTo(offsets.first().x, size.height)
-                        offsets.forEach { lineTo(it.x, it.y) }
-                        lineTo(offsets.last().x, size.height)
-                        close()
-                    }
-                    drawPath(
-                        path = fillPath,
-                        brush = Brush.verticalGradient(
-                            colors = listOf(fillColor, fillColor.copy(alpha = 0f)),
-                            startY = 0f,
-                            endY = size.height,
-                        ),
-                    )
-                    val strokePath = Path().apply {
-                        offsets.forEachIndexed { index, offset ->
-                            if (index == 0) moveTo(offset.x, offset.y) else lineTo(offset.x, offset.y)
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 12.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = yAxisTitle,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = colors.onSurfaceVariant,
+                    modifier = Modifier
+                        .rotate(-90f)
+                        .padding(end = 12.dp),
+                )
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
+                ) {
+                    Canvas(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .padding(top = 8.dp, end = 8.dp, bottom = 8.dp),
+                    ) {
+                        val xMin = points.minOf { it.time }
+                        val xMax = points.maxOf { it.time }
+                        val xRange = xMax - xMin
+                        val useIndex = xRange <= 0f
+                        val yMin = points.minOf { it.score }
+                        val yMax = points.maxOf { it.score }
+                        val yRange = yMax - yMin
+                        val offsets = points.mapIndexed { index, point ->
+                            val xFraction = if (useIndex) {
+                                index.toFloat() / points.lastIndex.toFloat()
+                            } else {
+                                (point.time - xMin) / xRange
+                            }
+                            val yFraction = if (yRange > 0f) {
+                                (point.score - yMin) / yRange
+                            } else {
+                                0.5f
+                            }
+                            Offset(
+                                x = xFraction.coerceIn(0f, 1f) * size.width,
+                                y = size.height - yFraction.coerceIn(0f, 1f) * size.height,
+                            )
+                        }
+                        val zeroLineY = when {
+                            yRange > 0f && yMin <= 0f && yMax >= 0f -> {
+                                val zeroFraction = (0f - yMin) / yRange
+                                size.height - zeroFraction * size.height
+                            }
+                            yRange == 0f && yMin == 0f -> size.height * 0.5f
+                            else -> null
+                        }
+                        if (zeroLineY != null) {
+                            drawLine(
+                                color = baselineColor,
+                                start = Offset(0f, zeroLineY),
+                                end = Offset(size.width, zeroLineY),
+                                strokeWidth = 1.dp.toPx(),
+                            )
+                        }
+                        if (offsets.size >= 2) {
+                            val fillPath = Path().apply {
+                                moveTo(offsets.first().x, size.height)
+                                offsets.forEach { lineTo(it.x, it.y) }
+                                lineTo(offsets.last().x, size.height)
+                                close()
+                            }
+                            drawPath(
+                                path = fillPath,
+                                brush = Brush.verticalGradient(
+                                    colors = listOf(fillColor, fillColor.copy(alpha = 0f)),
+                                    startY = 0f,
+                                    endY = size.height,
+                                ),
+                            )
+                            val strokePath = Path().apply {
+                                offsets.forEachIndexed { index, offset ->
+                                    if (index == 0) {
+                                        moveTo(offset.x, offset.y)
+                                    } else {
+                                        lineTo(offset.x, offset.y)
+                                    }
+                                }
+                            }
+                            drawPath(
+                                path = strokePath,
+                                color = strokeColor,
+                                style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round),
+                            )
+                            drawCircle(color = strokeColor, radius = 4.dp.toPx(), center = offsets.last())
                         }
                     }
-                    drawPath(
-                        path = strokePath,
-                        color = strokeColor,
-                        style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round),
+                    Text(
+                        text = xAxisTitle,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = colors.onSurfaceVariant,
+                        modifier = Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .padding(top = 8.dp),
                     )
-                    drawCircle(color = strokeColor, radius = 4.dp.toPx(), center = offsets.last())
                 }
             }
         }
@@ -668,35 +713,70 @@ private fun timeBetweenWordsGraph(events: List<TimelineEvent>, modifier: Modifie
             style = MaterialTheme.typography.labelLarge,
             color = colors.onSurfaceVariant,
         )
+        val xAxisTitle = stringResource(R.string.timeline_graph_axis_word_order)
+        val yAxisTitle = stringResource(R.string.timeline_graph_axis_seconds_per_word)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(220.dp)
                 .clip(RoundedCornerShape(12.dp))
-                .background(colors.surfaceVariant.copy(alpha = 0.6f))
-                .padding(horizontal = 12.dp, vertical = 12.dp),
+                .background(colors.surfaceVariant.copy(alpha = 0.6f)),
         ) {
-            Canvas(Modifier.fillMaxSize()) {
-                val count = points.size
-                val slotWidth = if (count > 0) size.width / (count * 2f) else 0f
-                val barWidth = slotWidth
-                val spacing = slotWidth
-                val heightFactor = size.height / maxSeconds
-                val averageY = size.height - (average * heightFactor).coerceIn(0f, size.height)
-                drawLine(
-                    color = colors.primary.copy(alpha = 0.35f),
-                    start = Offset(0f, averageY),
-                    end = Offset(size.width, averageY),
-                    strokeWidth = 1.dp.toPx(),
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 12.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = yAxisTitle,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = colors.onSurfaceVariant,
+                    modifier = Modifier
+                        .rotate(-90f)
+                        .padding(end = 12.dp),
                 )
-                points.forEachIndexed { index, point ->
-                    val barHeight = (point.seconds * heightFactor).coerceIn(0f, size.height)
-                    val x = spacing / 2f + index * (barWidth + spacing)
-                    drawRoundRect(
-                        color = colors.primary,
-                        topLeft = Offset(x, size.height - barHeight),
-                        size = Size(width = barWidth, height = barHeight),
-                        cornerRadius = CornerRadius(12f, 12f),
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
+                ) {
+                    Canvas(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .padding(top = 8.dp, end = 8.dp, bottom = 8.dp),
+                    ) {
+                        val count = points.size
+                        val slotWidth = if (count > 0) size.width / (count * 2f) else 0f
+                        val barWidth = slotWidth
+                        val spacing = slotWidth
+                        val heightFactor = size.height / maxSeconds
+                        val averageY = size.height - (average * heightFactor).coerceIn(0f, size.height)
+                        drawLine(
+                            color = colors.primary.copy(alpha = 0.35f),
+                            start = Offset(0f, averageY),
+                            end = Offset(size.width, averageY),
+                            strokeWidth = 1.dp.toPx(),
+                        )
+                        points.forEachIndexed { index, point ->
+                            val barHeight = (point.seconds * heightFactor).coerceIn(0f, size.height)
+                            val x = spacing / 2f + index * (barWidth + spacing)
+                            drawRoundRect(
+                                color = colors.primary,
+                                topLeft = Offset(x, size.height - barHeight),
+                                size = Size(width = barWidth, height = barHeight),
+                                cornerRadius = CornerRadius(12f, 12f),
+                            )
+                        }
+                    }
+                    Text(
+                        text = xAxisTitle,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = colors.onSurfaceVariant,
+                        modifier = Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .padding(top = 8.dp),
                     )
                 }
             }
@@ -904,12 +984,13 @@ private fun timelineEventBlock(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .border(BorderStroke(1.dp, borderColor), blockShape),
+            .border(BorderStroke(1.dp, borderColor), blockShape)
             .semantics { stateDescription = stateLabel }
             .clickable(role = Role.Button) {
                 val target = !event.outcome.correct
                 onToggle(target)
             },
+        shape = blockShape,
         color = containerColor,
         contentColor = contentColor,
         tonalElevation = 0.dp,

@@ -82,6 +82,8 @@ class DeckRepositoryTest {
             hasCategories = 0,
             classes = emptyList(),
             hasClasses = 0,
+            languages = emptyList(),
+            hasLanguages = 0,
         )
         assertEquals(1, briefs.size)
         val brief = briefs.single()
@@ -245,6 +247,8 @@ class DeckRepositoryTest {
             hasCategories: Int,
             classes: List<String>?,
             hasClasses: Int,
+            languages: List<String>,
+            hasLanguages: Int,
         ): List<String> = getWordBriefsForDecks(
             deckIds = deckIds,
             allowNSFW = allowNSFW,
@@ -254,6 +258,8 @@ class DeckRepositoryTest {
             hasCategories = hasCategories,
             classes = classes,
             hasClasses = hasClasses,
+            languages = languages,
+            hasLanguages = hasLanguages,
         ).map { it.text }
 
         override suspend fun getWordBriefsForDecks(
@@ -265,14 +271,18 @@ class DeckRepositoryTest {
             hasCategories: Int,
             classes: List<String>?,
             hasClasses: Int,
+            languages: List<String>,
+            hasLanguages: Int,
         ): List<WordBrief> {
             val requiredClasses = classes?.map { it.uppercase() } ?: emptyList()
+            val allowedLanguages = languages.toSet()
             return words.filter { word ->
                 deckIds.contains(word.deckId) &&
                     (allowNSFW || !word.isNSFW) &&
                     word.difficulty in minDifficulty..maxDifficulty &&
                     (hasCategories == 0 || (word.category != null && categories?.contains(word.category) == true)) &&
                     (hasClasses == 0 || classesForWord(word).any { requiredClasses.contains(it) })
+                    (hasLanguages == 0 || allowedLanguages.contains(word.language))
             }.map { word ->
                 val joinedClasses = classesForWord(word)
                     .takeIf { it.isNotEmpty() }
@@ -294,19 +304,28 @@ class DeckRepositoryTest {
         override suspend fun getAvailableCategories(
             deckIds: List<String>,
             allowNSFW: Boolean,
+            languages: List<String>,
+            hasLanguages: Int,
         ): List<String> =
-            words.filter { deckIds.contains(it.deckId) && (allowNSFW || !it.isNSFW) }
+            words.filter {
+                deckIds.contains(it.deckId) &&
+                    (allowNSFW || !it.isNSFW) &&
+                    (hasLanguages == 0 || languages.contains(it.language))
+            }
                 .mapNotNull { it.category }
                 .distinct()
 
         override suspend fun getAvailableWordClasses(
             deckIds: List<String>,
             allowNSFW: Boolean,
+            languages: List<String>,
+            hasLanguages: Int,
         ): List<String> {
             val relevantWords = words
                 .filter {
                     deckIds.contains(it.deckId) &&
-                        (allowNSFW || !it.isNSFW)
+                        (allowNSFW || !it.isNSFW) &&
+                        (hasLanguages == 0 || languages.contains(it.language))
                 }
                 .map { it.deckId to it.text }
                 .toSet()

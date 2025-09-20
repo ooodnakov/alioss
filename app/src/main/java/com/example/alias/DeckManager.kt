@@ -69,6 +69,8 @@ class DeckManager
             val categoryFilterEnabled: Int,
             val wordClasses: List<String>?,
             val wordClassFilterEnabled: Int,
+            val languages: List<String>,
+            val languageFilterEnabled: Int,
         )
 
         data class PackImportResult(
@@ -216,6 +218,7 @@ class DeckManager
         data class WordClassAvailabilityKey(
             val deckIds: Set<String>,
             val allowNSFW: Boolean,
+            val languages: Set<String>,
         )
 
         fun observeDecks(): Flow<List<DeckEntity>> {
@@ -281,6 +284,7 @@ class DeckManager
                 .mapNotNull { it.trim().takeIf(String::isNotEmpty) }
                 .takeIf { it.isNotEmpty() }
             val classes = canonicalizeWordClassFilters(settings.selectedWordClasses).takeIf { it.isNotEmpty() }
+            val languages = settings.selectedDeckLanguages.toList()
             return WordQueryFilters(
                 deckIds = deckIds,
                 allowNSFW = settings.allowNSFW,
@@ -289,7 +293,9 @@ class DeckManager
                 categories = categories,
                 categoryFilterEnabled = if (categories == null) 0 else 1,
                 wordClasses = classes,
-                wordClassFilterEnabled = if (classes == null) 0 else 1,
+                wordClassFilterEnabled = if (classes == null) 0 else 1
+                languages = languages,
+                languageFilterEnabled = if (languages.isEmpty()) 0 else 1,
             )
         }
 
@@ -305,6 +311,8 @@ class DeckManager
                     filters.categoryFilterEnabled,
                     filters.wordClasses,
                     filters.wordClassFilterEnabled,
+                    filters.languages,
+                    filters.languageFilterEnabled,
                 )
             }
         }
@@ -325,13 +333,25 @@ class DeckManager
                             filters.categoryFilterEnabled,
                             filters.wordClasses,
                             filters.wordClassFilterEnabled,
+                            filters.languages,
+                            filters.languageFilterEnabled,
                         )
                     }
                     val categoriesDeferred = async {
-                        wordDao.getAvailableCategories(filters.deckIds, filters.allowNSFW)
+                        wordDao.getAvailableCategories(
+                            filters.deckIds,
+                            filters.allowNSFW,
+                            filters.languages,
+                            filters.languageFilterEnabled,
+                        )
                     }
                     val classesDeferred = async {
-                        wordDao.getAvailableWordClasses(filters.deckIds, filters.allowNSFW)
+                        wordDao.getAvailableWordClasses(
+                            filters.deckIds,
+                            filters.allowNSFW,
+                            filters.languages,
+                            filters.languageFilterEnabled,
+                        )
                     }
                     val briefs = briefsDeferred.await()
                     val categories = categoriesDeferred.await().sorted()
@@ -427,8 +447,6 @@ class DeckManager
         }
 
         suspend fun deleteDeck(deck: DeckEntity): DeleteDeckResult {
-            val settingsSnapshot = settingsRepository.settings.first()
-            val updatedIds = settingsSnapshot.enabledDeckIds - deck.id
             val isBundledDeck = deck.isOfficial
             val result = runCatching {
                 withContext(Dispatchers.IO) {
@@ -438,13 +456,11 @@ class DeckManager
                         deckRepository.deleteDeck(deck.id)
                     }
                 }
+                settingsRepository.removeEnabledDeckId(deck.id)
             }
             if (result.isFailure) {
                 val error = result.exceptionOrNull()?.message ?: "Unknown error"
                 return DeleteDeckResult.Failure(error)
-            }
-            if (updatedIds != settingsSnapshot.enabledDeckIds) {
-                settingsRepository.setEnabledDeckIds(updatedIds)
             }
             val message = if (isBundledDeck) {
                 "Hidden deck: ${deck.name}"
@@ -454,11 +470,11 @@ class DeckManager
             return DeleteDeckResult.Success(message)
         }
 
-        suspend fun permanentlyDeleteImportedDeck(deck: DeckEntity): Result<Unit> {
-            return runCatching {
+        suspend fun permanentlyDeleteImportedDeck(deck: DeckEntity): Result<Unit> =
+            runCatching {
                 withContext(Dispatchers.IO) { deckRepository.deleteDeck(deck.id) }
+                settingsRepository.removeEnabledDeckId(deck.id)
             }
-        }
 
         suspend fun restoreDeletedBundledDeck(deckId: String): Result<Unit> {
             return runCatching {
@@ -507,13 +523,20 @@ class DeckManager
             WordClassAvailabilityKey(
                 deckIds = settings.enabledDeckIds,
                 allowNSFW = settings.allowNSFW,
+                languages = settings.selectedDeckLanguages,
             )
 
         suspend fun loadAvailableWordClasses(key: WordClassAvailabilityKey): List<String> {
             val ids = key.deckIds.toList()
             if (ids.isEmpty()) return emptyList()
+            val languages = key.languages.toList()
             val classes = withContext(Dispatchers.IO) {
-                wordDao.getAvailableWordClasses(ids, key.allowNSFW)
+                wordDao.getAvailableWordClasses(
+                    ids,
+                    key.allowNSFW,
+                    languages,
+                    if (languages.isEmpty()) 0 else 1,
+                )
             }
             return canonicalizeWordClassFilters(classes)
         }

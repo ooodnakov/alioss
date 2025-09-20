@@ -32,7 +32,8 @@ interface WordDao {
             "AND (:hasClasses = 0 OR EXISTS (" +
             "    SELECT 1 FROM word_classes wc " +
             "    WHERE wc.deckId = w.deckId AND wc.wordText = w.text AND UPPER(wc.wordClass) IN (:classes)" +
-            "))",
+            ")) " +
+            "AND (:hasLanguages = 0 OR w.language IN (:languages))",
     )
     suspend fun getWordTextsForDecks(
         deckIds: List<String>,
@@ -43,6 +44,8 @@ interface WordDao {
         hasCategories: Int,
         classes: List<String>?,
         hasClasses: Int,
+        languages: List<String>,
+        hasLanguages: Int,
     ): List<String>
 
     @Suppress("LongParameterList")
@@ -58,6 +61,7 @@ interface WordDao {
             "    SELECT 1 FROM word_classes wc2 " +
             "    WHERE wc2.deckId = w.deckId AND wc2.wordText = w.text AND UPPER(wc2.wordClass) IN (:classes)" +
             ")) " +
+            "AND (:hasLanguages = 0 OR w.language IN (:languages)) " +
             "GROUP BY w.text, w.difficulty, w.category",
     )
     suspend fun getWordBriefsForDecks(
@@ -69,28 +73,36 @@ interface WordDao {
         hasCategories: Int,
         classes: List<String>?,
         hasClasses: Int,
+        languages: List<String>,
+        hasLanguages: Int,
     ): List<WordBrief>
 
     @Query(
         "SELECT DISTINCT category FROM words " +
             "WHERE deckId IN (:deckIds) " +
             "AND category IS NOT NULL AND TRIM(category) != '' " +
-            "AND (:allowNSFW = 1 OR isNSFW = 0)",
+            "AND (:allowNSFW = 1 OR isNSFW = 0) " +
+            "AND (:hasLanguages = 0 OR language IN (:languages))",
     )
     suspend fun getAvailableCategories(
         deckIds: List<String>,
         allowNSFW: Boolean,
+        languages: List<String>,
+        hasLanguages: Int,
     ): List<String>
 
     @Query(
         "SELECT DISTINCT UPPER(wc.wordClass) FROM word_classes wc " +
             "JOIN words w ON w.deckId = wc.deckId AND w.text = wc.wordText " +
             "WHERE w.deckId IN (:deckIds) " +
-            "AND (:allowNSFW = 1 OR w.isNSFW = 0)",
+            "AND (:allowNSFW = 1 OR w.isNSFW = 0) " +
+            "AND (:hasLanguages = 0 OR w.language IN (:languages))",
     )
     suspend fun getAvailableWordClasses(
         deckIds: List<String>,
         allowNSFW: Boolean,
+        languages: List<String>,
+        hasLanguages: Int,
     ): List<String>
 
     @Query(

@@ -49,14 +49,16 @@ sealed interface GameState {
     data class TurnPending(
         val team: String,
         val scores: Map<String, Int>,
-        val remainingToWin: Int,
+        val goal: MatchGoal,
+        val remainingToGoal: Int,
     ) : GameState
 
     /** A turn is active and [word] should be explained by [team]. */
     data class TurnActive(
         val team: String,
         val word: String,
-        val remaining: Int,
+        val goal: MatchGoal,
+        val remainingToGoal: Int,
         val score: Int,
         val skipsRemaining: Int,
         val timeRemaining: Int,
@@ -80,12 +82,23 @@ sealed interface GameState {
 
 /** Configuration options for starting a match. */
 data class MatchConfig(
-    // Target number of correctly guessed words to finish the match.
-    val targetWords: Int,
+    val goal: MatchGoal,
     val maxSkips: Int,
     val penaltyPerSkip: Int,
     val roundSeconds: Int,
 )
+
+/** Match victory condition. */
+data class MatchGoal(
+    val type: MatchGoalType,
+    val target: Int,
+)
+
+/** Types of supported match goals. */
+enum class MatchGoalType {
+    TARGET_WORDS,
+    TARGET_SCORE,
+}
 
 /** Outcome of a single word during a turn. */
 data class TurnOutcome(

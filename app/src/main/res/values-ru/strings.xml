@@ -121,6 +121,10 @@
     <string name="timeline_score_graph_label">Очки по времени</string>
     <string name="timeline_time_between_graph_label">Интервал между словами</string>
     <string name="timeline_time_between_graph_average">Среднее %1$.1f с между словами</string>
+    <string name="timeline_graph_axis_word_order">Порядок слов</string>
+    <string name="timeline_graph_axis_elapsed_seconds">Время (с)</string>
+    <string name="timeline_graph_axis_cumulative_score">Счет</string>
+    <string name="timeline_graph_axis_seconds_per_word">Секунд на слово</string>
     <string name="timeline_no_events">В этом ходу слова не записывались.</string>
     <string name="timeline_bonus_label">Бонус</string>
     <string name="timeline_change">%1$+d</string>
