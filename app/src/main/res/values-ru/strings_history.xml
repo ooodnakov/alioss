@@ -1,0 +1,29 @@
+<resources>
+    <!-- History feature strings -->
+    <string name="history_filter_all_difficulties">Все сложности</string>
+    <string name="history_filter_all_results">Все результаты</string>
+    <string name="history_filter_all_teams">Все команды</string>
+    <string name="history_filter_difficulty">Сложность</string>
+    <string name="history_filter_result">Результат</string>
+    <string name="history_filter_team">Команда</string>
+    <string name="history_filter_unknown_difficulty">Неизвестная сложность</string>
+    <string name="history_game_summary">Раундов: %1$d · Слов: %2$d</string>
+    <string name="history_game_teams_label">Команды: %1$s</string>
+    <string name="history_hide_header">Скрыть фильтры и статистику</string>
+    <string name="history_no_entries_for_filters">Нет игр, подходящих под фильтры.</string>
+    <string name="history_performance_summary">%1$d/%2$d верных (%3$d%%)</string>
+    <string name="history_recent_count">%1$d из %2$d игр</string>
+    <string name="history_reset_action">Сбросить историю</string>
+    <string name="history_reset_dialog_cancel">Отмена</string>
+    <string name="history_reset_dialog_confirm">Сбросить</string>
+    <string name="history_reset_dialog_message">Очистить все сохранённые ходы? Это нельзя отменить.</string>
+    <string name="history_reset_dialog_title">Сбросить историю?</string>
+    <string name="history_result_correct">Верно</string>
+    <string name="history_result_missed">Пропущено</string>
+    <string name="history_result_skipped">Пропущено</string>
+    <string name="history_section_performance">Производительность</string>
+    <string name="history_section_recent_games">Недавние партии</string>
+    <string name="history_show_header">Показать фильтры и статистику</string>
+    <string name="no_history">Истории ещё нет</string>
+    <string name="title_history">История</string>
+</resources>

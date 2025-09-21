@@ -1,0 +1,55 @@
+<resources>
+    <!-- Settings screen strings -->
+    <string name="add_team_label">Добавить команду</string>
+    <string name="advanced_tab">Дополнительно</string>
+    <string name="allow_nsfw_label">Разрешить 18+</string>
+    <string name="auto_label">Авто</string>
+    <string name="drag_to_reorder_hint">Нажмите и перетащите ручку для изменения порядка.</string>
+    <string name="english_label">Английский</string>
+    <string name="feedback_and_layout">Отклик и интерфейс</string>
+    <string name="haptics_label">Виброотклик</string>
+    <string name="input_feedback_tab">Ввод и отклик</string>
+    <string name="language_and_content">Язык и содержимое</string>
+    <string name="landscape_label">Альбомная</string>
+    <string name="match_rules_tab">Правила матча</string>
+    <string name="max_skips_label">Лимит пропусков</string>
+    <string name="one_hand_layout_label">Для одной руки</string>
+    <string name="orientation_label">Ориентация</string>
+    <string name="penalty_per_skip_label">Штраф за пропуск</string>
+    <string name="portrait_label">Портретная</string>
+    <string name="punish_skips_label">Штраф за пропуски</string>
+    <string name="remove_team">Удалить команду</string>
+    <string name="reset_confirm_message">Удалит колоды, слова, историю и настройки. Отменить нельзя.</string>
+    <string name="reset_confirm_title">Сбросить данные?</string>
+    <string name="reset_local_data">Сбросить данные</string>
+    <string name="round_and_goals">Раунд и цели</string>
+    <string name="round_seconds_label">Время раунда</string>
+    <string name="russian_label">Русский</string>
+    <string name="save_and_restart_label">Сохранить и перезапуск</string>
+    <string name="save_label">Сохранить</string>
+    <string name="score_target_toggle_label">Использовать цель по очкам</string>
+    <string name="show_tutorial_again">Показать обучение</string>
+    <string name="skips_section">Пропуски</string>
+    <string name="sound_effects_label">Звуковые эффекты</string>
+    <string name="support_and_data_label">Поддержка и данные</string>
+    <string name="system_default_label">Как в системе</string>
+    <string name="target_score_label">Цель по очкам</string>
+    <string name="target_words_disabled_supporting_text">Недоступно, если включена цель по очкам.</string>
+    <string name="target_words_label">Цель по словам</string>
+    <string name="team_default_name">Команда %1$d</string>
+    <string name="team_drag_handle_description">Переместить команду</string>
+    <string name="team_suggestions_hint">Нажмите на предложение, чтобы заполнить следующий слот.</string>
+    <string name="team_suggestions_label">Нужны идеи?</string>
+    <string name="teams_label">Команды</string>
+    <string name="teams_tab">Команды</string>
+    <string name="title_settings">Настройки</string>
+    <string name="ui_language_label">Язык интерфейса</string>
+    <string name="vertical_swipes_label">Вертикальные жесты</string>
+    <string-array name="team_name_suggestions">
+        <item>Мастера слов</item>
+        <item>Молнии</item>
+        <item>Мозговой штурм</item>
+        <item>Первооткрыватели</item>
+        <item>Быстрые мыслители</item>
+    </string-array>
+</resources>
