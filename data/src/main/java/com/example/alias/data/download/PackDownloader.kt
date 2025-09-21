@@ -89,7 +89,7 @@ class PackDownloader(
         if (allowed.isEmpty()) return false
         // Accept either host-only entries or origin (scheme://host[:port]) entries
         val origins = buildList {
-            for (p in ports) add("https://${'$'}host:${'$'}p")
+            for (port in ports) add("https://${'$'}host:${'$'}port")
             add(host)
         }
         return origins.any { it in allowed }

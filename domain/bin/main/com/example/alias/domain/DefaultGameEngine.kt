@@ -22,9 +22,9 @@ class DefaultGameEngine(
     private val _state = MutableStateFlow<GameState>(GameState.Idle)
     override val state: StateFlow<GameState> = _state.asStateFlow()
 
-    private lateinit var queue: ArrayDeque<String>
-    private lateinit var config: MatchConfig
-    private lateinit var teams: List<String>
+    private var queue: ArrayDeque<String>? = null
+    private var config: MatchConfig? = null
+    private var teams: List<String>? = null
     private val scores: MutableMap<String, Int> = mutableMapOf()
     private var currentTeam: Int = 0
     private var turnScore: Int = 0
@@ -37,15 +37,15 @@ class DefaultGameEngine(
     private var matchOver: Boolean = false
     private val mutex = Mutex()
 
-    private fun goalTarget(): Int = config.goal.target
+    private fun goalTarget(): Int = config!!.goal.target
 
     private fun goalReached(includeCurrentTurn: Boolean): Boolean {
-        return when (config.goal.type) {
+        return when (config!!.goal.type) {
             MatchGoalType.TARGET_WORDS -> correctTotal >= goalTarget()
             MatchGoalType.TARGET_SCORE -> {
                 val target = goalTarget()
                 if (includeCurrentTurn) {
-                    val teamName = teams[currentTeam]
+                    val teamName = teams!![currentTeam]
                     val projected = scores.getOrDefault(teamName, 0) + turnScore
                     projected >= target
                 } else {
@@ -56,10 +56,10 @@ class DefaultGameEngine(
     }
 
     private fun remainingForPendingTeam(): Int {
-        return when (config.goal.type) {
+        return when (config!!.goal.type) {
             MatchGoalType.TARGET_WORDS -> (goalTarget() - correctTotal).coerceAtLeast(0)
             MatchGoalType.TARGET_SCORE -> {
-                val teamName = teams[currentTeam]
+                val teamName = teams!![currentTeam]
                 val base = scores.getOrDefault(teamName, 0)
                 (goalTarget() - base).coerceAtLeast(0)
             }
@@ -67,10 +67,10 @@ class DefaultGameEngine(
     }
 
     private fun remainingForActiveTeam(): Int {
-        return when (config.goal.type) {
+        return when (config!!.goal.type) {
             MatchGoalType.TARGET_WORDS -> (goalTarget() - correctTotal).coerceAtLeast(0)
             MatchGoalType.TARGET_SCORE -> {
-                val teamName = teams[currentTeam]
+                val teamName = teams!![currentTeam]
                 val projected = scores.getOrDefault(teamName, 0) + turnScore
                 (goalTarget() - projected).coerceAtLeast(0)
             }
@@ -110,7 +110,7 @@ class DefaultGameEngine(
             if (_state.value !is GameState.TurnActive) return@withLock
             if (skipsRemaining <= 0) return@withLock
             skipsRemaining--
-            turnScore -= config.penaltyPerSkip
+            turnScore -= config!!.penaltyPerSkip
             outcomes.add(TurnOutcome(currentWord, false, System.currentTimeMillis(), skipped = true))
             advanceLocked()
         }
@@ -123,7 +123,7 @@ class DefaultGameEngine(
                 finishMatchLocked()
             } else {
                 outcomes.clear()
-                currentTeam = (currentTeam + 1) % teams.size
+                currentTeam = (currentTeam + 1) % teams!!.size
                 prepareTurnLocked()
             }
         }
@@ -136,7 +136,7 @@ class DefaultGameEngine(
         }
     }
 
-    override suspend fun peekNextWord(): String? = mutex.withLock { queue.firstOrNull() }
+    override suspend fun peekNextWord(): String? = mutex.withLock { queue!!.firstOrNull() }
 
     override suspend fun overrideOutcome(
         index: Int,
@@ -151,23 +151,23 @@ class DefaultGameEngine(
             val goalReachedBeforeOverride = goalReached(includeCurrentTurn = false)
             val change =
                 if (correct) {
-                    val penalty = if (!item.correct && item.skipped) config.penaltyPerSkip else 0
+                    val penalty = if (!item.correct && item.skipped) config!!.penaltyPerSkip else 0
                     1 + penalty
                 } else {
-                    -(1 + config.penaltyPerSkip)
+                    -(1 + config!!.penaltyPerSkip)
                 }
             turnScore += change
             scores[team] = scores.getOrDefault(team, 0) + change
             // Update total correct words across the match based on override
-            if (config.goal.type == MatchGoalType.TARGET_WORDS && item.correct != correct) {
+            if (config!!.goal.type == MatchGoalType.TARGET_WORDS && item.correct != correct) {
                 if (correct) correctTotal++ else correctTotal--
             }
             outcomes[index] = item.copy(correct = correct, skipped = !correct)
 
-            val noWordsLeft = queue.isEmpty()
+            val noWordsLeft = queue!!.isEmpty()
             val nowMatchOver = goalReached(includeCurrentTurn = false) || noWordsLeft
             val preserveExistingCompletion =
-                current.matchOver && !goalReachedBeforeOverride && queue.isEmpty()
+                current.matchOver && !goalReachedBeforeOverride && queue!!.isEmpty()
             matchOver = nowMatchOver || preserveExistingCompletion
             _state.update { GameState.TurnFinished(team, turnScore, scores.toMap(), outcomes.toList(), matchOver) }
         }
@@ -180,9 +180,9 @@ class DefaultGameEngine(
         }
         _state.update {
             GameState.TurnPending(
-                team = teams[currentTeam],
+                team = teams!![currentTeam],
                 scores = scores.toMap(),
-                goal = config.goal,
+                goal = config!!.goal,
                 remainingToGoal = remainingForPendingTeam(),
             )
         }
@@ -193,8 +193,8 @@ class DefaultGameEngine(
             finishMatchLocked()
             return
         }
-        skipsRemaining = config.maxSkips
-        timeRemaining = config.roundSeconds
+        skipsRemaining = config!!.maxSkips
+        timeRemaining = config!!.roundSeconds
         turnScore = 0
         outcomes.clear()
         timerJob?.cancel()
@@ -203,34 +203,34 @@ class DefaultGameEngine(
     }
 
     private suspend fun advanceLocked() {
-        if (goalReached(includeCurrentTurn = true) || queue.isEmpty()) {
+        if (goalReached(includeCurrentTurn = true) || queue!!.isEmpty()) {
             finishTurnLocked(byTimer = false)
             return
         }
-        val next = queue.removeFirst()
-        val team = teams[currentTeam]
+        val next = queue!!.removeFirst()
+        val team = teams!![currentTeam]
         val totalScore = scores.getOrDefault(team, 0) + turnScore
         currentWord = next
         _state.update {
             GameState.TurnActive(
                 team = team,
                 word = next,
-                goal = config.goal,
+                goal = config!!.goal,
                 remainingToGoal = remainingForActiveTeam(),
                 score = totalScore,
                 skipsRemaining = skipsRemaining,
                 timeRemaining = timeRemaining,
-                totalSeconds = config.roundSeconds,
+                totalSeconds = config!!.roundSeconds,
             )
         }
     }
 
     private suspend fun finishTurnLocked(byTimer: Boolean) {
         timerJob?.cancel()
-        val team = teams[currentTeam]
+        val team = teams!![currentTeam]
         val updatedScore = scores.getOrDefault(team, 0) + turnScore
         scores[team] = updatedScore
-        val noWordsLeft = queue.isEmpty()
+        val noWordsLeft = queue!!.isEmpty()
         // If timer expired while a word was shown, include it as pending (no penalty applied yet)
         if (byTimer) {
             val current = _state.value

@@ -920,17 +920,6 @@ private fun filterChipGroup(
     }
 }
 
-private fun normalizeDifficultyRange(min: Int, max: Int): IntRange {
-    val boundedMin = min.coerceAtLeast(DIFFICULTY_LEVELS.first())
-    val boundedMax = max.coerceAtMost(DIFFICULTY_LEVELS.last())
-    return IntRange(boundedMin, boundedMax)
-}
-
-private fun IntRange.toDifficultyRange(): IntRange {
-    val start = first.coerceAtLeast(DIFFICULTY_LEVELS.first())
-    val end = last.coerceAtMost(DIFFICULTY_LEVELS.last())
-    return IntRange(start, end)
-}
 
 private fun adjustDifficultyRange(range: IntRange, level: Int): IntRange {
     return if (range.contains(level)) {

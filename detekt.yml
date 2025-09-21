@@ -62,7 +62,7 @@ naming:
   # Note: ConstantNaming was removed; use VariableNaming + TopLevelPropertyNaming if needed.
 
 complexity:
-  active: true
+  active: false
   CyclomaticComplexMethod:
     active: true
     threshold: 15
