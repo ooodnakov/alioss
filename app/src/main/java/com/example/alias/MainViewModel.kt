@@ -350,10 +350,10 @@ class MainViewModel
                     if (result.coverImageError != null) {
                         showCoverImageErrorSnackbar()
                     }
-                } catch (t: Throwable) {
+                } catch (e: Exception) {
                     _uiEvents.tryEmit(
                         UiEvent(
-                            message = "Failed: ${t.message}",
+                            message = "Failed: ${e.message}",
                             actionLabel = "Dismiss",
                             duration = SnackbarDuration.Long,
                             isError = true,
@@ -386,10 +386,10 @@ class MainViewModel
                     if (result.coverImageError != null) {
                         showCoverImageErrorSnackbar()
                     }
-                } catch (t: Throwable) {
+                } catch (e: Exception) {
                     _uiEvents.tryEmit(
                         UiEvent(
-                            message = "Failed: ${t.message}",
+                            message = "Failed: ${e.message}",
                             actionLabel = "Dismiss",
                             duration = SnackbarDuration.Long,
                             isError = true,
@@ -417,10 +417,10 @@ class MainViewModel
                 try {
                     gameController.clearHistory()
                     _uiEvents.tryEmit(UiEvent(message = "History cleared", actionLabel = "OK"))
-                } catch (t: Throwable) {
+                } catch (e: Exception) {
                     _uiEvents.tryEmit(
                         UiEvent(
-                            message = "Failed to clear history: ${t.message ?: "Unknown error"}",
+                            message = "Failed to clear history: ${e.message ?: "Unknown error"}",
                             actionLabel = "Dismiss",
                             duration = SnackbarDuration.Long,
                             isError = true,

@@ -43,7 +43,7 @@ import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
-enum class CardAction { Correct, Skip }
+enum class WordCardAction { Correct, Skip }
 
 private val COMMIT_DISTANCE = 112.dp
 private const val ROTATION_DIVISOR = 20f
@@ -61,7 +61,7 @@ fun wordCard(
     vibrator: Vibrator?,
     hapticsEnabled: Boolean,
     onActionStart: () -> Unit,
-    onAction: (CardAction) -> Unit,
+    onAction: (WordCardAction) -> Unit,
     animateAppear: Boolean = true,
     allowSkip: Boolean = true,
     verticalMode: Boolean = false,
@@ -182,19 +182,19 @@ fun wordCard(
                             animY.snapTo(endY)
                             val commit = if (verticalMode) abs(endY) > commitPx else abs(endX) > commitPx
                             val correctDir = if (verticalMode) endY < 0f else endX > 0f
-                            val dir = if (correctDir) CardAction.Correct else CardAction.Skip
-                            val allowed = (dir == CardAction.Correct) || (dir == CardAction.Skip && allowSkip)
+                            val dir = if (correctDir) WordCardAction.Correct else WordCardAction.Skip
+                            val allowed = (dir == WordCardAction.Correct) || (dir == WordCardAction.Skip && allowSkip)
                             if (commit && allowed) {
                                 onActionStart()
                                 if (verticalMode) {
                                     val targetY = commitPx * SWIPE_AWAY_MULTIPLIER * when (dir) {
-                                        CardAction.Correct -> -1
+                                        WordCardAction.Correct -> -1
                                         else -> 1
                                     }
                                     animY.animateTo(targetY, tween(200))
                                 } else {
                                     val targetX = commitPx * SWIPE_AWAY_MULTIPLIER * when (dir) {
-                                        CardAction.Correct -> 1
+                                        WordCardAction.Correct -> 1
                                         else -> -1
                                     }
                                     animX.animateTo(targetX, tween(200))

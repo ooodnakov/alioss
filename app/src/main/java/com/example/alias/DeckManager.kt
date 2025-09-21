@@ -40,6 +40,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.text.Charsets
+import kotlinx.serialization.SerializationException
 
 @Singleton
 class DeckManager
@@ -568,7 +569,7 @@ class DeckManager
                     ?.jsonPrimitive
                     ?.contentOrNull
                 if (deckId.isNullOrBlank()) emptyList() else listOf(deckId)
-            } catch (e: Exception) {
+            } catch (e: SerializationException) {
                 logger.error("Failed to parse deck IDs from content", e)
                 emptyList()
             }
@@ -578,7 +579,8 @@ class DeckManager
             var coverImageError: Throwable? = null
             val sanitizedDeck = when {
                 pack.coverImageUrl != null -> {
-                    val coverUrl = checkNotNull(pack.coverImageUrl)
+                    check(pack.coverImageUrl != null) { "Cover image URL is null" }
+                    val coverUrl = pack.coverImageUrl
                     val result = fetchCoverImageFromUrl(coverUrl)
                     if (result.isSuccess) {
                         pack.deck.copy(coverImageBase64 = result.getOrThrow())
@@ -643,8 +645,9 @@ class DeckManager
             return try {
                 val parsed = PackParser.fromJson(content, isBundledAsset)
                 sanitizeCoverImage(parsed)
-            } catch (error: Throwable) {
-                if (error is CancellationException) throw error
+            } catch (e: CancellationException) {
+                throw e
+            } catch (error: Exception) {
                 if (!error.isCoverImageError()) throw error
                 val sanitizedJson = removeCoverImageField(content) ?: throw error
                 val parsed = PackParser.fromJson(sanitizedJson, isBundledAsset)
@@ -677,7 +680,8 @@ class DeckManager
                     }
                 }
                 bundleJson.encodeToString(JsonObject.serializer(), sanitizedRoot)
-            } catch (error: Exception) {
+            } catch (error: SerializationException) {
+                logger.error("Failed to remove cover image field", error)
                 null
             }
         }

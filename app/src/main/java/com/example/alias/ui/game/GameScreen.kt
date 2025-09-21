@@ -59,7 +59,7 @@ import com.example.alias.data.settings.Settings
 import com.example.alias.domain.GameEngine
 import com.example.alias.domain.GameState
 import com.example.alias.domain.MatchGoalType
-import com.example.alias.ui.CardAction
+import com.example.alias.ui.WordCardAction
 import com.example.alias.ui.common.scoreBoard
 import com.example.alias.ui.countdownOverlay
 import com.example.alias.ui.tutorialOverlay
@@ -444,7 +444,7 @@ fun gameScreen(
                         },
                         onAction = {
                             when (it) {
-                                CardAction.Correct -> {
+                                WordCardAction.Correct -> {
                                     if (settings.soundEnabled) {
                                         tone.startTone(
                                             android.media.ToneGenerator.TONE_PROP_ACK,
@@ -456,7 +456,7 @@ fun gameScreen(
                                         isProcessing = false
                                     }
                                 }
-                                CardAction.Skip -> {
+                                WordCardAction.Skip -> {
                                     if (s.skipsRemaining > 0) {
                                         if (settings.soundEnabled) {
                                             tone.startTone(

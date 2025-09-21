@@ -72,9 +72,9 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import kotlin.math.roundToInt
 import com.example.alias.R
 import com.example.alias.data.db.TurnHistoryEntity
-import kotlin.math.roundToInt
 
 private const val SPARKLINE_RECENT_ENTRIES_COUNT = 12
 private val SPARKLINE_DOT_RADIUS = 4.dp
@@ -737,7 +737,7 @@ private fun historyEntryCard(
                 }
                 val difficultyLabel = entry.difficulty?.let { stringResource(R.string.word_difficulty_value, it) }
                     ?: stringResource(R.string.history_filter_unknown_difficulty)
-                DisabledCompactAssistChip(
+                disabledCompactAssistChip(
                     label = difficultyLabel,
                     colors = chipColors,
                 )
@@ -893,9 +893,7 @@ private fun groupTurnsIntoGames(turns: List<HistoryTurn>): List<HistoryGame> {
 }
 
 private fun buildTurn(entries: List<TurnHistoryEntity>): HistoryTurn {
-    if (entries.isEmpty()) {
-        throw IllegalArgumentException("Cannot build turn with no entries")
-    }
+    require(entries.isNotEmpty()) { "Cannot build turn with no entries" }
     val team = entries.first().team
     val turnId = entries.maxOfOrNull { it.id } ?: entries.hashCode().toLong()
     return HistoryTurn(
@@ -908,9 +906,7 @@ private fun buildTurn(entries: List<TurnHistoryEntity>): HistoryTurn {
 }
 
 private fun buildGame(turns: List<HistoryTurn>): HistoryGame {
-    if (turns.isEmpty()) {
-        throw IllegalArgumentException("Cannot build game with no turns")
-    }
+    require(turns.isNotEmpty()) { "Cannot build game with no turns" }
     val gameId = turns.maxOfOrNull { it.id } ?: turns.hashCode().toLong()
     return HistoryGame(
         id = gameId,
