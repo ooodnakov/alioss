@@ -227,7 +227,7 @@ class DeckManager
 
         fun observeDecks(): Flow<List<DeckEntity>> {
             return deckRepository.getDecks()
-                .combine(settingsRepository.settings.map { it.deletedBundledDeckIds }) { allDecks, deletedIds ->
+                .combine(settingsRepository.settings.map { it.deletedBundledDeckIds + it.deletedImportedDeckIds }) { allDecks, deletedIds ->
                     val filtered = allDecks.filter { deck -> !deletedIds.contains(deck.id) }
                     logger.debug("Filtered decks: ${filtered.size} (removed ${allDecks.size - filtered.size})")
                     filtered
@@ -497,6 +497,23 @@ class DeckManager
             }
         }
 
+        suspend fun restoreDeletedImportedDeck(deckId: String): Result<Unit> {
+            return runCatching {
+                withContext(Dispatchers.IO) {
+                    settingsRepository.removeDeletedImportedDeckId(deckId)
+                }
+            }
+        }
+
+        suspend fun permanentlyDeleteImportedDeck(deckId: String): Result<Unit> {
+            return runCatching {
+                withContext(Dispatchers.IO) {
+                    deckRepository.deleteDeck(deckId)
+                    settingsRepository.removeDeletedImportedDeckId(deckId)
+                }
+            }
+        }
+
         suspend fun getWordCount(deckId: String): Int = deckRepository.getWordCount(deckId)
 
         suspend fun getDeckCategories(deckId: String): List<String> = withContext(Dispatchers.IO) {
@@ -580,7 +597,7 @@ class DeckManager
             val sanitizedDeck = when {
                 pack.coverImageUrl != null -> {
                     check(pack.coverImageUrl != null) { "Cover image URL is null" }
-                    val coverUrl = pack.coverImageUrl
+                    val coverUrl = pack.coverImageUrl!!
                     val result = fetchCoverImageFromUrl(coverUrl)
                     if (result.isSuccess) {
                         pack.deck.copy(coverImageBase64 = result.getOrThrow())

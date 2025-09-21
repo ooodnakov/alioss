@@ -603,7 +603,7 @@ fun gameScreen(
                             color = barColor,
                             modifier = Modifier.fillMaxWidth(),
                         )
-                        Controls()
+                        controls()
                         if (settings.oneHandedLayout) {
                             val onCorrect = {
                                 if (settings.hapticsEnabled) {
@@ -664,7 +664,7 @@ fun gameScreen(
                         modifier = Modifier.weight(1f),
                         contentAlignment = Alignment.Center,
                     ) {
-                        CardStack()
+                        cardStack()
                     }
                 }
             }

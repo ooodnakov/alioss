@@ -72,9 +72,9 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import kotlin.math.roundToInt
 import com.example.alias.R
 import com.example.alias.data.db.TurnHistoryEntity
+import kotlin.math.roundToInt
 
 private const val SPARKLINE_RECENT_ENTRIES_COUNT = 12
 private val SPARKLINE_DOT_RADIUS = 4.dp

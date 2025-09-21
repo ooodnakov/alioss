@@ -184,7 +184,8 @@
     <string name="deck_deleted_empty">No deleted decks</string>
     <string name="deck_deleted_bundled_hint">Deleted bundled decks (tap to restore):</string>
     <string name="deck_deleted_bundled_label">Bundled deck: %1$s</string>
-    <string name="deck_deleted_imported_hint">Note: Imported decks that are deleted are permanently removed and cannot be restored.</string>
+    <string name="deck_deleted_imported_label">Imported deck: %1$s</string>
+    <string name="deck_deleted_imported_hint">Deleted imported decks (tap to restore or permanently delete):</string>
     <string name="deck_filters_description">Choose which words appear in the next match.</string>
     <string name="deck_filters_no_results">No decks match the current filters.</string>
     <string name="import_sheet_title">Import decks</string>

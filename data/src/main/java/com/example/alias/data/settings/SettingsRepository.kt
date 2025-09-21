@@ -68,6 +68,11 @@ interface SettingsRepository {
     suspend fun addDeletedBundledDeckId(deckId: String)
     suspend fun removeDeletedBundledDeckId(deckId: String)
 
+    // Track imported decks that have been explicitly deleted by the user
+    suspend fun readDeletedImportedDeckIds(): Set<String>
+    suspend fun addDeletedImportedDeckId(deckId: String)
+    suspend fun removeDeletedImportedDeckId(deckId: String)
+
     suspend fun updateSeenTutorial(value: Boolean)
     suspend fun clearAll()
 
@@ -102,6 +107,7 @@ data class Settings(
     val orientation: String = "system",
     val trustedSources: Set<String> = emptySet(),
     val deletedBundledDeckIds: Set<String> = emptySet(),
+    val deletedImportedDeckIds: Set<String> = emptySet(),
     val seenTutorial: Boolean = false,
 )
 
@@ -140,6 +146,7 @@ class SettingsRepositoryImpl(
             orientation = p[Keys.ORIENTATION] ?: "system",
             trustedSources = p[Keys.TRUSTED_SOURCES] ?: emptySet(),
             deletedBundledDeckIds = p[Keys.DELETED_BUNDLED_DECK_IDS] ?: emptySet(),
+            deletedImportedDeckIds = p[Keys.DELETED_IMPORTED_DECK_IDS] ?: emptySet(),
             seenTutorial = p[Keys.SEEN_TUTORIAL] ?: false,
         )
     }
@@ -281,6 +288,12 @@ class SettingsRepositoryImpl(
         return result
     }
 
+    override suspend fun readDeletedImportedDeckIds(): Set<String> {
+        val result = dataStore.data.first()[Keys.DELETED_IMPORTED_DECK_IDS] ?: emptySet()
+        Log.d("SettingsRepository", "Reading deleted imported deck IDs: $result")
+        return result
+    }
+
     override suspend fun addDeletedBundledDeckId(deckId: String) {
         Log.d("SettingsRepository", "Adding deleted bundled deck ID: $deckId")
         dataStore.edit {
@@ -295,6 +308,23 @@ class SettingsRepositoryImpl(
         dataStore.edit {
             val current = it[Keys.DELETED_BUNDLED_DECK_IDS] ?: emptySet()
             it[Keys.DELETED_BUNDLED_DECK_IDS] = current - deckId
+        }
+    }
+
+    override suspend fun addDeletedImportedDeckId(deckId: String) {
+        Log.d("SettingsRepository", "Adding deleted imported deck ID: $deckId")
+        dataStore.edit {
+            val current = it[Keys.DELETED_IMPORTED_DECK_IDS] ?: emptySet()
+            Log.d("SettingsRepository", "Current deleted imported deck IDs: $current")
+            it[Keys.DELETED_IMPORTED_DECK_IDS] = current + deckId
+            Log.d("SettingsRepository", "Updated deleted imported deck IDs: ${current + deckId}")
+        }
+    }
+
+    override suspend fun removeDeletedImportedDeckId(deckId: String) {
+        dataStore.edit {
+            val current = it[Keys.DELETED_IMPORTED_DECK_IDS] ?: emptySet()
+            it[Keys.DELETED_IMPORTED_DECK_IDS] = current - deckId
         }
     }
 
@@ -329,5 +359,6 @@ class SettingsRepositoryImpl(
         val SEEN_TUTORIAL = booleanPreferencesKey("seen_tutorial")
         val BUNDLED_DECK_HASHES = stringSetPreferencesKey("bundled_deck_hashes")
         val DELETED_BUNDLED_DECK_IDS = stringSetPreferencesKey("deleted_bundled_deck_ids")
+        val DELETED_IMPORTED_DECK_IDS = stringSetPreferencesKey("deleted_imported_deck_ids")
     }
 }

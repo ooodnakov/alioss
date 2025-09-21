@@ -234,6 +234,58 @@ class MainViewModel
             }
         }
 
+        fun restoreDeletedImportedDeck(deckId: String) {
+            viewModelScope.launch {
+                val result = deckManager.restoreDeletedImportedDeck(deckId)
+                if (result.isFailure) {
+                    val error = result.exceptionOrNull()?.message ?: "Unknown error"
+                    _uiEvents.tryEmit(
+                        UiEvent(
+                            message = "Failed to restore deck: $error",
+                            actionLabel = "Dismiss",
+                            duration = SnackbarDuration.Long,
+                            isError = true,
+                            dismissCurrent = true,
+                        ),
+                    )
+                    return@launch
+                }
+                _uiEvents.tryEmit(
+                    UiEvent(
+                        message = "Restored deck",
+                        actionLabel = "OK",
+                        dismissCurrent = true,
+                    ),
+                )
+            }
+        }
+
+        fun permanentlyDeleteImportedDeck(deckId: String) {
+            viewModelScope.launch {
+                val result = deckManager.permanentlyDeleteImportedDeck(deckId)
+                if (result.isFailure) {
+                    val error = result.exceptionOrNull()?.message ?: "Unknown error"
+                    _uiEvents.tryEmit(
+                        UiEvent(
+                            message = "Failed to permanently delete deck: $error",
+                            actionLabel = "Dismiss",
+                            duration = SnackbarDuration.Long,
+                            isError = true,
+                            dismissCurrent = true,
+                        ),
+                    )
+                    return@launch
+                }
+                _uiEvents.tryEmit(
+                    UiEvent(
+                        message = "Permanently deleted deck",
+                        actionLabel = "OK",
+                        dismissCurrent = true,
+                    ),
+                )
+            }
+        }
+
         fun addTrustedSource(originOrHost: String) {
             viewModelScope.launch {
                 when (settingsController.addTrustedSource(originOrHost)) {

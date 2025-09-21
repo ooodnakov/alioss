@@ -210,7 +210,10 @@ fun decksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
 
                 DeckSheet.DELETED_DECKS -> deckDeletedDecksSheet(
                     deletedBundledDeckIds = settings.deletedBundledDeckIds,
-                    onRestoreDeck = { deckId -> vm.restoreDeletedBundledDeck(deckId) },
+                    deletedImportedDeckIds = settings.deletedImportedDeckIds,
+                    onRestoreBundledDeck = { deckId -> vm.restoreDeletedBundledDeck(deckId) },
+                    onRestoreImportedDeck = { deckId -> vm.restoreDeletedImportedDeck(deckId) },
+                    onPermanentlyDeleteImportedDeck = { deckId -> vm.permanentlyDeleteImportedDeck(deckId) },
                 )
             }
         }
@@ -294,7 +297,7 @@ fun decksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
                         vm.deleteDeck(deckToDelete)
                         deckPendingDelete = null
                     }) {
-                        Text(stringResource(R.string.deck_delete_action))
+                        Text(stringResource(if (deckToDelete.isOfficial) R.string.deck_hide_action else R.string.deck_delete_action))
                     }
                 },
                 dismissButton = {
@@ -939,7 +942,10 @@ private fun adjustDifficultyRange(range: IntRange, level: Int): IntRange {
 @Composable
 private fun deckDeletedDecksSheet(
     deletedBundledDeckIds: Set<String>,
-    onRestoreDeck: (String) -> Unit,
+    deletedImportedDeckIds: Set<String>,
+    onRestoreBundledDeck: (String) -> Unit,
+    onRestoreImportedDeck: (String) -> Unit,
+    onPermanentlyDeleteImportedDeck: (String) -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -952,43 +958,72 @@ private fun deckDeletedDecksSheet(
             style = MaterialTheme.typography.titleLarge,
         )
 
-        if (deletedBundledDeckIds.isEmpty()) {
+        val hasDeletedDecks = deletedBundledDeckIds.isNotEmpty() || deletedImportedDeckIds.isNotEmpty()
+        if (!hasDeletedDecks) {
             Text(
                 text = stringResource(R.string.deck_deleted_empty),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         } else {
-            Text(
-                text = stringResource(R.string.deck_deleted_bundled_hint),
-                style = MaterialTheme.typography.titleMedium,
-            )
+            if (deletedBundledDeckIds.isNotEmpty()) {
+                Text(
+                    text = stringResource(R.string.deck_deleted_bundled_hint),
+                    style = MaterialTheme.typography.titleMedium,
+                )
 
-            deletedBundledDeckIds.forEach { deckId ->
-                ElevatedCard(
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    ListItem(
-                        headlineContent = {
-                            Text(stringResource(R.string.deck_deleted_bundled_label, deckId))
-                        },
-                        trailingContent = {
-                            TextButton(onClick = { onRestoreDeck(deckId) }) {
-                                Text(stringResource(R.string.restore))
-                            }
-                        },
-                        modifier = Modifier.padding(8.dp),
-                    )
+                deletedBundledDeckIds.forEach { deckId ->
+                    ElevatedCard(
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        ListItem(
+                            headlineContent = {
+                                Text(stringResource(R.string.deck_deleted_bundled_label, deckId))
+                            },
+                            trailingContent = {
+                                TextButton(onClick = { onRestoreBundledDeck(deckId) }) {
+                                    Text(stringResource(R.string.restore))
+                                }
+                            },
+                            modifier = Modifier.padding(8.dp),
+                        )
+                    }
                 }
             }
 
-            HorizontalDivider()
+            if (deletedImportedDeckIds.isNotEmpty()) {
+                if (deletedBundledDeckIds.isNotEmpty()) {
+                    HorizontalDivider()
+                }
 
-            Text(
-                text = stringResource(R.string.deck_deleted_imported_hint),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+                Text(
+                    text = stringResource(R.string.deck_deleted_imported_hint),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+
+                deletedImportedDeckIds.forEach { deckId ->
+                    ElevatedCard(
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        ListItem(
+                            headlineContent = {
+                                Text(stringResource(R.string.deck_deleted_imported_label, deckId))
+                            },
+                            trailingContent = {
+                                Row {
+                                    TextButton(onClick = { onRestoreImportedDeck(deckId) }) {
+                                        Text(stringResource(R.string.restore))
+                                    }
+                                    TextButton(onClick = { onPermanentlyDeleteImportedDeck(deckId) }) {
+                                        Text(stringResource(R.string.deck_delete_permanently_action))
+                                    }
+                                }
+                            },
+                            modifier = Modifier.padding(8.dp),
+                        )
+                    }
+                }
+            }
         }
     }
 }
