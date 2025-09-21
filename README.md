@@ -17,29 +17,29 @@ Roadmap highlights: richer statistics, automated migrations without destructive 
 ## Feature Highlights
 
 ### Gameplay & Match Flow
-- Deterministic word queue seeded per match for reproducible ordering.【F:domain/src/main/kotlin/com/example/alias/domain/DefaultGameEngine.kt†L80-L96】
-- Supports 2–6 teams with reorderable names, configurable round length, target score/words, skip penalties, and orientation lock.【F:app/src/main/java/com/example/alias/ui/settings/SettingsScreen.kt†L70-L177】【F:data/src/main/java/com/example/alias/data/settings/SettingsRepository.kt†L90-L157】
-- Timer-driven turns with resume/pause states, swipe gestures (up=correct, down=skip), one-handed layout mode, and peek-next-word helper.【F:domain/src/main/kotlin/com/example/alias/domain/DefaultGameEngine.kt†L191-L264】【F:data/src/main/java/com/example/alias/data/settings/SettingsRepository.kt†L120-L148】【F:domain/src/main/kotlin/com/example/alias/domain/GameEngine.kt†L37-L60】
-- Audio and haptic cues for countdowns, correct/skip actions, and turn boundaries, all toggleable in settings.【F:data/src/main/java/com/example/alias/data/settings/SettingsRepository.kt†L108-L138】
-- Turn summaries support outcome overrides that recalculate scores and respect goal completion logic.【F:domain/src/main/kotlin/com/example/alias/domain/DefaultGameEngine.kt†L141-L173】
+- Deterministic word queue seeded per match for reproducible ordering.
+- Supports 2–6 teams with reorderable names, configurable round length, target score/words, skip penalties, and orientation lock.
+- Timer-driven turns with resume/pause states, swipe gestures (up=correct, down=skip), one-handed layout mode, and peek-next-word helper.
+- Audio and haptic cues for countdowns, correct/skip actions, and turn boundaries, all toggleable in settings.
+- Turn summaries support outcome overrides that recalculate scores and respect goal completion logic.
 
 ### Deck Management
-- Bundled decks live under `app/src/main/assets/decks/` and are hashed to detect changes or deletions across launches.【F:app/src/main/assets/decks/general_en.json†L1-L40】【F:app/src/main/java/com/example/alias/DeckManager.kt†L55-L153】
-- Decks can be imported from JSON via Storage Access Framework or downloaded from allow-listed HTTPS hosts with optional SHA-256 verification.【F:app/src/main/java/com/example/alias/ui/decks/DecksScreen.kt†L57-L152】【F:data/src/main/java/com/example/alias/data/download/PackDownloader.kt†L17-L89】
-- Cover images are parsed, validated, and persisted; failures fall back to snackbar notifications without crashing the flow.【F:app/src/main/java/com/example/alias/MainViewModel.kt†L65-L118】【F:data/src/main/java/com/example/alias/data/pack/CoverImageException.kt†L1-L7】
-- Deck detail view surfaces counts, difficulty histograms, recent words, category/word-class chips, and safe delete flows (including permanent removal for imports).【F:app/src/main/java/com/example/alias/ui/decks/DeckDetailScreen.kt†L18-L162】【F:app/src/main/java/com/example/alias/MainViewModel.kt†L119-L227】
-- Filters persist across sessions for difficulty range, languages, categories, and word classes, gating which decks feed the word queue.【F:app/src/main/java/com/example/alias/ui/decks/DecksScreen.kt†L90-L210】【F:app/src/main/java/com/example/alias/DeckManager.kt†L281-L318】
+- Bundled decks live under `app/src/main/assets/decks/` and are hashed to detect changes or deletions across launches.
+- Decks can be imported from JSON via Storage Access Framework or downloaded from allow-listed HTTPS hosts with optional SHA-256 verification.
+- Cover images are parsed, validated, and persisted; failures fall back to snackbar notifications without crashing the flow.
+- Deck detail view surfaces counts, difficulty histograms, recent words, category/word-class chips, and safe delete flows (including permanent removal for imports).
+- Filters persist across sessions for difficulty range, languages, categories, and word classes, gating which decks feed the word queue.
 
 ### Settings, Localization & Accessibility
-- Full English/Russian localization (strings, team suggestions, onboarding) with runtime language toggle and system-default mode.【F:app/src/main/java/com/example/alias/ui/settings/SettingsScreen.kt†L70-L177】【F:data/src/main/java/com/example/alias/data/settings/SettingsRepository.kt†L103-L139】
-- Tutorial overlay appears on first play and persists dismissal state via DataStore.【F:app/src/main/java/com/example/alias/MainViewModel.kt†L98-L136】
-- Trusted source editor allows normalized host/origin entries, powering safe pack downloads.【F:app/src/main/java/com/example/alias/ui/decks/DecksScreen.kt†L147-L210】【F:app/src/main/java/com/example/alias/SettingsController.kt†L16-L63】
-- Orientation lock, one-handed layout tweaks, vertical swipe toggle, haptic/audio switches, and NSFW/difficulty gates tailor the experience for different groups.【F:app/src/main/java/com/example/alias/ui/settings/SettingsScreen.kt†L70-L177】【F:data/src/main/java/com/example/alias/data/settings/SettingsRepository.kt†L90-L157】
+- Full English/Russian localization (strings, team suggestions, onboarding) with runtime language toggle and system-default mode.
+- Tutorial overlay appears on first play and persists dismissal state via DataStore.
+- Trusted source editor allows normalized host/origin entries, powering safe pack downloads.
+- Orientation lock, one-handed layout tweaks, vertical swipe toggle, haptic/audio switches, and NSFW/difficulty gates tailor the experience for different groups.
 
 ### History & Analytics
-- Every turn outcome persists to `turn_history` with difficulty metadata, enabling resettable history feeds and deck-specific recents.【F:data/src/main/java/com/example/alias/data/db/TurnHistoryDao.kt†L1-L28】【F:app/src/main/java/com/example/alias/GameController.kt†L33-L71】
-- Home screen surfaces the latest results and provides resume/continue affordances alongside settings/decks shortcuts.【F:app/src/main/java/com/example/alias/navigation/AliasNavHost.kt†L42-L78】
-- Deck samples and histograms use DAO queries to compute stats without duplicating logic at the UI layer.【F:app/src/main/java/com/example/alias/ui/decks/DeckDetailScreen.kt†L37-L118】【F:data/src/main/java/com/example/alias/data/db/WordDao.kt†L25-L145】
+- Every turn outcome persists to `turn_history` with difficulty metadata, enabling resettable history feeds and deck-specific recents.
+- Home screen surfaces the latest results and provides resume/continue affordances alongside settings/decks shortcuts.
+- Deck samples and histograms use DAO queries to compute stats without duplicating logic at the UI layer.
 
 ## Architecture & Modules
 
@@ -50,55 +50,55 @@ domain/  – Pure Kotlin engine handling deterministic match state and rules.
 scripts/ – Automation helpers for builds, downloads, reproducibility snapshots.
 ```
 
-- Dependency injection is powered by Hilt with module wiring in `AppModule.kt` and scoped controllers in the app module.【F:app/src/main/java/com/example/alias/AppModule.kt†L1-L23】
-- Room manages deck metadata, word storage, word classes, and turn history with migrations housed in `data/src/main/java/com/example/alias/data/db/Migrations.kt`.【F:data/src/main/java/com/example/alias/data/db/Migrations.kt†L15-L89】
-- Settings persist via Preferences DataStore and stream into Compose screens through `SettingsController`/`MainViewModel`.【F:app/src/main/java/com/example/alias/SettingsController.kt†L12-L84】【F:app/src/main/java/com/example/alias/MainViewModel.kt†L27-L117】
-- The domain module exports the `GameEngine` interface and `DefaultGameEngine` implementation, ensuring platform-agnostic logic that tests can exercise without Android dependencies.【F:domain/src/main/kotlin/com/example/alias/domain/GameEngine.kt†L1-L78】【F:domain/src/main/kotlin/com/example/alias/domain/DefaultGameEngine.kt†L1-L205】
+- Dependency injection is powered by Hilt with module wiring in `AppModule.kt` and scoped controllers in the app module.
+- Room manages deck metadata, word storage, word classes, and turn history with migrations housed in `data/src/main/java/com/example/alias/data/db/Migrations.kt`.
+- Settings persist via Preferences DataStore and stream into Compose screens through `SettingsController`/`MainViewModel`.
+- The domain module exports the `GameEngine` interface and `DefaultGameEngine` implementation, ensuring platform-agnostic logic that tests can exercise without Android dependencies.
 
 ## Data Packs & Formats
 
-- Bundled decks ship as JSON (`alias-deck@1`) and live under `app/src/main/assets/decks/`. Deck hashes are tracked to avoid redundant imports and respect decks that the user deleted manually.【F:app/src/main/java/com/example/alias/DeckManager.kt†L55-L153】
-- JSON packs are parsed by `PackParser`, validated via `PackValidator`, and inserted atomically to replace existing deck content.【F:data/src/main/java/com/example/alias/data/pack/PackParser.kt†L12-L118】【F:data/src/main/java/com/example/alias/data/DeckRepository.kt†L52-L75】
-- Downloads require HTTPS and an allow-listed host/origin, enforce a 40 MB cap, disable redirects, and optionally verify SHA-256 checksums.【F:data/src/main/java/com/example/alias/data/download/PackDownloader.kt†L21-L95】
+- Bundled decks ship as JSON (`alias-deck@1`) and live under `app/src/main/assets/decks/`. Deck hashes are tracked to avoid redundant imports and respect decks that the user deleted manually.
+- JSON packs are parsed by `PackParser`, validated via `PackValidator`, and inserted atomically to replace existing deck content.
+- Downloads require HTTPS and an allow-listed host/origin, enforce a 40 MB cap, disable redirects, and optionally verify SHA-256 checksums.
 
 ## Build, Run & Test
 
-- **Requirements**: JDK 21, Android SDK 34, Gradle Wrapper (7.6+) bundled via `./gradlew`. Kotlin 1.9.23 and AGP 8.5.2 are configured in `gradle/libs.versions.toml`.【F:gradle/libs.versions.toml†L1-L44】
-- **Android Studio**: Open the root project, let Gradle sync, and run the `app` configuration on an emulator or device. `devRelease` build type produces a release-like APK signed with the debug key for easier installs.【F:app/build.gradle.kts†L33-L71】
+- **Requirements**: JDK 21, Android SDK 34, Gradle Wrapper (7.6+) bundled via `./gradlew`. Kotlin 1.9.23 and AGP 8.5.2 are configured in `gradle/libs.versions.toml`.
+- **Android Studio**: Open the root project, let Gradle sync, and run the `app` configuration on an emulator or device. `devRelease` build type produces a release-like APK signed with the debug key for easier installs.
 - **Command line**:
   - `./gradlew :app:assembleDebug` – Build debug APK.
   - `./gradlew :domain:test :data:test :app:testDebugUnitTest` – Run JVM/unit tests across modules.
-  - `./gradlew spotlessCheck detekt` – Enforce formatting (ktlint) and static analysis via Detekt (configured to ignore failures locally but still report issues).【F:build.gradle.kts†L1-L92】
+  - `./gradlew spotlessCheck detekt` – Enforce formatting (ktlint) and static analysis via Detekt (configured to ignore failures locally but still report issues).
   - `./gradlew :app:assembleDevRelease` – Build the installable release-like variant.
 - **Scripts**:
-  - `scripts/dev-build.sh` – Optional helper to clean, run JVM tests, and assemble the debug APK in one command.【F:scripts/dev-build.sh†L1-L37】
+  - `scripts/dev-build.sh` – Optional helper to clean, run JVM tests, and assemble the debug APK in one command.
   - `scripts/assemble-apk.sh` – Assemble APK after verifying the Android SDK/NDK presence.
-  - `scripts/download-pack.sh` – Fetch a pack over HTTPS with optional checksum and allow-list enforcement (mirrors in-app rules).【F:scripts/download-pack.sh†L1-L55】
-  - `scripts/repro-snapshot.sh` – Emit dependency versions and APK hashes for reproducibility notes.【F:scripts/repro-snapshot.sh†L1-L28】
+  - `scripts/download-pack.sh` – Fetch a pack over HTTPS with optional checksum and allow-list enforcement (mirrors in-app rules).
+  - `scripts/repro-snapshot.sh` – Emit dependency versions and APK hashes for reproducibility notes.
   - `scripts/setup-android-env.sh` – Headless SDK installation and license acceptance for CI or fresh Linux machines.
 
 ## Security, Privacy & Networking
 
-- No telemetry, analytics, ads, or background networking. Networking only occurs when the user explicitly downloads a deck, and even then only against allow-listed HTTPS origins with strict size and checksum policies.【F:data/src/main/java/com/example/alias/data/download/PackDownloader.kt†L17-L95】
-- Deck imports validate schemas, enforce NSFW flags, sanitize stems, and reject malformed cover images to prevent crashes.【F:data/src/main/java/com/example/alias/data/pack/PackValidator.kt†L1-L180】【F:data/src/main/java/com/example/alias/data/pack/CoverImageException.kt†L1-L7】
-- Settings, deck metadata, and history live entirely on-device via Room and DataStore; “Reset local data” clears everything without touching system storage beyond the app sandbox.【F:app/src/main/java/com/example/alias/MainViewModel.kt†L407-L447】【F:data/src/main/java/com/example/alias/data/settings/SettingsRepository.kt†L301-L303】
+- No telemetry, analytics, ads, or background networking. Networking only occurs when the user explicitly downloads a deck, and even then only against allow-listed HTTPS origins with strict size and checksum policies.
+- Deck imports validate schemas, enforce NSFW flags, sanitize stems, and reject malformed cover images to prevent crashes.
+- Settings, deck metadata, and history live entirely on-device via Room and DataStore; “Reset local data” clears everything without touching system storage beyond the app sandbox.
 
 ## Testing & Quality
 
-- JVM unit tests cover the game engine, deck repository, DataStore wiring, localization, downloader policies, and Room migrations (in-memory DB).【F:domain/src/test/kotlin/com/example/alias/domain/DefaultGameEngineTest.kt†L1-L200】【F:data/src/test/java/com/example/alias/data/DeckRepositoryTest.kt†L1-L200】
+- JVM unit tests cover the game engine, deck repository, DataStore wiring, localization, downloader policies, and Room migrations (in-memory DB).
 - Compose/UI tests are currently minimal; contributions that add instrumentation or Robolectric coverage are welcome.
-- Spotless (ktlint 0.50.0) enforces Kotlin style; Detekt runs with `detekt.yml` tuned for this project. Both run in CI and via the Gradle tasks above.【F:build.gradle.kts†L1-L116】
+- Spotless (ktlint 0.50.0) enforces Kotlin style; Detekt runs with `detekt.yml` tuned for this project. Both run in CI and via the Gradle tasks above.
 
 ## Contributing
 
-- Keep the `domain` module Android-free and deterministic. Inject randomness via seeds so tests stay reproducible.【F:domain/src/main/kotlin/com/example/alias/domain/DefaultGameEngine.kt†L80-L96】
+- Keep the `domain` module Android-free and deterministic. Inject randomness via seeds so tests stay reproducible.
 - Prefer immutable state models flowing from repositories/view models into Compose; business logic belongs in controllers or repositories, not UI composables.
 - Run `./gradlew spotlessCheck detekt :domain:test :data:test :app:testDebugUnitTest` before pushing a PR. CI mirrors these tasks along with APK assembly.
-- When touching deck formats, update documentation and validators together, and ensure migrations cover schema changes (no destructive fallback in release/`devRelease`).【F:data/src/main/java/com/example/alias/data/db/Migrations.kt†L15-L89】【F:app/build.gradle.kts†L52-L76】
+- When touching deck formats, update documentation and validators together, and ensure migrations cover schema changes (no destructive fallback in release/`devRelease`).
 
 ## License
 
-A license has not been finalized. MPL-2.0 or Apache-2.0 remain likely candidates. Bundled and imported decks must respect their original licenses; attribution metadata is surfaced in-app where provided.【F:app/src/main/java/com/example/alias/ui/decks/DeckDetailScreen.kt†L18-L162】
+A license has not been finalized. MPL-2.0 or Apache-2.0 remain likely candidates. Bundled and imported decks must respect their original licenses; attribution metadata is surfaced in-app where provided.
 
 ## Acknowledgements
 
