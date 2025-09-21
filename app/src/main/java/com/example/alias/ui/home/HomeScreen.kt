@@ -260,7 +260,6 @@ private fun homeHeroSection(
     }
     val showResume = gameState != null && gameState !is GameState.Idle
 
-    // Make hero section more compact in landscape mode
     val cardPadding = 20.dp
     val sectionSpacing = 16.dp
     val buttonSpacing = 10.dp
@@ -333,6 +332,7 @@ private fun homeHeroSection(
                     icon = highlightIcon,
                     iconTint = highlightTint,
                     contentColor = contentColor,
+                    modifier = Modifier.fillMaxWidth(),
                 )
                 Column(verticalArrangement = Arrangement.spacedBy(buttonSpacing)) {
                     if (showResume) {
@@ -489,7 +489,7 @@ private fun recentHighlightSection(
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Text(
