@@ -24,14 +24,14 @@ import androidx.compose.ui.unit.dp
 import com.example.alias.R
 
 @Immutable
-data class ScoreboardEntry(
+data class ScoreEntry(
     val team: String,
     val score: Int,
     val isLeader: Boolean,
     val isTiedLeader: Boolean,
 )
 
-fun Map<String, Int>.toScoreboardEntries(): List<ScoreboardEntry> {
+fun Map<String, Int>.toScoreboardEntries(): List<ScoreEntry> {
     if (isEmpty()) return emptyList()
     val sorted = entries
         .sortedWith(
@@ -42,7 +42,7 @@ fun Map<String, Int>.toScoreboardEntries(): List<ScoreboardEntry> {
     val leaderCount = sorted.count { it.value == leaderScore }
     return sorted.map { (team, score) ->
         val isLeader = score == leaderScore
-        ScoreboardEntry(
+        ScoreEntry(
             team = team,
             score = score,
             isLeader = isLeader,
@@ -67,7 +67,7 @@ fun scoreBoard(
             )
         }
         entries.forEach { entry ->
-            ScoreboardRow(
+            scoreboardRow(
                 entry = entry,
                 showIndicator = showLeaderIndicator,
             )
@@ -76,8 +76,8 @@ fun scoreBoard(
 }
 
 @Composable
-private fun ScoreboardRow(
-    entry: ScoreboardEntry,
+private fun scoreboardRow(
+    entry: ScoreEntry,
     showIndicator: Boolean,
 ) {
     val textStyle = if (entry.isLeader) {

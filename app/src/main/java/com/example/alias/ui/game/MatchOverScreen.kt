@@ -35,7 +35,7 @@ import com.example.alias.ui.common.scoreBoard
 import com.example.alias.ui.common.toScoreboardEntries
 
 @Composable
-fun MatchOverScreen(
+fun matchOverScreen(
     scores: Map<String, Int>,
     onRestartMatch: () -> Unit,
     onNavigateHome: () -> Unit,
@@ -139,7 +139,7 @@ fun MatchOverScreen(
         }
         FilledTonalButton(
             onClick = onNavigateHome,
-            modifier = Modifier.align(Alignment.TopEnd).padding(end = 24.dp, top = 32.dp)
+            modifier = Modifier.align(Alignment.TopEnd).padding(end = 24.dp, top = 32.dp),
         ) {
             Icon(
                 imageVector = Icons.Outlined.Menu,

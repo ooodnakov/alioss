@@ -38,8 +38,8 @@ class PackParserTest {
 
     @Test
     fun parses_cover_image_and_normalizes_data_uri() {
-        val base64Image =
-            "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAAWgmWQ0AAAAASUVORK5CYII="
+        val base64Image = "data:image/png;base64," +
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAAWgmWQ0AAAAASUVORK5CYII="
         val json = """
             {
               "format": "alias-deck@1",

@@ -59,7 +59,7 @@ import com.example.alias.data.settings.Settings
 import com.example.alias.domain.GameEngine
 import com.example.alias.domain.GameState
 import com.example.alias.domain.MatchGoalType
-import com.example.alias.ui.WordCardAction
+import com.example.alias.ui.CardAction
 import com.example.alias.ui.common.scoreBoard
 import com.example.alias.ui.countdownOverlay
 import com.example.alias.ui.tutorialOverlay
@@ -395,7 +395,7 @@ fun gameScreen(
                 computedNext = engine.peekNextWord()
             }
             val infoMap by vm.wordInfoByText.collectAsState()
-            val CardStack: @Composable () -> Unit = {
+            val cardStack: @Composable () -> Unit = {
                 val nextWord = frozenNext ?: computedNext
                 val nextMeta = nextWord?.let { infoMap[it] }
                 val currentMeta = infoMap[s.word]
@@ -444,7 +444,7 @@ fun gameScreen(
                         },
                         onAction = {
                             when (it) {
-                                WordCardAction.Correct -> {
+                                CardAction.Correct -> {
                                     if (settings.soundEnabled) {
                                         tone.startTone(
                                             android.media.ToneGenerator.TONE_PROP_ACK,
@@ -456,7 +456,7 @@ fun gameScreen(
                                         isProcessing = false
                                     }
                                 }
-                                WordCardAction.Skip -> {
+                                CardAction.Skip -> {
                                     if (s.skipsRemaining > 0) {
                                         if (settings.soundEnabled) {
                                             tone.startTone(
@@ -483,7 +483,7 @@ fun gameScreen(
                     )
                 }
             }
-            val Controls: @Composable () -> Unit = {
+            val controls: @Composable () -> Unit = {
                 Text(
                     pluralStringResource(
                         R.plurals.time_remaining_seconds,
@@ -531,7 +531,7 @@ fun gameScreen(
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
-                            Controls()
+                            controls()
                             val onCorrect = {
                                 if (settings.hapticsEnabled) {
                                     val effect = VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK)
@@ -586,7 +586,7 @@ fun gameScreen(
                             verticalArrangement = Arrangement.Center,
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
-                            CardStack()
+                            cardStack()
                         }
                     }
                 }
@@ -673,7 +673,7 @@ fun gameScreen(
             roundSummaryScreen(vm = vm, s = s, settings = settings)
         }
         is GameState.MatchFinished -> {
-            MatchOverScreen(
+            matchOverScreen(
                 scores = s.scores,
                 onRestartMatch = {
                     if (settings.hapticsEnabled) {

@@ -126,7 +126,8 @@ class DeckManager
                         return@forEach
                     }
 
-                    val fileNeedsImport = previousHashes.none { it.startsWith("$file:") } || !previousHashes.contains("$file:$fileHash")
+                    val fileNeedsImport = previousHashes.none { it.startsWith("$file:") } ||
+                        !previousHashes.contains("$file:$fileHash")
                     val decksNeedImport = deckIds.any { deckId ->
                         if (deletedBundledDeckIds.contains(deckId)) {
                             false
@@ -242,7 +243,10 @@ class DeckManager
             return withContext(Dispatchers.IO) {
                 val assetFiles = bundledDeckProvider.listBundledDeckFiles()
                 val previousHashes = settingsRepository.readBundledDeckHashes()
-                val previousBundledDeckIds = previousHashes.map { it.substringBefore(':') }.filterNot { it.endsWith(".json") }.toSet()
+                val previousBundledDeckIds = previousHashes
+                    .map { it.substringBefore(':') }
+                    .filterNot { it.endsWith(".json") }
+                    .toSet()
                 val deletedBundledDeckIds = settingsRepository.readDeletedBundledDeckIds()
 
                 val existingDecks = deckRepository.getDecks().first()
@@ -255,7 +259,12 @@ class DeckManager
                     hadDecks = hadDecks,
                 )
 
-                pruneOrphanedBundledDecks(existingDecks, scanResult.currentBundledDeckIds, deletedBundledDeckIds, previousBundledDeckIds)
+                pruneOrphanedBundledDecks(
+                    existingDecks,
+                    scanResult.currentBundledDeckIds,
+                    deletedBundledDeckIds,
+                    previousBundledDeckIds,
+                )
 
                 importBundledDecks(scanResult.toImport, scanResult.assetContents)
 

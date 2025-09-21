@@ -55,6 +55,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -62,18 +63,17 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.alias.R
 import com.example.alias.data.db.TurnHistoryEntity
-import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
 import kotlin.math.roundToInt
 
 private const val SPARKLINE_RECENT_ENTRIES_COUNT = 12
@@ -730,7 +730,7 @@ private fun historyEntryCard(
                 maxLines = 1,
             ) {
                 if (showTeam) {
-                    DisabledCompactAssistChip(
+                    disabledCompactAssistChip(
                         label = entry.team,
                         colors = chipColors,
                     )
@@ -749,7 +749,7 @@ private fun historyEntryCard(
 @Suppress("ExperimentalMaterial3Api")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DisabledCompactAssistChip(
+private fun disabledCompactAssistChip(
     label: String,
     colors: ChipColors,
     modifier: Modifier = Modifier,
@@ -1008,4 +1008,3 @@ private data class HistoryEntryVisuals(
     val accent: Color,
     @StringRes val labelRes: Int,
 )
-

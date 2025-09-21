@@ -920,7 +920,6 @@ private fun filterChipGroup(
     }
 }
 
-
 private fun adjustDifficultyRange(range: IntRange, level: Int): IntRange {
     return if (range.contains(level)) {
         when {

@@ -21,7 +21,7 @@ class GameController
         private val historyRepository: TurnHistoryRepository,
         private val gameEngineFactory: GameEngineFactory,
     ) {
-    private var currentMatchId: String? = null
+        private var currentMatchId: String? = null
         fun createEngine(words: List<String>, scope: CoroutineScope): GameEngine {
             return gameEngineFactory.create(words, scope)
         }
