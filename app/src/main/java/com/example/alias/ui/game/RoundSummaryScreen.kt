@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -210,6 +211,7 @@ private fun timelineCard(
                     modifier = Modifier.padding(horizontal = 10.dp),
                     initiallyExpanded = true,
                     contentArrangement = Arrangement.spacedBy(12.dp),
+                    contentPadding = PaddingValues(16.dp),
                 ) {
                     timeline.segments.forEach { segment ->
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -234,6 +236,7 @@ private fun timelineCard(
                     modifier = Modifier.padding(horizontal = 10.dp),
                     initiallyExpanded = false,
                     contentArrangement = Arrangement.spacedBy(20.dp),
+                    contentPadding = PaddingValues(16.dp),
                 ) {
                     scoreProgressGraph(
                         events = timeline.events,
@@ -663,7 +666,7 @@ private fun scoreProgressGraph(events: List<TimelineEvent>, modifier: Modifier =
             Row(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 12.dp, vertical = 12.dp),
+                    .padding(horizontal = 6.dp, vertical = 16.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
@@ -738,7 +741,7 @@ private fun scoreProgressGraph(events: List<TimelineEvent>, modifier: Modifier =
                             .fillMaxWidth()
                             .padding(top = 8.dp, end = 8.dp, bottom = 8.dp),
                     ) {
-                        val chartLeftPadding = 4.dp.toPx()
+                        val chartLeftPadding = 2.dp.toPx()
                         val chartRightPadding = 4.dp.toPx()
                         val chartTopPadding = 4.dp.toPx()
                         val chartBottomPadding = 8.dp.toPx()
@@ -920,7 +923,7 @@ private fun timeBetweenWordsGraph(events: List<TimelineEvent>, modifier: Modifie
             Row(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 12.dp, vertical = 12.dp),
+                    .padding(horizontal = 6.dp, vertical = 16.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
@@ -929,7 +932,7 @@ private fun timeBetweenWordsGraph(events: List<TimelineEvent>, modifier: Modifie
                     color = colors.onSurfaceVariant,
                     modifier = Modifier
                         .rotate(-90f)
-                        .padding(end = 8.dp),
+                        .padding(end = 2.dp),
                 )
                 Column(
                     modifier = Modifier
@@ -981,7 +984,7 @@ private fun timeBetweenWordsGraph(events: List<TimelineEvent>, modifier: Modifie
                             .fillMaxWidth()
                             .padding(top = 8.dp, end = 8.dp, bottom = 8.dp),
                     ) {
-                        val chartLeftPadding = 4.dp.toPx()
+                        val chartLeftPadding = 2.dp.toPx()
                         val chartRightPadding = 4.dp.toPx()
                         val chartTopPadding = 4.dp.toPx()
                         val chartBottomPadding = 8.dp.toPx()
@@ -1106,6 +1109,7 @@ private fun ExpandableSection(
     modifier: Modifier = Modifier,
     initiallyExpanded: Boolean = false,
     contentArrangement: Arrangement.Vertical = Arrangement.spacedBy(12.dp),
+    contentPadding: PaddingValues = PaddingValues(top = 12.dp),
     content: @Composable ColumnScope.() -> Unit,
 ) {
     var expanded by rememberSaveable { mutableStateOf(initiallyExpanded) }
@@ -1162,7 +1166,7 @@ private fun ExpandableSection(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 12.dp),
+                .padding(contentPadding),
             verticalArrangement = contentArrangement,
             content = content,
         )
