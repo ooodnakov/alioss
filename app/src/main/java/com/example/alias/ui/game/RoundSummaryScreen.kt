@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -38,7 +39,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -1174,7 +1174,8 @@ private fun timelineSegmentHeader(
     modifier: Modifier = Modifier,
     penaltyPerSkip: Int,
 ) {
-    val color = timelineColor(segment.type)
+    val colors = MaterialTheme.colorScheme
+    val accentColor = timelineColor(segment.type)
     val title = when (segment.type) {
         TimelineSegmentType.CORRECT -> pluralStringResource(
             R.plurals.timeline_correct,
@@ -1203,44 +1204,68 @@ private fun timelineSegmentHeader(
         TimelineSegmentType.PENDING -> stringResource(R.string.timeline_header_pending_subtitle)
     }
     val showBonus = segment.events.any { it.isBonus }
+    val icon = when (segment.type) {
+        TimelineSegmentType.CORRECT -> Icons.Filled.Check
+        TimelineSegmentType.SKIP -> Icons.Filled.Close
+        TimelineSegmentType.PENDING -> Icons.Filled.Schedule
+    }
+    val deltaColor = if (delta == 0) colors.onSurfaceVariant else accentColor
 
-    Surface(
+    Column(
         modifier = modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp),
-        contentColor = MaterialTheme.colorScheme.onSurface,
-        tonalElevation = 0.dp,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            val icon = when (segment.type) {
-                TimelineSegmentType.CORRECT -> Icons.Filled.Check
-                TimelineSegmentType.SKIP -> Icons.Filled.Close
-                TimelineSegmentType.PENDING -> Icons.Filled.Schedule
-            }
-            Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(18.dp))
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+            Surface(
+                color = accentColor.copy(alpha = 0.12f),
+                contentColor = accentColor,
+                shape = RoundedCornerShape(50),
+                border = BorderStroke(1.dp, accentColor.copy(alpha = 0.3f)),
             ) {
-                Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                Text(
-                    subtitle,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(icon, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Medium,
+                    )
+                }
             }
+            if (showBonus) {
+                Surface(
+                    color = colors.secondaryContainer.copy(alpha = 0.7f),
+                    contentColor = colors.onSecondaryContainer,
+                    shape = RoundedCornerShape(50),
+                ) {
+                    Text(
+                        text = stringResource(R.string.timeline_bonus_label),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.weight(1f))
             Text(
                 text = stringResource(R.string.timeline_change, delta),
-                style = MaterialTheme.typography.titleMedium,
-                color = color,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = deltaColor,
             )
         }
+        Text(
+            text = subtitle,
+            style = MaterialTheme.typography.bodySmall,
+            color = colors.onSurfaceVariant,
+        )
     }
 }
 

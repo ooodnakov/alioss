@@ -24,7 +24,11 @@ class PackValidatorTest {
         assertEquals("https://example.com/images/cover.png", normalized)
 
         assertFailsWith<CoverImageException> { PackValidator.normalizeCoverImageUrl("ftp://example.com/image.png") }
-        assertFailsWith<CoverImageException> { PackValidator.normalizeCoverImageUrl("https://user:pass@example.com/image.png") }
+        assertFailsWith<CoverImageException> {
+            PackValidator.normalizeCoverImageUrl(
+                "https://user:pass@example.com/image.png",
+            )
+        }
         assertFailsWith<CoverImageException> { PackValidator.normalizeCoverImageUrl("/relative/path.png") }
     }
 
