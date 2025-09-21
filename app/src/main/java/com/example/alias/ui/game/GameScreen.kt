@@ -60,7 +60,7 @@ import com.example.alias.domain.GameEngine
 import com.example.alias.domain.GameState
 import com.example.alias.domain.MatchGoalType
 import com.example.alias.ui.WordCardAction
-import com.example.alias.ui.common.Scoreboard
+import com.example.alias.ui.common.scoreBoard
 import com.example.alias.ui.countdownOverlay
 import com.example.alias.ui.tutorialOverlay
 import com.example.alias.ui.wordCard
@@ -208,7 +208,7 @@ fun gameScreen(
                             fontWeight = FontWeight.Bold,
                             textAlign = TextAlign.Center,
                         )
-                        Scoreboard(scores = s.scores)
+                        scoreBoard(scores = s.scores)
                         Text(
                             text = pendingStatus,
                             style = MaterialTheme.typography.bodyMedium,
@@ -286,7 +286,7 @@ fun gameScreen(
                                     fontWeight = FontWeight.Bold,
                                     textAlign = TextAlign.Center,
                                 )
-                                Scoreboard(scores = s.scores)
+                                scoreBoard(scores = s.scores)
                                 Text(
                                     text = pendingStatus,
                                     style = MaterialTheme.typography.bodyMedium,

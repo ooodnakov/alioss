@@ -52,7 +52,7 @@ fun Map<String, Int>.toScoreboardEntries(): List<ScoreboardEntry> {
 }
 
 @Composable
-fun Scoreboard(
+fun scoreBoard(
     scores: Map<String, Int>,
     modifier: Modifier = Modifier,
     @StringRes titleResId: Int? = R.string.scoreboard,

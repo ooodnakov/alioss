@@ -31,7 +31,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.alias.R
-import com.example.alias.ui.common.Scoreboard
+import com.example.alias.ui.common.scoreBoard
 import com.example.alias.ui.common.toScoreboardEntries
 
 @Composable
@@ -128,7 +128,7 @@ fun MatchOverScreen(
                         .padding(horizontal = 24.dp, vertical = 20.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
-                    Scoreboard(
+                    scoreBoard(
                         scores = scores,
                         modifier = Modifier.fillMaxWidth(),
                     )

@@ -80,7 +80,7 @@ import com.example.alias.R
 import com.example.alias.data.settings.Settings
 import com.example.alias.domain.GameState
 import com.example.alias.domain.TurnOutcome
-import com.example.alias.ui.common.Scoreboard
+import com.example.alias.ui.common.scoreBoard
 import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.ceil
@@ -147,7 +147,7 @@ private fun scoreboardCard(
                 .padding(horizontal = 20.dp, vertical = 20.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
-            Scoreboard(scores = scores)
+            scoreBoard(scores = scores)
             HorizontalDivider()
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
