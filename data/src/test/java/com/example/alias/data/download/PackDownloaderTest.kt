@@ -132,6 +132,18 @@ class PackDownloaderTest {
             }
         }
     }
+
+    @Test
+    fun allows_plain_https_origin_entry() = runBlocking {
+        val payload = "trusted".toByteArray()
+        withHttpsDownloader(trustedSources = { _ -> setOf("https://localhost") }) { server, downloader ->
+            val responseBody = okio.Buffer().write(payload)
+            server.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
+            val url = server.url("/pack.json").toString().replace("http://", "https://")
+            val bytes = downloader.download(url, null)
+            assertContentEquals(payload, bytes)
+        }
+    }
 }
 
 private suspend fun withHttpsDownloader(

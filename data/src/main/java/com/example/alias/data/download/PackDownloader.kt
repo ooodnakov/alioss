@@ -87,12 +87,21 @@ class PackDownloader(
         val ports = listOf(url.port, 443)
         val allowed = settings.settings.first().trustedSources
         if (allowed.isEmpty()) return false
+        val allowedNormalized = allowed
+            .asSequence()
+            .map { it.trimEnd('/').lowercase() }
+            .toSet()
         // Accept either host-only entries or origin (scheme://host[:port]) entries
-        val origins = buildList {
-            for (port in ports) add("https://${'$'}host:${'$'}port")
+        val origins = buildSet {
             add(host)
+            add("https://$host")
+            for (port in ports.distinct()) {
+                add("https://$host:$port")
+            }
         }
-        return origins.any { it in allowed }
+        return origins.any { origin ->
+            origin.trimEnd('/').lowercase() in allowedNormalized
+        }
     }
 }
 
