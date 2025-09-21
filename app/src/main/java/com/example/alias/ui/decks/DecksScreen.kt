@@ -297,7 +297,11 @@ fun decksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
                         vm.deleteDeck(deckToDelete)
                         deckPendingDelete = null
                     }) {
-                        Text(stringResource(if (deckToDelete.isOfficial) R.string.deck_hide_action else R.string.deck_delete_action))
+                        Text(
+                            stringResource(
+                                if (deckToDelete.isOfficial) R.string.deck_hide_action else R.string.deck_delete_action,
+                            ),
+                        )
                     }
                 },
                 dismissButton = {

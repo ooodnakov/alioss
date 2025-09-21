@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
@@ -40,7 +41,6 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.text.Charsets
-import kotlinx.serialization.SerializationException
 
 @Singleton
 class DeckManager
@@ -227,7 +227,11 @@ class DeckManager
 
         fun observeDecks(): Flow<List<DeckEntity>> {
             return deckRepository.getDecks()
-                .combine(settingsRepository.settings.map { it.deletedBundledDeckIds + it.deletedImportedDeckIds }) { allDecks, deletedIds ->
+                .combine(
+                    settingsRepository.settings.map {
+                        it.deletedBundledDeckIds + it.deletedImportedDeckIds
+                    },
+                ) { allDecks, deletedIds ->
                     val filtered = allDecks.filter { deck -> !deletedIds.contains(deck.id) }
                     logger.debug("Filtered decks: ${filtered.size} (removed ${allDecks.size - filtered.size})")
                     filtered

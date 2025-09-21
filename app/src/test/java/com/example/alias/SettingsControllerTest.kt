@@ -127,6 +127,9 @@ class SettingsControllerTest {
         override suspend fun readDeletedBundledDeckIds(): Set<String> = emptySet()
         override suspend fun addDeletedBundledDeckId(deckId: String) = Unit
         override suspend fun removeDeletedBundledDeckId(deckId: String) = Unit
+        override suspend fun readDeletedImportedDeckIds(): Set<String> = emptySet()
+        override suspend fun addDeletedImportedDeckId(deckId: String) = Unit
+        override suspend fun removeDeletedImportedDeckId(deckId: String) = Unit
         override suspend fun updateSeenTutorial(value: Boolean) {
             state.value = state.value.copy(seenTutorial = value)
         }

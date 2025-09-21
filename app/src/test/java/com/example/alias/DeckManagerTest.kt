@@ -711,6 +711,12 @@ class DeckManagerTest {
             flow.value = flow.value.copy(seenTutorial = value)
         }
 
+        override suspend fun readDeletedImportedDeckIds(): Set<String> = emptySet()
+
+        override suspend fun addDeletedImportedDeckId(deckId: String) = Unit
+
+        override suspend fun removeDeletedImportedDeckId(deckId: String) = Unit
+
         override suspend fun clearAll() {
             bundledDeckHashes = emptySet()
             deletedBundledDeckIds.clear()
