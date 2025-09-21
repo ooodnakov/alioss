@@ -87,7 +87,12 @@ fun aliasNavHost(
             val currentSettings by viewModel.settings.collectAsState()
             appScaffold(snackbarHostState = snackbarHostState) {
                 engine?.let { gameEngine ->
-                    gameScreen(viewModel, gameEngine, currentSettings)
+                    gameScreen(
+                        vm = viewModel,
+                        engine = gameEngine,
+                        settings = currentSettings,
+                        onNavigateHome = { navController.popBackStack() },
+                    )
                 } ?: Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.surfaceVariant,

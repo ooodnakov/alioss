@@ -81,7 +81,12 @@ private val TIMER_WARNING_COLOR = Color(0xFFFFC107)
 private val TIMER_CRITICAL_COLOR = Color(0xFFF44336)
 
 @Composable
-fun gameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
+fun gameScreen(
+    vm: MainViewModel,
+    engine: GameEngine,
+    settings: Settings,
+    onNavigateHome: () -> Unit,
+) {
     val context = LocalContext.current
     val activity = context as? android.app.Activity
     DisposableEffect(settings.orientation) {
@@ -677,6 +682,7 @@ fun gameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
                     }
                     vm.restartMatch()
                 },
+                onNavigateHome = onNavigateHome,
             )
         }
     }
