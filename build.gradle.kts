@@ -34,7 +34,7 @@ subprojects {
 
         // ✅ Configure reports on the TASK, not the extension (fixes deprecation warning)
         tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
-            autoCorrect = true
+            autoCorrect = false
             ignoreFailures = true
             reports {
                 html.required.set(true)
@@ -75,7 +75,7 @@ allprojects {
         configure<io.gitlab.arturbosch.detekt.extensions.DetektExtension> {
             config.setFrom(files("$rootDir/detekt.yml"))
             buildUponDefaultConfig = true
-            autoCorrect = true
+            autoCorrect = false
             parallel = true
         }
     }
@@ -84,7 +84,7 @@ allprojects {
 detekt {
     buildUponDefaultConfig = true
     allRules = false
-    autoCorrect = true
+    autoCorrect = false
     parallel = true
     ignoreFailures = true
 }
