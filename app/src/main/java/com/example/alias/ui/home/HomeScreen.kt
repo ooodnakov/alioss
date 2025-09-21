@@ -235,13 +235,13 @@ private fun homeHeroSection(
             }
         }
     }
-    val favoriteDecks = remember(settings.enabledDeckIds, decks) {
+    val visibleEnabledDecks = remember(settings.enabledDeckIds, decks) {
         val enabled = settings.enabledDeckIds
         decks.filter { enabled.contains(it.id) }
             .sortedBy { it.name }
-            .take(3)
     }
-    val extraDecks = (settings.enabledDeckIds.size - favoriteDecks.size).coerceAtLeast(0)
+    val favoriteDecks = visibleEnabledDecks.take(3)
+    val extraDecks = (visibleEnabledDecks.size - favoriteDecks.size).coerceAtLeast(0)
     val highlight = recentHistory.firstOrNull()
     val highlightText = when {
         highlight == null -> stringResource(R.string.home_highlight_empty)
