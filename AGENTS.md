@@ -37,6 +37,6 @@ Run these before pushing or opening a PR:
 - Strings are localized in English and Russian. New UI must externalize strings and provide translations.
 
 ## Security & Privacy
-- Manual pack downloads must respect the trusted-host allow list and 40 MB cap (`PackDownloader`).
+- Manual pack downloads must respect the trusted-host allow list and 40 MB cap (`PackDownloader`).
 - Do not commit secrets or keystores. Bundle only vetted assets with attribution metadata.
 - Provide “Reset local data” pathways when adding new persistent storage.
