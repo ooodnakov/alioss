@@ -718,7 +718,7 @@ private fun scoreProgressGraph(events: List<TimelineEvent>, modifier: Modifier =
                     val useIndex = remember(points) { (xMax - xMin) <= 0f }
                     val xTickValues = remember(points, useIndex, xMin, xMax) {
                         val rawTicks = if (useIndex) {
-                            if (points.size <= 1) listOf(0f) else generateAxisTicks(0f, points.lastIndex.toFloat())
+                            generateAxisTicks(0f, points.lastIndex.toFloat())
                         } else {
                             generateAxisTicks(xMin, xMax)
                         }
@@ -757,7 +757,7 @@ private fun scoreProgressGraph(events: List<TimelineEvent>, modifier: Modifier =
 
                         fun mapX(index: Int, time: Float): Float {
                             val fraction = if (useIndex) {
-                                if (points.lastIndex == 0) 0f else index.toFloat() / points.lastIndex.toFloat()
+                                index.toFloat() / points.lastIndex.toFloat()
                             } else {
                                 if (xRange <= 0f) 0f else (time - xMin) / xRange
                             }
@@ -766,8 +766,7 @@ private fun scoreProgressGraph(events: List<TimelineEvent>, modifier: Modifier =
 
                         fun mapXValue(value: Float): Float {
                             val fraction = if (useIndex) {
-                                val denominator = max(points.lastIndex, 1).toFloat()
-                                if (denominator == 0f) 0f else value / denominator
+                                value / points.lastIndex.toFloat()
                             } else {
                                 if (xRange <= 0f) 0f else (value - xMin) / xRange
                             }
@@ -970,12 +969,8 @@ private fun timeBetweenWordsGraph(events: List<TimelineEvent>, modifier: Modifie
                     }
                     val barCount = points.size
                     val xTickValues = remember(barCount) {
-                        if (barCount <= 0) {
-                            emptyList()
-                        } else {
-                            generateAxisTicks(1f, barCount.toFloat()).filter { tick ->
-                                tick >= 1f && tick <= barCount.toFloat()
-                            }
+                        generateAxisTicks(1f, barCount.toFloat()).filter { tick ->
+                            tick >= 1f && tick <= barCount.toFloat()
                         }
                     }
                     val yTickValues = remember(maxSeconds) {
@@ -1014,9 +1009,8 @@ private fun timeBetweenWordsGraph(events: List<TimelineEvent>, modifier: Modifie
                         }
 
                         fun mapXValue(value: Float): Float {
-                            val count = max(barCount, 1)
-                            val clamped = value.coerceIn(1f, count.toFloat())
-                            val fraction = (clamped - 0.5f) / count
+                            val clamped = value.coerceIn(1f, barCount.toFloat())
+                            val fraction = (clamped - 0.5f) / barCount.toFloat()
                             return chartLeft + fraction.coerceIn(0f, 1f) * chartWidth
                         }
 
