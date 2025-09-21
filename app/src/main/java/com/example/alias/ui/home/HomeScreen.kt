@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -392,28 +393,22 @@ private fun homeScoreboardSection(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 scoreboard.entries.sortedByDescending { it.value }.forEach { entry ->
-                    Surface(
-                        shape = RoundedCornerShape(50),
-                        color = contentColor.copy(alpha = 0.08f),
+                    homePill(
+                        backgroundColor = contentColor.copy(alpha = 0.08f),
                         contentColor = contentColor,
                     ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(
-                                entry.key,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = contentColor,
-                            )
-                            Spacer(modifier = Modifier.weight(1f, fill = false))
-                            Text(
-                                entry.value.toString(),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = contentColor.copy(alpha = 0.95f),
-                                fontWeight = FontWeight.SemiBold,
-                            )
-                        }
+                        Text(
+                            entry.key,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = contentColor,
+                        )
+                        Spacer(modifier = Modifier.weight(1f, fill = false))
+                        Text(
+                            entry.value.toString(),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = contentColor.copy(alpha = 0.95f),
+                            fontWeight = FontWeight.SemiBold,
+                        )
                     }
                 }
             }
@@ -451,51 +446,80 @@ private fun favoriteDecksSection(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 favorites.forEach { deck ->
-                    Surface(
+                    homePill(
                         onClick = onDecks,
-                        shape = RoundedCornerShape(50),
-                        color = contentColor.copy(alpha = 0.08f),
+                        backgroundColor = contentColor.copy(alpha = 0.08f),
                         contentColor = contentColor,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Icon(
-                                Icons.Filled.Star,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp),
-                                tint = contentColor,
-                            )
-                            Text(
-                                deck.name,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = contentColor,
-                            )
-                        }
+                        Icon(
+                            Icons.Filled.Star,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                            tint = contentColor,
+                        )
+                        Text(
+                            deck.name,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = contentColor,
+                        )
                     }
                 }
                 if (extra > 0) {
-                    Surface(
+                    homePill(
                         onClick = onDecks,
-                        shape = RoundedCornerShape(50),
-                        color = contentColor.copy(alpha = 0.08f),
+                        backgroundColor = contentColor.copy(alpha = 0.08f),
                         contentColor = contentColor,
                     ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(
-                                text = stringResource(R.string.home_more_favorites, extra),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = contentColor,
-                            )
-                        }
+                        Text(
+                            text = stringResource(R.string.home_more_favorites, extra),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = contentColor,
+                        )
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun homePill(
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
+    backgroundColor: Color,
+    contentColor: Color,
+    horizontalArrangement: Arrangement.Horizontal = Arrangement.Start,
+    content: @Composable RowScope.() -> Unit,
+) {
+    val shape = RoundedCornerShape(50)
+    val pillContent = @Composable {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = horizontalArrangement,
+            content = content,
+        )
+    }
+
+    if (onClick != null) {
+        Surface(
+            onClick = onClick,
+            modifier = modifier,
+            shape = shape,
+            color = backgroundColor,
+            contentColor = contentColor,
+        ) {
+            pillContent()
+        }
+    } else {
+        Surface(
+            modifier = modifier,
+            shape = shape,
+            color = backgroundColor,
+            contentColor = contentColor,
+        ) {
+            pillContent()
         }
     }
 }
