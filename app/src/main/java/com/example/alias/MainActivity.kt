@@ -72,7 +72,7 @@ class MainActivity : AppCompatActivity() {
                                     ev.onAction?.invoke()
                                 }
                             } finally {
-                                if (currentSnackbarJob === this) {
+                                if (currentSnackbarJob === coroutineContext[Job]) {
                                     currentSnackbarJob = null
                                 }
                             }
