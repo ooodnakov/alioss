@@ -1223,7 +1223,7 @@ private fun timelineSegmentHeader(
             Surface(
                 color = accentColor.copy(alpha = 0.12f),
                 contentColor = accentColor,
-                shape = RoundedCornerShape(50),
+                shape = CircleShape,
                 border = BorderStroke(1.dp, accentColor.copy(alpha = 0.3f)),
             ) {
                 Row(
