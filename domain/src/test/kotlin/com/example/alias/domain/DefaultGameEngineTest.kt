@@ -500,24 +500,16 @@ class DefaultGameEngineTest {
             assertEquals(expectedOrder.first(), engine.peekNextWord(), "peek should not consume word")
 
             engine.startTurn()
-            var active = assertIs<GameState.TurnActive>(engine.state.value)
-            assertEquals(expectedOrder.first(), active.word)
-            assertEquals(expectedOrder[1], engine.peekNextWord())
+            engine.assertActiveWordAndPeek(expectedOrder[0], expectedOrder[1])
 
             engine.correct()
-            active = assertIs<GameState.TurnActive>(engine.state.value)
-            assertEquals(expectedOrder[1], active.word)
-            assertEquals(expectedOrder[2], engine.peekNextWord())
+            engine.assertActiveWordAndPeek(expectedOrder[1], expectedOrder[2])
 
             engine.correct()
-            active = assertIs<GameState.TurnActive>(engine.state.value)
-            assertEquals(expectedOrder[2], active.word)
-            assertEquals(expectedOrder[3], engine.peekNextWord())
+            engine.assertActiveWordAndPeek(expectedOrder[2], expectedOrder[3])
 
             engine.correct()
-            active = assertIs<GameState.TurnActive>(engine.state.value)
-            assertEquals(expectedOrder[3], active.word)
-            assertNull(engine.peekNextWord())
+            engine.assertActiveWordAndPeek(expectedOrder[3], null)
 
             engine.correct()
             val finished = assertIs<GameState.TurnFinished>(engine.state.value)
@@ -556,4 +548,13 @@ class DefaultGameEngineTest {
             val expectedOrder = words.shuffled(Random(1L))
             assertEquals(expectedOrder.first(), engine.peekNextWord())
         }
+
+    private suspend fun DefaultGameEngine.assertActiveWordAndPeek(
+        expectedWord: String,
+        expectedPeek: String?,
+    ) {
+        val active = assertIs<GameState.TurnActive>(state.value)
+        assertEquals(expectedWord, active.word)
+        assertEquals(expectedPeek, peekNextWord())
+    }
 }

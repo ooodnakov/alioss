@@ -38,10 +38,7 @@ class PackValidatorTest {
             isNSFW = false,
             coverImageBase64 = " data:image/png;base64,${ONE_BY_ONE_PNG_BASE64} ",
         )
-        val expected = Base64.getEncoder().encodeToString(
-            Base64.getMimeDecoder().decode(ONE_BY_ONE_PNG_BASE64),
-        )
-        assertEquals(expected, normalized)
+        assertEquals(ONE_BY_ONE_PNG_BASE64, normalized)
 
         assertNull(
             PackValidator.validateDeck(
