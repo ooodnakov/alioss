@@ -2,6 +2,7 @@
 
 package com.example.alias.ui.game
 
+import android.graphics.Paint
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
@@ -30,9 +31,6 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.HorizontalDivider
@@ -40,6 +38,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -59,6 +58,9 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -68,13 +70,24 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.alias.MainViewModel
 import com.example.alias.R
 import com.example.alias.data.settings.Settings
 import com.example.alias.domain.GameState
 import com.example.alias.domain.TurnOutcome
 import com.example.alias.ui.common.scoreboard
+import java.util.Locale
+import kotlin.math.abs
+import kotlin.math.ceil
+import kotlin.math.floor
+import kotlin.math.log10
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.pow
+import kotlin.math.roundToInt
 
 @Composable
 fun roundSummaryScreen(vm: MainViewModel, s: GameState.TurnFinished, settings: Settings) {
@@ -99,7 +112,6 @@ fun roundSummaryScreen(vm: MainViewModel, s: GameState.TurnFinished, settings: S
                 deltaColor = deltaColor,
             )
         }
-        item { scoreboardCard(scores = s.scores, stats = stats) }
         item {
             timelineCard(
                 timeline = timeline,
@@ -107,6 +119,7 @@ fun roundSummaryScreen(vm: MainViewModel, s: GameState.TurnFinished, settings: S
                 onOverride = { index, correct -> vm.overrideOutcome(index, correct) },
             )
         }
+        item { scoreboardCard(scores = s.scores, stats = stats) }
         item {
             Button(onClick = { vm.nextTurn() }, modifier = Modifier.fillMaxWidth()) {
                 Text(if (s.matchOver) stringResource(R.string.end_match) else stringResource(R.string.next_team))
@@ -191,26 +204,10 @@ private fun timelineCard(
                     )
                 }
                 ExpandableSection(
-                    title = stringResource(R.string.timeline_graphs_title),
-                    subtitle = stringResource(R.string.timeline_graphs_subtitle),
-                    modifier = Modifier.padding(horizontal = 20.dp),
-                    initiallyExpanded = false,
-                    contentArrangement = Arrangement.spacedBy(20.dp),
-                ) {
-                    scoreProgressGraph(
-                        events = timeline.events,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    timeBetweenWordsGraph(
-                        events = timeline.events,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-                ExpandableSection(
                     title = stringResource(R.string.timeline_breakdown_title),
                     subtitle = stringResource(R.string.timeline_breakdown_subtitle),
-                    modifier = Modifier.padding(horizontal = 20.dp),
-                    initiallyExpanded = false,
+                    modifier = Modifier.padding(horizontal = 10.dp),
+                    initiallyExpanded = true,
                     contentArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     timeline.segments.forEach { segment ->
@@ -229,6 +226,22 @@ private fun timelineCard(
                             }
                         }
                     }
+                }
+                ExpandableSection(
+                    title = stringResource(R.string.timeline_graphs_title),
+                    subtitle = stringResource(R.string.timeline_graphs_subtitle),
+                    modifier = Modifier.padding(horizontal = 10.dp),
+                    initiallyExpanded = false,
+                    contentArrangement = Arrangement.spacedBy(20.dp),
+                ) {
+                    scoreProgressGraph(
+                        events = timeline.events,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    timeBetweenWordsGraph(
+                        events = timeline.events,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
                 }
             }
         }
@@ -372,6 +385,66 @@ private fun buildTimeBetweenPoints(events: List<TimelineEvent>): List<TimeBetwee
         val delta = (event.elapsedMillis - previous).coerceAtLeast(0L)
         previous = event.elapsedMillis
         TimeBetweenWordPoint(index = index, seconds = delta / 1000f)
+    }
+}
+
+private fun generateAxisTicks(min: Float, max: Float, desiredTickCount: Int = 5): List<Float> {
+    if (!min.isFinite() || !max.isFinite() || desiredTickCount <= 0) return emptyList()
+    if (min == max) return listOf(min)
+    val actualMin = min(min, max)
+    val actualMax = max(min, max)
+    val range = actualMax - actualMin
+    if (range <= 0f) return listOf(actualMin)
+    val tickCount = max(2, desiredTickCount)
+    val niceRange = niceNumber(range, round = false)
+    val tickSpacing = niceNumber(niceRange / (tickCount - 1), round = true)
+    if (tickSpacing == 0f) return listOf(actualMin)
+    val niceMin = floor((actualMin / tickSpacing).toDouble()).toFloat() * tickSpacing
+    val niceMax = ceil((actualMax / tickSpacing).toDouble()).toFloat() * tickSpacing
+    val ticks = mutableListOf<Float>()
+    var value = niceMin
+    var iteration = 0
+    while (value <= niceMax + tickSpacing * 0.5f && iteration < 100) {
+        ticks += value
+        value += tickSpacing
+        iteration++
+    }
+    return ticks
+}
+
+private fun niceNumber(range: Float, round: Boolean): Float {
+    if (range <= 0f || range.isNaN() || range.isInfinite()) return 0f
+    val exponent = floor(log10(range.toDouble())).toInt()
+    val fraction = range / 10f.pow(exponent.toFloat())
+    val niceFraction = if (round) {
+        when {
+            fraction < 1.5f -> 1f
+            fraction < 3f -> 2f
+            fraction < 7f -> 5f
+            else -> 10f
+        }
+    } else {
+        when {
+            fraction <= 1f -> 1f
+            fraction <= 2f -> 2f
+            fraction <= 5f -> 5f
+            else -> 10f
+        }
+    }
+    return niceFraction * 10f.pow(exponent.toFloat())
+}
+
+private fun formatAxisValue(value: Float, allowFractions: Boolean): String {
+    val adjusted = if (abs(value) < 1e-4f) 0f else value
+    return if (allowFractions) {
+        val rounded = adjusted.roundToInt()
+        if (abs(adjusted - rounded) < 0.05f) {
+            rounded.toString()
+        } else {
+            String.format(Locale.getDefault(), "%.1f", adjusted)
+        }
+    } else {
+        adjusted.roundToInt().toString()
     }
 }
 
@@ -598,71 +671,192 @@ private fun scoreProgressGraph(events: List<TimelineEvent>, modifier: Modifier =
                     color = colors.onSurfaceVariant,
                     modifier = Modifier
                         .rotate(-90f)
-                        .padding(end = 12.dp),
+                        .padding(end = 2.dp),
                 )
                 Column(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight(),
                 ) {
+                    val density = LocalDensity.current
+                    val axisLabelStyle = MaterialTheme.typography.labelSmall
+                    val axisLabelTextSizePx = remember(axisLabelStyle, density) {
+                        with(density) {
+                            (
+                                if (axisLabelStyle.fontSize != TextUnit.Unspecified) {
+                                    axisLabelStyle.fontSize
+                                } else {
+                                    12.sp
+                                }
+                                ).toPx()
+                        }
+                    }
+                    val axisLabelColor = colors.onSurfaceVariant.copy(alpha = 0.7f)
+                    val xAxisPaint = remember(axisLabelColor, axisLabelTextSizePx) {
+                        Paint().apply {
+                            color = axisLabelColor.toArgb()
+                            textAlign = Paint.Align.CENTER
+                            textSize = axisLabelTextSizePx
+                            isAntiAlias = true
+                        }
+                    }
+                    val yAxisPaint = remember(axisLabelColor, axisLabelTextSizePx) {
+                        Paint().apply {
+                            color = axisLabelColor.toArgb()
+                            textAlign = Paint.Align.RIGHT
+                            textSize = axisLabelTextSizePx
+                            isAntiAlias = true
+                        }
+                    }
+                    val xMin = remember(points) { points.minOf { it.time } }
+                    val xMax = remember(points) { points.maxOf { it.time } }
+                    val yMin = remember(points) { points.minOf { it.score } }
+                    val yMax = remember(points) { points.maxOf { it.score } }
+                    val useIndex = remember(points) { (xMax - xMin) <= 0f }
+                    val xTickValues = remember(points, useIndex, xMin, xMax) {
+                        val rawTicks = if (useIndex) {
+                            generateAxisTicks(0f, points.lastIndex.toFloat())
+                        } else {
+                            generateAxisTicks(xMin, xMax)
+                        }
+                        rawTicks.filter { tick ->
+                            if (useIndex) {
+                                tick >= 0f && tick <= points.lastIndex.toFloat()
+                            } else {
+                                tick >= min(xMin, xMax) && tick <= max(xMin, xMax)
+                            }
+                        }
+                    }
+                    val yTickValues = remember(points, yMin, yMax) {
+                        val rawTicks = if (yMin == yMax) listOf(yMin) else generateAxisTicks(yMin, yMax)
+                        rawTicks.filter { tick -> tick >= min(yMin, yMax) && tick <= max(yMin, yMax) }
+                    }
                     Canvas(
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxWidth()
                             .padding(top = 8.dp, end = 8.dp, bottom = 8.dp),
                     ) {
-                        val xMin = points.minOf { it.time }
-                        val xMax = points.maxOf { it.time }
+                        val chartLeftPadding = 4.dp.toPx()
+                        val chartRightPadding = 4.dp.toPx()
+                        val chartTopPadding = 4.dp.toPx()
+                        val chartBottomPadding = 8.dp.toPx()
+                        val chartWidth = size.width - chartLeftPadding - chartRightPadding
+                        val chartHeight = size.height - chartTopPadding - chartBottomPadding
+                        if (chartWidth <= 0f || chartHeight <= 0f) return@Canvas
+
                         val xRange = xMax - xMin
-                        val useIndex = xRange <= 0f
-                        val yMin = points.minOf { it.score }
-                        val yMax = points.maxOf { it.score }
                         val yRange = yMax - yMin
-                        val offsets = points.mapIndexed { index, point ->
-                            val xFraction = if (useIndex) {
+                        val chartLeft = chartLeftPadding
+                        val chartBottom = chartTopPadding + chartHeight
+                        val axisStrokeWidth = 1.dp.toPx()
+                        val tickLength = 6.dp.toPx()
+
+                        fun mapX(index: Int, time: Float): Float {
+                            val fraction = if (useIndex) {
                                 index.toFloat() / points.lastIndex.toFloat()
                             } else {
-                                (point.time - xMin) / xRange
+                                if (xRange <= 0f) 0f else (time - xMin) / xRange
                             }
-                            val yFraction = if (yRange > 0f) {
-                                (point.score - yMin) / yRange
+                            return chartLeft + fraction.coerceIn(0f, 1f) * chartWidth
+                        }
+
+                        fun mapXValue(value: Float): Float {
+                            val fraction = if (useIndex) {
+                                value / points.lastIndex.toFloat()
+                            } else {
+                                if (xRange <= 0f) 0f else (value - xMin) / xRange
+                            }
+                            return chartLeft + fraction.coerceIn(0f, 1f) * chartWidth
+                        }
+
+                        fun mapY(score: Float): Float {
+                            val fraction = if (yRange > 0f) {
+                                (score - yMin) / yRange
                             } else {
                                 0.5f
                             }
-                            Offset(
-                                x = xFraction.coerceIn(0f, 1f) * size.width,
-                                y = size.height - yFraction.coerceIn(0f, 1f) * size.height,
-                            )
+                            return chartTopPadding + (1f - fraction.coerceIn(0f, 1f)) * chartHeight
                         }
+
+                        drawLine(
+                            color = axisLabelColor,
+                            start = Offset(chartLeft, chartTopPadding),
+                            end = Offset(chartLeft, chartBottom),
+                            strokeWidth = axisStrokeWidth,
+                        )
+                        drawLine(
+                            color = axisLabelColor,
+                            start = Offset(chartLeft, chartBottom),
+                            end = Offset(chartLeft + chartWidth, chartBottom),
+                            strokeWidth = axisStrokeWidth,
+                        )
+
+                        val xFontMetrics = xAxisPaint.fontMetrics
+                        val yFontMetrics = yAxisPaint.fontMetrics
+                        val xLabelTop = chartBottom + tickLength + 4.dp.toPx()
+                        val yLabelX = chartLeft - tickLength - 4.dp.toPx()
+
+                        xTickValues.forEach { tick ->
+                            val xPosition = mapXValue(tick)
+                            drawLine(
+                                color = axisLabelColor,
+                                start = Offset(xPosition, chartBottom),
+                                end = Offset(xPosition, chartBottom + tickLength),
+                                strokeWidth = axisStrokeWidth,
+                            )
+                            val displayValue = if (hasElapsedData && !useIndex) tick / 1000f else tick
+                            val label = formatAxisValue(displayValue, allowFractions = hasElapsedData && !useIndex)
+                            val baseline = xLabelTop - xFontMetrics.ascent
+                            drawContext.canvas.nativeCanvas.drawText(label, xPosition, baseline, xAxisPaint)
+                        }
+
+                        yTickValues.forEach { tick ->
+                            val yPosition = mapY(tick)
+                            drawLine(
+                                color = axisLabelColor,
+                                start = Offset(chartLeft - tickLength, yPosition),
+                                end = Offset(chartLeft, yPosition),
+                                strokeWidth = axisStrokeWidth,
+                            )
+                            val label = formatAxisValue(tick, allowFractions = false)
+                            val baseline = yPosition - (yFontMetrics.ascent + yFontMetrics.descent) / 2f
+                            drawContext.canvas.nativeCanvas.drawText(label, yLabelX, baseline, yAxisPaint)
+                        }
+
                         val zeroLineY = when {
-                            yRange > 0f && yMin <= 0f && yMax >= 0f -> {
-                                val zeroFraction = (0f - yMin) / yRange
-                                size.height - zeroFraction * size.height
-                            }
-                            yRange == 0f && yMin == 0f -> size.height * 0.5f
+                            yRange > 0f && yMin <= 0f && yMax >= 0f -> mapY(0f)
+                            yRange == 0f && yMin == 0f -> chartTopPadding + chartHeight * 0.5f
                             else -> null
                         }
                         if (zeroLineY != null) {
                             drawLine(
                                 color = baselineColor,
-                                start = Offset(0f, zeroLineY),
-                                end = Offset(size.width, zeroLineY),
-                                strokeWidth = 1.dp.toPx(),
+                                start = Offset(chartLeft, zeroLineY),
+                                end = Offset(chartLeft + chartWidth, zeroLineY),
+                                strokeWidth = axisStrokeWidth,
+                            )
+                        }
+
+                        val offsets = points.mapIndexed { index, point ->
+                            Offset(
+                                x = mapX(index, point.time),
+                                y = mapY(point.score),
                             )
                         }
                         if (offsets.size >= 2) {
                             val fillPath = Path().apply {
-                                moveTo(offsets.first().x, size.height)
+                                moveTo(offsets.first().x, chartBottom)
                                 offsets.forEach { lineTo(it.x, it.y) }
-                                lineTo(offsets.last().x, size.height)
+                                lineTo(offsets.last().x, chartBottom)
                                 close()
                             }
                             drawPath(
                                 path = fillPath,
                                 brush = Brush.verticalGradient(
                                     colors = listOf(fillColor, fillColor.copy(alpha = 0f)),
-                                    startY = 0f,
-                                    endY = size.height,
+                                    startY = chartTopPadding,
+                                    endY = chartBottom,
                                 ),
                             )
                             val strokePath = Path().apply {
@@ -688,7 +882,7 @@ private fun scoreProgressGraph(events: List<TimelineEvent>, modifier: Modifier =
                         color = colors.onSurfaceVariant,
                         modifier = Modifier
                             .align(Alignment.CenterHorizontally)
-                            .padding(top = 8.dp),
+                            .padding(top = 4.dp),
                     )
                 }
             }
@@ -734,37 +928,149 @@ private fun timeBetweenWordsGraph(events: List<TimelineEvent>, modifier: Modifie
                     color = colors.onSurfaceVariant,
                     modifier = Modifier
                         .rotate(-90f)
-                        .padding(end = 12.dp),
+                        .padding(end = 8.dp),
                 )
                 Column(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight(),
                 ) {
+                    val density = LocalDensity.current
+                    val axisLabelStyle = MaterialTheme.typography.labelSmall
+                    val axisLabelTextSizePx = remember(axisLabelStyle, density) {
+                        with(density) {
+                            (
+                                if (axisLabelStyle.fontSize != TextUnit.Unspecified) {
+                                    axisLabelStyle.fontSize
+                                } else {
+                                    12.sp
+                                }
+                                ).toPx()
+                        }
+                    }
+                    val axisLabelColor = colors.onSurfaceVariant.copy(alpha = 0.7f)
+                    val xAxisPaint = remember(axisLabelColor, axisLabelTextSizePx) {
+                        Paint().apply {
+                            color = axisLabelColor.toArgb()
+                            textAlign = Paint.Align.CENTER
+                            textSize = axisLabelTextSizePx
+                            isAntiAlias = true
+                        }
+                    }
+                    val yAxisPaint = remember(axisLabelColor, axisLabelTextSizePx) {
+                        Paint().apply {
+                            color = axisLabelColor.toArgb()
+                            textAlign = Paint.Align.RIGHT
+                            textSize = axisLabelTextSizePx
+                            isAntiAlias = true
+                        }
+                    }
+                    val barCount = points.size
+                    val xTickValues = remember(barCount) {
+                        generateAxisTicks(1f, barCount.toFloat()).filter { tick ->
+                            tick >= 1f && tick <= barCount.toFloat()
+                        }
+                    }
+                    val yTickValues = remember(maxSeconds) {
+                        generateAxisTicks(0f, maxSeconds).filter { tick -> tick >= 0f && tick <= maxSeconds }
+                    }
                     Canvas(
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxWidth()
                             .padding(top = 8.dp, end = 8.dp, bottom = 8.dp),
                     ) {
-                        val count = points.size
-                        val slotWidth = if (count > 0) size.width / (count * 2f) else 0f
-                        val barWidth = slotWidth
-                        val spacing = slotWidth
-                        val heightFactor = size.height / maxSeconds
-                        val averageY = size.height - (average * heightFactor).coerceIn(0f, size.height)
+                        val chartLeftPadding = 4.dp.toPx()
+                        val chartRightPadding = 4.dp.toPx()
+                        val chartTopPadding = 4.dp.toPx()
+                        val chartBottomPadding = 8.dp.toPx()
+                        val chartWidth = size.width - chartLeftPadding - chartRightPadding
+                        val chartHeight = size.height - chartTopPadding - chartBottomPadding
+                        if (chartWidth <= 0f || chartHeight <= 0f) return@Canvas
+
+                        val chartLeft = chartLeftPadding
+                        val chartBottom = chartTopPadding + chartHeight
+                        val axisStrokeWidth = 1.dp.toPx()
+                        val tickLength = 6.dp.toPx()
+
+                        val slotWidth = if (barCount > 0) chartWidth / barCount else 0f
+                        val barWidth = slotWidth * 0.6f
+                        val halfSpacing = (slotWidth - barWidth) / 2f
+
+                        fun mapY(seconds: Float): Float {
+                            val fraction = (seconds / maxSeconds).coerceIn(0f, 1f)
+                            return chartTopPadding + (1f - fraction) * chartHeight
+                        }
+
+                        fun barStart(index: Int): Float {
+                            return chartLeft + index * slotWidth + halfSpacing
+                        }
+
+                        fun mapXValue(value: Float): Float {
+                            val clamped = value.coerceIn(1f, barCount.toFloat())
+                            val fraction = (clamped - 0.5f) / barCount.toFloat()
+                            return chartLeft + fraction.coerceIn(0f, 1f) * chartWidth
+                        }
+
+                        drawLine(
+                            color = axisLabelColor,
+                            start = Offset(chartLeft, chartTopPadding),
+                            end = Offset(chartLeft, chartBottom),
+                            strokeWidth = axisStrokeWidth,
+                        )
+                        drawLine(
+                            color = axisLabelColor,
+                            start = Offset(chartLeft, chartBottom),
+                            end = Offset(chartLeft + chartWidth, chartBottom),
+                            strokeWidth = axisStrokeWidth,
+                        )
+
+                        val xFontMetrics = xAxisPaint.fontMetrics
+                        val yFontMetrics = yAxisPaint.fontMetrics
+                        val xLabelTop = chartBottom + tickLength + 4.dp.toPx()
+                        val yLabelX = chartLeft - tickLength - 4.dp.toPx()
+
+                        xTickValues.forEach { tick ->
+                            val xPosition = mapXValue(tick)
+                            drawLine(
+                                color = axisLabelColor,
+                                start = Offset(xPosition, chartBottom),
+                                end = Offset(xPosition, chartBottom + tickLength),
+                                strokeWidth = axisStrokeWidth,
+                            )
+                            val label = formatAxisValue(tick, allowFractions = false)
+                            val baseline = xLabelTop - xFontMetrics.ascent
+                            drawContext.canvas.nativeCanvas.drawText(label, xPosition, baseline, xAxisPaint)
+                        }
+
+                        yTickValues.forEach { tick ->
+                            val yPosition = mapY(tick)
+                            drawLine(
+                                color = axisLabelColor,
+                                start = Offset(chartLeft - tickLength, yPosition),
+                                end = Offset(chartLeft, yPosition),
+                                strokeWidth = axisStrokeWidth,
+                            )
+                            val label = formatAxisValue(tick, allowFractions = true)
+                            val baseline = yPosition - (yFontMetrics.ascent + yFontMetrics.descent) / 2f
+                            drawContext.canvas.nativeCanvas.drawText(label, yLabelX, baseline, yAxisPaint)
+                        }
+
+                        val averageY = mapY(average)
                         drawLine(
                             color = colors.primary.copy(alpha = 0.35f),
-                            start = Offset(0f, averageY),
-                            end = Offset(size.width, averageY),
-                            strokeWidth = 1.dp.toPx(),
+                            start = Offset(chartLeft, averageY),
+                            end = Offset(chartLeft + chartWidth, averageY),
+                            strokeWidth = axisStrokeWidth,
                         )
+
                         points.forEachIndexed { index, point ->
-                            val barHeight = (point.seconds * heightFactor).coerceIn(0f, size.height)
-                            val x = spacing / 2f + index * (barWidth + spacing)
+                            val top = mapY(point.seconds)
+                            val barHeight = chartBottom - top
+                            val x = barStart(index)
                             drawRoundRect(
                                 color = colors.primary,
-                                topLeft = Offset(x, size.height - barHeight),
+                                topLeft = Offset(x, top),
                                 size = Size(width = barWidth, height = barHeight),
                                 cornerRadius = CornerRadius(12f, 12f),
                             )
@@ -776,7 +1082,7 @@ private fun timeBetweenWordsGraph(events: List<TimelineEvent>, modifier: Modifie
                         color = colors.onSurfaceVariant,
                         modifier = Modifier
                             .align(Alignment.CenterHorizontally)
-                            .padding(top = 8.dp),
+                            .padding(top = 4.dp),
                     )
                 }
             }
@@ -785,6 +1091,9 @@ private fun timeBetweenWordsGraph(events: List<TimelineEvent>, modifier: Modifie
             text = stringResource(R.string.timeline_time_between_graph_average, average),
             style = MaterialTheme.typography.bodySmall,
             color = colors.onSurfaceVariant,
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .padding(horizontal = 4.dp),
         )
     }
 }
@@ -897,13 +1206,14 @@ private fun timelineSegmentHeader(
 
     Surface(
         modifier = modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.surfaceVariant,
+        color = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp),
         contentColor = MaterialTheme.colorScheme.onSurface,
+        tonalElevation = 0.dp,
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(horizontal = 12.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -912,7 +1222,7 @@ private fun timelineSegmentHeader(
                 TimelineSegmentType.SKIP -> Icons.Filled.Close
                 TimelineSegmentType.PENDING -> Icons.Filled.Schedule
             }
-            Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(20.dp))
+            Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(18.dp))
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -920,23 +1230,9 @@ private fun timelineSegmentHeader(
                 Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                 Text(
                     subtitle,
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                if (showBonus) {
-                    AssistChip(
-                        onClick = {},
-                        enabled = false,
-                        leadingIcon = {
-                            Icon(Icons.Filled.Star, contentDescription = null, modifier = Modifier.size(16.dp))
-                        },
-                        label = { Text(stringResource(R.string.timeline_bonus_label)) },
-                        colors = AssistChipDefaults.assistChipColors(
-                            disabledContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                            disabledLabelColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                        ),
-                    )
-                }
             }
             Text(
                 text = stringResource(R.string.timeline_change, delta),
@@ -962,12 +1258,6 @@ private fun timelineEventBlock(
     }
     val borderColor = timelineColor(event.type).copy(alpha = 0.4f)
     val supportColor = contentColor.copy(alpha = 0.8f)
-    val timeLabel = if (event.elapsedMillis <= 0L) {
-        stringResource(R.string.timeline_elapsed_time_start)
-    } else {
-        val seconds = event.elapsedMillis / 1000f
-        stringResource(R.string.timeline_elapsed_time, seconds)
-    }
     val stateLabel = when {
         event.outcome.correct -> stringResource(R.string.timeline_word_state_correct)
         event.outcome.skipped -> stringResource(R.string.timeline_word_state_skipped)
@@ -1022,20 +1312,6 @@ private fun timelineEventBlock(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
-                    if (event.isBonus) {
-                        AssistChip(
-                            onClick = {},
-                            enabled = false,
-                            leadingIcon = {
-                                Icon(Icons.Filled.Star, contentDescription = null, modifier = Modifier.size(16.dp))
-                            },
-                            label = { Text(stringResource(R.string.timeline_bonus_label)) },
-                            colors = AssistChipDefaults.assistChipColors(
-                                disabledContainerColor = colors.tertiaryContainer,
-                                disabledLabelColor = colors.onTertiaryContainer,
-                            ),
-                        )
-                    }
                 }
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -1052,11 +1328,6 @@ private fun timelineEventBlock(
                         color = supportColor,
                     )
                 }
-                Text(
-                    text = timeLabel,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = supportColor,
-                )
             }
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
