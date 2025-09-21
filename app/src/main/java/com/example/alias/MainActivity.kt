@@ -60,23 +60,24 @@ class MainActivity : AppCompatActivity() {
                                 ev.duration
                             }
                         val job = launch {
-                            val result =
-                                snack.showSnackbar(
-                                    message = ev.message,
-                                    actionLabel = ev.actionLabel,
-                                    withDismissAction = ev.actionLabel == null,
-                                    duration = duration,
-                                )
-                            if (result == SnackbarResult.ActionPerformed) {
-                                ev.onAction?.invoke()
+                            try {
+                                val result =
+                                    snack.showSnackbar(
+                                        message = ev.message,
+                                        actionLabel = ev.actionLabel,
+                                        withDismissAction = true,
+                                        duration = duration,
+                                    )
+                                if (result == SnackbarResult.ActionPerformed) {
+                                    ev.onAction?.invoke()
+                                }
+                            } finally {
+                                if (currentSnackbarJob === coroutineContext[Job]) {
+                                    currentSnackbarJob = null
+                                }
                             }
                         }
                         currentSnackbarJob = job
-                        job.invokeOnCompletion {
-                            if (currentSnackbarJob === job) {
-                                currentSnackbarJob = null
-                            }
-                        }
                     }
                 }
 

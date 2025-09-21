@@ -74,7 +74,7 @@ class MainViewModel
             val actionLabel: String? = null,
             val duration: SnackbarDuration = SnackbarDuration.Short,
             val isError: Boolean = false,
-            val dismissCurrent: Boolean = false,
+            val dismissCurrent: Boolean = true,
             val onAction: (suspend () -> Unit)? = null,
         )
 
