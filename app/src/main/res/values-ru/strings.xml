@@ -271,6 +271,7 @@
     <string name="round_and_goals">Раунд и цели</string>
     <string name="round_seconds_label">Время раунда</string>
     <string name="target_words_label">Цель по словам</string>
+    <string name="target_words_disabled_supporting_text">Недоступно, если включена цель по очкам.</string>
     <string name="score_target_toggle_label">Использовать цель по очкам</string>
     <string name="target_score_label">Цель по очкам</string>
     <string name="skips_section">Пропуски</string>
