@@ -1,0 +1,13 @@
+<resources>
+    <!-- About screen strings -->
+    <string name="about_source_code_link">github.com/ooodnakov/alias-game</string>
+    <string name="about_source_code_url" translatable="false">https://github.com/ooodnakov/alias-game</string>
+    <string name="author_line">Author: Aleksandr Odnakov</string>
+    <string name="links_label">Links</string>
+    <string name="open_github_issues_label">Open GitHub issues</string>
+    <string name="privacy_line">No telemetry, no ads, all offline.</string>
+    <string name="report_issue_label">Report an issue</string>
+    <string name="source_code_label">Source code</string>
+    <string name="title_about">About</string>
+    <string name="version_label">Version %1$s</string>
+</resources>

@@ -1,0 +1,147 @@
+<resources>
+    <!-- In-game experience strings -->
+    <string name="countdown_announcement">Обратный отсчёт: %1$d</string>
+    <string name="correct">Правильно</string>
+    <string name="end_match">Завершить матч</string>
+    <string name="idle">Ожидание</string>
+    <string name="match_finished_message">🎉 Матч завершён 🎉</string>
+    <string name="match_over_back_to_menu">В меню</string>
+    <string name="next_team">Следующая команда</string>
+    <string name="remaining_points_label">Очков до цели: %d</string>
+    <string name="remaining_words_label">Слов до цели: %d</string>
+    <string name="restart_match">Перезапустить матч</string>
+    <string name="score_change">Изменение счёта: %+d</string>
+    <plurals name="score_label">
+        <item quantity="one">%d очко</item>
+        <item quantity="few">%d очка</item>
+        <item quantity="many">%d очков</item>
+        <item quantity="other">%d очка</item>
+    </plurals>
+    <string name="scoreboard">Счёт</string>
+    <string name="scoreboard_entry">%1$s: %2$d%3$s</string>
+    <string name="skip">Пропустить</string>
+    <plurals name="skips_label">
+        <item quantity="one">%d пропуск</item>
+        <item quantity="few">%d пропуска</item>
+        <item quantity="many">%d пропусков</item>
+        <item quantity="other">%d пропуска</item>
+    </plurals>
+    <string name="start_new_match">Новый матч: Настройки или Перезапуск.</string>
+    <string name="start_turn">Начать</string>
+    <string name="summary_points_label">Очков до цели: %1$d • Очки: %2$d • Пропуски: %3$d</string>
+    <string name="summary_words_label">Слов до цели: %1$d • Очки: %2$d • Пропуски: %3$d</string>
+    <string name="team_label">Команда: %s</string>
+    <string name="tie_suffix"> (ничья)</string>
+    <plurals name="time_remaining_seconds">
+        <item quantity="one">%d секунда</item>
+        <item quantity="few">%d секунды</item>
+        <item quantity="many">%d секунд</item>
+        <item quantity="other">%d секунд</item>
+    </plurals>
+    <string name="timeline_bonus_label">Бонус</string>
+    <string name="timeline_breakdown_subtitle">Нажмите на слово, чтобы отметить верное или пропущенное.</string>
+    <string name="timeline_breakdown_title">Разбор слов</string>
+    <string name="timeline_change">%1$+d</string>
+    <plurals name="timeline_correct">
+        <item quantity="one">Верное слово</item>
+        <item quantity="few">Серия верных ×%d</item>
+        <item quantity="many">Серия верных ×%d</item>
+        <item quantity="other">Серия верных ×%d</item>
+    </plurals>
+    <string name="timeline_elapsed_time">Прошло %1$.1f с от начала хода</string>
+    <string name="timeline_elapsed_time_start">Начало хода</string>
+    <string name="timeline_graph_axis_cumulative_score">Счет</string>
+    <string name="timeline_graph_axis_elapsed_seconds">Время (с)</string>
+    <string name="timeline_graph_axis_seconds_per_word">Секунд на слово</string>
+    <string name="timeline_graph_axis_word_order">Порядок слов</string>
+    <string name="timeline_graphs_subtitle">Следите за динамикой счёта и темпа.</string>
+    <string name="timeline_graphs_title">Графики хода</string>
+    <string name="timeline_header_correct_subtitle">%1$+d за серию</string>
+    <string name="timeline_header_penalty_subtitle">Влияние %1$+d</string>
+    <string name="timeline_header_pending_subtitle">Счёт пока без изменений</string>
+    <string name="timeline_header_skip_no_penalty">Штраф не применён</string>
+    <string name="timeline_mark_correct">Отметить как верное</string>
+    <string name="timeline_mark_incorrect">Отметить как неверное</string>
+    <string name="timeline_no_events">В этом ходу слова не записывались.</string>
+    <plurals name="timeline_pending">
+        <item quantity="one">Ожидающее слово</item>
+        <item quantity="few">Ожидающие слова ×%d</item>
+        <item quantity="many">Ожидающие слова ×%d</item>
+        <item quantity="other">Ожидающие слова ×%d</item>
+    </plurals>
+    <string name="timeline_running_total">Текущий итог %1$+d</string>
+    <string name="timeline_score_breakdown">Посмотрите, как команда набрала очки в этом раунде.</string>
+    <string name="timeline_score_graph_label">Очки по времени</string>
+    <string name="timeline_section_state_collapsed">Свернуто</string>
+    <string name="timeline_section_state_expanded">Развернуто</string>
+    <plurals name="timeline_skipped">
+        <item quantity="one">Пропущенное слово</item>
+        <item quantity="few">Пропущенные слова ×%d</item>
+        <item quantity="many">Пропущенные слова ×%d</item>
+        <item quantity="other">Пропущенные слова ×%d</item>
+    </plurals>
+    <string name="timeline_time_between_graph_average">Среднее %1$.1f с между словами</string>
+    <string name="timeline_time_between_graph_label">Интервал между словами</string>
+    <string name="timeline_word_state_correct">Верно</string>
+    <string name="timeline_word_state_pending">Проверить</string>
+    <string name="timeline_word_state_skipped">Пропущено</string>
+    <string name="title_game">Игра</string>
+    <plurals name="turn_pending_status_points">
+        <item quantity="one">До победы осталось %d очко!</item>
+        <item quantity="few">До победы осталось %d очка!</item>
+        <item quantity="many">До победы осталось %d очков!</item>
+        <item quantity="other">До победы осталось %d очка!</item>
+    </plurals>
+    <plurals name="turn_pending_status_words">
+        <item quantity="one">До победы осталось %d слово!</item>
+        <item quantity="few">До победы осталось %d слова!</item>
+        <item quantity="many">До победы осталось %d слов!</item>
+        <item quantity="other">До победы осталось %d слов!</item>
+    </plurals>
+    <string name="turn_summary">Ход: %s</string>
+    <plurals name="turn_summary_stat_bonus">
+        <item quantity="one">%d бонусная серия</item>
+        <item quantity="few">%d бонусные серии</item>
+        <item quantity="many">%d бонусных серий</item>
+        <item quantity="other">%d бонусные серии</item>
+    </plurals>
+    <plurals name="turn_summary_stat_correct">
+        <item quantity="one">%d верное слово</item>
+        <item quantity="few">%d верных слова</item>
+        <item quantity="many">%d верных слов</item>
+        <item quantity="other">%d верных слова</item>
+    </plurals>
+    <plurals name="turn_summary_stat_pending">
+        <item quantity="one">%d требует проверки</item>
+        <item quantity="few">%d требуют проверки</item>
+        <item quantity="many">%d требуют проверки</item>
+        <item quantity="other">%d требуют проверки</item>
+    </plurals>
+    <plurals name="turn_summary_stat_skipped">
+        <item quantity="one">%d пропуск</item>
+        <item quantity="few">%d пропуска</item>
+        <item quantity="many">%d пропусков</item>
+        <item quantity="other">%d пропуска</item>
+    </plurals>
+    <string name="turn_summary_stat_time_label">Затраченное время</string>
+    <string name="turn_summary_stat_time_under_second_value">&lt;1 с</string>
+    <string name="turn_summary_stat_time_value">%1$.1f с</string>
+    <string name="turn_summary_stats_title">Статистика хода</string>
+    <string name="turn_summary_status_match_complete">Матч завершён! Итоговый счёт ниже.</string>
+    <string name="turn_summary_status_next_team">Готовьтесь к следующей команде.</string>
+    <string name="turn_timeline_title">Хронология хода</string>
+    <string name="tutorial_back">Назад</string>
+    <string name="tutorial_dismiss">Готово</string>
+    <string name="tutorial_finish">Играем</string>
+    <string name="tutorial_instructions">Вправо — верно, влево — пропуск.</string>
+    <string name="tutorial_instructions_no_skip">Вправо — верно. Пропусков не осталось.</string>
+    <string name="tutorial_instructions_vertical">Вверх — верно, вниз — пропуск.</string>
+    <string name="tutorial_instructions_vertical_no_skip">Вверх — верно. Пропусков не осталось.</string>
+    <string name="tutorial_next">Далее</string>
+    <string name="tutorial_skip">Пропустить обучение</string>
+    <string name="tutorial_step_actions_body">Нажимайте, когда жест не подходит, или для перезапуска матча.</string>
+    <string name="tutorial_step_actions_title">Запасные кнопки</string>
+    <string name="tutorial_step_status_body">Здесь обновляются таймер, команда, счёт и пропуски.</string>
+    <string name="tutorial_step_status_title">Следите за таймером</string>
+    <string name="tutorial_step_swipe_title">Жесты для очков</string>
+</resources>

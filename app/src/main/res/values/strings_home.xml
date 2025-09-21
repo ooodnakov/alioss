@@ -1,0 +1,30 @@
+<resources>
+    <!-- Home screen strings -->
+    <string name="decks_subtitle">Manage and import word decks</string>
+    <string name="history_subtitle">Review recent games</string>
+    <string name="home_empty_favorites">Enable decks to feature them here.</string>
+    <string name="home_favorite_decks">Favorite decks</string>
+    <string name="home_highlight_correct">%1$s nailed “%2$s”.</string>
+    <string name="home_highlight_empty">Play a round to build your highlight reel.</string>
+    <string name="home_highlight_skip">%1$s passed on “%2$s”.</string>
+    <string name="home_hero_active_subtitle">%1$s is on the clock — %2$d seconds left.</string>
+    <string name="home_hero_finished_subtitle">%1$s just wrapped their turn for %2$+d.</string>
+    <string name="home_hero_idle_subtitle">Start a new match for %1$d teams or tweak the setup first.</string>
+    <string name="home_hero_pending_subtitle">Next up: %1$s is waiting to play.</string>
+    <string name="home_hero_title_idle">Welcome to Alias</string>
+    <string name="home_hero_title_playing">Match in progress</string>
+    <string name="home_hero_title_ready">Ready for the next round?</string>
+    <string name="home_hero_title_victory">Match complete</string>
+    <string name="home_match_finished_tie">Last match ended in a %1$d-point tie.</string>
+    <string name="home_match_finished_winner">Last match: %1$s won with %2$d points.</string>
+    <string name="home_match_point">Match point! %1$s just closed a round.</string>
+    <string name="home_more_favorites">+%1$d</string>
+    <string name="home_recent_highlight">Recent highlight</string>
+    <string name="home_scoreboard_placeholder">Scores appear after the first round.</string>
+    <string name="quick_play">Quick Play</string>
+    <string name="quick_play_subtitle">Start a match with current settings</string>
+    <string name="resume_match">Resume match</string>
+    <string name="settings_subtitle">Time, teams, language and more</string>
+    <string name="start_new_game">Start new game</string>
+    <string name="view_history">View history</string>
+</resources>

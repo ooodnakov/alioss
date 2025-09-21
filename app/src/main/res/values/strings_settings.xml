@@ -1,0 +1,55 @@
+<resources>
+    <!-- Settings screen strings -->
+    <string name="add_team_label">Add Team</string>
+    <string name="advanced_tab">Advanced</string>
+    <string name="allow_nsfw_label">Allow NSFW</string>
+    <string name="auto_label">Auto</string>
+    <string name="drag_to_reorder_hint">Press and drag the handle to reorder your lineup.</string>
+    <string name="english_label">English</string>
+    <string name="feedback_and_layout">Feedback &amp; Layout</string>
+    <string name="haptics_label">Haptics</string>
+    <string name="input_feedback_tab">Input &amp; feedback</string>
+    <string name="language_and_content">Language &amp; Content</string>
+    <string name="landscape_label">Landscape</string>
+    <string name="match_rules_tab">Match rules</string>
+    <string name="max_skips_label">Max skips</string>
+    <string name="one_hand_layout_label">One-hand layout</string>
+    <string name="orientation_label">Orientation</string>
+    <string name="penalty_per_skip_label">Penalty/skip</string>
+    <string name="portrait_label">Portrait</string>
+    <string name="punish_skips_label">Punish skips</string>
+    <string name="remove_team">Remove team</string>
+    <string name="reset_confirm_message">This clears decks, words, history, and settings. This cannot be undone.</string>
+    <string name="reset_confirm_title">Reset local data?</string>
+    <string name="reset_local_data">Reset local data</string>
+    <string name="round_and_goals">Round &amp; Goals</string>
+    <string name="round_seconds_label">Round seconds</string>
+    <string name="russian_label">Russian</string>
+    <string name="save_and_restart_label">Save &amp; Restart</string>
+    <string name="save_label">Save</string>
+    <string name="score_target_toggle_label">Use score goal</string>
+    <string name="show_tutorial_again">Show tutorial again</string>
+    <string name="skips_section">Skips</string>
+    <string name="sound_effects_label">Sound effects</string>
+    <string name="support_and_data_label">Support &amp; data</string>
+    <string name="system_default_label">System</string>
+    <string name="target_score_label">Target score</string>
+    <string name="target_words_disabled_supporting_text">Disabled when using a score goal.</string>
+    <string name="target_words_label">Max words</string>
+    <string name="team_default_name">Team %1$d</string>
+    <string name="team_drag_handle_description">Reorder team</string>
+    <string name="team_suggestions_hint">Tap a suggestion to auto-fill the next open slot.</string>
+    <string name="team_suggestions_label">Need inspiration?</string>
+    <string name="teams_label">Teams</string>
+    <string name="teams_tab">Teams</string>
+    <string name="title_settings">Settings</string>
+    <string name="ui_language_label">UI language</string>
+    <string name="vertical_swipes_label">Vertical swipes (up/down)</string>
+    <string-array name="team_name_suggestions">
+        <item>Word Wizards</item>
+        <item>Lightning Bolts</item>
+        <item>Brain Trust</item>
+        <item>Trailblazers</item>
+        <item>Quick Thinkers</item>
+    </string-array>
+</resources>
