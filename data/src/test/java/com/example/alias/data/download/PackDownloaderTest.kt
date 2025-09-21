@@ -117,6 +117,18 @@ class PackDownloaderTest {
             }
         }
     }
+
+    @Test
+    fun rejects_untrusted_host() = runBlocking {
+        val body = okio.Buffer().writeUtf8("ok")
+        withHttpsDownloader(trustedSources = { _ -> emptySet() }) { server, downloader ->
+            server.enqueue(MockResponse().setResponseCode(200).setBody(body))
+            val url = server.url("/pack.json").toString().replace("http://", "https://")
+            assertFailsWith<IllegalArgumentException> {
+                downloader.download(url, null)
+            }
+        }
+    }
 }
 
 private suspend fun withHttpsDownloader(

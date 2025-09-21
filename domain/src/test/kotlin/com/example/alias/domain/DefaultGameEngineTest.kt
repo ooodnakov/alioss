@@ -9,6 +9,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -258,13 +259,6 @@ class DefaultGameEngineTest {
             runCurrent()
 
             val finishedAfterSkip = assertIs<GameState.TurnFinished>(engine.state.value)
-
-            // Temporarily comment out the failing assertion to see actual values
-            // assertFalse(finishedAfterSkip.matchOver)
-            println("ACTUAL: matchOver = ${finishedAfterSkip.matchOver}")
-            println("ACTUAL: deltaScore = ${finishedAfterSkip.deltaScore}")
-            println("ACTUAL: outcomes = ${finishedAfterSkip.outcomes.map { "${it.word} (${it.correct})" }}")
-            println("ACTUAL: scores = ${finishedAfterSkip.scores}")
             assertEquals(-1, finishedAfterSkip.deltaScore)
             assertEquals(2, finishedAfterSkip.outcomes.size)
 
@@ -491,4 +485,76 @@ class DefaultGameEngineTest {
                 engine.nextTurn()
             }
         }
+
+    @Test
+    fun `peek next word does not advance queue`() =
+        runTest {
+            val words = listOf("alpha", "beta", "gamma", "delta")
+            val expectedOrder = words.shuffled(Random(0L))
+            val engine = DefaultGameEngine(words, this)
+            val cfg = config.copy(goal = wordGoal(10), roundSeconds = 10)
+
+            engine.startMatch(cfg, teams = listOf("Team"), seed = 0L)
+
+            assertEquals(expectedOrder.first(), engine.peekNextWord())
+            assertEquals(expectedOrder.first(), engine.peekNextWord(), "peek should not consume word")
+
+            engine.startTurn()
+            engine.assertActiveWordAndPeek(expectedOrder[0], expectedOrder[1])
+
+            engine.correct()
+            engine.assertActiveWordAndPeek(expectedOrder[1], expectedOrder[2])
+
+            engine.correct()
+            engine.assertActiveWordAndPeek(expectedOrder[2], expectedOrder[3])
+
+            engine.correct()
+            engine.assertActiveWordAndPeek(expectedOrder[3], null)
+
+            engine.correct()
+            val finished = assertIs<GameState.TurnFinished>(engine.state.value)
+            assertTrue(finished.matchOver)
+            assertNull(engine.peekNextWord())
+
+            engine.nextTurn()
+            assertIs<GameState.MatchFinished>(engine.state.value)
+        }
+
+    @Test
+    fun `start match resets previous progress`() =
+        runTest {
+            val words = listOf("alpha", "beta", "gamma", "delta")
+            val engine = DefaultGameEngine(words, this)
+
+            val firstConfig = config.copy(goal = wordGoal(1), roundSeconds = 1)
+            engine.startMatch(firstConfig, teams = listOf("Team"), seed = 0L)
+
+            engine.startTurn()
+            engine.correct()
+            advanceTimeBy(firstConfig.roundSeconds * 1000L)
+            runCurrent()
+            val finishedFirst = assertIs<GameState.TurnFinished>(engine.state.value)
+            assertTrue(finishedFirst.matchOver)
+            engine.nextTurn()
+            assertIs<GameState.MatchFinished>(engine.state.value)
+
+            val secondConfig = config.copy(goal = wordGoal(3), roundSeconds = 5)
+            engine.startMatch(secondConfig, teams = listOf("Team"), seed = 1L)
+
+            val pending = assertIs<GameState.TurnPending>(engine.state.value)
+            assertEquals(mapOf("Team" to 0), pending.scores)
+            assertEquals(3, pending.remainingToGoal)
+
+            val expectedOrder = words.shuffled(Random(1L))
+            assertEquals(expectedOrder.first(), engine.peekNextWord())
+        }
+
+    private suspend fun DefaultGameEngine.assertActiveWordAndPeek(
+        expectedWord: String,
+        expectedPeek: String?,
+    ) {
+        val active = assertIs<GameState.TurnActive>(state.value)
+        assertEquals(expectedWord, active.word)
+        assertEquals(expectedPeek, peekNextWord())
+    }
 }
