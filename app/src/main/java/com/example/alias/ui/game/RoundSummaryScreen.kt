@@ -210,12 +210,7 @@ private fun timelineCard(
                     modifier = Modifier.padding(horizontal = 10.dp),
                     initiallyExpanded = true,
                     contentArrangement = Arrangement.spacedBy(12.dp),
-                    contentPadding = PaddingValues(
-                        start = 16.dp,
-                        end = 16.dp,
-                        top = 16.dp,
-                        bottom = 16.dp,
-                    ),
+                    contentPadding = PaddingValues(16.dp),
                 ) {
                     timeline.segments.forEach { segment ->
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -240,12 +235,7 @@ private fun timelineCard(
                     modifier = Modifier.padding(horizontal = 10.dp),
                     initiallyExpanded = false,
                     contentArrangement = Arrangement.spacedBy(20.dp),
-                    contentPadding = PaddingValues(
-                        start = 16.dp,
-                        end = 16.dp,
-                        top = 16.dp,
-                        bottom = 16.dp,
-                    ),
+                    contentPadding = PaddingValues(16.dp),
                 ) {
                     scoreProgressGraph(
                         events = timeline.events,
