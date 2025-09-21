@@ -12,7 +12,7 @@
     <string name="quick_play_subtitle">Игра с текущими настройками</string>
     <string name="decks_subtitle">Управление и импорт колод</string>
     <string name="settings_subtitle">Время, команды, язык и другое</string>
-    <string name="history_subtitle">Недавние ходы</string>
+    <string name="history_subtitle">Недавние партии</string>
     <string name="home_hero_title_idle">Добро пожаловать в Alias</string>
     <string name="home_hero_title_playing">Матч в разгаре</string>
     <string name="home_hero_title_ready">Готовы к новому раунду?</string>
@@ -303,4 +303,9 @@
     <string name="cancel">Отмена</string>
     <string name="confirm">Подтвердить</string>
     <string name="restore">Восстановить</string>
+    <string name="history_section_recent_games">Недавние партии</string>
+    <string name="history_recent_count">%1$d из %2$d игр</string>
+    <string name="history_no_entries_for_filters">Нет игр, подходящих под фильтры.</string>
+    <string name="history_game_summary">Раундов: %1$d · Слов: %2$d</string>
+    <string name="history_game_teams_label">Команды: %1$s</string>
 </resources>
