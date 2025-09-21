@@ -668,25 +668,16 @@ fun gameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
             roundSummaryScreen(vm = vm, s = s, settings = settings)
         }
         is GameState.MatchFinished -> {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text(
-                    stringResource(R.string.match_finished_message),
-                    style = MaterialTheme.typography.headlineSmall,
-                )
-                scoreboard(s.scores)
-                Text(stringResource(R.string.start_new_match))
-                Button(onClick = {
+            MatchOverScreen(
+                scores = s.scores,
+                onRestartMatch = {
                     if (settings.hapticsEnabled) {
                         val effect = VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK)
                         vibrator?.vibrate(effect)
                     }
                     vm.restartMatch()
-                }) { Text(stringResource(R.string.restart_match)) }
-            }
+                },
+            )
         }
     }
 }
