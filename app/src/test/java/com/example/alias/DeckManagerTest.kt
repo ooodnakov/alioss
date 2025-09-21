@@ -246,6 +246,7 @@ class DeckManagerTest {
         )
         val removed = remaining.copy(id = "removed", name = "Removed")
         deckRepository.setDecks(listOf(remaining, removed))
+        settingsRepository.seedBundledDeckHashes(setOf("removed:oldhash", "alpha:oldhash"))
         bundledDeckProvider.assets["alpha.json"] = sampleDeckJson(id = "alpha", words = listOf("keep"))
 
         deckManager.prepareInitialLoad()

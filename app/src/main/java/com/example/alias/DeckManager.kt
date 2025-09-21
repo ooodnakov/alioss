@@ -164,10 +164,12 @@ class DeckManager
             existingDecks: List<DeckEntity>,
             currentBundledDeckIds: Set<String>,
             deletedBundledDeckIds: Set<String>,
+            previousBundledDeckIds: Set<String>,
         ) {
             existingDecks
                 .asSequence()
                 .filter { it.isOfficial }
+                .filter { previousBundledDeckIds.contains(it.id) }
                 .filterNot { currentBundledDeckIds.contains(it.id) }
                 .filterNot { deletedBundledDeckIds.contains(it.id) }
                 .forEach { deck ->
@@ -240,6 +242,7 @@ class DeckManager
             return withContext(Dispatchers.IO) {
                 val assetFiles = bundledDeckProvider.listBundledDeckFiles()
                 val previousHashes = settingsRepository.readBundledDeckHashes()
+                val previousBundledDeckIds = previousHashes.map { it.substringBefore(':') }.filterNot { it.endsWith(".json") }.toSet()
                 val deletedBundledDeckIds = settingsRepository.readDeletedBundledDeckIds()
 
                 val existingDecks = deckRepository.getDecks().first()
@@ -252,7 +255,7 @@ class DeckManager
                     hadDecks = hadDecks,
                 )
 
-                pruneOrphanedBundledDecks(existingDecks, scanResult.currentBundledDeckIds, deletedBundledDeckIds)
+                pruneOrphanedBundledDecks(existingDecks, scanResult.currentBundledDeckIds, deletedBundledDeckIds, previousBundledDeckIds)
 
                 importBundledDecks(scanResult.toImport, scanResult.assetContents)
 
