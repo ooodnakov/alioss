@@ -99,9 +99,7 @@ class PackDownloader(
                 add("https://$host:$port")
             }
         }
-        return origins.any { origin ->
-            origin.trimEnd('/').lowercase() in allowedNormalized
-        }
+        return origins.any { it in allowedNormalized }
     }
 }
 
