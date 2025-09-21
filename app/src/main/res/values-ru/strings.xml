@@ -65,6 +65,7 @@
     <string name="restart_match">Перезапустить матч</string>
     <string name="start_new_match">Новый матч: Настройки или Перезапуск.</string>
     <string name="match_finished_message">🎉 Матч завершён 🎉</string>
+    <string name="match_over_back_to_menu">В меню</string>
     <string name="start_turn">Начать</string>
     <plurals name="turn_pending_status_words">
         <item quantity="one">До победы осталось %d слово!</item>

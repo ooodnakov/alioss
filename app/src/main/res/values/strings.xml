@@ -59,6 +59,7 @@
     <string name="restart_match">Restart Match</string>
     <string name="start_new_match">Start a new match from Settings or Restart.</string>
     <string name="match_finished_message">🎉 Match over 🎉</string>
+    <string name="match_over_back_to_menu">Back to menu</string>
     <string name="start_turn">Start</string>
     <plurals name="turn_pending_status_words">
         <item quantity="one">Only %d correct word to win!</item>
