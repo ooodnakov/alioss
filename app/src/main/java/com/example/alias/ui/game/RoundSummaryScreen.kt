@@ -1243,7 +1243,7 @@ private fun timelineSegmentHeader(
                 Surface(
                     color = colors.secondaryContainer.copy(alpha = 0.7f),
                     contentColor = colors.onSecondaryContainer,
-                    shape = RoundedCornerShape(50),
+                    shape = CircleShape,
                 ) {
                     Text(
                         text = stringResource(R.string.timeline_bonus_label),
