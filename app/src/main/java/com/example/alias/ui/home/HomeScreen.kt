@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -54,6 +55,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.alias.R
@@ -61,6 +63,7 @@ import com.example.alias.data.db.DeckEntity
 import com.example.alias.data.db.TurnHistoryEntity
 import com.example.alias.data.settings.Settings
 import com.example.alias.domain.GameState
+import com.example.alias.ui.common.toScoreboardEntries
 
 data class HomeViewState(
     val gameState: GameState?,
@@ -388,27 +391,43 @@ private fun homeScoreboardSection(
                 color = contentColor.copy(alpha = 0.7f),
             )
         } else {
+            val entries = scoreboard.toScoreboardEntries()
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                scoreboard.entries.sortedByDescending { it.value }.forEach { entry ->
+                entries.forEach { entry ->
+                    val pillContentColor = if (entry.isLeader) {
+                        contentColor.copy(alpha = 0.95f)
+                    } else {
+                        contentColor.copy(alpha = 0.85f)
+                    }
                     homePill(
-                        backgroundColor = contentColor.copy(alpha = 0.08f),
+                        backgroundColor = contentColor.copy(alpha = if (entry.isLeader) 0.14f else 0.08f),
                         contentColor = contentColor,
                     ) {
                         Text(
-                            entry.key,
+                            entry.team,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = contentColor,
+                            color = pillContentColor,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                         )
                         Spacer(modifier = Modifier.weight(1f, fill = false))
                         Text(
-                            entry.value.toString(),
+                            entry.score.toString(),
                             style = MaterialTheme.typography.bodyMedium,
-                            color = contentColor.copy(alpha = 0.95f),
-                            fontWeight = FontWeight.SemiBold,
+                            color = pillContentColor,
+                            fontWeight = if (entry.isLeader) FontWeight.SemiBold else FontWeight.Medium,
                         )
+                        if (entry.isTiedLeader) {
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = stringResource(R.string.tie_suffix).trim(),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = contentColor.copy(alpha = 0.75f),
+                            )
+                        }
                     }
                 }
             }
