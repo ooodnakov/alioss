@@ -33,15 +33,19 @@ import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.ChipColors
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalMinimumInteractiveComponentEnforcement
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -674,63 +678,95 @@ private fun historyEntryCard(
 
     Surface(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(20.dp),
         color = containerColor,
         contentColor = colors.onSurface,
         tonalElevation = 1.dp,
         border = BorderStroke(1.dp, borderColor),
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
                     imageVector = visuals.icon,
                     contentDescription = null,
                     tint = visuals.accent,
-                    modifier = Modifier.size(28.dp),
+                    modifier = Modifier.size(24.dp),
                 )
                 Column(
                     modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
                 ) {
                     Text(
                         entry.word,
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.SemiBold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
                     Text(
                         relativeTime,
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MaterialTheme.typography.labelSmall,
                         color = colors.onSurfaceVariant,
                     )
                 }
                 Text(
                     text = stringResource(visuals.labelRes),
-                    style = MaterialTheme.typography.labelLarge,
+                    style = MaterialTheme.typography.labelMedium,
                     color = visuals.accent,
                     fontWeight = FontWeight.Medium,
                 )
             }
             FlowRow(
+                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.Center,
+                maxLines = 1,
             ) {
                 if (showTeam) {
-                    AssistChip(onClick = {}, enabled = false, colors = chipColors, label = { Text(entry.team) })
+                    DisabledCompactAssistChip(
+                        label = entry.team,
+                        colors = chipColors,
+                    )
                 }
                 val difficultyLabel = entry.difficulty?.let { stringResource(R.string.word_difficulty_value, it) }
                     ?: stringResource(R.string.history_filter_unknown_difficulty)
-                AssistChip(onClick = {}, enabled = false, colors = chipColors, label = { Text(difficultyLabel) })
+                DisabledCompactAssistChip(
+                    label = difficultyLabel,
+                    colors = chipColors,
+                )
             }
         }
+    }
+}
+
+@Suppress("ExperimentalMaterial3Api")
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DisabledCompactAssistChip(
+    label: String,
+    colors: ChipColors,
+    modifier: Modifier = Modifier,
+) {
+    CompositionLocalProvider(LocalMinimumInteractiveComponentEnforcement provides false) {
+        AssistChip(
+            onClick = {},
+            enabled = false,
+            modifier = modifier.height(28.dp),
+            colors = colors,
+            label = {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.labelSmall,
+                )
+            },
+        )
     }
 }
 
@@ -944,3 +980,4 @@ private data class HistoryEntryVisuals(
     val accent: Color,
     @StringRes val labelRes: Int,
 )
+
