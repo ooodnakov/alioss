@@ -442,11 +442,9 @@ private fun matchRulesTab(
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         enabled = !state.scoreTargetEnabled,
-                        supportingText = {
-                            if (state.scoreTargetEnabled) {
-                                Text(stringResource(R.string.target_words_disabled_supporting_text))
-                            }
-                        },
+                        supportingText = if (state.scoreTargetEnabled) {
+                            { Text(stringResource(R.string.target_words_disabled_supporting_text)) }
+                        } else null,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     )
                     Row(verticalAlignment = Alignment.CenterVertically) {
