@@ -31,9 +31,6 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.HorizontalDivider
@@ -209,7 +206,7 @@ private fun timelineCard(
                 ExpandableSection(
                     title = stringResource(R.string.timeline_breakdown_title),
                     subtitle = stringResource(R.string.timeline_breakdown_subtitle),
-                    modifier = Modifier.padding(horizontal = 20.dp),
+                    modifier = Modifier.padding(horizontal = 10.dp),
                     initiallyExpanded = true,
                     contentArrangement = Arrangement.spacedBy(12.dp),
                 ) {
@@ -233,7 +230,7 @@ private fun timelineCard(
                 ExpandableSection(
                     title = stringResource(R.string.timeline_graphs_title),
                     subtitle = stringResource(R.string.timeline_graphs_subtitle),
-                    modifier = Modifier.padding(horizontal = 20.dp),
+                    modifier = Modifier.padding(horizontal = 10.dp),
                     initiallyExpanded = false,
                     contentArrangement = Arrangement.spacedBy(20.dp),
                 ) {
@@ -674,7 +671,7 @@ private fun scoreProgressGraph(events: List<TimelineEvent>, modifier: Modifier =
                     color = colors.onSurfaceVariant,
                     modifier = Modifier
                         .rotate(-90f)
-                        .padding(end = 8.dp),
+                        .padding(end = 2.dp),
                 )
                 Column(
                     modifier = Modifier
@@ -740,10 +737,10 @@ private fun scoreProgressGraph(events: List<TimelineEvent>, modifier: Modifier =
                             .fillMaxWidth()
                             .padding(top = 8.dp, end = 8.dp, bottom = 8.dp),
                     ) {
-                        val chartLeftPadding = 32.dp.toPx()
-                        val chartRightPadding = 16.dp.toPx()
-                        val chartTopPadding = 16.dp.toPx()
-                        val chartBottomPadding = 40.dp.toPx()
+                        val chartLeftPadding = 4.dp.toPx()
+                        val chartRightPadding = 4.dp.toPx()
+                        val chartTopPadding = 4.dp.toPx()
+                        val chartBottomPadding = 8.dp.toPx()
                         val chartWidth = size.width - chartLeftPadding - chartRightPadding
                         val chartHeight = size.height - chartTopPadding - chartBottomPadding
                         if (chartWidth <= 0f || chartHeight <= 0f) return@Canvas
@@ -808,7 +805,8 @@ private fun scoreProgressGraph(events: List<TimelineEvent>, modifier: Modifier =
                                 end = Offset(xPosition, chartBottom + tickLength),
                                 strokeWidth = axisStrokeWidth,
                             )
-                            val label = formatAxisValue(tick, allowFractions = hasElapsedData && !useIndex)
+                            val displayValue = if (hasElapsedData && !useIndex) tick / 1000f else tick
+                            val label = formatAxisValue(displayValue, allowFractions = hasElapsedData && !useIndex)
                             val baseline = xLabelTop - xFontMetrics.ascent
                             drawContext.canvas.nativeCanvas.drawText(label, xPosition, baseline, xAxisPaint)
                         }
@@ -982,10 +980,10 @@ private fun timeBetweenWordsGraph(events: List<TimelineEvent>, modifier: Modifie
                             .fillMaxWidth()
                             .padding(top = 8.dp, end = 8.dp, bottom = 8.dp),
                     ) {
-                        val chartLeftPadding = 32.dp.toPx()
-                        val chartRightPadding = 16.dp.toPx()
-                        val chartTopPadding = 16.dp.toPx()
-                        val chartBottomPadding = 40.dp.toPx()
+                        val chartLeftPadding = 4.dp.toPx()
+                        val chartRightPadding = 4.dp.toPx()
+                        val chartTopPadding = 4.dp.toPx()
+                        val chartBottomPadding = 8.dp.toPx()
                         val chartWidth = size.width - chartLeftPadding - chartRightPadding
                         val chartHeight = size.height - chartTopPadding - chartBottomPadding
                         if (chartWidth <= 0f || chartHeight <= 0f) return@Canvas
@@ -1093,6 +1091,9 @@ private fun timeBetweenWordsGraph(events: List<TimelineEvent>, modifier: Modifie
             text = stringResource(R.string.timeline_time_between_graph_average, average),
             style = MaterialTheme.typography.bodySmall,
             color = colors.onSurfaceVariant,
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .padding(horizontal = 4.dp),
         )
     }
 }
@@ -1232,20 +1233,6 @@ private fun timelineSegmentHeader(
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                if (showBonus) {
-                    AssistChip(
-                        onClick = {},
-                        enabled = false,
-                        leadingIcon = {
-                            Icon(Icons.Filled.Star, contentDescription = null, modifier = Modifier.size(16.dp))
-                        },
-                        label = { Text(stringResource(R.string.timeline_bonus_label)) },
-                        colors = AssistChipDefaults.assistChipColors(
-                            disabledContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                            disabledLabelColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                        ),
-                    )
-                }
             }
             Text(
                 text = stringResource(R.string.timeline_change, delta),
@@ -1325,20 +1312,6 @@ private fun timelineEventBlock(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
-                    if (event.isBonus) {
-                        AssistChip(
-                            onClick = {},
-                            enabled = false,
-                            leadingIcon = {
-                                Icon(Icons.Filled.Star, contentDescription = null, modifier = Modifier.size(16.dp))
-                            },
-                            label = { Text(stringResource(R.string.timeline_bonus_label)) },
-                            colors = AssistChipDefaults.assistChipColors(
-                                disabledContainerColor = colors.tertiaryContainer,
-                                disabledLabelColor = colors.onTertiaryContainer,
-                            ),
-                        )
-                    }
                 }
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
