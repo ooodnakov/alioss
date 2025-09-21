@@ -74,6 +74,11 @@ val MIGRATION_6_7 = Migration(6, 7) { database ->
     database.execSQL("ALTER TABLE `decks` ADD COLUMN `coverImageBase64` TEXT")
 }
 
+// Migration 7→8: Add matchId to turn_history for proper match grouping
+val MIGRATION_7_8 = Migration(7, 8) { database ->
+    database.execSQL("ALTER TABLE `turn_history` ADD COLUMN `matchId` TEXT")
+}
+
 /**
  * All migrations as a list for easy registration in DataModule
  */
@@ -84,4 +89,5 @@ val ALL_MIGRATIONS = arrayOf(
     MIGRATION_4_5,
     MIGRATION_5_6,
     MIGRATION_6_7,
+    MIGRATION_7_8,
 )

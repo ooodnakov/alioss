@@ -814,6 +814,30 @@ private data class HistoryTurn(
 private fun groupHistoryIntoGames(history: List<TurnHistoryEntity>): List<HistoryGame> {
     if (history.isEmpty()) return emptyList()
 
+    // Group by matchId for entries that have it
+    val (withMatchId, withoutMatchId) = history.partition { it.matchId != null }
+
+    val games = mutableListOf<HistoryGame>()
+
+    // Process entries with matchId: each matchId is a separate game
+    withMatchId.groupBy { it.matchId!! }.forEach { (matchId, entries) ->
+        val turns = groupEntriesIntoTurns(entries.sortedBy { it.timestamp })
+        if (turns.isNotEmpty()) {
+            games += buildGame(turns)
+        }
+    }
+
+    // Process entries without matchId: use time-based grouping
+    if (withoutMatchId.isNotEmpty()) {
+        val turns = groupEntriesIntoTurns(withoutMatchId.sortedBy { it.timestamp })
+        val timeBasedGames = groupTurnsIntoGames(turns)
+        games += timeBasedGames
+    }
+
+    return games.sortedByDescending { it.endTimestamp }
+}
+
+private fun groupEntriesIntoTurns(history: List<TurnHistoryEntity>): List<HistoryTurn> {
     val turns = mutableListOf<HistoryTurn>()
     var currentEntries = mutableListOf<TurnHistoryEntity>()
     var lastEntry: TurnHistoryEntity? = null
@@ -837,6 +861,10 @@ private fun groupHistoryIntoGames(history: List<TurnHistoryEntity>): List<Histor
         turns += buildTurn(currentEntries.toList())
     }
 
+    return turns
+}
+
+private fun groupTurnsIntoGames(turns: List<HistoryTurn>): List<HistoryGame> {
     if (turns.isEmpty()) return emptyList()
 
     val games = mutableListOf<HistoryGame>()
@@ -861,7 +889,7 @@ private fun groupHistoryIntoGames(history: List<TurnHistoryEntity>): List<Histor
         games += buildGame(currentTurns.toList())
     }
 
-    return games.sortedByDescending { it.endTimestamp }
+    return games
 }
 
 private fun buildTurn(entries: List<TurnHistoryEntity>): HistoryTurn {

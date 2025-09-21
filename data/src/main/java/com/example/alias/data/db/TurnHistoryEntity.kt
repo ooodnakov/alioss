@@ -12,4 +12,5 @@ data class TurnHistoryEntity(
     val skipped: Boolean,
     val difficulty: Int?,
     val timestamp: Long,
+    val matchId: String? = null,
 )

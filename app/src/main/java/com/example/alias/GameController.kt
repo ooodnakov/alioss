@@ -21,11 +21,13 @@ class GameController
         private val historyRepository: TurnHistoryRepository,
         private val gameEngineFactory: GameEngineFactory,
     ) {
+    private var currentMatchId: String? = null
         fun createEngine(words: List<String>, scope: CoroutineScope): GameEngine {
             return gameEngineFactory.create(words, scope)
         }
 
         suspend fun startMatch(engine: GameEngine, settings: Settings) {
+            currentMatchId = java.util.UUID.randomUUID().toString()
             val goal =
                 if (settings.scoreTargetEnabled) {
                     MatchGoal(MatchGoalType.TARGET_SCORE, settings.targetScore)
@@ -54,6 +56,7 @@ class GameController
                         skipped = outcome.skipped,
                         difficulty = infoByWord[outcome.word]?.difficulty,
                         timestamp = outcome.timestamp,
+                        matchId = currentMatchId,
                     )
                 }
                 historyRepository.save(entries)

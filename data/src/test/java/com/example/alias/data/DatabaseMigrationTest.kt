@@ -7,6 +7,7 @@ import com.example.alias.data.db.MIGRATION_3_4
 import com.example.alias.data.db.MIGRATION_4_5
 import com.example.alias.data.db.MIGRATION_5_6
 import com.example.alias.data.db.MIGRATION_6_7
+import com.example.alias.data.db.MIGRATION_7_8
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Test
@@ -25,12 +26,13 @@ class DatabaseMigrationTest {
         assertNotNull("MIGRATION_4_5 should not be null", MIGRATION_4_5)
         assertNotNull("MIGRATION_5_6 should not be null", MIGRATION_5_6)
         assertNotNull("MIGRATION_6_7 should not be null", MIGRATION_6_7)
+        assertNotNull("MIGRATION_7_8 should not be null", MIGRATION_7_8)
     }
 
     @Test
     fun allMigrationsArrayContainsAllMigrations() {
-        // Test that ALL_MIGRATIONS contains all 6 migration objects
-        assertEquals("ALL_MIGRATIONS should contain 6 migrations", 6, ALL_MIGRATIONS.size)
+        // Test that ALL_MIGRATIONS contains all 7 migration objects
+        assertEquals("ALL_MIGRATIONS should contain 7 migrations", 7, ALL_MIGRATIONS.size)
 
         // Verify each migration has correct start and end versions
         assertEquals("MIGRATION_1_2 should go from version 1 to 2", 1, ALL_MIGRATIONS[0].startVersion)
@@ -50,6 +52,9 @@ class DatabaseMigrationTest {
 
         assertEquals("MIGRATION_6_7 should go from version 6 to 7", 6, ALL_MIGRATIONS[5].startVersion)
         assertEquals("MIGRATION_6_7 should go from version 6 to 7", 7, ALL_MIGRATIONS[5].endVersion)
+
+        assertEquals("MIGRATION_7_8 should go from version 7 to 8", 7, ALL_MIGRATIONS[6].startVersion)
+        assertEquals("MIGRATION_7_8 should go from version 7 to 8", 8, ALL_MIGRATIONS[6].endVersion)
     }
 
     @Test
@@ -71,11 +76,11 @@ class DatabaseMigrationTest {
 
     @Test
     fun migrationsCoverCompleteRange() {
-        // Ensure migrations cover the complete range from version 1 to 7
+        // Ensure migrations cover the complete range from version 1 to 8
         val firstMigration = ALL_MIGRATIONS.first()
         val lastMigration = ALL_MIGRATIONS.last()
 
         assertEquals("First migration should start at version 1", 1, firstMigration.startVersion)
-        assertEquals("Last migration should end at version 7", 7, lastMigration.endVersion)
+        assertEquals("Last migration should end at version 8", 8, lastMigration.endVersion)
     }
 }
