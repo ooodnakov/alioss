@@ -116,7 +116,7 @@ fun historyScreen(
         return
     }
 
-    val sorted = remember(history) { history.sortedByDescending { it.timestamp } }
+    val chronologicalHistory = remember(history) { history.sortedBy { it.timestamp } }
     val teams = remember(history) { history.map { it.team }.distinct().sorted() }
     val difficulties = remember(history) { history.mapNotNull { it.difficulty }.distinct().sorted() }
 
@@ -124,7 +124,7 @@ fun historyScreen(
     val filterListener = rememberHistoryFilterListener(filterState)
     var headerExpanded by rememberSaveable { mutableStateOf(false) }
 
-    val games = remember(sorted) { groupHistoryIntoGames(sorted) }
+    val games = remember(chronologicalHistory) { groupHistoryIntoGames(chronologicalHistory) }
     val filteredGames = remember(
         games,
         filterState.selectedTeam,
@@ -195,7 +195,7 @@ fun historyScreen(
                     filterState = filterState,
                     listener = filterListener,
                 )
-                historyPerformanceSection(history = sorted)
+                historyPerformanceSection(history = chronologicalHistory)
             }
         }
         HorizontalDivider()
@@ -454,6 +454,10 @@ private fun historyTurnCard(turn: HistoryTurn) {
         turn.missedCount,
     )
 
+    val summaryText = remember(correctLabel, skippedLabel, pendingLabel) {
+        listOf(correctLabel, skippedLabel, pendingLabel).joinToString(" • ")
+    }
+
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -482,7 +486,7 @@ private fun historyTurnCard(turn: HistoryTurn) {
                         color = colors.onSurfaceVariant,
                     )
                     Text(
-                        text = listOf(correctLabel, skippedLabel, pendingLabel).joinToString(" • "),
+                        text = summaryText,
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.onSurfaceVariant,
                     )
@@ -773,18 +777,17 @@ private data class HistoryTurn(
 
 private fun groupHistoryIntoGames(history: List<TurnHistoryEntity>): List<HistoryGame> {
     if (history.isEmpty()) return emptyList()
-    val orderedEntries = history.sortedBy { it.timestamp }
-    if (orderedEntries.isEmpty()) return emptyList()
 
     val turns = mutableListOf<HistoryTurn>()
     var currentEntries = mutableListOf<TurnHistoryEntity>()
     var lastEntry: TurnHistoryEntity? = null
 
-    orderedEntries.forEach { entry ->
+    history.forEach { entry ->
+        val last = lastEntry
         val shouldStartNewTurn = when {
             currentEntries.isEmpty() -> false
             entry.team != currentEntries.last().team -> true
-            lastEntry != null && entry.timestamp - (lastEntry?.timestamp ?: entry.timestamp) > TURN_BREAK_THRESHOLD_MILLIS -> true
+            last != null && entry.timestamp - last.timestamp > TURN_BREAK_THRESHOLD_MILLIS -> true
             else -> false
         }
         if (shouldStartNewTurn) {
@@ -805,11 +808,11 @@ private fun groupHistoryIntoGames(history: List<TurnHistoryEntity>): List<Histor
     var lastTurnEnd: Long? = null
 
     turns.forEach { turn ->
-        val shouldStartNewGame = when {
-            currentTurns.isEmpty() -> false
-            lastTurnEnd == null -> false
-            turn.startTimestamp - lastTurnEnd!! > GAME_BREAK_THRESHOLD_MILLIS -> true
-            else -> false
+        val last = lastTurnEnd
+        val shouldStartNewGame = if (currentTurns.isNotEmpty() && last != null) {
+            turn.startTimestamp - last > GAME_BREAK_THRESHOLD_MILLIS
+        } else {
+            false
         }
         if (shouldStartNewGame) {
             games += buildGame(currentTurns.toList())
@@ -829,15 +832,14 @@ private fun buildTurn(entries: List<TurnHistoryEntity>): HistoryTurn {
     if (entries.isEmpty()) {
         throw IllegalArgumentException("Cannot build turn with no entries")
     }
-    val ordered = entries.sortedBy { it.timestamp }
-    val team = ordered.first().team
-    val turnId = ordered.maxOfOrNull { it.id } ?: ordered.hashCode().toLong()
+    val team = entries.first().team
+    val turnId = entries.maxOfOrNull { it.id } ?: entries.hashCode().toLong()
     return HistoryTurn(
         id = turnId,
         team = team,
-        entries = ordered,
-        startTimestamp = ordered.first().timestamp,
-        endTimestamp = ordered.last().timestamp,
+        entries = entries,
+        startTimestamp = entries.first().timestamp,
+        endTimestamp = entries.last().timestamp,
     )
 }
 
@@ -845,13 +847,12 @@ private fun buildGame(turns: List<HistoryTurn>): HistoryGame {
     if (turns.isEmpty()) {
         throw IllegalArgumentException("Cannot build game with no turns")
     }
-    val ordered = turns.sortedBy { it.startTimestamp }
-    val gameId = ordered.maxOfOrNull { it.id } ?: ordered.hashCode().toLong()
+    val gameId = turns.maxOfOrNull { it.id } ?: turns.hashCode().toLong()
     return HistoryGame(
         id = gameId,
-        startTimestamp = ordered.first().startTimestamp,
-        endTimestamp = ordered.last().endTimestamp,
-        turns = ordered,
+        startTimestamp = turns.first().startTimestamp,
+        endTimestamp = turns.last().endTimestamp,
+        turns = turns,
     )
 }
 
