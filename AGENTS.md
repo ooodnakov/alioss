@@ -1,48 +1,42 @@
 # Repository Guidelines
 
-## Project Structure & Module Organization
-- `app/`: Android app built with Jetpack Compose UI and Hilt wiring. Assets live in `app/src/main/assets/` (e.g., bundled `decks/`).
-- `data/`: Android library for Room entities/DAOs, repositories, JSON pack parser, preferences storage, and optional pack download helpers.
-- `domain/`: Pure Kotlin game engine and immutable state machines. No Android dependencies allowed.
-- `scripts/`: Helper shell scripts (e.g., `dev-build.sh`, `run-domain-tests.sh`, `download-pack.sh`, `setup-android-env.sh`).
-- `.github/workflows/`: GitHub Actions CI that runs formatting, detekt, unit tests for all modules, and assembles the debug APK.
+## Project Structure
+- `app/` – Android app module with Compose UI, navigation host, DI wiring (Hilt), controllers, and assets.
+- `data/` – Android library providing Room entities/DAOs, repositories, pack parser/downloader, and Preferences DataStore-backed settings.
+- `domain/` – Pure Kotlin module implementing the deterministic game engine and shared models (no Android dependencies).
+- `scripts/` – Helper scripts for builds, SDK setup, reproducibility snapshots, and pack downloads.
 
-## Tooling, Build, and Test Commands
-- Requires the Java 21 toolchain and Kotlin 1.9.x (configured via Gradle wrappers/toolchains).
-- Formatting: `./gradlew spotlessApply` (Spotless + ktlint). Check with `./gradlew spotlessCheck`.
-- Static analysis: `./gradlew detekt` (uses `detekt.yml`).
-- Unit tests: `./gradlew :domain:test :data:test :app:testDebugUnitTest`.
-- Build APK: `./gradlew :app:assembleDebug`.
-- Convenience scripts:
-  - `scripts/dev-build.sh` — Runs Spotless check, detekt, all unit tests, and assembles the debug APK.
-  - `scripts/run-domain-tests.sh` — Runs only the domain module tests.
-  - `scripts/assemble-apk.sh` — Assembles the debug APK after ensuring dependencies.
-- Headless Android SDK setup (CI/Linux): `scripts/setup-android-env.sh` (installs CLI tools, accepts licenses, optional build).
+## Tooling & Versions
+- Requires JDK 21 and Android SDK 34. The Gradle Wrapper configures AGP 8.5.2 and Kotlin 1.9.23 via `gradle/libs.versions.toml`.
+- Compose compiler 1.5.11, Compose BOM 2024.02.00, Hilt 2.51, Room 2.6.1.
+- Formatting uses Spotless (ktlint 0.50.0). Static analysis runs with Detekt 1.23.8 (reports enabled, failures ignored locally).
 
-## Coding Style & Conventions
-- Kotlin official code style (`gradle.properties`). Tooling is enforced by Spotless (ktlint).
-- Target JVM/Java version 21 across modules.
-- Package naming: lowercase (e.g., `com.example.alias.domain`).
-- Class/Object naming: `PascalCase`; functions/vars: `lowerCamelCase`; constants: `UPPER_SNAKE_CASE`.
-- Suffix conventions: `ViewModel`, `Dao`, `Entity`, `Repository`, etc.
-- `domain` must remain platform-agnostic (pure Kotlin, deterministic, seed-driven logic).
+## Build & Test Commands
+Run these before pushing or opening a PR:
+- `./gradlew spotlessCheck detekt` – Formatting + static analysis.
+- `./gradlew :domain:test :data:test :app:testDebugUnitTest` – JVM/unit tests for every module.
+- `./gradlew :app:assembleDebug` – Build debug APK for smoke-testing.
+- Optional: `./gradlew :app:assembleDevRelease` for a release-like, installable build.
+- Convenience script: `scripts/dev-build.sh` runs tests and assembles the debug APK; pass `--clean`/`--no-tests` as needed.
 
-## Testing Guidelines
-- `domain`: Pure JVM tests with `kotlin("test")` and `kotlinx-coroutines-test`. Keep tests deterministic (same seed ⇒ same order).
-- `data`: JVM Robolectric-friendly tests for Room/JSON/HTTP helpers; prefer in-memory DB and mocked HTTP via OkHttp MockWebServer.
-- `app`: Compose/Robolectric unit tests live under `app/src/test/`. Favor state-driven tests over timing-based ones.
-- Avoid flakiness: use virtual time for coroutine tests and deterministic seeds for sampling logic.
+## Coding Conventions
+- Kotlin official style; keep files Spotless-compliant.
+- Keep `domain` deterministic and Android-free. Inject randomness via seeds and expose immutable state through flows.
+- Surface business logic in controllers/repositories, not Compose UI. Keep composables focused on rendering state and invoking callbacks.
+- When touching Room schemas, add migrations in `data/.../db/Migrations.kt` and adjust tests; no destructive fallback in release or `devRelease`.
+- Pack import changes must update parser, validator, and documentation together. Preserve security constraints (HTTPS-only, allow-listed hosts, checksum verification).
+- Local storage only: no telemetry, analytics, or background networking. Any new network feature must be opt-in, HTTPS, and policy-checked.
 
-## Commit & Pull Request Guidelines
-- Commits: concise, present-tense subjects; include optional scope tags (e.g., `[domain] Implement skip penalty`).
-- Before opening a PR, ensure the following pass locally: `./gradlew spotlessCheck detekt :domain:test :data:test :app:testDebugUnitTest :app:assembleDebug`.
-- PRs should remain focused and include:
-  - Summary, motivation, and modules touched.
-  - Screenshots or short clips for UI changes.
-  - Steps to reproduce/test locally and any migration notes.
-  - Confirmation that the CI-equivalent commands above succeed.
+## Testing Notes
+- `domain` tests live under `domain/src/test` and should stay deterministic (use fake clocks/seeds where necessary).
+- `data` tests can use in-memory Room and MockWebServer. Avoid Robolectric unless absolutely required.
+- `app` tests currently cover controllers and localization; Compose UI tests are limited—add them if contributing UI features.
 
-## Security & Configuration Tips
-- No telemetry, ads, background networking, or dynamic code loading. Optional pack downloads must use allow-listed HTTPS origins with hash/signature verification.
-- Do not commit secrets or keystores. Bundle only vetted assets under `assets/decks/`.
-- Validate pack inputs (sizes, languages, difficulty range) and enforce reasonable limits to avoid oversized assets.
+## Assets & Localization
+- Bundled decks reside in `app/src/main/assets/decks/` and are hashed to detect updates/deletions. Update hashes/migrations if assets change.
+- Strings are localized in English and Russian. New UI must externalize strings and provide translations.
+
+## Security & Privacy
+- Manual pack downloads must respect the trusted-host allow list and 40 MB cap (`PackDownloader`).
+- Do not commit secrets or keystores. Bundle only vetted assets with attribution metadata.
+- Provide “Reset local data” pathways when adding new persistent storage.
