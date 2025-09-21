@@ -3,8 +3,10 @@ package com.example.alias.ui
 import android.text.format.DateUtils
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,6 +27,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.AlertDialog
@@ -55,17 +58,25 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.alias.R
 import com.example.alias.data.db.TurnHistoryEntity
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import kotlin.math.roundToInt
 
 private const val SPARKLINE_RECENT_ENTRIES_COUNT = 12
 private val SPARKLINE_DOT_RADIUS = 4.dp
 private const val SPARKLINE_STROKE_WIDTH = 4f
+private const val TURN_BREAK_THRESHOLD_MILLIS = 3 * 60_000L
+private const val GAME_BREAK_THRESHOLD_MILLIS = 20 * 60_000L
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -105,7 +116,7 @@ fun historyScreen(
         return
     }
 
-    val sorted = remember(history) { history.sortedByDescending { it.timestamp } }
+    val chronologicalHistory = remember(history) { history.sortedBy { it.timestamp } }
     val teams = remember(history) { history.map { it.team }.distinct().sorted() }
     val difficulties = remember(history) { history.mapNotNull { it.difficulty }.distinct().sorted() }
 
@@ -113,17 +124,20 @@ fun historyScreen(
     val filterListener = rememberHistoryFilterListener(filterState)
     var headerExpanded by rememberSaveable { mutableStateOf(false) }
 
-    val filtered = remember(
-        sorted,
+    val games = remember(chronologicalHistory) { groupHistoryIntoGames(chronologicalHistory) }
+    val filteredGames = remember(
+        games,
         filterState.selectedTeam,
         filterState.selectedDifficulty,
         filterState.selectedResult,
     ) {
-        sorted.filter { entry ->
-            val matchesTeam = filterState.selectedTeam == null || entry.team == filterState.selectedTeam
-            val matchesDifficulty =
-                filterState.selectedDifficulty == null || entry.difficulty == filterState.selectedDifficulty
-            val matchesResult = when (filterState.selectedResult) {
+        val selectedTeam = filterState.selectedTeam
+        val selectedDifficulty = filterState.selectedDifficulty
+        val selectedResult = filterState.selectedResult
+        val predicate: (TurnHistoryEntity) -> Boolean = { entry ->
+            val matchesTeam = selectedTeam == null || entry.team == selectedTeam
+            val matchesDifficulty = selectedDifficulty == null || entry.difficulty == selectedDifficulty
+            val matchesResult = when (selectedResult) {
                 ResultFilter.All -> true
                 ResultFilter.Correct -> entry.correct
                 ResultFilter.Skipped -> !entry.correct && entry.skipped
@@ -131,6 +145,7 @@ fun historyScreen(
             }
             matchesTeam && matchesDifficulty && matchesResult
         }
+        games.mapNotNull { it.filter(predicate) }
     }
 
     Column(
@@ -180,7 +195,7 @@ fun historyScreen(
                     filterState = filterState,
                     listener = filterListener,
                 )
-                historyPerformanceSection(history = sorted)
+                historyPerformanceSection(history = chronologicalHistory)
             }
         }
         HorizontalDivider()
@@ -189,14 +204,14 @@ fun historyScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(stringResource(R.string.history_section_recent_turns), style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.history_section_recent_games), style = MaterialTheme.typography.titleMedium)
             Text(
-                text = stringResource(R.string.history_recent_count, filtered.size, sorted.size),
+                text = stringResource(R.string.history_recent_count, filteredGames.size, games.size),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        if (filtered.isEmpty()) {
+        if (filteredGames.isEmpty()) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -213,8 +228,8 @@ fun historyScreen(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                items(filtered) { entry ->
-                    historyEntryCard(entry = entry)
+                items(filteredGames, key = { it.id }) { game ->
+                    historyGameCard(game = game)
                 }
             }
         }
@@ -308,6 +323,202 @@ private fun historyFilters(
                         onClick = { listener.onResultSelected(filter) },
                         label = { Text(stringResource(filter.labelRes)) },
                     )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun historyGameCard(game: HistoryGame) {
+    val colors = MaterialTheme.colorScheme
+    val context = LocalContext.current
+    var expanded by rememberSaveable(game.id) { mutableStateOf(false) }
+    val rotation by animateFloatAsState(if (expanded) 180f else 0f, label = "historyGameRotation")
+    val stateLabel = if (expanded) {
+        stringResource(R.string.timeline_section_state_expanded)
+    } else {
+        stringResource(R.string.timeline_section_state_collapsed)
+    }
+    val summary = stringResource(R.string.history_game_summary, game.turns.size, game.totalWords)
+    val dateLabel = remember(game.startTimestamp, game.endTimestamp, context) {
+        DateUtils.formatDateTime(
+            context,
+            game.startTimestamp,
+            DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_TIME or DateUtils.FORMAT_ABBREV_MONTH,
+        )
+    }
+    val relativeTime = remember(game.endTimestamp) {
+        DateUtils.getRelativeTimeSpanString(
+            game.endTimestamp,
+            System.currentTimeMillis(),
+            DateUtils.MINUTE_IN_MILLIS,
+        ).toString()
+    }
+    val teams = remember(game.turns) { game.turns.map { it.team }.distinct() }
+    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .semantics { stateDescription = stateLabel },
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(role = Role.Button) { expanded = !expanded }
+                    .padding(horizontal = 20.dp, vertical = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Text(dateLabel, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    Text(
+                        summary,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.onSurfaceVariant,
+                    )
+                    if (teams.isNotEmpty()) {
+                        Text(
+                            text = stringResource(R.string.history_game_teams_label, teams.joinToString()),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.onSurfaceVariant,
+                        )
+                    }
+                    Text(
+                        relativeTime,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = colors.onSurfaceVariant,
+                    )
+                }
+                Icon(
+                    imageVector = Icons.Filled.ExpandMore,
+                    contentDescription = null,
+                    modifier = Modifier.rotate(rotation),
+                )
+            }
+            AnimatedVisibility(visible = expanded) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    HorizontalDivider()
+                    Column(
+                        modifier = Modifier.padding(horizontal = 20.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        game.turns.forEach { turn ->
+                            historyTurnCard(turn = turn)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun historyTurnCard(turn: HistoryTurn) {
+    val colors = MaterialTheme.colorScheme
+    var expanded by rememberSaveable(turn.id) { mutableStateOf(false) }
+    val rotation by animateFloatAsState(if (expanded) 180f else 0f, label = "historyTurnRotation")
+    val stateLabel = if (expanded) {
+        stringResource(R.string.timeline_section_state_expanded)
+    } else {
+        stringResource(R.string.timeline_section_state_collapsed)
+    }
+    val relativeTime = remember(turn.endTimestamp) {
+        DateUtils.getRelativeTimeSpanString(
+            turn.endTimestamp,
+            System.currentTimeMillis(),
+            DateUtils.MINUTE_IN_MILLIS,
+        ).toString()
+    }
+    val correctLabel = pluralStringResource(
+        R.plurals.turn_summary_stat_correct,
+        turn.correctCount,
+        turn.correctCount,
+    )
+    val skippedLabel = pluralStringResource(
+        R.plurals.turn_summary_stat_skipped,
+        turn.skippedCount,
+        turn.skippedCount,
+    )
+    val pendingLabel = pluralStringResource(
+        R.plurals.turn_summary_stat_pending,
+        turn.missedCount,
+        turn.missedCount,
+    )
+
+    val summaryText = remember(correctLabel, skippedLabel, pendingLabel) {
+        listOf(correctLabel, skippedLabel, pendingLabel).joinToString(" • ")
+    }
+
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .semantics { stateDescription = stateLabel },
+        shape = RoundedCornerShape(24.dp),
+        tonalElevation = if (expanded) 2.dp else 0.dp,
+        border = BorderStroke(1.dp, colors.outline.copy(alpha = 0.2f)),
+    ) {
+        Column {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(role = Role.Button) { expanded = !expanded }
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Text(turn.team, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    Text(
+                        relativeTime,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.onSurfaceVariant,
+                    )
+                    Text(
+                        text = summaryText,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.onSurfaceVariant,
+                    )
+                }
+                Icon(
+                    imageVector = Icons.Filled.ExpandMore,
+                    contentDescription = null,
+                    modifier = Modifier.rotate(rotation),
+                )
+            }
+            AnimatedVisibility(visible = expanded) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    HorizontalDivider(color = colors.outline.copy(alpha = 0.2f))
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        turn.entries.forEach { entry ->
+                            historyEntryCard(
+                                entry = entry,
+                                modifier = Modifier.fillMaxWidth(),
+                                showTeam = false,
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -424,7 +635,11 @@ private fun sparkline(values: List<Float>, modifier: Modifier = Modifier) {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun historyEntryCard(entry: TurnHistoryEntity) {
+private fun historyEntryCard(
+    entry: TurnHistoryEntity,
+    modifier: Modifier = Modifier,
+    showTeam: Boolean = true,
+) {
     val colors = MaterialTheme.colorScheme
     val visuals = when {
         entry.correct -> HistoryEntryVisuals(
@@ -458,7 +673,7 @@ private fun historyEntryCard(entry: TurnHistoryEntity) {
     val borderColor = visuals.accent.copy(alpha = 0.35f)
 
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
         color = containerColor,
         contentColor = colors.onSurface,
@@ -508,13 +723,137 @@ private fun historyEntryCard(entry: TurnHistoryEntity) {
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                AssistChip(onClick = {}, enabled = false, colors = chipColors, label = { Text(entry.team) })
+                if (showTeam) {
+                    AssistChip(onClick = {}, enabled = false, colors = chipColors, label = { Text(entry.team) })
+                }
                 val difficultyLabel = entry.difficulty?.let { stringResource(R.string.word_difficulty_value, it) }
                     ?: stringResource(R.string.history_filter_unknown_difficulty)
                 AssistChip(onClick = {}, enabled = false, colors = chipColors, label = { Text(difficultyLabel) })
             }
         }
     }
+}
+
+private data class HistoryGame(
+    val id: Long,
+    val startTimestamp: Long,
+    val endTimestamp: Long,
+    val turns: List<HistoryTurn>,
+) {
+    val totalWords: Int get() = turns.sumOf { it.entries.size }
+
+    fun filter(predicate: (TurnHistoryEntity) -> Boolean): HistoryGame? {
+        val filteredTurns = turns.mapNotNull { it.filter(predicate) }
+        if (filteredTurns.isEmpty()) return null
+        val start = filteredTurns.minOf { it.startTimestamp }
+        val end = filteredTurns.maxOf { it.endTimestamp }
+        return copy(startTimestamp = start, endTimestamp = end, turns = filteredTurns)
+    }
+}
+
+private data class HistoryTurn(
+    val id: Long,
+    val team: String,
+    val entries: List<TurnHistoryEntity>,
+    val startTimestamp: Long,
+    val endTimestamp: Long,
+) {
+    val totalWords: Int get() = entries.size
+    val correctCount: Int get() = entries.count { it.correct }
+    val skippedCount: Int get() = entries.count { it.skipped }
+    val missedCount: Int get() = entries.count { !it.correct && !it.skipped }
+
+    fun filter(predicate: (TurnHistoryEntity) -> Boolean): HistoryTurn? {
+        val filtered = entries.filter(predicate)
+        if (filtered.isEmpty()) return null
+        val ordered = filtered.sortedBy { it.timestamp }
+        return copy(
+            entries = ordered,
+            startTimestamp = ordered.first().timestamp,
+            endTimestamp = ordered.last().timestamp,
+        )
+    }
+}
+
+private fun groupHistoryIntoGames(history: List<TurnHistoryEntity>): List<HistoryGame> {
+    if (history.isEmpty()) return emptyList()
+
+    val turns = mutableListOf<HistoryTurn>()
+    var currentEntries = mutableListOf<TurnHistoryEntity>()
+    var lastEntry: TurnHistoryEntity? = null
+
+    history.forEach { entry ->
+        val last = lastEntry
+        val shouldStartNewTurn = when {
+            currentEntries.isEmpty() -> false
+            entry.team != currentEntries.last().team -> true
+            last != null && entry.timestamp - last.timestamp > TURN_BREAK_THRESHOLD_MILLIS -> true
+            else -> false
+        }
+        if (shouldStartNewTurn) {
+            turns += buildTurn(currentEntries.toList())
+            currentEntries = mutableListOf()
+        }
+        currentEntries += entry
+        lastEntry = entry
+    }
+    if (currentEntries.isNotEmpty()) {
+        turns += buildTurn(currentEntries.toList())
+    }
+
+    if (turns.isEmpty()) return emptyList()
+
+    val games = mutableListOf<HistoryGame>()
+    var currentTurns = mutableListOf<HistoryTurn>()
+    var lastTurnEnd: Long? = null
+
+    turns.forEach { turn ->
+        val last = lastTurnEnd
+        val shouldStartNewGame = if (currentTurns.isNotEmpty() && last != null) {
+            turn.startTimestamp - last > GAME_BREAK_THRESHOLD_MILLIS
+        } else {
+            false
+        }
+        if (shouldStartNewGame) {
+            games += buildGame(currentTurns.toList())
+            currentTurns = mutableListOf()
+        }
+        currentTurns += turn
+        lastTurnEnd = turn.endTimestamp
+    }
+    if (currentTurns.isNotEmpty()) {
+        games += buildGame(currentTurns.toList())
+    }
+
+    return games.sortedByDescending { it.endTimestamp }
+}
+
+private fun buildTurn(entries: List<TurnHistoryEntity>): HistoryTurn {
+    if (entries.isEmpty()) {
+        throw IllegalArgumentException("Cannot build turn with no entries")
+    }
+    val team = entries.first().team
+    val turnId = entries.maxOfOrNull { it.id } ?: entries.hashCode().toLong()
+    return HistoryTurn(
+        id = turnId,
+        team = team,
+        entries = entries,
+        startTimestamp = entries.first().timestamp,
+        endTimestamp = entries.last().timestamp,
+    )
+}
+
+private fun buildGame(turns: List<HistoryTurn>): HistoryGame {
+    if (turns.isEmpty()) {
+        throw IllegalArgumentException("Cannot build game with no turns")
+    }
+    val gameId = turns.maxOfOrNull { it.id } ?: turns.hashCode().toLong()
+    return HistoryGame(
+        id = gameId,
+        startTimestamp = turns.first().startTimestamp,
+        endTimestamp = turns.last().endTimestamp,
+        turns = turns,
+    )
 }
 
 @Stable

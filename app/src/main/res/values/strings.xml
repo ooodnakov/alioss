@@ -12,7 +12,7 @@
     <string name="quick_play_subtitle">Start a match with current settings</string>
     <string name="decks_subtitle">Manage and import word decks</string>
     <string name="settings_subtitle">Time, teams, language and more</string>
-    <string name="history_subtitle">Review recent turns</string>
+    <string name="history_subtitle">Review recent games</string>
     <string name="home_hero_title_idle">Welcome to Alias</string>
     <string name="home_hero_title_playing">Match in progress</string>
     <string name="home_hero_title_ready">Ready for the next round?</string>
@@ -220,7 +220,7 @@
     <string name="history_result_skipped">Skipped</string>
     <string name="history_result_missed">Pending</string>
     <string name="history_section_performance">Performance</string>
-    <string name="history_section_recent_turns">Recent turns</string>
+    <string name="history_section_recent_games">Recent games</string>
     <string name="history_hide_header">Hide filters &amp; stats</string>
     <string name="history_show_header">Show filters &amp; stats</string>
     <string name="history_reset_action">Reset history</string>
@@ -228,8 +228,10 @@
     <string name="history_reset_dialog_message">Clear all saved turns? This cannot be undone.</string>
     <string name="history_reset_dialog_confirm">Reset</string>
     <string name="history_reset_dialog_cancel">Cancel</string>
-    <string name="history_recent_count">%1$d of %2$d turns</string>
-    <string name="history_no_entries_for_filters">No turns match your filters yet.</string>
+    <string name="history_recent_count">%1$d of %2$d games</string>
+    <string name="history_no_entries_for_filters">No games match your filters yet.</string>
+    <string name="history_game_summary">%1$d turns · %2$d words</string>
+    <string name="history_game_teams_label">Teams: %1$s</string>
     <string name="history_performance_summary">%1$d/%2$d correct (%3$d%%)</string>
     <string name="installed_decks">Installed Decks</string>
     <string name="enable_all">Enable all</string>
