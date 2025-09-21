@@ -668,7 +668,7 @@ fun gameScreen(vm: MainViewModel, engine: GameEngine, settings: Settings) {
             roundSummaryScreen(vm = vm, s = s, settings = settings)
         }
         is GameState.MatchFinished -> {
-            matchOverScreen(
+            MatchOverScreen(
                 scores = s.scores,
                 onRestartMatch = {
                     if (settings.hapticsEnabled) {

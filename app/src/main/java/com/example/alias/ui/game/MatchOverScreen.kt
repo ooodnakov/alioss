@@ -17,7 +17,7 @@ import com.example.alias.R
 import com.example.alias.ui.common.scoreboard
 
 @Composable
-fun matchOverScreen(
+fun MatchOverScreen(
     scores: Map<String, Int>,
     onRestartMatch: () -> Unit,
     modifier: Modifier = Modifier,
