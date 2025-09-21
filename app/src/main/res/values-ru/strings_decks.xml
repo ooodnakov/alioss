@@ -12,7 +12,7 @@
     <string name="deck_categories_title">Категории</string>
     <string name="deck_cover_language">Колода %1$s</string>
     <string name="deck_delete_action">Удалить колоду</string>
-    <string name="deck_delete_dialog_message">Удалить"%1$s" и слова в ней? Это действие не может быть отменено.</string>
+    <string name="deck_delete_dialog_message">Удалить «%1$s» и слова в ней? Это действие не может быть отменено.</string>
     <string name="deck_delete_dialog_title">Удалить колоду?</string>
     <string name="deck_delete_permanently_action">Удалить навсегда</string>
     <string name="deck_deleted_bundled_hint">Удалённые встроенные колоды (нажмите, чтобы восстановить):</string>
