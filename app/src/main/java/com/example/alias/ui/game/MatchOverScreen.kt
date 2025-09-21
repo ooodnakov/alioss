@@ -72,17 +72,6 @@ fun MatchOverScreen(
             .fillMaxSize()
             .background(gradient),
     ) {
-        FilledTonalButton(
-            onClick = onNavigateHome,
-            modifier = Modifier.align(Alignment.TopEnd).padding(end = 24.dp, top = 32.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.Menu,
-                contentDescription = null,
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(text = stringResource(R.string.match_over_back_to_menu))
-        }
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -147,6 +136,17 @@ fun MatchOverScreen(
             ) {
                 Text(stringResource(R.string.restart_match))
             }
+        }
+        FilledTonalButton(
+            onClick = onNavigateHome,
+            modifier = Modifier.align(Alignment.TopEnd).padding(end = 24.dp, top = 32.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Menu,
+                contentDescription = null,
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(text = stringResource(R.string.match_over_back_to_menu))
         }
     }
 }
