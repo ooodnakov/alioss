@@ -343,7 +343,7 @@ class DeckManagerTest {
               },
               "words":[ $wordsJson ]
             }
-            """.trimIndent()
+        """.trimIndent()
     }
 
     private suspend fun withHttpsServer(
