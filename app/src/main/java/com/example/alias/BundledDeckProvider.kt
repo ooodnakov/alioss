@@ -13,24 +13,24 @@ interface BundledDeckProvider {
 
 @Singleton
 class AssetBundledDeckProvider
-    @Inject
-    constructor(
-        @ApplicationContext private val context: Context,
-    ) : BundledDeckProvider {
-        override fun listBundledDeckFiles(): List<String> {
-            return context.assets.list("decks")?.filter { it.endsWith(".json") } ?: emptyList()
-        }
+@Inject
+constructor(
+    @ApplicationContext private val context: Context,
+) : BundledDeckProvider {
+    override fun listBundledDeckFiles(): List<String> {
+        return context.assets.list("decks")?.filter { it.endsWith(".json") } ?: emptyList()
+    }
 
-        override fun readDeckAsset(fileName: String): String? {
-            return runCatching {
-                context.assets.open("decks/$fileName").bufferedReader().use { it.readText() }
-            }.getOrElse { error ->
-                Log.e(TAG, "Failed to read bundled deck asset $fileName", error)
-                null
-            }
-        }
-
-        private companion object {
-            private const val TAG = "BundledDeckProvider"
+    override fun readDeckAsset(fileName: String): String? {
+        return runCatching {
+            context.assets.open("decks/$fileName").bufferedReader().use { it.readText() }
+        }.getOrElse { error ->
+            Log.e(TAG, "Failed to read bundled deck asset $fileName", error)
+            null
         }
     }
+
+    private companion object {
+        private const val TAG = "BundledDeckProvider"
+    }
+}

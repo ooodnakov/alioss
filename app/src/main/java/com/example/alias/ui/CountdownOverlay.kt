@@ -77,35 +77,35 @@ fun countdownOverlay(
 
     Box(
         modifier =
-            modifier.fillMaxSize()
-                .background(scrimColor.copy(alpha = scrimAlpha))
-                .onSizeChanged { size ->
-                    Log.d(
-                        "countdownOverlay",
-                        "Overlay size: ${size.width}x${size.height}",
-                    )
-                    Log.d(
-                        "countdownOverlay",
-                        "Screen size: ${screenWidthPx.toInt()}x${screenHeightPx.toInt()}",
-                    )
-                }
-                // Swallow taps so the game underneath doesn't get accidental clicks.
-                .then(
-                    if (consumeTouches) {
-                        Modifier.clickable(
-                            interactionSource = interaction,
-                            indication = null,
-                            onClick = {},
-                        )
-                    } else {
-                        Modifier
-                    },
+        modifier.fillMaxSize()
+            .background(scrimColor.copy(alpha = scrimAlpha))
+            .onSizeChanged { size ->
+                Log.d(
+                    "countdownOverlay",
+                    "Overlay size: ${size.width}x${size.height}",
                 )
-                // Screen reader announces each tick.
-                .semantics {
-                    contentDescription = announcement
-                    liveRegion = LiveRegionMode.Assertive
+                Log.d(
+                    "countdownOverlay",
+                    "Screen size: ${screenWidthPx.toInt()}x${screenHeightPx.toInt()}",
+                )
+            }
+            // Swallow taps so the game underneath doesn't get accidental clicks.
+            .then(
+                if (consumeTouches) {
+                    Modifier.clickable(
+                        interactionSource = interaction,
+                        indication = null,
+                        onClick = {},
+                    )
+                } else {
+                    Modifier
                 },
+            )
+            // Screen reader announces each tick.
+            .semantics {
+                contentDescription = announcement
+                liveRegion = LiveRegionMode.Assertive
+            },
         contentAlignment = Alignment.Center,
     ) {
         AnimatedContent(
@@ -116,10 +116,10 @@ fun countdownOverlay(
                     scaleIn(
                         initialScale = 0.6f,
                         animationSpec =
-                            spring(
-                                stiffness = Spring.StiffnessLow,
-                                dampingRatio = Spring.DampingRatioMediumBouncy,
-                            ),
+                        spring(
+                            stiffness = Spring.StiffnessLow,
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                        ),
                     ) + fadeIn()
                     ) togetherWith
                     (

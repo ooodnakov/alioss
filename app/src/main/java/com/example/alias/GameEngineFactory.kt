@@ -12,9 +12,9 @@ interface GameEngineFactory {
 
 @Singleton
 class DefaultGameEngineFactory
-    @Inject
-    constructor() : GameEngineFactory {
-        override fun create(words: List<String>, scope: CoroutineScope): GameEngine {
-            return DefaultGameEngine(words, scope)
-        }
+@Inject
+constructor() : GameEngineFactory {
+    override fun create(words: List<String>, scope: CoroutineScope): GameEngine {
+        return DefaultGameEngine(words, scope)
     }
+}

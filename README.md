@@ -68,7 +68,7 @@ scripts/ – Automation helpers for builds, downloads, reproducibility snapshots
 - **Command line**:
   - `./gradlew :app:assembleDebug` – Build debug APK.
   - `./gradlew :domain:test :data:test :app:testDebugUnitTest` – Run JVM/unit tests across modules.
-  - `./gradlew spotlessCheck detekt` – Enforce formatting (ktlint) and static analysis via Detekt (configured to ignore failures locally but still report issues).
+  - `./gradlew detekt` – Enforce formatting (via `detekt-formatting` auto-correct) and static analysis using the shared `detekt.yml`.
   - `./gradlew :app:assembleDevRelease` – Build the installable release-like variant.
 - **Scripts**:
   - `scripts/dev-build.sh` – Optional helper to clean, run JVM tests, and assemble the debug APK in one command.
@@ -87,13 +87,13 @@ scripts/ – Automation helpers for builds, downloads, reproducibility snapshots
 
 - JVM unit tests cover the game engine, deck repository, DataStore wiring, localization, downloader policies, and Room migrations (in-memory DB).
 - Compose/UI tests are currently minimal; contributions that add instrumentation or Robolectric coverage are welcome.
-- Spotless (ktlint 0.50.0) enforces Kotlin style; Detekt runs with `detekt.yml` tuned for this project. Both run in CI and via the Gradle tasks above.
+- Detekt with the `detekt-formatting` plugin enforces Kotlin style (auto-correct enabled) and static analysis using `detekt.yml`. CI mirrors the Gradle task above.
 
 ## Contributing
 
 - Keep the `domain` module Android-free and deterministic. Inject randomness via seeds so tests stay reproducible.
 - Prefer immutable state models flowing from repositories/view models into Compose; business logic belongs in controllers or repositories, not UI composables.
-- Run `./gradlew spotlessCheck detekt :domain:test :data:test :app:testDebugUnitTest` before pushing a PR. CI mirrors these tasks along with APK assembly.
+- Run `./gradlew detekt :domain:test :data:test :app:testDebugUnitTest` before pushing a PR. CI mirrors these tasks along with APK assembly.
 - When touching deck formats, update documentation and validators together, and ensure migrations cover schema changes (no destructive fallback in release/`devRelease`).
 
 ## License
