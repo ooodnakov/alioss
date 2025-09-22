@@ -438,10 +438,22 @@ constructor(
                 if (result.coverImageError != null) {
                     showCoverImageErrorSnackbar()
                 }
-            } catch (e: Exception) {
+            } catch (e: java.io.IOException) {
+                Log.e(TAG, "Failed to download or import pack", e)
                 _uiEvents.tryEmit(
                     UiEvent(
                         message = "Failed: ${e.message}",
+                        actionLabel = "Dismiss",
+                        duration = SnackbarDuration.Long,
+                        isError = true,
+                        dismissCurrent = true,
+                    ),
+                )
+            } catch (e: Exception) {
+                Log.e(TAG, "An unexpected error occurred", e)
+                _uiEvents.tryEmit(
+                    UiEvent(
+                        message = "An unexpected error occurred",
                         actionLabel = "Dismiss",
                         duration = SnackbarDuration.Long,
                         isError = true,
@@ -474,10 +486,21 @@ constructor(
                 if (result.coverImageError != null) {
                     showCoverImageErrorSnackbar()
                 }
-            } catch (e: Exception) {
+            } catch (e: java.io.IOException) {
+                Log.e(TAG, "Failed to import deck from file", e)
                 _uiEvents.tryEmit(
                     UiEvent(
                         message = "Failed: ${e.message}",
+                        actionLabel = "Dismiss",
+                        duration = SnackbarDuration.Long,
+                        isError = true,
+                    ),
+                )
+            } catch (e: Exception) {
+                Log.e(TAG, "An unexpected error occurred", e)
+                _uiEvents.tryEmit(
+                    UiEvent(
+                        message = "An unexpected error occurred",
                         actionLabel = "Dismiss",
                         duration = SnackbarDuration.Long,
                         isError = true,
@@ -505,10 +528,21 @@ constructor(
             try {
                 gameController.clearHistory()
                 _uiEvents.tryEmit(UiEvent(message = "History cleared", actionLabel = "OK"))
-            } catch (e: Exception) {
+            } catch (e: android.database.SQLException) {
+                Log.e(TAG, "Failed to clear history", e)
                 _uiEvents.tryEmit(
                     UiEvent(
                         message = "Failed to clear history: ${e.message ?: "Unknown error"}",
+                        actionLabel = "Dismiss",
+                        duration = SnackbarDuration.Long,
+                        isError = true,
+                    ),
+                )
+            } catch (e: Exception) {
+                Log.e(TAG, "An unexpected error occurred", e)
+                _uiEvents.tryEmit(
+                    UiEvent(
+                        message = "An unexpected error occurred",
                         actionLabel = "Dismiss",
                         duration = SnackbarDuration.Long,
                         isError = true,

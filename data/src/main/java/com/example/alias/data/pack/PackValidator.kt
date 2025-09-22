@@ -51,7 +51,7 @@ object PackValidator {
         }
         val uri = try {
             java.net.URI(trimmed)
-        } catch (error: Exception) {
+        } catch (error: java.net.URISyntaxException) {
             throw CoverImageException("Invalid cover image URL", error)
         }
         if (!uri.isAbsolute) {

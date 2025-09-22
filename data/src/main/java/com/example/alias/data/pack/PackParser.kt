@@ -47,12 +47,10 @@ private data class WordDto(
     }
 
     fun resolvedWordClass(): String? {
-        val normalized = wordClass?.let { WordClassCatalog.normalizeOrNull(it) }
-        if (normalized != null) {
-            return normalized
-        }
         if (wordClass != null && wordClass.isNotBlank()) {
-            throw IllegalArgumentException("Unsupported word class: $wordClass")
+            val normalized = WordClassCatalog.normalizeOrNull(wordClass)
+            require(normalized != null) { "Unsupported word class: $wordClass" }
+            return normalized
         }
         return legacyWordClasses
             ?.asSequence()

@@ -668,7 +668,10 @@ constructor(
             sanitizeCoverImage(parsed)
         } catch (e: CancellationException) {
             throw e
-        } catch (error: Exception) {
+        } catch (e: SerializationException) {
+            throw IllegalArgumentException("Failed to parse pack content", e)
+        } catch (error: Throwable) {
+            if (error is CancellationException) throw error
             if (!error.isCoverImageError()) throw error
             val sanitizedJson = removeCoverImageField(content) ?: throw error
             val parsed = PackParser.fromJson(sanitizedJson, isBundledAsset)
