@@ -78,6 +78,19 @@ class MainViewModel
             val onAction: (suspend () -> Unit)? = null,
         )
 
+        private data class WordMetadataKey(
+            val deckIds: Set<String>,
+            val allowNSFW: Boolean,
+            val minDifficulty: Int,
+            val maxDifficulty: Int,
+            val categories: Set<String>,
+            val categoryFilterEnabled: Int,
+            val wordClasses: Set<String>,
+            val wordClassFilterEnabled: Int,
+            val languages: Set<String>,
+            val languageFilterEnabled: Int,
+        )
+
         private val _uiEvents = MutableSharedFlow<UiEvent>(
             extraBufferCapacity = 16,
             onBufferOverflow = BufferOverflow.DROP_OLDEST,
@@ -128,6 +141,34 @@ class MainViewModel
                         _availableWordClasses.value = classes
                     }
             }
+
+            viewModelScope.launch {
+                settingsController.settings
+                    .map { deckManager.buildWordQueryFilters(it) }
+                    .distinctUntilChanged { previous, current ->
+                        previous.toMetadataKey() == current.toMetadataKey()
+                    }
+                    .collectLatest { filters ->
+                        val metadata = deckManager.loadWordMetadata(filters)
+                        _wordInfo.value = metadata.infoByWord
+                        _availableCategories.value = metadata.categories
+                    }
+            }
+        }
+
+        private fun DeckManager.WordQueryFilters.toMetadataKey(): WordMetadataKey {
+            return WordMetadataKey(
+                deckIds = deckIds.toSet(),
+                allowNSFW = allowNSFW,
+                minDifficulty = minDifficulty,
+                maxDifficulty = maxDifficulty,
+                categories = categories?.toSet() ?: emptySet(),
+                categoryFilterEnabled = categoryFilterEnabled,
+                wordClasses = wordClasses?.toSet() ?: emptySet(),
+                wordClassFilterEnabled = wordClassFilterEnabled,
+                languages = languages.toSet(),
+                languageFilterEnabled = languageFilterEnabled,
+            )
         }
 
         fun setDeckEnabled(id: String, enabled: Boolean, fromUndo: Boolean = false) {
