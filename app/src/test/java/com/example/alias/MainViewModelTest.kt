@@ -26,10 +26,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestDispatcher
-import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import okhttp3.OkHttpClient
 import org.junit.Assert.assertEquals
@@ -130,13 +130,9 @@ class MainViewModelTest {
     fun enablingAdditionalDeckRefreshesAvailableCategories() = runTest(dispatcherRule.dispatcher) {
         val vm = MainViewModel(deckManager, settingsController, gameController)
         settingsController.setEnabledDeckIds(setOf("alpha", "beta"))
-        val updatedCategories = withTimeout(5_000) {
-            while (true) {
-                advanceUntilIdle()
-                val current = vm.availableCategories.value
-                if (current == listOf("Alpha", "Beta")) {
-                    return@withTimeout current
-                }
+        val updatedCategories = withContext(Dispatchers.Default.limitedParallelism(1)) {
+            withTimeout(5_000) {
+                vm.availableCategories.first { it == listOf("Alpha", "Beta") }
             }
         }
 
@@ -150,13 +146,9 @@ class MainViewModelTest {
         wordDao.updateBriefs("alpha", listOf(WordBrief("apple", 1, "Gamma", "NOUN")))
 
         settingsController.updateCategoriesFilter(setOf("Gamma"))
-        val updatedCategories = withTimeout(5_000) {
-            while (true) {
-                advanceUntilIdle()
-                val current = vm.availableCategories.value
-                if (current.size == 1 && current.first() == "Gamma") {
-                    return@withTimeout current
-                }
+        val updatedCategories = withContext(Dispatchers.Default.limitedParallelism(1)) {
+            withTimeout(5_000) {
+                vm.availableCategories.first { it.size == 1 && it.first() == "Gamma" }
             }
         }
 

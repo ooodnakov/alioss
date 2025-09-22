@@ -121,11 +121,6 @@ class MainViewModel
             viewModelScope.launch {
                 Log.i(TAG, "Starting MainViewModel init block")
                 val initial = deckManager.prepareInitialLoad()
-                val filters = deckManager.buildWordQueryFilters(initial.settings)
-                val metadata = deckManager.loadWordMetadata(filters)
-                _wordInfo.value = metadata.infoByWord
-                _availableCategories.value = metadata.categories
-                _availableWordClasses.value = metadata.wordClasses
                 val engineInstance = gameController.createEngine(initial.words, viewModelScope)
                 _engine.value = engineInstance
                 gameController.startMatch(engineInstance, initial.settings)
