@@ -107,4 +107,5 @@ dependencies {
     testImplementation(libs.okhttp)
     testImplementation(libs.okhttp.mockwebserver)
     testImplementation(libs.okhttp.tls)
+    testImplementation(libs.kotlinx.coroutines.test)
 }
