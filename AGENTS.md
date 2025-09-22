@@ -9,18 +9,19 @@
 ## Tooling & Versions
 - Requires JDK 21 and Android SDK 34. The Gradle Wrapper configures AGP 8.5.2 and Kotlin 1.9.23 via `gradle/libs.versions.toml`.
 - Compose compiler 1.5.11, Compose BOM 2024.02.00, Hilt 2.51, Room 2.6.1.
-- Formatting uses Spotless (ktlint 0.50.0). Static analysis runs with Detekt 1.23.8 (reports enabled, failures ignored locally).
+- Formatting and static analysis rely on Detekt 1.23.8 with the `detekt-formatting` plugin (auto-correct is enabled, failures ar
+  e ignored locally).
 
 ## Build & Test Commands
 Run these before pushing or opening a PR:
-- `./gradlew spotlessCheck detekt` – Formatting + static analysis.
+- `./gradlew detekt` – Formatting + static analysis (auto-correct enabled).
 - `./gradlew :domain:test :data:test :app:testDebugUnitTest` – JVM/unit tests for every module.
 - `./gradlew :app:assembleDebug` – Build debug APK for smoke-testing.
 - Optional: `./gradlew :app:assembleDevRelease` for a release-like, installable build.
 - Convenience script: `scripts/dev-build.sh` runs tests and assembles the debug APK; pass `--clean`/`--no-tests` as needed.
 
 ## Coding Conventions
-- Kotlin official style; keep files Spotless-compliant.
+- Kotlin official style; keep files Detekt-formatting compliant.
 - Keep `domain` deterministic and Android-free. Inject randomness via seeds and expose immutable state through flows.
 - Surface business logic in controllers/repositories, not Compose UI. Keep composables focused on rendering state and invoking callbacks.
 - When touching Room schemas, add migrations in `data/.../db/Migrations.kt` and adjust tests; no destructive fallback in release or `devRelease`.

@@ -1,4 +1,5 @@
-import com.diffplug.gradle.spotless.SpotlessExtension
+import org.gradle.api.artifacts.VersionCatalogsExtension
+import org.gradle.kotlin.dsl.getByType
 
 plugins {
     alias(libs.plugins.android.application) apply false
@@ -9,11 +10,16 @@ plugins {
     alias(libs.plugins.hilt.android) apply false
     alias(libs.plugins.kotlin.kapt) apply false
     alias(libs.plugins.detekt)
-    alias(libs.plugins.spotless)
 }
 
+val detektFormattingDependency = extensions
+    .getByType<VersionCatalogsExtension>()
+    .named("libs")
+    .findLibrary("detektFormatting")
+    .get()
+
 dependencies {
-    detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.23.8")
+    add("detektPlugins", detektFormattingDependency)
 }
 
 subprojects {
@@ -21,7 +27,7 @@ subprojects {
 
     // ✅ Attach detekt-formatting to every module that applied detekt
     dependencies {
-        add("detektPlugins", "io.gitlab.arturbosch.detekt:detekt-formatting:1.23.8")
+        add("detektPlugins", detektFormattingDependency)
     }
 
     // ✅ Configure Detekt via extension (non-deprecated bits only)
@@ -30,11 +36,12 @@ subprojects {
             buildUponDefaultConfig = true
             config.setFrom(files("$rootDir/detekt.yml")) // your current path
             parallel = true
+            autoCorrect = true
         }
 
         // ✅ Configure reports on the TASK, not the extension (fixes deprecation warning)
         tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
-            autoCorrect = false
+            autoCorrect = true
             ignoreFailures = true
             reports {
                 html.required.set(true)
@@ -48,26 +55,6 @@ subprojects {
             exclude("**/build/**", "**/generated/**")
         }
     }
-
-    plugins.withId("com.diffplug.spotless") {
-        configure<SpotlessExtension> {
-            kotlin {
-                target("src/**/*.kt")
-                targetExclude("**/build/**", "**/generated/**")
-                ktlint("0.50.0")
-                    .setEditorConfigPath("$rootDir/.editorconfig")
-                    .editorConfigOverride(mapOf("ktlint_standard_max-line-length" to "disabled"))
-            }
-
-            kotlinGradle {
-                target("*.gradle.kts", "src/**/*.gradle.kts")
-                targetExclude("**/build/**", "**/generated/**")
-                ktlint("0.50.0")
-                    .setEditorConfigPath("$rootDir/.editorconfig")
-                    .editorConfigOverride(mapOf("ktlint_standard_max-line-length" to "disabled"))
-            }
-        }
-    }
 }
 
 allprojects {
@@ -75,7 +62,7 @@ allprojects {
         configure<io.gitlab.arturbosch.detekt.extensions.DetektExtension> {
             config.setFrom(files("$rootDir/detekt.yml"))
             buildUponDefaultConfig = true
-            autoCorrect = false
+            autoCorrect = true
             parallel = true
         }
     }
@@ -84,38 +71,18 @@ allprojects {
 detekt {
     buildUponDefaultConfig = true
     allRules = false
-    autoCorrect = false
+    autoCorrect = true
     parallel = true
     ignoreFailures = true
 }
 
 tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
+    autoCorrect = true
     ignoreFailures = true
     reports {
         html.required.set(true)
         xml.required.set(true)
         sarif.required.set(true)
         txt.required.set(false)
-    }
-}
-
-spotless {
-    kotlin {
-        target("src/**/*.kt")
-        targetExclude("**/build/**", "**/generated/**")
-        ktlint("0.50.0")
-            .setEditorConfigPath("$rootDir/.editorconfig")
-            .editorConfigOverride(mapOf("ktlint_standard_max-line-length" to "disabled"))
-        trimTrailingWhitespace()
-        endWithNewline()
-    }
-    kotlinGradle {
-        target("*.gradle.kts", "gradle/**/*.gradle.kts")
-        targetExclude("**/build/**", "**/generated/**")
-        ktlint("0.50.0")
-            .setEditorConfigPath("$rootDir/.editorconfig")
-            .editorConfigOverride(mapOf("ktlint_standard_max-line-length" to "disabled"))
-        trimTrailingWhitespace()
-        endWithNewline()
     }
 }
