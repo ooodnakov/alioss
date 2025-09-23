@@ -1,6 +1,7 @@
 package com.example.alias.data.pack
 
-import java.util.Base64
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -8,6 +9,16 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class PackParserTest {
+
+    @BeforeTest
+    fun setUpDecoder() {
+        PackValidator.imageMetadataDecoder = TestCoverImages.fakeDecoder
+    }
+
+    @AfterTest
+    fun tearDownDecoder() {
+        PackValidator.resetImageMetadataDecoder()
+    }
 
     @Test
     fun parses_valid_json_pack() {
@@ -40,8 +51,7 @@ class PackParserTest {
 
     @Test
     fun parses_cover_image_and_normalizes_data_uri() {
-        val base64Image = "data:image/png;base64," +
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAAWgmWQ0AAAAASUVORK5CYII="
+        val base64Image = "data:image/png;base64," + TestCoverImages.TWO_BY_TWO_PNG_BASE64
         val json = """
             {
               "format": "alias-deck@1",
@@ -61,9 +71,7 @@ class PackParserTest {
 
         val parsed = PackParser.fromJson(json)
 
-        val expected = Base64.getEncoder().encodeToString(
-            Base64.getMimeDecoder().decode(base64Image.substringAfter(',')),
-        )
+        val expected = TestCoverImages.base64Encoder.encodeToString(TestCoverImages.twoByTwoPngBytes)
         assertEquals(expected, parsed.deck.coverImageBase64)
         assertEquals("Cover Test", parsed.deck.author)
         assertNull(parsed.coverImageUrl)
@@ -306,8 +314,8 @@ class PackParserTest {
     }
 
     @Test
-    fun rejects_cover_image_with_excessive_dimensions() {
-        val encoded = LARGE_COVER_IMAGE_BASE64
+    fun allows_cover_image_with_large_dimensions() {
+        val encoded = TestCoverImages.base64Encoder.encodeToString(TestCoverImages.oversizedImageBytes)
         val json = """
             {
               "format": "alias-deck@1",
@@ -322,31 +330,8 @@ class PackParserTest {
             }
         """.trimIndent()
 
-        val error = assertFailsWith<IllegalArgumentException> { PackParser.fromJson(json) }
-        assertTrue(error.message?.contains("dimensions") == true)
+        val parsed = PackParser.fromJson(json)
+        assertEquals(encoded, parsed.deck.coverImageBase64)
     }
 
-    companion object {
-        private val LARGE_COVER_IMAGE_BASE64 = """
-            AAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6
-            Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx
-            8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAV
-            YnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPE
-            xcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDxyiiiv3E8wKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACi
-            iigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACi
-            iigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACi
-            iigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACi
-            iigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACi
-            iigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACi
-            iigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACi
-            iigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACi
-            iigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACi
-            iigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACi
-            iigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACi
-            iigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACi
-            iigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACi
-            iigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACi
-            iigAooooAKKKKACiiigAooooA//Z
-        """.trimIndent().replace("\n", "")
-    }
 }

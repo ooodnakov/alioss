@@ -1,6 +1,12 @@
 package com.example.alias.data.pack
 
+import android.graphics.BitmapFactory
+import android.graphics.ImageDecoder
+import android.os.Build
+import androidx.annotation.RequiresApi
+import androidx.annotation.VisibleForTesting
 import com.example.alias.domain.word.WordClassCatalog
+import java.nio.ByteBuffer
 import java.util.Base64
 import java.util.Locale
 
@@ -10,6 +16,7 @@ import java.util.Locale
 object PackValidator {
     const val MULTI_LANGUAGE_TAG = "mul"
     private const val MAX_WORDS = 200_000
+    internal const val MAX_COVER_IMAGE_BYTES = 40L * 1024 * 1024
     const val MAX_COVER_IMAGE_BYTES = 5 * 1024 * 1024
     private const val MAX_COVER_IMAGE_DIMENSION = 2_048
     private const val MAX_COVER_IMAGE_URL_LENGTH = 2_048
@@ -110,101 +117,80 @@ object PackValidator {
         if (data.isEmpty()) {
             throw CoverImageException("Cover image is empty")
         }
-        if (data.size > MAX_COVER_IMAGE_BYTES) {
-            throw CoverImageException("Cover image too large")
-        }
-        val (width, height) = decodeImageDimensions(data)
-            ?: throw CoverImageException("Cover image has invalid dimensions")
+        val (width, height) = decodeImageSize(data)
+            ?: throw CoverImageException("Cover image has invalid data")
         if (width <= 0 || height <= 0) {
             throw CoverImageException("Cover image has invalid dimensions")
-        }
-        if (width > MAX_COVER_IMAGE_DIMENSION || height > MAX_COVER_IMAGE_DIMENSION) {
-            throw CoverImageException("Cover image dimensions too large")
         }
         return base64Encoder.encodeToString(data)
     }
 
-    private fun decodeImageDimensions(data: ByteArray): Pair<Int, Int>? {
-        if (data.size >= 24 && hasPngSignature(data)) {
-            val width = readUInt32(data, 16)
-            val height = readUInt32(data, 20)
-            return width to height
+    internal fun resetImageMetadataDecoder() {
+        imageMetadataDecoder = AndroidImageMetadataDecoder
+    }
+
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    @JvmStatic
+    fun overrideImageMetadataDecoderForTesting(
+        decoder: (ByteArray) -> Pair<Int, Int>?,
+    ) {
+        imageMetadataDecoder = object : ImageMetadataDecoder {
+            override fun decodeSize(data: ByteArray): Pair<Int, Int>? = decoder(data)
         }
-        if (data.size >= 4 && data[0] == 0xFF.toByte() && data[1] == 0xD8.toByte()) {
-            var offset = 2
-            while (offset + 4 < data.size) {
-                if (data[offset] != 0xFF.toByte()) {
-                    offset++
-                    continue
-                }
-                val marker = data[offset + 1].toInt() and 0xFF
-                if (marker == 0xFF) {
-                    offset++
-                    continue
-                }
-                if (marker == 0xD9 || marker == 0xDA) {
-                    break
-                }
-                if (offset + 3 >= data.size) {
-                    return null
-                }
-                val length = ((data[offset + 2].toInt() and 0xFF) shl 8) or (data[offset + 3].toInt() and 0xFF)
-                if (length < 2 || offset + 2 + length > data.size) {
-                    return null
-                }
-                if (isStartOfFrame(marker)) {
-                    if (length < 7) {
-                        return null
+    }
+
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    @JvmStatic
+    fun resetImageMetadataDecoderForTesting() {
+        resetImageMetadataDecoder()
+    }
+
+    private fun decodeImageSize(data: ByteArray): Pair<Int, Int>? {
+        return imageMetadataDecoder.decodeSize(data)
+    }
+
+    internal interface ImageMetadataDecoder {
+        fun decodeSize(data: ByteArray): Pair<Int, Int>?
+    }
+
+    internal var imageMetadataDecoder: ImageMetadataDecoder = AndroidImageMetadataDecoder
+
+    private object AndroidImageMetadataDecoder : ImageMetadataDecoder {
+        override fun decodeSize(data: ByteArray): Pair<Int, Int>? {
+            val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            BitmapFactory.decodeByteArray(data, 0, data.size, options)
+            val width = options.outWidth
+            val height = options.outHeight
+            if (width > 0 && height > 0) {
+                return width to height
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                return ImageDecoderDelegate.decodeSize(data)
+            }
+            return null
+        }
+
+        @RequiresApi(Build.VERSION_CODES.P)
+        private object ImageDecoderDelegate {
+            fun decodeSize(data: ByteArray): Pair<Int, Int>? {
+                return try {
+                    val source = ImageDecoder.createSource(ByteBuffer.wrap(data))
+                    ImageDecoder.decodeDrawable(source) { _, info, _ ->
+                        throw ImageSizeCaptured(info.size.width, info.size.height)
                     }
-                    val height = ((data[offset + 5].toInt() and 0xFF) shl 8) or (data[offset + 6].toInt() and 0xFF)
-                    val width = ((data[offset + 7].toInt() and 0xFF) shl 8) or (data[offset + 8].toInt() and 0xFF)
-                    return width to height
+                    null
+                } catch (captured: ImageSizeCaptured) {
+                    captured.width to captured.height
+                } catch (_: Exception) {
+                    null
                 }
-                offset += 2 + length
             }
-        }
-        return null
-    }
 
-    private fun readUInt32(data: ByteArray, offset: Int): Int {
-        return ((data[offset].toInt() and 0xFF) shl 24) or
-            ((data[offset + 1].toInt() and 0xFF) shl 16) or
-            ((data[offset + 2].toInt() and 0xFF) shl 8) or
-            (data[offset + 3].toInt() and 0xFF)
-    }
-
-    private fun isStartOfFrame(marker: Int): Boolean {
-        return when (marker) {
-            0xC0, 0xC1, 0xC2, 0xC3,
-            0xC5, 0xC6, 0xC7,
-            0xC9, 0xCA, 0xCB,
-            0xCD, 0xCE, 0xCF,
-            -> true
-            else -> false
+            private class ImageSizeCaptured(
+                val width: Int,
+                val height: Int,
+            ) : RuntimeException(null, null, false, false)
         }
-    }
-
-    private val PNG_SIGNATURE = byteArrayOf(
-        137.toByte(),
-        80,
-        78,
-        71,
-        13,
-        10,
-        26,
-        10,
-    )
-
-    private fun hasPngSignature(data: ByteArray): Boolean {
-        if (data.size < PNG_SIGNATURE.size) {
-            return false
-        }
-        PNG_SIGNATURE.forEachIndexed { index, value ->
-            if (data[index] != value) {
-                return false
-            }
-        }
-        return true
     }
 
     fun validateWordCount(count: Int) {

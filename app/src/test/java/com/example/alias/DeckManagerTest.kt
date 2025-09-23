@@ -12,6 +12,7 @@ import com.example.alias.data.db.WordBrief
 import com.example.alias.data.db.WordClassCount
 import com.example.alias.data.db.WordDao
 import com.example.alias.data.download.PackDownloader
+import com.example.alias.data.pack.PackValidator
 import com.example.alias.data.pack.ParsedPack
 import com.example.alias.data.settings.Settings
 import com.example.alias.data.settings.SettingsRepository
@@ -26,6 +27,7 @@ import okhttp3.mockwebserver.MockWebServer
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
 import okio.Buffer
+import org.junit.After
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -66,6 +68,12 @@ class DeckManagerTest {
             bundledDeckProvider = bundledDeckProvider,
             logger = logger,
         )
+        PackValidator.overrideImageMetadataDecoderForTesting { 1 to 1 }
+    }
+
+    @After
+    fun tearDown() {
+        PackValidator.resetImageMetadataDecoderForTesting()
     }
 
     @Test
