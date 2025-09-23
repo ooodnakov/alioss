@@ -35,6 +35,7 @@ import javax.inject.Singleton
 object DataModule {
     @Provides
     @Singleton
+    @Suppress("SpreadOperator")
     fun provideDatabase(
         @ApplicationContext context: Context,
     ): AliasDatabase {
@@ -76,7 +77,7 @@ object DataModule {
             val enableDestructiveFallback = field.getBoolean(null)
             Log.d("DataModule", "ENABLE_DESTRUCTIVE_MIGRATION_FALLBACK value: $enableDestructiveFallback")
             enableDestructiveFallback
-        } catch (e: Exception) {
+        } catch (e: ReflectiveOperationException) {
             Log.e("DataModule", "Could not access BuildConfig, checking alternative methods. Error: ${e.message}", e)
 
             // Fallback: Check if we're in a debuggable build using ApplicationInfo
@@ -88,7 +89,7 @@ object DataModule {
                 // Only enable destructive fallback for debuggable builds
                 // This preserves user data in release and devRelease builds
                 isDebuggable
-            } catch (e2: Exception) {
+            } catch (e2: android.content.pm.PackageManager.NameNotFoundException) {
                 Log.e(
                     "DataModule",
                     "Could not determine if app is debuggable, preserving user data by default. Error: ${e2.message}",
