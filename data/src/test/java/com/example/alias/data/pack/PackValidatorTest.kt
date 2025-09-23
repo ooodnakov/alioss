@@ -1,10 +1,12 @@
 package com.example.alias.data.pack
 
+import com.example.alias.testing.fakePngBytes
 import java.util.Base64
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class PackValidatorTest {
 
@@ -119,6 +121,15 @@ class PackValidatorTest {
     }
 
     @Test
+    fun `validate cover image bytes accepts large png under limit`() {
+        val largeBytes = fakePngBytes(width = 512, height = 512, totalSize = 3 * 1024 * 1024)
+        assertTrue(largeBytes.size > 1_000_000)
+
+        val normalized = PackValidator.validateCoverImageBytes(largeBytes)
+        assertEquals(Base64.getEncoder().encodeToString(largeBytes), normalized)
+    }
+
+    @Test
     fun `validate word enforces language and metadata`() {
         PackValidator.validateWord(
             text = "Director",
@@ -212,4 +223,5 @@ class PackValidatorTest {
         private const val ONE_BY_ONE_PNG_BASE64 =
             "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAAWgmWQ0AAAAASUVORK5CYII="
     }
+
 }

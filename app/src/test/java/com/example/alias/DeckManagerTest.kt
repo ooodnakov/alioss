@@ -19,14 +19,15 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import com.example.alias.testing.fakePngBytes
 import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
 import okio.Buffer
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -276,7 +277,8 @@ class DeckManagerTest {
     @Test
     fun importPackFromJsonDownloadsCoverImageUrl() = runBlocking {
         withHttpsServer { server, origin, client ->
-            val imageBytes = Base64.getDecoder().decode(SAMPLE_PNG_BASE64)
+            val imageBytes = fakePngBytes(width = 512, height = 512, totalSize = 3 * 1024 * 1024)
+            assertTrue(imageBytes.size > 1_000_000)
             val buffer = Buffer().write(imageBytes)
             server.enqueue(MockResponse().setResponseCode(200).setBody(buffer))
             val httpsUrl = server.url("/cover.png").toString().replace("http://", "https://")
@@ -301,9 +303,9 @@ class DeckManagerTest {
             assertEquals("cover_remote", result.deckId)
             assertEquals(null, result.coverImageError)
             val imported = deckRepository.importedPacks.last()
-            val expected = Base64.getEncoder().encodeToString(imageBytes)
-            assertEquals(expected, imported.deck.coverImageBase64)
-            assertNotNull(imported.deck.coverImageBase64)
+            val storedBase64 = requireNotNull(imported.deck.coverImageBase64)
+            val decoded = Base64.getDecoder().decode(storedBase64)
+            assertArrayEquals(imageBytes, decoded)
         }
     }
 
@@ -367,11 +369,6 @@ class DeckManagerTest {
         } finally {
             server.shutdown()
         }
-    }
-
-    companion object {
-        private const val SAMPLE_PNG_BASE64 =
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAAWgmWQ0AAAAASUVORK5CYII="
     }
 
     private fun sha256(content: String): String {
