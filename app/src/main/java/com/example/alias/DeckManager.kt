@@ -42,6 +42,8 @@ import javax.inject.Singleton
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.text.Charsets
 
+private const val MAX_COVER_IMAGE_DOWNLOAD_BYTES = 256_000L
+
 @Singleton
 class DeckManager
 @Inject
@@ -647,7 +649,7 @@ constructor(
                 val bytes = downloader.download(
                     url.trim(),
                     expectedSha256 = null,
-                    maxBytes = PackValidator.MAX_COVER_IMAGE_BYTES.toLong(),
+                    maxBytes = MAX_COVER_IMAGE_DOWNLOAD_BYTES,
                 )
                 PackValidator.validateCoverImageBytes(bytes)
             }

@@ -3,6 +3,8 @@ package com.example.alias.data.pack
 import android.graphics.BitmapFactory
 import android.graphics.ImageDecoder
 import android.os.Build
+import androidx.annotation.RequiresApi
+import androidx.annotation.VisibleForTesting
 import com.example.alias.domain.word.WordClassCatalog
 import java.nio.ByteBuffer
 import java.util.Base64
@@ -14,7 +16,7 @@ import java.util.Locale
 object PackValidator {
     const val MULTI_LANGUAGE_TAG = "mul"
     private const val MAX_WORDS = 200_000
-    const val MAX_COVER_IMAGE_BYTES = 256_000
+    internal const val MAX_COVER_IMAGE_BYTES = 256_000
     private const val MAX_COVER_IMAGE_URL_LENGTH = 2_048
     private val ID_REGEX = Regex("^[a-z0-9_-]{1,64}$")
     private val LANG_REGEX = Regex("^[A-Za-z]{2,8}(-[A-Za-z0-9]{1,8})*$")
@@ -111,6 +113,22 @@ object PackValidator {
         imageMetadataDecoder = AndroidImageMetadataDecoder
     }
 
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    @JvmStatic
+    fun overrideImageMetadataDecoderForTesting(
+        decoder: (ByteArray) -> Pair<Int, Int>?,
+    ) {
+        imageMetadataDecoder = object : ImageMetadataDecoder {
+            override fun decodeSize(data: ByteArray): Pair<Int, Int>? = decoder(data)
+        }
+    }
+
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    @JvmStatic
+    fun resetImageMetadataDecoderForTesting() {
+        resetImageMetadataDecoder()
+    }
+
     private fun decodeImageSize(data: ByteArray): Pair<Int, Int>? {
         return imageMetadataDecoder.decodeSize(data)
     }
@@ -136,11 +154,9 @@ object PackValidator {
             return null
         }
 
+        @RequiresApi(Build.VERSION_CODES.P)
         private object ImageDecoderDelegate {
             fun decodeSize(data: ByteArray): Pair<Int, Int>? {
-                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
-                    return null
-                }
                 return try {
                     val source = ImageDecoder.createSource(ByteBuffer.wrap(data))
                     ImageDecoder.decodeDrawable(source) { _, info, _ ->
