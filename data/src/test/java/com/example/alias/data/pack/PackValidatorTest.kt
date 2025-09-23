@@ -1,12 +1,25 @@
 package com.example.alias.data.pack
 
 import java.util.Base64
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class PackValidatorTest {
+
+    @BeforeTest
+    fun setUpDecoder() {
+        PackValidator.imageMetadataDecoder = TestCoverImages.fakeDecoder
+    }
+
+    @AfterTest
+    fun tearDownDecoder() {
+        PackValidator.resetImageMetadataDecoder()
+    }
 
     @Test
     fun `normalize language tag trims and lowercases`() {
@@ -45,9 +58,9 @@ class PackValidatorTest {
             name = "Deck One",
             version = 1,
             isNSFW = false,
-            coverImageBase64 = " data:image/png;base64,${ONE_BY_ONE_PNG_BASE64} ",
+            coverImageBase64 = " data:image/png;base64,${TestCoverImages.TWO_BY_TWO_PNG_BASE64} ",
         )
-        assertEquals(ONE_BY_ONE_PNG_BASE64, normalized)
+        assertEquals(TestCoverImages.TWO_BY_TWO_PNG_BASE64, normalized)
 
         assertNull(
             PackValidator.validateDeck(
@@ -73,22 +86,33 @@ class PackValidatorTest {
     }
 
     @Test
-    fun `validate cover image bytes accepts png and rejects invalid data`() {
-        val bytes = Base64.getMimeDecoder().decode(ONE_BY_ONE_PNG_BASE64)
-        val normalized = PackValidator.validateCoverImageBytes(bytes)
-        assertEquals(Base64.getEncoder().encodeToString(bytes), normalized)
+    fun `validate cover image bytes accepts common formats`() {
+        TestCoverImages.supportedFormatBytes.forEach { (label, bytes) ->
+            val normalized = PackValidator.validateCoverImageBytes(bytes)
+            assertEquals(TestCoverImages.base64Encoder.encodeToString(bytes), normalized, label)
+        }
+    }
 
+    @Test
+    fun `validate cover image bytes rejects invalid data`() {
         assertFailsWith<CoverImageException> { PackValidator.validateCoverImageBytes(ByteArray(0)) }
+
         assertFailsWith<CoverImageException> {
-            PackValidator.validateCoverImageBytes(ByteArray(PackValidator.MAX_COVER_IMAGE_BYTES + 1))
+            PackValidator.validateCoverImageBytes(TestCoverImages.zeroDimensionPngBytes)
         }
 
-        val zeroDimension = bytes.copyOf()
-        zeroDimension[16] = 0
-        zeroDimension[17] = 0
-        zeroDimension[18] = 0
-        zeroDimension[19] = 0
-        assertFailsWith<CoverImageException> { PackValidator.validateCoverImageBytes(zeroDimension) }
+        assertFailsWith<CoverImageException> {
+            PackValidator.validateCoverImageBytes(ByteArray(1024) { 0x55 })
+        }
+    }
+
+    @Test
+    fun `validate cover image bytes allows oversized payloads`() {
+        val oversized = TestCoverImages.oversizedImageBytes
+        assertTrue(oversized.size > PackValidator.MAX_COVER_IMAGE_BYTES)
+
+        val normalized = PackValidator.validateCoverImageBytes(oversized)
+        assertEquals(TestCoverImages.base64Encoder.encodeToString(oversized), normalized)
     }
 
     @Test
@@ -181,8 +205,4 @@ class PackValidatorTest {
         assertFailsWith<IllegalArgumentException> { PackValidator.validateMultiLanguageContent(setOf("en")) }
     }
 
-    companion object {
-        private const val ONE_BY_ONE_PNG_BASE64 =
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAAWgmWQ0AAAAASUVORK5CYII="
-    }
 }
