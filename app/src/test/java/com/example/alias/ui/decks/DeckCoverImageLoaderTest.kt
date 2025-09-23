@@ -3,19 +3,19 @@ package com.example.alias.ui.decks
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.junit.Assert.assertTrue
 import java.util.UUID
 
 class DeckCoverImageLoaderTest {
     private lateinit var decodeCounts: MutableMap<String, Int>
 
     @Before
-    fun setUp() {
+    fun setUp() = runBlocking {
         decodeCounts = mutableMapOf()
         DeckCoverImageLoader.overrideCacheForTest(
-            FakeByteCountingLruCache(DeckCoverImageLoader.maxCacheSizeBytes()),
+            BitmapByteLruCache(DeckCoverImageLoader.maxCacheSizeBytes()),
         )
         DeckCoverImageLoader.decoderOverride = { key ->
             decodeCounts[key] = decodeCounts.getOrDefault(key, 0) + 1
@@ -24,7 +24,7 @@ class DeckCoverImageLoaderTest {
     }
 
     @After
-    fun tearDown() {
+    fun tearDown() = runBlocking {
         DeckCoverImageLoader.decoderOverride = null
         DeckCoverImageLoader.resetCacheForTest()
     }
@@ -59,44 +59,6 @@ class DeckCoverImageLoaderTest {
         bitmap = null,
         sizeBytes = SIMULATED_SIZE_BYTES,
     )
-
-    private class FakeByteCountingLruCache(maxSize: Int) : DeckCoverCache {
-        private val maxSizeBytes = maxSize
-        private val entries = LinkedHashMap<String, DeckCoverCacheEntry>(0, 0.75f, true)
-        private var currentSize = 0
-
-        override fun get(key: String): DeckCoverCacheEntry? = entries[key]
-
-        override fun put(key: String, value: DeckCoverCacheEntry): DeckCoverCacheEntry? {
-            val previous = entries.put(key, value)
-            if (previous != null) {
-                currentSize -= previous.sizeBytes
-            }
-            currentSize += value.sizeBytes
-            trimToSize(maxSizeBytes)
-            return previous
-        }
-
-        private fun trimToSize(maxSize: Int) {
-            if (maxSize < 0) {
-                entries.clear()
-                currentSize = 0
-                return
-            }
-            val iterator = entries.entries.iterator()
-            while (currentSize > maxSize && iterator.hasNext()) {
-                val entry = iterator.next()
-                currentSize -= entry.value.sizeBytes
-                iterator.remove()
-            }
-        }
-
-        override fun evictAll() {
-            entries.clear()
-            currentSize = 0
-        }
-    }
-
     private companion object {
         const val DIMENSION = 2_048
         const val BYTES_PER_PIXEL = 4

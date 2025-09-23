@@ -9,7 +9,6 @@ import androidx.compose.runtime.produceState
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -47,17 +46,13 @@ object DeckCoverImageLoader {
     internal var decoderOverride: ((String) -> DeckCoverCacheEntry)? = null
 
     @VisibleForTesting
-    internal fun overrideCacheForTest(newCache: DeckCoverCache) {
-        runBlocking {
-            mutex.withLock { cache = newCache }
-        }
+    internal suspend fun overrideCacheForTest(newCache: DeckCoverCache) {
+        mutex.withLock { cache = newCache }
     }
 
     @VisibleForTesting
-    internal fun resetCacheForTest() {
-        runBlocking {
-            mutex.withLock { cache = createCache() }
-        }
+    internal suspend fun resetCacheForTest() {
+        mutex.withLock { cache = createCache() }
     }
 
     @VisibleForTesting
@@ -101,19 +96,19 @@ object DeckCoverImageLoader {
             return override(base64)
         }
         val decoded = Base64.decode(base64, Base64.DEFAULT)
-        if (decoded.isEmpty()) {
-            return DeckCoverCacheEntry(bitmap = null, sizeBytes = 0)
+        val bitmap = if (decoded.isEmpty()) {
+            null
+        } else {
+            BitmapFactory.decodeByteArray(decoded, 0, decoded.size)
         }
-        val bitmap = BitmapFactory.decodeByteArray(decoded, 0, decoded.size)
-            ?: return DeckCoverCacheEntry(bitmap = null, sizeBytes = 0)
-        val sizeBytes = bitmap.allocationByteCount
-        return DeckCoverCacheEntry(bitmap = bitmap.asImageBitmap(), sizeBytes = sizeBytes)
+        val sizeBytes = bitmap?.allocationByteCount ?: 0
+        return DeckCoverCacheEntry(bitmap = bitmap?.asImageBitmap(), sizeBytes = sizeBytes)
     }
 
     private fun createCache(): DeckCoverCache = BitmapByteLruCache(MAX_CACHE_SIZE_BYTES)
 }
 
-private class BitmapByteLruCache(maxSize: Int) :
+internal class BitmapByteLruCache(maxSize: Int) :
     LruCache<String, DeckCoverCacheEntry>(maxSize), DeckCoverCache {
 
     override fun sizeOf(key: String, value: DeckCoverCacheEntry): Int = value.sizeBytes
