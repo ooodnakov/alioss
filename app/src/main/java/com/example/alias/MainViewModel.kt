@@ -5,6 +5,9 @@ import android.util.Log
 import androidx.compose.material3.SnackbarDuration
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.alias.achievements.AchievementsManager
+import com.example.alias.data.achievements.AchievementSection
+import com.example.alias.data.achievements.AchievementState
 import com.example.alias.data.db.DeckEntity
 import com.example.alias.data.db.DifficultyBucket
 import com.example.alias.data.db.TurnHistoryEntity
@@ -36,6 +39,7 @@ constructor(
     private val deckManager: DeckManager,
     private val settingsController: SettingsController,
     private val gameController: GameController,
+    private val achievementsManager: AchievementsManager,
 ) : ViewModel() {
     companion object {
         private const val TAG = "MainViewModel"
@@ -66,6 +70,9 @@ constructor(
 
     val settings = settingsController.settings
         .stateIn(viewModelScope, SharingStarted.Lazily, Settings())
+
+    val achievements: StateFlow<List<AchievementState>> = achievementsManager.achievements
+        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     fun recentHistory(limit: Int): Flow<List<TurnHistoryEntity>> = gameController.recentHistory(limit)
 
@@ -551,5 +558,9 @@ constructor(
 
     fun setOrientation(value: String) {
         viewModelScope.launch { settingsController.setOrientation(value) }
+    }
+
+    fun onSectionVisited(section: AchievementSection) {
+        viewModelScope.launch { achievementsManager.onSectionVisited(section) }
     }
 }

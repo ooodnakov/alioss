@@ -11,6 +11,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -24,6 +25,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.alias.MainViewModel
 import com.example.alias.R
+import com.example.alias.data.achievements.AchievementSection
 import com.example.alias.data.settings.Settings
 import com.example.alias.ui.about.aboutScreen
 import com.example.alias.ui.appScaffold
@@ -53,6 +55,7 @@ fun aliasNavHost(
         exitTransition = { fadeOut() },
     ) {
         composable("home") {
+            LaunchedEffect(Unit) { viewModel.onSectionVisited(AchievementSection.HOME) }
             val engine by viewModel.engine.collectAsState()
             val gameState = engine?.let { current ->
                 val state by current.state.collectAsState()
@@ -83,6 +86,7 @@ fun aliasNavHost(
             }
         }
         composable("game") {
+            LaunchedEffect(Unit) { viewModel.onSectionVisited(AchievementSection.GAME) }
             val engine by viewModel.engine.collectAsState()
             val currentSettings by viewModel.settings.collectAsState()
             appScaffold(snackbarHostState = snackbarHostState) {
@@ -107,6 +111,7 @@ fun aliasNavHost(
             }
         }
         composable("decks") {
+            LaunchedEffect(Unit) { viewModel.onSectionVisited(AchievementSection.DECKS) }
             appScaffold(snackbarHostState = snackbarHostState) {
                 decksScreen(
                     vm = viewModel,
@@ -118,6 +123,7 @@ fun aliasNavHost(
             route = "deck/{id}",
             arguments = listOf(navArgument("id") { type = NavType.StringType }),
         ) { backStackEntry ->
+            LaunchedEffect(Unit) { viewModel.onSectionVisited(AchievementSection.DECKS) }
             val id = requireNotNull(backStackEntry.arguments?.getString("id"))
             val decks by viewModel.decks.collectAsState()
             val deck = decks.find { it.id == id }
@@ -138,6 +144,7 @@ fun aliasNavHost(
             }
         }
         composable("settings") {
+            LaunchedEffect(Unit) { viewModel.onSectionVisited(AchievementSection.SETTINGS) }
             appScaffold(snackbarHostState = snackbarHostState) {
                 settingsScreen(
                     vm = viewModel,
@@ -147,6 +154,7 @@ fun aliasNavHost(
             }
         }
         composable("history") {
+            LaunchedEffect(Unit) { viewModel.onSectionVisited(AchievementSection.HISTORY) }
             appScaffold(snackbarHostState = snackbarHostState) {
                 val historyFlow = remember { viewModel.recentHistory(HISTORY_LIMIT) }
                 val history by historyFlow.collectAsState(initial = emptyList())
@@ -157,6 +165,7 @@ fun aliasNavHost(
             }
         }
         composable("about") {
+            LaunchedEffect(Unit) { viewModel.onSectionVisited(AchievementSection.ABOUT) }
             appScaffold(snackbarHostState = snackbarHostState) {
                 aboutScreen()
             }

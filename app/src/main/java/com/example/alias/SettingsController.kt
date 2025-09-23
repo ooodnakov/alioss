@@ -1,5 +1,6 @@
 package com.example.alias
 
+import com.example.alias.achievements.AchievementsManager
 import com.example.alias.data.settings.Settings
 import com.example.alias.data.settings.SettingsRepository
 import kotlinx.coroutines.flow.Flow
@@ -13,6 +14,7 @@ class SettingsController
 @Inject
 constructor(
     private val settingsRepository: SettingsRepository,
+    private val achievementsManager: AchievementsManager,
 ) {
     val settings: Flow<Settings> = settingsRepository.settings
 
@@ -36,6 +38,7 @@ constructor(
             return TrustedSourceResult.Unchanged(normalized)
         }
         settingsRepository.setTrustedSources(current)
+        achievementsManager.onSettingsAdjusted()
         return TrustedSourceResult.Added(normalized)
     }
 
@@ -43,22 +46,27 @@ constructor(
         val current = settingsRepository.settings.first().trustedSources.toMutableSet()
         current -= entry
         settingsRepository.setTrustedSources(current)
+        achievementsManager.onSettingsAdjusted()
     }
 
     suspend fun updateDifficultyFilter(min: Int, max: Int) {
         settingsRepository.updateDifficultyFilter(min, max)
+        achievementsManager.onSettingsAdjusted()
     }
 
     suspend fun updateCategoriesFilter(categories: Set<String>) {
         settingsRepository.setCategoriesFilter(categories)
+        achievementsManager.onSettingsAdjusted()
     }
 
     suspend fun updateWordClassesFilter(classes: Set<String>) {
         settingsRepository.setWordClassesFilter(classes)
+        achievementsManager.onSettingsAdjusted()
     }
 
     suspend fun updateSeenTutorial(value: Boolean) {
         settingsRepository.updateSeenTutorial(value)
+        achievementsManager.onSettingsAdjusted()
     }
 
     suspend fun applySettingsUpdate(request: SettingsUpdateRequest) {
@@ -76,18 +84,22 @@ constructor(
         settingsRepository.updateOrientation(request.orientation)
         settingsRepository.updateUiLanguage(canonicalizeLocalePreference(request.uiLanguage))
         settingsRepository.setTeams(request.teams)
+        achievementsManager.onSettingsAdjusted()
     }
 
     suspend fun setEnabledDeckIds(ids: Set<String>) {
         settingsRepository.setEnabledDeckIds(ids)
+        achievementsManager.onSettingsAdjusted()
     }
 
     suspend fun updateDeckLanguagesFilter(languages: Set<String>) {
         settingsRepository.setDeckLanguagesFilter(languages)
+        achievementsManager.onSettingsAdjusted()
     }
 
     suspend fun setOrientation(value: String) {
         settingsRepository.updateOrientation(value)
+        achievementsManager.onSettingsAdjusted()
     }
 
     sealed interface TrustedSourceResult {
