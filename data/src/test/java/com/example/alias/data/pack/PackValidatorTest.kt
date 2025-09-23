@@ -5,6 +5,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class PackValidatorTest {
 
@@ -89,6 +90,15 @@ class PackValidatorTest {
         zeroDimension[18] = 0
         zeroDimension[19] = 0
         assertFailsWith<CoverImageException> { PackValidator.validateCoverImageBytes(zeroDimension) }
+    }
+
+    @Test
+    fun `validate cover image bytes accepts large png under limit`() {
+        val largeBytes = fakePngBytes(width = 512, height = 512, totalSize = 3 * 1024 * 1024)
+        assertTrue(largeBytes.size > 1_000_000)
+
+        val normalized = PackValidator.validateCoverImageBytes(largeBytes)
+        assertEquals(Base64.getEncoder().encodeToString(largeBytes), normalized)
     }
 
     @Test
@@ -184,5 +194,48 @@ class PackValidatorTest {
     companion object {
         private const val ONE_BY_ONE_PNG_BASE64 =
             "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAAWgmWQ0AAAAASUVORK5CYII="
+        private val PNG_SIGNATURE = byteArrayOf(
+            137.toByte(),
+            80,
+            78,
+            71,
+            13,
+            10,
+            26,
+            10,
+        )
+    }
+
+    private fun fakePngBytes(width: Int, height: Int, totalSize: Int): ByteArray {
+        require(totalSize >= 33) { "PNG must be large enough to hold signature and IHDR chunk" }
+        val bytes = ByteArray(totalSize) { 0 }
+        PNG_SIGNATURE.copyInto(bytes, destinationOffset = 0)
+        writeInt(bytes, 8, 13)
+        bytes[12] = 'I'.code.toByte()
+        bytes[13] = 'H'.code.toByte()
+        bytes[14] = 'D'.code.toByte()
+        bytes[15] = 'R'.code.toByte()
+        writeInt(bytes, 16, width)
+        writeInt(bytes, 20, height)
+        bytes[24] = 8 // bit depth
+        bytes[25] = 2 // color type (RGB)
+        bytes[26] = 0 // compression
+        bytes[27] = 0 // filter
+        bytes[28] = 0 // interlace
+
+        val iendOffset = totalSize - 12
+        writeInt(bytes, iendOffset, 0)
+        bytes[iendOffset + 4] = 'I'.code.toByte()
+        bytes[iendOffset + 5] = 'E'.code.toByte()
+        bytes[iendOffset + 6] = 'N'.code.toByte()
+        bytes[iendOffset + 7] = 'D'.code.toByte()
+        return bytes
+    }
+
+    private fun writeInt(target: ByteArray, offset: Int, value: Int) {
+        target[offset] = ((value shr 24) and 0xFF).toByte()
+        target[offset + 1] = ((value shr 16) and 0xFF).toByte()
+        target[offset + 2] = ((value shr 8) and 0xFF).toByte()
+        target[offset + 3] = (value and 0xFF).toByte()
     }
 }

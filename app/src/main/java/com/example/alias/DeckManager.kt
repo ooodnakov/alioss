@@ -647,7 +647,6 @@ constructor(
                 val bytes = downloader.download(
                     url.trim(),
                     expectedSha256 = null,
-                    maxBytes = PackValidator.MAX_COVER_IMAGE_BYTES.toLong(),
                 )
                 PackValidator.validateCoverImageBytes(bytes)
             }
