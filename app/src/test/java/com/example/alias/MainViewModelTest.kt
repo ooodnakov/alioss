@@ -1,8 +1,12 @@
 package com.example.alias
 
 import android.app.Application
+import com.example.alias.achievements.AchievementsManager
 import com.example.alias.data.DeckRepository
 import com.example.alias.data.TurnHistoryRepository
+import com.example.alias.data.achievements.AchievementSection
+import com.example.alias.data.achievements.AchievementState
+import com.example.alias.data.achievements.AchievementsRepository
 import com.example.alias.data.db.DeckDao
 import com.example.alias.data.db.DeckEntity
 import com.example.alias.data.db.DifficultyBucket
@@ -52,6 +56,8 @@ class MainViewModelTest {
     private lateinit var settingsRepository: TestSettingsRepository
     private lateinit var settingsController: SettingsController
     private lateinit var gameController: GameController
+    private lateinit var achievementsRepository: TestAchievementsRepository
+    private lateinit var achievementsManager: AchievementsManager
 
     @Before
     fun setUp() {
@@ -120,15 +126,17 @@ class MainViewModelTest {
             bundledDeckProvider = bundledDeckProvider,
             logger = logger,
         )
-        settingsController = SettingsController(settingsRepository)
+        achievementsRepository = TestAchievementsRepository()
+        achievementsManager = AchievementsManager(achievementsRepository)
+        settingsController = SettingsController(settingsRepository, achievementsManager)
         val historyRepository = TestTurnHistoryRepository()
         val engineFactory = TestGameEngineFactory()
-        gameController = GameController(historyRepository, engineFactory)
+        gameController = GameController(historyRepository, achievementsManager, engineFactory)
     }
 
     @Test
     fun enablingAdditionalDeckRefreshesAvailableCategories() = runTest(dispatcherRule.dispatcher) {
-        val vm = MainViewModel(deckManager, settingsController, gameController)
+        val vm = MainViewModel(deckManager, settingsController, gameController, achievementsManager)
         settingsController.setEnabledDeckIds(setOf("alpha", "beta"))
         val updatedCategories = withContext(Dispatchers.Default.limitedParallelism(1)) {
             withTimeout(5_000) {
@@ -141,7 +149,7 @@ class MainViewModelTest {
 
     @Test
     fun togglingCategoryRefreshesAvailableCategories() = runTest(dispatcherRule.dispatcher) {
-        val vm = MainViewModel(deckManager, settingsController, gameController)
+        val vm = MainViewModel(deckManager, settingsController, gameController, achievementsManager)
         wordDao.updateCategories("alpha", listOf("Gamma"))
         wordDao.updateBriefs("alpha", listOf(WordBrief("apple", 1, "Gamma", "NOUN")))
 
@@ -535,6 +543,22 @@ private class TestTurnHistoryRepository : TurnHistoryRepository {
     override suspend fun clear() {
         history.value = emptyList()
     }
+}
+
+private class TestAchievementsRepository : AchievementsRepository {
+    private val states = MutableStateFlow<List<AchievementState>>(emptyList())
+
+    override val achievements: Flow<List<AchievementState>> = states
+
+    override suspend fun recordCorrectGuesses(count: Int) = Unit
+
+    override suspend fun recordPerfectTurn() = Unit
+
+    override suspend fun recordFastMatchWin() = Unit
+
+    override suspend fun recordSettingsAdjustment() = Unit
+
+    override suspend fun recordSectionVisited(section: AchievementSection) = Unit
 }
 
 private class TestGameEngineFactory : GameEngineFactory {

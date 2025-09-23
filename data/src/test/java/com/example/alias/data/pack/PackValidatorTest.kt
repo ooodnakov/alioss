@@ -48,8 +48,21 @@ class PackValidatorTest {
             version = 1,
             isNSFW = false,
             coverImageBase64 = " data:image/png;base64,${ONE_BY_ONE_PNG_BASE64} ",
+            author = "  Deck Author  ",
         )
-        assertEquals(ONE_BY_ONE_PNG_BASE64, normalized)
+        assertEquals(ONE_BY_ONE_PNG_BASE64, normalized.coverImageBase64)
+        assertEquals("Deck Author", normalized.author)
+
+        val blankAuthor = PackValidator.validateDeck(
+            id = "deck_blank",
+            language = "en",
+            name = "Deck Blank",
+            version = 1,
+            isNSFW = false,
+            coverImageBase64 = null,
+            author = "   ",
+        )
+        assertNull(blankAuthor.author)
 
         assertNull(
             PackValidator.validateDeck(
@@ -59,7 +72,8 @@ class PackValidatorTest {
                 version = 1,
                 isNSFW = false,
                 coverImageBase64 = "   ",
-            ),
+                author = null,
+            ).coverImageBase64,
         )
 
         assertFailsWith<IllegalArgumentException> {
@@ -70,6 +84,19 @@ class PackValidatorTest {
                 version = 1,
                 isNSFW = false,
                 coverImageBase64 = null,
+                author = null,
+            )
+        }
+
+        assertFailsWith<IllegalArgumentException> {
+            PackValidator.validateDeck(
+                id = "deck_3",
+                language = "en",
+                name = "Deck Three",
+                version = 1,
+                isNSFW = false,
+                coverImageBase64 = null,
+                author = "a".repeat(101),
             )
         }
     }

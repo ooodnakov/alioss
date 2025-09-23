@@ -13,10 +13,16 @@ object PackValidator {
     const val MAX_COVER_IMAGE_BYTES = 5 * 1024 * 1024
     private const val MAX_COVER_IMAGE_DIMENSION = 2_048
     private const val MAX_COVER_IMAGE_URL_LENGTH = 2_048
+    private const val MAX_AUTHOR_LENGTH = 100
     private val ID_REGEX = Regex("^[a-z0-9_-]{1,64}$")
     private val LANG_REGEX = Regex("^[A-Za-z]{2,8}(-[A-Za-z0-9]{1,8})*$")
     private val base64Encoder = Base64.getEncoder()
     private val base64MimeDecoder = Base64.getMimeDecoder()
+
+    data class DeckValidationResult(
+        val coverImageBase64: String?,
+        val author: String?,
+    )
 
     fun validateFormat(format: String) {
         require(format == "alias-deck@1") { "Unsupported pack format: $format" }
@@ -29,13 +35,21 @@ object PackValidator {
         version: Int,
         @Suppress("UNUSED_PARAMETER") isNSFW: Boolean,
         coverImageBase64: String?,
-    ): String? {
+        author: String?,
+    ): DeckValidationResult {
         require(ID_REGEX.matches(id)) { "Invalid deck id" }
         require(name.isNotBlank() && name.length <= 100) { "Invalid deck name" }
         require(LANG_REGEX.matches(language)) { "Invalid language tag" }
         require(version >= 1) { "Invalid version" }
         // isNSFW: no constraint (boolean)
-        return normalizeCoverImage(coverImageBase64)
+        val normalizedAuthor = author?.trim()?.takeIf { it.isNotEmpty() }
+        if (normalizedAuthor != null) {
+            require(normalizedAuthor.length <= MAX_AUTHOR_LENGTH) { "Invalid deck author" }
+        }
+        return DeckValidationResult(
+            coverImageBase64 = normalizeCoverImage(coverImageBase64),
+            author = normalizedAuthor,
+        )
     }
 
     fun normalizeCoverImageUrl(coverImageUrl: String?): String? {
@@ -51,7 +65,7 @@ object PackValidator {
         }
         val uri = try {
             java.net.URI(trimmed)
-        } catch (error: Exception) {
+        } catch (error: java.net.URISyntaxException) {
             throw CoverImageException("Invalid cover image URL", error)
         }
         if (!uri.isAbsolute) {

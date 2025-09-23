@@ -58,6 +58,7 @@ dependencies {
     testImplementation(kotlin("test"))
     testImplementation(libs.bundles.test.unit)
     testImplementation(project(":test-utils"))
+    testImplementation(libs.kotlinx.coroutines.test)
 
     // HTTP client for manual pack downloads
     implementation(libs.okhttp)

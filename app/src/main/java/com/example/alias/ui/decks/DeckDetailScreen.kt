@@ -370,6 +370,13 @@ private fun deckDetailHero(deck: DeckEntity, count: Int?, downloadDateText: Stri
                     deckTag(stringResource(R.string.deck_nsfw_label))
                 }
             }
+            deck.author?.let { author ->
+                Text(
+                    text = stringResource(R.string.deck_author_label, author),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.White.copy(alpha = 0.9f),
+                )
+            }
             Text(
                 text = stringResource(R.string.deck_word_count, countText),
                 style = MaterialTheme.typography.bodyLarge,
