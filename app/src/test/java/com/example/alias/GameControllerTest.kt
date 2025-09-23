@@ -1,6 +1,10 @@
 package com.example.alias
 
+import com.example.alias.achievements.AchievementsManager
 import com.example.alias.data.TurnHistoryRepository
+import com.example.alias.data.achievements.AchievementSection
+import com.example.alias.data.achievements.AchievementState
+import com.example.alias.data.achievements.AchievementsRepository
 import com.example.alias.data.db.TurnHistoryEntity
 import com.example.alias.data.settings.Settings
 import com.example.alias.domain.GameEngine
@@ -19,12 +23,16 @@ import org.junit.Test
 
 class GameControllerTest {
     private lateinit var historyRepository: FakeTurnHistoryRepository
+    private lateinit var achievementsRepository: FakeAchievementsRepository
+    private lateinit var achievementsManager: AchievementsManager
     private lateinit var controller: GameController
 
     @Before
     fun setUp() {
         historyRepository = FakeTurnHistoryRepository()
-        controller = GameController(historyRepository, FakeGameEngineFactory())
+        achievementsRepository = FakeAchievementsRepository()
+        achievementsManager = AchievementsManager(achievementsRepository)
+        controller = GameController(historyRepository, achievementsManager, FakeGameEngineFactory())
     }
 
     @Test
@@ -90,6 +98,20 @@ class GameControllerTest {
         override suspend fun clear() {
             saved.clear()
         }
+    }
+
+    private class FakeAchievementsRepository : AchievementsRepository {
+        override val achievements = MutableStateFlow(emptyList<AchievementState>())
+
+        override suspend fun recordCorrectGuesses(count: Int) = Unit
+
+        override suspend fun recordPerfectTurn() = Unit
+
+        override suspend fun recordFastMatchWin() = Unit
+
+        override suspend fun recordSettingsAdjustment() = Unit
+
+        override suspend fun recordSectionVisited(section: AchievementSection) = Unit
     }
 
     private class FakeGameEngine : GameEngine {

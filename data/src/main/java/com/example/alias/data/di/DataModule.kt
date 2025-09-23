@@ -11,6 +11,8 @@ import androidx.datastore.preferences.preferencesDataStoreFile
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.example.alias.data.achievements.AchievementsRepository
+import com.example.alias.data.achievements.AchievementsRepositoryImpl
 import com.example.alias.data.DeckRepository
 import com.example.alias.data.DeckRepositoryImpl
 import com.example.alias.data.TurnHistoryRepository
@@ -28,6 +30,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import javax.inject.Named
 import javax.inject.Singleton
 
 @Module
@@ -138,6 +141,7 @@ object DataModule {
 
     @Provides
     @Singleton
+    @Named("settings")
     fun providePreferencesDataStore(
         @ApplicationContext context: Context,
     ): DataStore<Preferences> =
@@ -148,8 +152,28 @@ object DataModule {
 
     @Provides
     @Singleton
-    fun provideSettingsRepository(dataStore: DataStore<Preferences>): SettingsRepository =
+    fun provideSettingsRepository(
+        @Named("settings") dataStore: DataStore<Preferences>,
+    ): SettingsRepository =
         SettingsRepositoryImpl(dataStore)
+
+    @Provides
+    @Singleton
+    @Named("achievements")
+    fun provideAchievementsDataStore(
+        @ApplicationContext context: Context,
+    ): DataStore<Preferences> =
+        PreferenceDataStoreFactory.create(
+            corruptionHandler = ReplaceFileCorruptionHandler { emptyPreferences() },
+            produceFile = { context.preferencesDataStoreFile("alias_achievements") },
+        )
+
+    @Provides
+    @Singleton
+    fun provideAchievementsRepository(
+        @Named("achievements") dataStore: DataStore<Preferences>,
+    ): AchievementsRepository =
+        AchievementsRepositoryImpl(dataStore)
 
     @Provides
     @Singleton
