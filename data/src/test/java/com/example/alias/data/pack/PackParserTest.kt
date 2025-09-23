@@ -29,6 +29,7 @@ class PackParserTest {
                 "id": "movies_en_v1",
                 "name": "Movies (EN)",
                 "language": "en",
+                "author": "Movie Buffs",
                 "version": 1,
                 "isNSFW": false
               },
@@ -41,6 +42,7 @@ class PackParserTest {
 
         val parsed = PackParser.fromJson(json)
         assertEquals("movies_en_v1", parsed.deck.id)
+        assertEquals("Movie Buffs", parsed.deck.author)
         assertEquals(2, parsed.words.size)
         assertEquals(2, parsed.wordClasses.size)
         assertEquals(setOf("NOUN"), parsed.wordClasses.map { it.wordClass }.toSet())
@@ -57,6 +59,7 @@ class PackParserTest {
                 "id": "cover_test",
                 "name": "Cover Test",
                 "language": "en",
+                "author": "Cover Test",
                 "version": 1,
                 "coverImage": "$base64Image"
               },
@@ -70,7 +73,51 @@ class PackParserTest {
 
         val expected = TestCoverImages.base64Encoder.encodeToString(TestCoverImages.twoByTwoPngBytes)
         assertEquals(expected, parsed.deck.coverImageBase64)
+        assertEquals("Cover Test", parsed.deck.author)
         assertNull(parsed.coverImageUrl)
+    }
+
+    @Test
+    fun trims_author_and_allows_absence() {
+        val json = """
+            {
+              "format": "alias-deck@1",
+              "deck": {
+                "id": "cover_url",
+                "name": "Cover URL",
+                "language": "en",
+                "version": 1,
+                "author": "  Jane Doe  "
+              },
+              "words": [
+                { "text": "One" }
+              ]
+            }
+        """.trimIndent()
+
+        val parsed = PackParser.fromJson(json)
+
+        assertEquals("Jane Doe", parsed.deck.author)
+        assertNull(parsed.deck.coverImageBase64)
+
+        val withoutAuthor = """
+            {
+              "format": "alias-deck@1",
+              "deck": {
+                "id": "no_author",
+                "name": "No Author",
+                "language": "en",
+                "version": 1
+              },
+              "words": [
+                { "text": "One" }
+              ]
+            }
+        """.trimIndent()
+
+        val parsedWithoutAuthor = PackParser.fromJson(withoutAuthor)
+
+        assertNull(parsedWithoutAuthor.deck.author)
     }
 
     @Test

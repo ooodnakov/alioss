@@ -21,6 +21,7 @@ private data class DeckDto(
     val id: String,
     val name: String,
     val language: String,
+    val author: String? = null,
     @SerialName("isNSFW") val isNsfw: Boolean = false,
     val version: Int = 1,
     val updatedAt: Long = 0L,
@@ -47,12 +48,10 @@ private data class WordDto(
     }
 
     fun resolvedWordClass(): String? {
-        val normalized = wordClass?.let { WordClassCatalog.normalizeOrNull(it) }
-        if (normalized != null) {
-            return normalized
-        }
         if (wordClass != null && wordClass.isNotBlank()) {
-            throw IllegalArgumentException("Unsupported word class: $wordClass")
+            val normalized = WordClassCatalog.normalizeOrNull(wordClass)
+            require(normalized != null) { "Unsupported word class: $wordClass" }
+            return normalized
         }
         return legacyWordClasses
             ?.asSequence()
@@ -85,14 +84,16 @@ object PackParser {
         require(dto.deck.coverImageBase64 == null || dto.deck.coverImageUrl == null) {
             "Cover image cannot be both embedded and referenced via URL"
         }
-        val coverImageBase64 = PackValidator.validateDeck(
+        val deckValidation = PackValidator.validateDeck(
             id = dto.deck.id,
             language = normalizedDeckLanguage,
             name = dto.deck.name,
             version = dto.deck.version,
             isNSFW = dto.deck.isNsfw,
             coverImageBase64 = dto.deck.coverImageBase64,
+            author = dto.deck.author,
         )
+        val coverImageBase64 = deckValidation.coverImageBase64
         val coverImageUrl = PackValidator.normalizeCoverImageUrl(dto.deck.coverImageUrl)
         PackValidator.validateWordCount(dto.words.size)
         val deckEntity = DeckEntity(
@@ -104,6 +105,7 @@ object PackParser {
             version = dto.deck.version,
             updatedAt = dto.deck.updatedAt,
             coverImageBase64 = coverImageBase64,
+            author = deckValidation.author,
         )
         val wordEntities = mutableListOf<WordEntity>()
         val classEntities = mutableListOf<WordClassEntity>()

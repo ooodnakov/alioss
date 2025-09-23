@@ -15,4 +15,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "alias-game"
-include(":app", ":domain", ":data")
+include(":app", ":domain", ":data", ":test-utils")

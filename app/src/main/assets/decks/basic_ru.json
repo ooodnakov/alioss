@@ -4,6 +4,7 @@
     "id": "basic_ru_v1",
     "name": "Базовый (RU)",
     "language": "ru",
+    "author": "Alias Contributors",
     "version": 1,
     "categories": [
       "общие"

@@ -5,6 +5,9 @@ import android.util.Log
 import androidx.compose.material3.SnackbarDuration
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.alias.achievements.AchievementsManager
+import com.example.alias.data.achievements.AchievementSection
+import com.example.alias.data.achievements.AchievementState
 import com.example.alias.data.db.DeckEntity
 import com.example.alias.data.db.DifficultyBucket
 import com.example.alias.data.db.TurnHistoryEntity
@@ -36,6 +39,7 @@ constructor(
     private val deckManager: DeckManager,
     private val settingsController: SettingsController,
     private val gameController: GameController,
+    private val achievementsManager: AchievementsManager,
 ) : ViewModel() {
     companion object {
         private const val TAG = "MainViewModel"
@@ -66,6 +70,9 @@ constructor(
 
     val settings = settingsController.settings
         .stateIn(viewModelScope, SharingStarted.Lazily, Settings())
+
+    val achievements: StateFlow<List<AchievementState>> = achievementsManager.achievements
+        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     fun recentHistory(limit: Int): Flow<List<TurnHistoryEntity>> = gameController.recentHistory(limit)
 
@@ -438,10 +445,22 @@ constructor(
                 if (result.coverImageError != null) {
                     showCoverImageErrorSnackbar()
                 }
-            } catch (e: Exception) {
+            } catch (e: java.io.IOException) {
+                Log.e(TAG, "Failed to download or import pack", e)
                 _uiEvents.tryEmit(
                     UiEvent(
                         message = "Failed: ${e.message}",
+                        actionLabel = "Dismiss",
+                        duration = SnackbarDuration.Long,
+                        isError = true,
+                        dismissCurrent = true,
+                    ),
+                )
+            } catch (e: Exception) {
+                Log.e(TAG, "An unexpected error occurred", e)
+                _uiEvents.tryEmit(
+                    UiEvent(
+                        message = "An unexpected error occurred",
                         actionLabel = "Dismiss",
                         duration = SnackbarDuration.Long,
                         isError = true,
@@ -474,10 +493,21 @@ constructor(
                 if (result.coverImageError != null) {
                     showCoverImageErrorSnackbar()
                 }
-            } catch (e: Exception) {
+            } catch (e: java.io.IOException) {
+                Log.e(TAG, "Failed to import deck from file", e)
                 _uiEvents.tryEmit(
                     UiEvent(
                         message = "Failed: ${e.message}",
+                        actionLabel = "Dismiss",
+                        duration = SnackbarDuration.Long,
+                        isError = true,
+                    ),
+                )
+            } catch (e: Exception) {
+                Log.e(TAG, "An unexpected error occurred", e)
+                _uiEvents.tryEmit(
+                    UiEvent(
+                        message = "An unexpected error occurred",
                         actionLabel = "Dismiss",
                         duration = SnackbarDuration.Long,
                         isError = true,
@@ -505,10 +535,21 @@ constructor(
             try {
                 gameController.clearHistory()
                 _uiEvents.tryEmit(UiEvent(message = "History cleared", actionLabel = "OK"))
-            } catch (e: Exception) {
+            } catch (e: android.database.SQLException) {
+                Log.e(TAG, "Failed to clear history", e)
                 _uiEvents.tryEmit(
                     UiEvent(
                         message = "Failed to clear history: ${e.message ?: "Unknown error"}",
+                        actionLabel = "Dismiss",
+                        duration = SnackbarDuration.Long,
+                        isError = true,
+                    ),
+                )
+            } catch (e: Exception) {
+                Log.e(TAG, "An unexpected error occurred", e)
+                _uiEvents.tryEmit(
+                    UiEvent(
+                        message = "An unexpected error occurred",
                         actionLabel = "Dismiss",
                         duration = SnackbarDuration.Long,
                         isError = true,
@@ -551,5 +592,9 @@ constructor(
 
     fun setOrientation(value: String) {
         viewModelScope.launch { settingsController.setOrientation(value) }
+    }
+
+    fun onSectionVisited(section: AchievementSection) {
+        viewModelScope.launch { achievementsManager.onSectionVisited(section) }
     }
 }

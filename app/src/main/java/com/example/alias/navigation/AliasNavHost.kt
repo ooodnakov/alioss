@@ -11,12 +11,14 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -24,6 +26,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.alias.MainViewModel
 import com.example.alias.R
+import com.example.alias.data.achievements.AchievementSection
 import com.example.alias.data.settings.Settings
 import com.example.alias.ui.about.aboutScreen
 import com.example.alias.ui.appScaffold
@@ -46,6 +49,28 @@ fun aliasNavHost(
     settings: Settings,
     viewModel: MainViewModel,
 ) {
+    DisposableEffect(navController) {
+        val listener = NavController.OnDestinationChangedListener { _, destination, _ ->
+            val section = when (val route = destination.route) {
+                "home" -> AchievementSection.HOME
+                "game" -> AchievementSection.GAME
+                "decks" -> AchievementSection.DECKS
+                "deck/{id}" -> AchievementSection.DECKS
+                "settings" -> AchievementSection.SETTINGS
+                "history" -> AchievementSection.HISTORY
+                "about" -> AchievementSection.ABOUT
+                else -> if (route != null && route.startsWith("deck/")) {
+                    AchievementSection.DECKS
+                } else {
+                    null
+                }
+            }
+            section?.let(viewModel::onSectionVisited)
+        }
+        navController.addOnDestinationChangedListener(listener)
+        onDispose { navController.removeOnDestinationChangedListener(listener) }
+    }
+
     NavHost(
         navController = navController,
         startDestination = "home",

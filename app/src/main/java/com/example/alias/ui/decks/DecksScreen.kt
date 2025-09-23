@@ -541,6 +541,15 @@ private fun deckCard(
 
                     Switch(checked = enabled, onCheckedChange = onToggle)
                 }
+                deck.author?.let { author ->
+                    Text(
+                        text = stringResource(R.string.deck_author_label, author),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     AssistChip(
                         onClick = {},

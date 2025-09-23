@@ -1,5 +1,6 @@
 package com.example.alias.data.pack
 
+import com.example.alias.testing.fakePngBytes
 import java.util.Base64
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -61,6 +62,18 @@ class PackValidatorTest {
             coverImageBase64 = " data:image/png;base64,${TestCoverImages.TWO_BY_TWO_PNG_BASE64} ",
         )
         assertEquals(TestCoverImages.TWO_BY_TWO_PNG_BASE64, normalized)
+        assertEquals("Deck Author", normalized.author)
+
+        val blankAuthor = PackValidator.validateDeck(
+            id = "deck_blank",
+            language = "en",
+            name = "Deck Blank",
+            version = 1,
+            isNSFW = false,
+            coverImageBase64 = null,
+            author = "   ",
+        )
+        assertNull(blankAuthor.author)
 
         assertNull(
             PackValidator.validateDeck(
@@ -70,7 +83,8 @@ class PackValidatorTest {
                 version = 1,
                 isNSFW = false,
                 coverImageBase64 = "   ",
-            ),
+                author = null,
+            ).coverImageBase64,
         )
 
         assertFailsWith<IllegalArgumentException> {
@@ -81,6 +95,19 @@ class PackValidatorTest {
                 version = 1,
                 isNSFW = false,
                 coverImageBase64 = null,
+                author = null,
+            )
+        }
+
+        assertFailsWith<IllegalArgumentException> {
+            PackValidator.validateDeck(
+                id = "deck_3",
+                language = "en",
+                name = "Deck Three",
+                version = 1,
+                isNSFW = false,
+                coverImageBase64 = null,
+                author = "a".repeat(101),
             )
         }
     }
@@ -113,6 +140,15 @@ class PackValidatorTest {
 
         val normalized = PackValidator.validateCoverImageBytes(oversized)
         assertEquals(TestCoverImages.base64Encoder.encodeToString(oversized), normalized)
+    }
+
+    @Test
+    fun `validate cover image bytes accepts large png under limit`() {
+        val largeBytes = fakePngBytes(width = 512, height = 512, totalSize = 3 * 1024 * 1024)
+        assertTrue(largeBytes.size > 1_000_000)
+
+        val normalized = PackValidator.validateCoverImageBytes(largeBytes)
+        assertEquals(Base64.getEncoder().encodeToString(largeBytes), normalized)
     }
 
     @Test

@@ -79,6 +79,11 @@ val MIGRATION_7_8 = Migration(7, 8) { database ->
     database.execSQL("ALTER TABLE `turn_history` ADD COLUMN `matchId` TEXT")
 }
 
+// Migration 8→9: Add author metadata to decks
+val MIGRATION_8_9 = Migration(8, 9) { database ->
+    database.execSQL("ALTER TABLE `decks` ADD COLUMN `author` TEXT")
+}
+
 /**
  * All migrations as a list for easy registration in DataModule
  */
@@ -90,4 +95,5 @@ val ALL_MIGRATIONS = arrayOf(
     MIGRATION_5_6,
     MIGRATION_6_7,
     MIGRATION_7_8,
+    MIGRATION_8_9,
 )

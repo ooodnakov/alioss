@@ -11,6 +11,8 @@ import androidx.datastore.preferences.preferencesDataStoreFile
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.example.alias.data.achievements.AchievementsRepository
+import com.example.alias.data.achievements.AchievementsRepositoryImpl
 import com.example.alias.data.DeckRepository
 import com.example.alias.data.DeckRepositoryImpl
 import com.example.alias.data.TurnHistoryRepository
@@ -28,6 +30,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import javax.inject.Named
 import javax.inject.Singleton
 
 @Module
@@ -35,6 +38,7 @@ import javax.inject.Singleton
 object DataModule {
     @Provides
     @Singleton
+    @Suppress("SpreadOperator")
     fun provideDatabase(
         @ApplicationContext context: Context,
     ): AliasDatabase {
@@ -76,7 +80,7 @@ object DataModule {
             val enableDestructiveFallback = field.getBoolean(null)
             Log.d("DataModule", "ENABLE_DESTRUCTIVE_MIGRATION_FALLBACK value: $enableDestructiveFallback")
             enableDestructiveFallback
-        } catch (e: Exception) {
+        } catch (e: ReflectiveOperationException) {
             Log.e("DataModule", "Could not access BuildConfig, checking alternative methods. Error: ${e.message}", e)
 
             // Fallback: Check if we're in a debuggable build using ApplicationInfo
@@ -88,7 +92,7 @@ object DataModule {
                 // Only enable destructive fallback for debuggable builds
                 // This preserves user data in release and devRelease builds
                 isDebuggable
-            } catch (e2: Exception) {
+            } catch (e2: android.content.pm.PackageManager.NameNotFoundException) {
                 Log.e(
                     "DataModule",
                     "Could not determine if app is debuggable, preserving user data by default. Error: ${e2.message}",
@@ -137,6 +141,7 @@ object DataModule {
 
     @Provides
     @Singleton
+    @Named("settings")
     fun providePreferencesDataStore(
         @ApplicationContext context: Context,
     ): DataStore<Preferences> =
@@ -147,8 +152,28 @@ object DataModule {
 
     @Provides
     @Singleton
-    fun provideSettingsRepository(dataStore: DataStore<Preferences>): SettingsRepository =
+    fun provideSettingsRepository(
+        @Named("settings") dataStore: DataStore<Preferences>,
+    ): SettingsRepository =
         SettingsRepositoryImpl(dataStore)
+
+    @Provides
+    @Singleton
+    @Named("achievements")
+    fun provideAchievementsDataStore(
+        @ApplicationContext context: Context,
+    ): DataStore<Preferences> =
+        PreferenceDataStoreFactory.create(
+            corruptionHandler = ReplaceFileCorruptionHandler { emptyPreferences() },
+            produceFile = { context.preferencesDataStoreFile("alias_achievements") },
+        )
+
+    @Provides
+    @Singleton
+    fun provideAchievementsRepository(
+        @Named("achievements") dataStore: DataStore<Preferences>,
+    ): AchievementsRepository =
+        AchievementsRepositoryImpl(dataStore)
 
     @Provides
     @Singleton

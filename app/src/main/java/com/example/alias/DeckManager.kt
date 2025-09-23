@@ -42,7 +42,7 @@ import javax.inject.Singleton
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.text.Charsets
 
-private const val MAX_COVER_IMAGE_DOWNLOAD_BYTES = 256_000L
+private const val MAX_COVER_IMAGE_DOWNLOAD_BYTES = 40L * 1024 * 1024
 
 @Singleton
 class DeckManager
@@ -670,7 +670,10 @@ constructor(
             sanitizeCoverImage(parsed)
         } catch (e: CancellationException) {
             throw e
-        } catch (error: Exception) {
+        } catch (e: SerializationException) {
+            throw IllegalArgumentException("Failed to parse pack content", e)
+        } catch (error: Throwable) {
+            if (error is CancellationException) throw error
             if (!error.isCoverImageError()) throw error
             val sanitizedJson = removeCoverImageField(content) ?: throw error
             val parsed = PackParser.fromJson(sanitizedJson, isBundledAsset)

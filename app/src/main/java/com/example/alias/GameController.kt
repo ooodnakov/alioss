@@ -1,5 +1,6 @@
 package com.example.alias
 
+import com.example.alias.achievements.AchievementsManager
 import com.example.alias.data.TurnHistoryRepository
 import com.example.alias.data.db.TurnHistoryEntity
 import com.example.alias.data.settings.Settings
@@ -19,6 +20,7 @@ class GameController
 @Inject
 constructor(
     private val historyRepository: TurnHistoryRepository,
+    private val achievementsManager: AchievementsManager,
     private val gameEngineFactory: GameEngineFactory,
 ) {
     private var currentMatchId: String? = null
@@ -28,6 +30,7 @@ constructor(
 
     suspend fun startMatch(engine: GameEngine, settings: Settings) {
         currentMatchId = java.util.UUID.randomUUID().toString()
+        achievementsManager.onMatchStarted()
         val goal =
             if (settings.scoreTargetEnabled) {
                 MatchGoal(MatchGoalType.TARGET_SCORE, settings.targetScore)
@@ -60,6 +63,7 @@ constructor(
                 )
             }
             historyRepository.save(entries)
+            achievementsManager.onTurnCompleted(entries, current.matchOver)
             engine.nextTurn()
         }
     }
