@@ -325,10 +325,12 @@ class DeckManagerTest {
         version: Int = 1,
         words: List<String>,
         coverImageUrl: String? = null,
+        author: String? = "Alias Contributors",
     ): String {
         val wordsJson = words.joinToString(separator = ",") { word ->
             """{"text":"$word","difficulty":1}"""
         }
+        val authorLine = author?.let { ",\n                \"author\":\"$it\"" } ?: ""
         val coverLine = coverImageUrl?.let { ",\n                \"coverImageUrl\":\"$it\"" } ?: ""
         return """
             {
@@ -336,7 +338,7 @@ class DeckManagerTest {
               "deck":{
                 "id":"$id",
                 "name":"$name",
-                "language":"$language",
+                "language":"$language"$authorLine,
                 "isNSFW":false,
                 "version":$version,
                 "updatedAt":0$coverLine
@@ -345,7 +347,6 @@ class DeckManagerTest {
             }
         """.trimIndent()
     }
-
     private suspend fun withHttpsServer(
         block: suspend (server: MockWebServer, origin: String, client: OkHttpClient) -> Unit,
     ) {

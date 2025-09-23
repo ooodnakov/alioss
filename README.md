@@ -58,6 +58,7 @@ scripts/ – Automation helpers for builds, downloads, reproducibility snapshots
 ## Data Packs & Formats
 
 - Bundled decks ship as JSON (`alias-deck@1`) and live under `app/src/main/assets/decks/`. Deck hashes are tracked to avoid redundant imports and respect decks that the user deleted manually.
+- Deck metadata may include an optional `author` field; when provided it is validated, stored alongside the deck, and displayed in the decks UI for attribution.
 - JSON packs are parsed by `PackParser`, validated via `PackValidator`, and inserted atomically to replace existing deck content.
 - Downloads require HTTPS and an allow-listed host/origin, enforce a 40 MB cap, disable redirects, and optionally verify SHA-256 checksums.
 

@@ -14,4 +14,5 @@ data class DeckEntity(
     val version: Int,
     val updatedAt: Long,
     val coverImageBase64: String? = null,
+    val author: String? = null,
 )

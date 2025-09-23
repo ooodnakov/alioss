@@ -4,6 +4,7 @@
     "id": "general_en_v1",
     "name": "General (EN)",
     "language": "en",
+    "author": "Alias Contributors",
     "version": 1,
     "categories": [
       "general"
