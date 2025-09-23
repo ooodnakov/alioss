@@ -37,68 +37,67 @@ constructor(
         if (!changed) {
             return TrustedSourceResult.Unchanged(normalized)
         }
-        settingsRepository.setTrustedSources(current)
-        achievementsManager.onSettingsAdjusted()
+        trackSettingsUpdate { settingsRepository.setTrustedSources(current) }
         return TrustedSourceResult.Added(normalized)
     }
 
     suspend fun removeTrustedSource(entry: String) {
-        val current = settingsRepository.settings.first().trustedSources.toMutableSet()
-        current -= entry
-        settingsRepository.setTrustedSources(current)
-        achievementsManager.onSettingsAdjusted()
+        trackSettingsUpdate {
+            val current = settingsRepository.settings.first().trustedSources.toMutableSet()
+            current -= entry
+            settingsRepository.setTrustedSources(current)
+        }
     }
 
     suspend fun updateDifficultyFilter(min: Int, max: Int) {
-        settingsRepository.updateDifficultyFilter(min, max)
-        achievementsManager.onSettingsAdjusted()
+        trackSettingsUpdate { settingsRepository.updateDifficultyFilter(min, max) }
     }
 
     suspend fun updateCategoriesFilter(categories: Set<String>) {
-        settingsRepository.setCategoriesFilter(categories)
-        achievementsManager.onSettingsAdjusted()
+        trackSettingsUpdate { settingsRepository.setCategoriesFilter(categories) }
     }
 
     suspend fun updateWordClassesFilter(classes: Set<String>) {
-        settingsRepository.setWordClassesFilter(classes)
-        achievementsManager.onSettingsAdjusted()
+        trackSettingsUpdate { settingsRepository.setWordClassesFilter(classes) }
     }
 
     suspend fun updateSeenTutorial(value: Boolean) {
-        settingsRepository.updateSeenTutorial(value)
-        achievementsManager.onSettingsAdjusted()
+        trackSettingsUpdate { settingsRepository.updateSeenTutorial(value) }
     }
 
     suspend fun applySettingsUpdate(request: SettingsUpdateRequest) {
-        settingsRepository.updateRoundSeconds(request.roundSeconds)
-        settingsRepository.updateTargetWords(request.targetWords)
-        settingsRepository.updateTargetScore(request.targetScore)
-        settingsRepository.updateScoreTargetEnabled(request.scoreTargetEnabled)
-        settingsRepository.updateSkipPolicy(request.maxSkips, request.penaltyPerSkip)
-        settingsRepository.updatePunishSkips(request.punishSkips)
-        settingsRepository.updateAllowNSFW(request.allowNSFW)
-        settingsRepository.updateHapticsEnabled(request.haptics)
-        settingsRepository.updateSoundEnabled(request.sound)
-        settingsRepository.updateOneHandedLayout(request.oneHanded)
-        settingsRepository.updateVerticalSwipes(request.verticalSwipes)
-        settingsRepository.updateOrientation(request.orientation)
-        settingsRepository.updateUiLanguage(canonicalizeLocalePreference(request.uiLanguage))
-        settingsRepository.setTeams(request.teams)
-        achievementsManager.onSettingsAdjusted()
+        trackSettingsUpdate {
+            settingsRepository.updateRoundSeconds(request.roundSeconds)
+            settingsRepository.updateTargetWords(request.targetWords)
+            settingsRepository.updateTargetScore(request.targetScore)
+            settingsRepository.updateScoreTargetEnabled(request.scoreTargetEnabled)
+            settingsRepository.updateSkipPolicy(request.maxSkips, request.penaltyPerSkip)
+            settingsRepository.updatePunishSkips(request.punishSkips)
+            settingsRepository.updateAllowNSFW(request.allowNSFW)
+            settingsRepository.updateHapticsEnabled(request.haptics)
+            settingsRepository.updateSoundEnabled(request.sound)
+            settingsRepository.updateOneHandedLayout(request.oneHanded)
+            settingsRepository.updateVerticalSwipes(request.verticalSwipes)
+            settingsRepository.updateOrientation(request.orientation)
+            settingsRepository.updateUiLanguage(canonicalizeLocalePreference(request.uiLanguage))
+            settingsRepository.setTeams(request.teams)
+        }
     }
 
     suspend fun setEnabledDeckIds(ids: Set<String>) {
-        settingsRepository.setEnabledDeckIds(ids)
-        achievementsManager.onSettingsAdjusted()
+        trackSettingsUpdate { settingsRepository.setEnabledDeckIds(ids) }
     }
 
     suspend fun updateDeckLanguagesFilter(languages: Set<String>) {
-        settingsRepository.setDeckLanguagesFilter(languages)
-        achievementsManager.onSettingsAdjusted()
+        trackSettingsUpdate { settingsRepository.setDeckLanguagesFilter(languages) }
     }
 
     suspend fun setOrientation(value: String) {
-        settingsRepository.updateOrientation(value)
+        trackSettingsUpdate { settingsRepository.updateOrientation(value) }
+    }
+
+    private suspend fun trackSettingsUpdate(block: suspend () -> Unit) {
+        block()
         achievementsManager.onSettingsAdjusted()
     }
 

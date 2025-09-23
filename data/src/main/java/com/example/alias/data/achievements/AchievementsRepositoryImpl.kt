@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import java.util.Locale
 
 class AchievementsRepositoryImpl(
     private val dataStore: DataStore<Preferences>,
@@ -25,7 +26,11 @@ class AchievementsRepositoryImpl(
     }
 
     private val unlockedKeys: Map<AchievementId, Preferences.Key<Long>> =
-        definitions.associate { it.id to longPreferencesKey("achievement_${it.id.name.lowercase()}_unlocked_at") }
+        definitions.associate {
+            it.id to longPreferencesKey(
+                "achievement_${it.id.name.lowercase(Locale.ROOT)}_unlocked_at",
+            )
+        }
 
     override val achievements: Flow<List<AchievementState>> = dataStore.data.map { prefs ->
         val stats = prefs.toStats()
