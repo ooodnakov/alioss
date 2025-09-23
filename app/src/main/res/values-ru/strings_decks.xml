@@ -5,6 +5,7 @@
     <string name="apply_label">Применить</string>
     <string name="categories_label">Категории</string>
     <string name="deck_active_summary">%1$d из %2$d колод включено</string>
+    <string name="deck_author_label">Автор: %1$s</string>
     <string name="deck_card_disabled">Выключена</string>
     <string name="deck_card_enabled">Включена</string>
     <string name="deck_card_view_details">Подробнее</string>

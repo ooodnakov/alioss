@@ -4,6 +4,7 @@
     "id": "movies_en_v1",
     "name": "Movies (EN)",
     "language": "en",
+    "author": "Alias Contributors",
     "version": 1,
     "categories": [
       "movies"

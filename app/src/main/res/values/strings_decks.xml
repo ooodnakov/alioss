@@ -5,6 +5,7 @@
     <string name="apply_label">Apply</string>
     <string name="categories_label">Categories</string>
     <string name="deck_active_summary">%1$d of %2$d decks enabled</string>
+    <string name="deck_author_label">Author: %1$s</string>
     <string name="deck_card_disabled">Disabled</string>
     <string name="deck_card_enabled">Enabled</string>
     <string name="deck_card_view_details">View details</string>
