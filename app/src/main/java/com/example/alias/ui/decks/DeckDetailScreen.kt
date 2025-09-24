@@ -47,7 +47,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.alias.MainViewModel
 import com.example.alias.R
 import com.example.alias.data.db.DeckEntity
 import com.example.alias.data.db.DifficultyBucket
@@ -60,7 +59,7 @@ import java.util.Locale
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun deckDetailScreen(vm: MainViewModel, deck: DeckEntity) {
+fun deckDetailScreen(vm: DecksScreenViewModel, deck: DeckEntity) {
     var count by remember { mutableStateOf<Int?>(null) }
     var categories by remember { mutableStateOf<List<String>?>(null) }
     var wordClassCounts by remember { mutableStateOf<List<WordClassCount>?>(null) }

@@ -72,7 +72,6 @@ import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import com.example.alias.MainViewModel
 import com.example.alias.R
 import com.example.alias.SettingsUpdateRequest
 import com.example.alias.data.settings.SettingsRepository
@@ -84,7 +83,7 @@ private const val MIN_TEAMS = SettingsRepository.MIN_TEAMS
 private const val MAX_TEAMS = SettingsRepository.MAX_TEAMS
 
 @Composable
-fun settingsScreen(vm: MainViewModel, onBack: () -> Unit, onAbout: () -> Unit) {
+fun settingsScreen(vm: SettingsScreenViewModel, onBack: () -> Unit, onAbout: () -> Unit) {
     val s by vm.settings.collectAsState()
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()

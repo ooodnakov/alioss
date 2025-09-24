@@ -53,7 +53,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import com.example.alias.MainViewModel
 import com.example.alias.R
 import com.example.alias.data.settings.Settings
 import com.example.alias.domain.GameEngine
@@ -82,7 +81,7 @@ private val TIMER_CRITICAL_COLOR = Color(0xFFF44336)
 
 @Composable
 fun gameScreen(
-    vm: MainViewModel,
+    vm: GameScreenViewModel,
     engine: GameEngine,
     settings: Settings,
     onNavigateHome: () -> Unit,

@@ -14,6 +14,9 @@ import com.example.alias.data.db.TurnHistoryEntity
 import com.example.alias.data.db.WordClassCount
 import com.example.alias.data.settings.Settings
 import com.example.alias.domain.GameEngine
+import com.example.alias.ui.decks.DecksScreenViewModel
+import com.example.alias.ui.game.GameScreenViewModel
+import com.example.alias.ui.settings.SettingsScreenViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
@@ -40,7 +43,10 @@ constructor(
     private val settingsController: SettingsController,
     private val gameController: GameController,
     private val achievementsManager: AchievementsManager,
-) : ViewModel() {
+) : ViewModel(),
+    GameScreenViewModel,
+    DecksScreenViewModel,
+    SettingsScreenViewModel {
     companion object {
         private const val TAG = "MainViewModel"
     }
@@ -57,18 +63,19 @@ constructor(
     )
 
     private val _deckDownloadProgress = MutableStateFlow<DeckDownloadProgress?>(null)
-    val deckDownloadProgress: StateFlow<DeckDownloadProgress?> = _deckDownloadProgress.asStateFlow()
+    override val deckDownloadProgress: StateFlow<DeckDownloadProgress?> =
+        _deckDownloadProgress.asStateFlow()
 
-    val decks = deckManager.observeDecks()
+    override val decks = deckManager.observeDecks()
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
-    val enabledDeckIds = settingsController.enabledDeckIds
+    override val enabledDeckIds = settingsController.enabledDeckIds
         .stateIn(viewModelScope, SharingStarted.Lazily, emptySet())
 
-    val trustedSources = settingsController.trustedSources
+    override val trustedSources = settingsController.trustedSources
         .stateIn(viewModelScope, SharingStarted.Lazily, emptySet())
 
-    val settings = settingsController.settings
+    override val settings = settingsController.settings
         .stateIn(viewModelScope, SharingStarted.Lazily, Settings())
 
     val achievements: StateFlow<List<AchievementState>> = achievementsManager.achievements
@@ -116,13 +123,13 @@ constructor(
     }
 
     private val _wordInfo = MutableStateFlow<Map<String, WordInfo>>(emptyMap())
-    val wordInfoByText: StateFlow<Map<String, WordInfo>> = _wordInfo.asStateFlow()
+    override val wordInfoByText: StateFlow<Map<String, WordInfo>> = _wordInfo.asStateFlow()
     private val _availableCategories = MutableStateFlow<List<String>>(emptyList())
-    val availableCategories: StateFlow<List<String>> = _availableCategories.asStateFlow()
+    override val availableCategories: StateFlow<List<String>> = _availableCategories.asStateFlow()
     private val _availableWordClasses = MutableStateFlow<List<String>>(emptyList())
-    val availableWordClasses: StateFlow<List<String>> = _availableWordClasses.asStateFlow()
+    override val availableWordClasses: StateFlow<List<String>> = _availableWordClasses.asStateFlow()
     private val _showTutorialOnFirstTurn = MutableStateFlow(true)
-    val showTutorialOnFirstTurn: StateFlow<Boolean> = _showTutorialOnFirstTurn.asStateFlow()
+    override val showTutorialOnFirstTurn: StateFlow<Boolean> = _showTutorialOnFirstTurn.asStateFlow()
 
     init {
         viewModelScope.launch {
@@ -173,7 +180,11 @@ constructor(
         )
     }
 
-    fun setDeckEnabled(id: String, enabled: Boolean, fromUndo: Boolean = false) {
+    override fun setDeckEnabled(id: String, enabled: Boolean) {
+        setDeckEnabledInternal(id, enabled, fromUndo = false)
+    }
+
+    private fun setDeckEnabledInternal(id: String, enabled: Boolean, fromUndo: Boolean) {
         viewModelScope.launch {
             deckManager.setDeckEnabled(id, enabled)
             if (!fromUndo) {
@@ -183,14 +194,14 @@ constructor(
                         message = msg,
                         actionLabel = "Undo",
                         duration = SnackbarDuration.Short,
-                        onAction = { setDeckEnabled(id, !enabled, fromUndo = true) },
+                        onAction = { setDeckEnabledInternal(id, !enabled, fromUndo = true) },
                     ),
                 )
             }
         }
     }
 
-    fun setAllDecksEnabled(enableAll: Boolean) {
+    override fun setAllDecksEnabled(enableAll: Boolean) {
         viewModelScope.launch {
             deckManager.setAllDecksEnabled(enableAll)
             val msg = if (enableAll) "Enabled all decks" else "Disabled all decks"
@@ -198,7 +209,7 @@ constructor(
         }
     }
 
-    fun deleteDeck(deck: DeckEntity) {
+    override fun deleteDeck(deck: DeckEntity) {
         viewModelScope.launch {
             when (val result = deckManager.deleteDeck(deck)) {
                 is DeckManager.DeleteDeckResult.Success -> {
@@ -225,7 +236,7 @@ constructor(
         }
     }
 
-    fun permanentlyDeleteImportedDeck(deck: DeckEntity) {
+    override fun permanentlyDeleteImportedDeck(deck: DeckEntity) {
         viewModelScope.launch {
             val result = deckManager.permanentlyDeleteImportedDeck(deck)
             if (result.isFailure) {
@@ -251,7 +262,7 @@ constructor(
         }
     }
 
-    fun restoreDeletedBundledDeck(deckId: String) {
+    override fun restoreDeletedBundledDeck(deckId: String) {
         viewModelScope.launch {
             val result = deckManager.restoreDeletedBundledDeck(deckId)
             if (result.isFailure) {
@@ -277,7 +288,7 @@ constructor(
         }
     }
 
-    fun restoreDeletedImportedDeck(deckId: String) {
+    override fun restoreDeletedImportedDeck(deckId: String) {
         viewModelScope.launch {
             val result = deckManager.restoreDeletedImportedDeck(deckId)
             if (result.isFailure) {
@@ -303,7 +314,7 @@ constructor(
         }
     }
 
-    fun permanentlyDeleteImportedDeck(deckId: String) {
+    override fun permanentlyDeleteImportedDeck(deckId: String) {
         viewModelScope.launch {
             val result = deckManager.permanentlyDeleteImportedDeck(deckId)
             if (result.isFailure) {
@@ -329,7 +340,7 @@ constructor(
         }
     }
 
-    fun addTrustedSource(originOrHost: String) {
+    override fun addTrustedSource(originOrHost: String) {
         viewModelScope.launch {
             when (settingsController.addTrustedSource(originOrHost)) {
                 SettingsController.TrustedSourceResult.Invalid -> {
@@ -349,54 +360,55 @@ constructor(
         }
     }
 
-    fun updateDifficultyFilter(min: Int, max: Int) {
+    override fun updateDifficultyFilter(min: Int, max: Int) {
         viewModelScope.launch { settingsController.updateDifficultyFilter(min, max) }
     }
 
-    fun updateCategoriesFilter(categories: Set<String>) {
+    override fun updateCategoriesFilter(categories: Set<String>) {
         viewModelScope.launch { settingsController.updateCategoriesFilter(categories) }
     }
 
-    fun updateDeckLanguagesFilter(languages: Set<String>) {
+    override fun updateDeckLanguagesFilter(languages: Set<String>) {
         viewModelScope.launch { settingsController.updateDeckLanguagesFilter(languages) }
     }
 
-    fun updateWordClassesFilter(classes: Set<String>) {
+    override fun updateWordClassesFilter(classes: Set<String>) {
         viewModelScope.launch { settingsController.updateWordClassesFilter(classes) }
     }
 
-    fun removeTrustedSource(entry: String) {
+    override fun removeTrustedSource(entry: String) {
         viewModelScope.launch { settingsController.removeTrustedSource(entry) }
     }
 
-    suspend fun getWordCount(deckId: String): Int = deckManager.getWordCount(deckId)
+    override suspend fun getWordCount(deckId: String): Int = deckManager.getWordCount(deckId)
 
-    suspend fun getDeckCategories(deckId: String): List<String> = deckManager.getDeckCategories(deckId)
+    override suspend fun getDeckCategories(deckId: String): List<String> =
+        deckManager.getDeckCategories(deckId)
 
-    suspend fun getDeckWordSamples(deckId: String, limit: Int = 5): List<String> =
+    override suspend fun getDeckWordSamples(deckId: String, limit: Int = 5): List<String> =
         deckManager.getDeckWordSamples(deckId, limit)
 
-    suspend fun getDeckDifficultyHistogram(deckId: String): List<DifficultyBucket> =
+    override suspend fun getDeckDifficultyHistogram(deckId: String): List<DifficultyBucket> =
         deckManager.getDeckDifficultyHistogram(deckId)
 
-    suspend fun getDeckRecentWords(deckId: String, limit: Int = 8): List<String> =
+    override suspend fun getDeckRecentWords(deckId: String, limit: Int = 8): List<String> =
         deckManager.getDeckRecentWords(deckId, limit)
 
-    suspend fun getDeckWordClassCounts(deckId: String): List<WordClassCount> =
+    override suspend fun getDeckWordClassCounts(deckId: String): List<WordClassCount> =
         deckManager.getDeckWordClassCounts(deckId)
 
-    fun updateSeenTutorial(value: Boolean) {
+    override fun updateSeenTutorial(value: Boolean) {
         viewModelScope.launch {
             settingsController.updateSeenTutorial(value)
             _showTutorialOnFirstTurn.value = false
         }
     }
 
-    fun dismissTutorialOnFirstTurn() {
+    override fun dismissTutorialOnFirstTurn() {
         _showTutorialOnFirstTurn.value = false
     }
 
-    fun downloadPackFromUrl(url: String, expectedSha256: String?) {
+    override fun downloadPackFromUrl(url: String, expectedSha256: String?) {
         viewModelScope.launch {
             _deckDownloadProgress.value = DeckDownloadProgress(step = DeckDownloadStep.DOWNLOADING)
             _uiEvents.tryEmit(
@@ -473,7 +485,7 @@ constructor(
         }
     }
 
-    fun importDeckFromFile(uri: Uri) {
+    override fun importDeckFromFile(uri: Uri) {
         viewModelScope.launch {
             try {
                 val result = deckManager.importDeckFromUri(uri)
@@ -517,12 +529,12 @@ constructor(
         }
     }
 
-    suspend fun updateSettings(request: SettingsUpdateRequest) {
+    override suspend fun updateSettings(request: SettingsUpdateRequest) {
         settingsController.applySettingsUpdate(request)
         _uiEvents.tryEmit(UiEvent(message = "Settings updated", actionLabel = "Dismiss"))
     }
 
-    fun resetLocalData(onDone: (() -> Unit)? = null) {
+    override fun resetLocalData(onDone: (() -> Unit)? = null) {
         viewModelScope.launch {
             deckManager.resetLocalData()
             _uiEvents.tryEmit(UiEvent(message = "Local data cleared", actionLabel = "OK"))
@@ -559,7 +571,7 @@ constructor(
         }
     }
 
-    fun restartMatch() {
+    override fun restartMatch() {
         viewModelScope.launch {
             val currentSettings = settingsController.settings.first()
             val filters = deckManager.buildWordQueryFilters(currentSettings)

@@ -73,7 +73,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.example.alias.MainViewModel
 import com.example.alias.R
 import com.example.alias.data.db.DeckEntity
 import java.util.Locale
@@ -84,7 +83,7 @@ private val DIFFICULTY_LEVELS = listOf(1, 2, 3, 4, 5)
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun decksScreen(vm: MainViewModel, onDeckSelected: (DeckEntity) -> Unit) {
+fun decksScreen(vm: DecksScreenViewModel, onDeckSelected: (DeckEntity) -> Unit) {
     val decks by vm.decks.collectAsState()
     val enabled by vm.enabledDeckIds.collectAsState()
     val trusted by vm.trustedSources.collectAsState()
