@@ -1,5 +1,5 @@
 [versions]
-android-gradle-plugin = "8.5.2"
+android-gradle-plugin = "8.13.0"
 kotlin = "1.9.23"
 hilt = "2.51"
 compose-bom = "2024.02.00"
