@@ -39,6 +39,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 private const val SAMPLE_NOW = 1_720_000_000_000L
+private const val TEAM_CRIMSON_COMETS = "Crimson Comets"
+private const val TEAM_AZURE_OWLS = "Azure Owls"
+private const val TEAM_GOLDEN_FOXES = "Golden Foxes"
+private const val MATCH_ID_820 = "match-820"
+private const val MATCH_ID_821 = "match-821"
 
 private val SampleDecks = listOf(
     DeckEntity(
@@ -87,7 +92,7 @@ private val SampleSettings = Settings(
     uiLanguage = "en",
     enabledDeckIds = SampleDecks.take(2).map { it.id }.toSet(),
     selectedDeckLanguages = setOf("en", "es"),
-    teams = listOf("Crimson Comets", "Azure Owls", "Golden Foxes"),
+    teams = listOf(TEAM_CRIMSON_COMETS, TEAM_AZURE_OWLS, TEAM_GOLDEN_FOXES),
     allowNSFW = true,
     stemmingEnabled = true,
     hapticsEnabled = true,
@@ -108,63 +113,63 @@ private val SampleSettings = Settings(
 private val SampleHistory = listOf(
     TurnHistoryEntity(
         id = 1,
-        team = "Crimson Comets",
+        team = TEAM_CRIMSON_COMETS,
         word = "Aurora",
         correct = true,
         skipped = false,
         difficulty = 2,
         timestamp = SAMPLE_NOW - 120_000L,
-        matchId = "match-820",
+        matchId = MATCH_ID_820,
     ),
     TurnHistoryEntity(
         id = 2,
-        team = "Azure Owls",
+        team = TEAM_AZURE_OWLS,
         word = "Momentum",
         correct = true,
         skipped = false,
         difficulty = 3,
         timestamp = SAMPLE_NOW - 90_000L,
-        matchId = "match-820",
+        matchId = MATCH_ID_820,
     ),
     TurnHistoryEntity(
         id = 3,
-        team = "Golden Foxes",
+        team = TEAM_GOLDEN_FOXES,
         word = "Nebula",
         correct = false,
         skipped = true,
         difficulty = 4,
         timestamp = SAMPLE_NOW - 60_000L,
-        matchId = "match-820",
+        matchId = MATCH_ID_820,
     ),
     TurnHistoryEntity(
         id = 4,
-        team = "Crimson Comets",
+        team = TEAM_CRIMSON_COMETS,
         word = "Catalyst",
         correct = true,
         skipped = false,
         difficulty = 3,
         timestamp = SAMPLE_NOW - 30_000L,
-        matchId = "match-821",
+        matchId = MATCH_ID_821,
     ),
     TurnHistoryEntity(
         id = 5,
-        team = "Azure Owls",
+        team = TEAM_AZURE_OWLS,
         word = "Quasar",
         correct = false,
         skipped = false,
         difficulty = 5,
         timestamp = SAMPLE_NOW - 10_000L,
-        matchId = "match-821",
+        matchId = MATCH_ID_821,
     ),
     TurnHistoryEntity(
         id = 6,
-        team = "Golden Foxes",
+        team = TEAM_GOLDEN_FOXES,
         word = "Mirage",
         correct = true,
         skipped = false,
         difficulty = 2,
         timestamp = SAMPLE_NOW,
-        matchId = "match-821",
+        matchId = MATCH_ID_821,
     ),
 )
 
@@ -186,9 +191,9 @@ private fun homeScreenMarketingPreview() {
                 state = HomeViewState(
                     gameState = GameState.MatchFinished(
                         scores = mapOf(
-                            "Crimson Comets" to 62,
-                            "Azure Owls" to 58,
-                            "Golden Foxes" to 44,
+                            TEAM_CRIMSON_COMETS to 62,
+                            TEAM_AZURE_OWLS to 58,
+                            TEAM_GOLDEN_FOXES to 44,
                         ),
                     ),
                     settings = SampleSettings,
@@ -216,11 +221,11 @@ private fun gameTurnPendingMarketingPreview() {
                 vm = PreviewGameViewModel(SampleWordInfo, tutorial = false),
                 engine = PreviewGameEngine(
                     GameState.TurnPending(
-                        team = "Crimson Comets",
+                        team = TEAM_CRIMSON_COMETS,
                         scores = mapOf(
-                            "Crimson Comets" to 42,
-                            "Azure Owls" to 38,
-                            "Golden Foxes" to 24,
+                            TEAM_CRIMSON_COMETS to 42,
+                            TEAM_AZURE_OWLS to 38,
+                            TEAM_GOLDEN_FOXES to 24,
                         ),
                         goal = MatchGoal(MatchGoalType.TARGET_SCORE, target = 60),
                         remainingToGoal = 18,
@@ -242,7 +247,7 @@ private fun gameTurnActiveMarketingPreview() {
                 vm = PreviewGameViewModel(SampleWordInfo, tutorial = true),
                 engine = PreviewGameEngine(
                     initialState = GameState.TurnActive(
-                        team = "Azure Owls",
+                        team = TEAM_AZURE_OWLS,
                         word = "Momentum",
                         goal = MatchGoal(MatchGoalType.TARGET_SCORE, target = 60),
                         remainingToGoal = 15,
@@ -269,12 +274,12 @@ private fun gameTurnFinishedMarketingPreview() {
                 vm = PreviewGameViewModel(SampleWordInfo),
                 engine = PreviewGameEngine(
                     GameState.TurnFinished(
-                        team = "Golden Foxes",
+                        team = TEAM_GOLDEN_FOXES,
                         deltaScore = 7,
                         scores = mapOf(
-                            "Crimson Comets" to 49,
-                            "Azure Owls" to 53,
-                            "Golden Foxes" to 51,
+                            TEAM_CRIMSON_COMETS to 49,
+                            TEAM_AZURE_OWLS to 53,
+                            TEAM_GOLDEN_FOXES to 51,
                         ),
                         outcomes = listOf(
                             TurnOutcome(word = "Mirage", correct = true, timestamp = SAMPLE_NOW - 8_000L),

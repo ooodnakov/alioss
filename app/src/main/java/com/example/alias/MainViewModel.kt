@@ -385,13 +385,13 @@ constructor(
     override suspend fun getDeckCategories(deckId: String): List<String> =
         deckManager.getDeckCategories(deckId)
 
-    override suspend fun getDeckWordSamples(deckId: String, limit: Int = 5): List<String> =
+    override suspend fun getDeckWordSamples(deckId: String, limit: Int): List<String> =
         deckManager.getDeckWordSamples(deckId, limit)
 
     override suspend fun getDeckDifficultyHistogram(deckId: String): List<DifficultyBucket> =
         deckManager.getDeckDifficultyHistogram(deckId)
 
-    override suspend fun getDeckRecentWords(deckId: String, limit: Int = 8): List<String> =
+    override suspend fun getDeckRecentWords(deckId: String, limit: Int): List<String> =
         deckManager.getDeckRecentWords(deckId, limit)
 
     override suspend fun getDeckWordClassCounts(deckId: String): List<WordClassCount> =

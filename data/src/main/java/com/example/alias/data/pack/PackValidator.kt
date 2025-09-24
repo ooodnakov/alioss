@@ -17,7 +17,6 @@ object PackValidator {
     const val MULTI_LANGUAGE_TAG = "mul"
     private const val MAX_WORDS = 200_000
     internal const val MAX_COVER_IMAGE_BYTES = 40L * 1024 * 1024
-    const val MAX_COVER_IMAGE_BYTES = 5 * 1024 * 1024
     private const val MAX_COVER_IMAGE_DIMENSION = 2_048
     private const val MAX_COVER_IMAGE_URL_LENGTH = 2_048
     private const val MAX_AUTHOR_LENGTH = 100
