@@ -333,5 +333,4 @@ class PackParserTest {
         val parsed = PackParser.fromJson(json)
         assertEquals(encoded, parsed.deck.coverImageBase64)
     }
-
 }

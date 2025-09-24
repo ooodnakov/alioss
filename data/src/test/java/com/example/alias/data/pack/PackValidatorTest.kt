@@ -240,5 +240,4 @@ class PackValidatorTest {
         assertFailsWith<IllegalArgumentException> { PackValidator.validateMultiLanguageContent(emptySet()) }
         assertFailsWith<IllegalArgumentException> { PackValidator.validateMultiLanguageContent(setOf("en")) }
     }
-
 }

@@ -75,7 +75,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.alias.MainViewModel
 import com.example.alias.R
 import com.example.alias.data.settings.Settings
 import com.example.alias.domain.GameState
@@ -92,7 +91,7 @@ import kotlin.math.pow
 import kotlin.math.roundToInt
 
 @Composable
-fun roundSummaryScreen(vm: MainViewModel, s: GameState.TurnFinished, settings: Settings) {
+fun roundSummaryScreen(vm: GameScreenViewModel, s: GameState.TurnFinished, settings: Settings) {
     val penaltyPerSkip = remember(settings.punishSkips, settings.penaltyPerSkip) {
         if (settings.punishSkips) settings.penaltyPerSkip else 0
     }
