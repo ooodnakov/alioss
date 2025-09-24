@@ -6,8 +6,6 @@ import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.alias.MainViewModel.DeckDownloadProgress
-import com.example.alias.MainViewModel.DeckDownloadStep
 import com.example.alias.SettingsUpdateRequest
 import com.example.alias.WordInfo
 import com.example.alias.aliasAppTheme
@@ -23,6 +21,8 @@ import com.example.alias.domain.MatchGoalType
 import com.example.alias.domain.TurnOutcome
 import com.example.alias.ui.about.aboutScreen
 import com.example.alias.ui.appScaffold
+import com.example.alias.ui.decks.DeckDownloadProgress
+import com.example.alias.ui.decks.DeckDownloadStep
 import com.example.alias.ui.decks.DecksScreenViewModel
 import com.example.alias.ui.decks.deckDetailScreen
 import com.example.alias.ui.decks.decksScreen
@@ -366,6 +366,12 @@ private class PreviewGameViewModel(
     }
 
     override fun restartMatch() = Unit
+
+    override fun startTurn() = Unit
+
+    override fun nextTurn() = Unit
+
+    override fun overrideOutcome(index: Int, correct: Boolean) = Unit
 }
 
 private class PreviewDecksViewModel(

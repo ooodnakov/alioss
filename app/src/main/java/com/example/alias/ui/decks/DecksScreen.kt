@@ -667,7 +667,7 @@ private fun filteredDecksEmptyState(onAdjustFilters: () -> Unit, modifier: Modif
 }
 
 @Composable
-private fun deckDownloadCard(progress: MainViewModel.DeckDownloadProgress) {
+private fun deckDownloadCard(progress: DeckDownloadProgress) {
     ElevatedCard(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(20.dp),
@@ -732,7 +732,7 @@ private fun deckTrustedSourcesSheet(
 
 @Composable
 private fun deckDownloadProgressIndicator(
-    progress: MainViewModel.DeckDownloadProgress,
+    progress: DeckDownloadProgress,
     modifier: Modifier = Modifier,
 ) {
     val totalBytes = progress.totalBytes?.takeIf { it > 0L }
@@ -741,17 +741,17 @@ private fun deckDownloadProgressIndicator(
         (clamped.toFloat() / bytesTotal.toFloat()).coerceIn(0f, 1f)
     }
     val statusText = when (progress.step) {
-        MainViewModel.DeckDownloadStep.DOWNLOADING -> fraction?.let {
+        DeckDownloadStep.DOWNLOADING -> fraction?.let {
             stringResource(R.string.deck_download_percent, (it * 100).roundToInt())
         } ?: stringResource(R.string.deck_download_downloading)
 
-        MainViewModel.DeckDownloadStep.IMPORTING -> stringResource(R.string.deck_download_importing)
+        DeckDownloadStep.IMPORTING -> stringResource(R.string.deck_download_importing)
     }
 
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(statusText, style = MaterialTheme.typography.bodyMedium)
         val indicatorModifier = Modifier.fillMaxWidth()
-        if (fraction != null && progress.step == MainViewModel.DeckDownloadStep.DOWNLOADING) {
+        if (fraction != null && progress.step == DeckDownloadStep.DOWNLOADING) {
             LinearProgressIndicator(progress = { fraction }, modifier = indicatorModifier)
         } else {
             LinearProgressIndicator(modifier = indicatorModifier)

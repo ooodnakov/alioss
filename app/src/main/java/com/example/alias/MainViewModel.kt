@@ -14,6 +14,8 @@ import com.example.alias.data.db.TurnHistoryEntity
 import com.example.alias.data.db.WordClassCount
 import com.example.alias.data.settings.Settings
 import com.example.alias.domain.GameEngine
+import com.example.alias.ui.decks.DeckDownloadProgress
+import com.example.alias.ui.decks.DeckDownloadStep
 import com.example.alias.ui.decks.DecksScreenViewModel
 import com.example.alias.ui.game.GameScreenViewModel
 import com.example.alias.ui.settings.SettingsScreenViewModel
@@ -53,14 +55,6 @@ constructor(
 
     private val _engine = MutableStateFlow<GameEngine?>(null)
     val engine: StateFlow<GameEngine?> = _engine.asStateFlow()
-
-    enum class DeckDownloadStep { DOWNLOADING, IMPORTING }
-
-    data class DeckDownloadProgress(
-        val step: DeckDownloadStep,
-        val bytesRead: Long = 0L,
-        val totalBytes: Long? = null,
-    )
 
     private val _deckDownloadProgress = MutableStateFlow<DeckDownloadProgress?>(null)
     override val deckDownloadProgress: StateFlow<DeckDownloadProgress?> =
@@ -534,7 +528,7 @@ constructor(
         _uiEvents.tryEmit(UiEvent(message = "Settings updated", actionLabel = "Dismiss"))
     }
 
-    override fun resetLocalData(onDone: (() -> Unit)? = null) {
+    override fun resetLocalData(onDone: (() -> Unit)?) {
         viewModelScope.launch {
             deckManager.resetLocalData()
             _uiEvents.tryEmit(UiEvent(message = "Local data cleared", actionLabel = "OK"))
@@ -587,17 +581,17 @@ constructor(
         }
     }
 
-    fun nextTurn() {
+    override fun nextTurn() {
         val e = _engine.value ?: return
         viewModelScope.launch { gameController.completeTurn(e, _wordInfo.value) }
     }
 
-    fun startTurn() {
+    override fun startTurn() {
         val e = _engine.value ?: return
         viewModelScope.launch { gameController.startTurn(e) }
     }
 
-    fun overrideOutcome(index: Int, correct: Boolean) {
+    override fun overrideOutcome(index: Int, correct: Boolean) {
         val e = _engine.value ?: return
         viewModelScope.launch { gameController.overrideOutcome(e, index, correct) }
     }

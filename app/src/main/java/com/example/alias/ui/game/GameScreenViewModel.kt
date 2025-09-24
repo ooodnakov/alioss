@@ -11,4 +11,7 @@ interface GameScreenViewModel {
     fun dismissTutorialOnFirstTurn()
     fun updateSeenTutorial(value: Boolean)
     fun restartMatch()
+    fun startTurn()
+    fun nextTurn()
+    fun overrideOutcome(index: Int, correct: Boolean)
 }

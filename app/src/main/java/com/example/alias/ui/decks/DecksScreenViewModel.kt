@@ -1,7 +1,6 @@
 package com.example.alias.ui.decks
 
 import android.net.Uri
-import com.example.alias.MainViewModel.DeckDownloadProgress
 import com.example.alias.data.db.DeckEntity
 import com.example.alias.data.db.DifficultyBucket
 import com.example.alias.data.db.WordClassCount
