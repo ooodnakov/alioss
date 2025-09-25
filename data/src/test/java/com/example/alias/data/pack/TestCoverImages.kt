@@ -69,12 +69,7 @@ internal object TestCoverImages {
         if (size < prefix.size) {
             return false
         }
-        for (index in prefix.indices) {
-            if (this[index] != prefix[index]) {
-                return false
-            }
-        }
-        return true
+        return prefix.indices.all { this[it] == prefix[it] }
     }
 
     private fun ByteArray.decodeBigEndianInt(offset: Int): Int {
