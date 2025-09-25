@@ -47,6 +47,7 @@ import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -98,9 +99,16 @@ fun gameScreen(
         onDispose { activity?.requestedOrientation = original }
     }
     val vibrator = remember { context.getSystemService(android.os.Vibrator::class.java) }
-    val tone = remember { android.media.ToneGenerator(android.media.AudioManager.STREAM_MUSIC, 80) }
-    DisposableEffect(Unit) {
-        onDispose { tone.release() }
+    val isPreview = LocalInspectionMode.current
+    val tone = remember(isPreview) {
+        if (isPreview) {
+            null
+        } else {
+            android.media.ToneGenerator(android.media.AudioManager.STREAM_MUSIC, 80)
+        }
+    }
+    DisposableEffect(tone) {
+        onDispose { tone?.release() }
     }
     val state by engine.state.collectAsState()
     val scope = rememberCoroutineScope()
@@ -116,7 +124,7 @@ fun gameScreen(
         when {
             state is GameState.TurnActive && previous !is GameState.TurnActive -> {
                 if (soundEnabled) {
-                    tone.startTone(
+                    tone?.startTone(
                         android.media.ToneGenerator.TONE_PROP_ACK,
                         SOUND_DURATION_SHORT_MS,
                     )
@@ -124,7 +132,7 @@ fun gameScreen(
             }
             state is GameState.TurnFinished && previous !is GameState.TurnFinished -> {
                 if (soundEnabled) {
-                    tone.startTone(
+                    tone?.startTone(
                         android.media.ToneGenerator.TONE_PROP_BEEP2,
                         SOUND_DURATION_SHORT_MS,
                     )
@@ -231,7 +239,7 @@ fun gameScreen(
                                     countdownState.start(
                                         onTick = {
                                             if (soundEnabled) {
-                                                tone.startTone(
+                                                tone?.startTone(
                                                     android.media.ToneGenerator.TONE_PROP_BEEP,
                                                     SOUND_DURATION_SHORT_MS,
                                                 )
@@ -302,7 +310,7 @@ fun gameScreen(
                                             countdownState.start(
                                                 onTick = {
                                                     if (soundEnabled) {
-                                                        tone.startTone(
+                                                        tone?.startTone(
                                                             android.media.ToneGenerator.TONE_PROP_BEEP,
                                                             SOUND_DURATION_SHORT_MS,
                                                         )
@@ -364,7 +372,7 @@ fun gameScreen(
                 val remaining = s.timeRemaining
                 if (remaining in 1..TURN_END_COUNTDOWN_PROMPT_SECONDS) {
                     if (soundEnabled) {
-                        tone.startTone(
+                        tone?.startTone(
                             android.media.ToneGenerator.TONE_PROP_PROMPT,
                             SOUND_DURATION_SHORT_MS,
                         )
@@ -445,7 +453,7 @@ fun gameScreen(
                             when (it) {
                                 WordCardAction.Correct -> {
                                     if (settings.soundEnabled) {
-                                        tone.startTone(
+                                        tone?.startTone(
                                             android.media.ToneGenerator.TONE_PROP_ACK,
                                             100,
                                         )
@@ -458,7 +466,7 @@ fun gameScreen(
                                 WordCardAction.Skip -> {
                                     if (s.skipsRemaining > 0) {
                                         if (settings.soundEnabled) {
-                                            tone.startTone(
+                                            tone?.startTone(
                                                 android.media.ToneGenerator.TONE_PROP_NACK,
                                                 100,
                                             )

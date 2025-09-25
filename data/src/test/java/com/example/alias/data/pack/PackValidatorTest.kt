@@ -60,8 +60,9 @@ class PackValidatorTest {
             version = 1,
             isNSFW = false,
             coverImageBase64 = " data:image/png;base64,${TestCoverImages.TWO_BY_TWO_PNG_BASE64} ",
+            author = "Deck Author",
         )
-        assertEquals(TestCoverImages.TWO_BY_TWO_PNG_BASE64, normalized)
+        assertEquals(TestCoverImages.TWO_BY_TWO_PNG_BASE64, normalized.coverImageBase64)
         assertEquals("Deck Author", normalized.author)
 
         val blankAuthor = PackValidator.validateDeck(

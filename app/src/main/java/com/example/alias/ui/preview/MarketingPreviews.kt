@@ -44,6 +44,8 @@ private const val TEAM_AZURE_OWLS = "Azure Owls"
 private const val TEAM_GOLDEN_FOXES = "Golden Foxes"
 private const val MATCH_ID_820 = "match-820"
 private const val MATCH_ID_821 = "match-821"
+private const val MARKETING_PREVIEW_WIDTH_DP = 1280
+private const val MARKETING_PREVIEW_HEIGHT_DP = 832
 
 private val SampleDecks = listOf(
     DeckEntity(
@@ -182,7 +184,12 @@ private val SampleWordInfo = mapOf(
     "Velocity" to WordInfo(difficulty = 4, category = "Science", wordClass = "Noun"),
 )
 
-@Preview(name = "Home – Marketing", showBackground = true)
+@Preview(
+    name = "Home – Marketing",
+    showBackground = true,
+    widthDp = MARKETING_PREVIEW_WIDTH_DP,
+    heightDp = MARKETING_PREVIEW_HEIGHT_DP,
+)
 @Composable
 private fun homeScreenMarketingPreview() {
     aliasAppTheme {
@@ -212,7 +219,12 @@ private fun homeScreenMarketingPreview() {
     }
 }
 
-@Preview(name = "Game – Turn Pending", showBackground = true)
+@Preview(
+    name = "Game – Turn Pending",
+    showBackground = true,
+    widthDp = MARKETING_PREVIEW_WIDTH_DP,
+    heightDp = MARKETING_PREVIEW_HEIGHT_DP,
+)
 @Composable
 private fun gameTurnPendingMarketingPreview() {
     aliasAppTheme {
@@ -238,7 +250,12 @@ private fun gameTurnPendingMarketingPreview() {
     }
 }
 
-@Preview(name = "Game – Turn Active", showBackground = true)
+@Preview(
+    name = "Game – Turn Active",
+    showBackground = true,
+    widthDp = MARKETING_PREVIEW_WIDTH_DP,
+    heightDp = MARKETING_PREVIEW_HEIGHT_DP,
+)
 @Composable
 private fun gameTurnActiveMarketingPreview() {
     aliasAppTheme {
@@ -265,7 +282,12 @@ private fun gameTurnActiveMarketingPreview() {
     }
 }
 
-@Preview(name = "Game – Turn Finished", showBackground = true)
+@Preview(
+    name = "Game – Turn Finished",
+    showBackground = true,
+    widthDp = MARKETING_PREVIEW_WIDTH_DP,
+    heightDp = MARKETING_PREVIEW_HEIGHT_DP,
+)
 @Composable
 private fun gameTurnFinishedMarketingPreview() {
     aliasAppTheme {
@@ -296,7 +318,12 @@ private fun gameTurnFinishedMarketingPreview() {
     }
 }
 
-@Preview(name = "Decks – Marketing", showBackground = true)
+@Preview(
+    name = "Decks – Marketing",
+    showBackground = true,
+    widthDp = MARKETING_PREVIEW_WIDTH_DP,
+    heightDp = MARKETING_PREVIEW_HEIGHT_DP,
+)
 @Composable
 private fun decksScreenMarketingPreview() {
     aliasAppTheme {
@@ -307,7 +334,12 @@ private fun decksScreenMarketingPreview() {
     }
 }
 
-@Preview(name = "Deck Detail – Marketing", showBackground = true)
+@Preview(
+    name = "Deck Detail – Marketing",
+    showBackground = true,
+    widthDp = MARKETING_PREVIEW_WIDTH_DP,
+    heightDp = MARKETING_PREVIEW_HEIGHT_DP,
+)
 @Composable
 private fun deckDetailMarketingPreview() {
     aliasAppTheme {
@@ -318,7 +350,12 @@ private fun deckDetailMarketingPreview() {
     }
 }
 
-@Preview(name = "Settings – Marketing", showBackground = true)
+@Preview(
+    name = "Settings – Marketing",
+    showBackground = true,
+    widthDp = MARKETING_PREVIEW_WIDTH_DP,
+    heightDp = MARKETING_PREVIEW_HEIGHT_DP,
+)
 @Composable
 private fun settingsScreenMarketingPreview() {
     aliasAppTheme {
@@ -329,7 +366,12 @@ private fun settingsScreenMarketingPreview() {
     }
 }
 
-@Preview(name = "History – Marketing", showBackground = true)
+@Preview(
+    name = "History – Marketing",
+    showBackground = true,
+    widthDp = MARKETING_PREVIEW_WIDTH_DP,
+    heightDp = MARKETING_PREVIEW_HEIGHT_DP,
+)
 @Composable
 private fun historyScreenMarketingPreview() {
     aliasAppTheme {
@@ -339,7 +381,12 @@ private fun historyScreenMarketingPreview() {
     }
 }
 
-@Preview(name = "About – Marketing", showBackground = true)
+@Preview(
+    name = "About – Marketing",
+    showBackground = true,
+    widthDp = MARKETING_PREVIEW_WIDTH_DP,
+    heightDp = MARKETING_PREVIEW_HEIGHT_DP,
+)
 @Composable
 private fun aboutScreenMarketingPreview() {
     aliasAppTheme {

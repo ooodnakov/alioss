@@ -1,5 +1,8 @@
+@file:Suppress("MaxLineLength")
+
 package com.example.alias.data.pack
 
+import java.nio.ByteBuffer
 import java.util.Base64
 
 internal object TestCoverImages {
@@ -38,7 +41,9 @@ internal object TestCoverImages {
         this[19] = 0
     }
 
-    val oversizedImageBytes: ByteArray = ByteArray(PackValidator.MAX_COVER_IMAGE_BYTES + 32) { 0x42 }
+    val oversizedImageBytes: ByteArray = ByteArray(
+        (PackValidator.MAX_COVER_IMAGE_BYTES + 32).toInt(),
+    ) { 0x42 }
 
     val supportedFormatBytes: Map<String, ByteArray> = mapOf(
         "png" to twoByTwoPngBytes,
@@ -49,11 +54,39 @@ internal object TestCoverImages {
         "heif" to twoByTwoHeifBytes,
     )
 
+    private val pngSignature = byteArrayOf(
+        0x89.toByte(),
+        'P'.code.toByte(),
+        'N'.code.toByte(),
+        'G'.code.toByte(),
+        0x0D,
+        0x0A,
+        0x1A,
+        0x0A,
+    )
+
+    private fun ByteArray.hasPrefix(prefix: ByteArray): Boolean {
+        if (size < prefix.size) {
+            return false
+        }
+        for (index in prefix.indices) {
+            if (this[index] != prefix[index]) {
+                return false
+            }
+        }
+        return true
+    }
+
+    private fun ByteArray.decodeBigEndianInt(offset: Int): Int {
+        return ByteBuffer.wrap(this, offset, Int.SIZE_BYTES).int
+    }
+
     val fakeDecoder: PackValidator.ImageMetadataDecoder = object : PackValidator.ImageMetadataDecoder {
         override fun decodeSize(data: ByteArray): Pair<Int, Int>? {
             return when {
                 data.contentEquals(oversizedImageBytes) -> 4_096 to 4_096
                 data.contentEquals(zeroDimensionPngBytes) -> 0 to 0
+                data.hasPrefix(pngSignature) -> data.decodeBigEndianInt(16) to data.decodeBigEndianInt(20)
                 supportedFormatBytes.values.any { it.contentEquals(data) } -> 2 to 2
                 else -> null
             }

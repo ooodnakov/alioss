@@ -41,7 +41,7 @@ object PackValidator {
         version: Int,
         @Suppress("UNUSED_PARAMETER") isNSFW: Boolean,
         coverImageBase64: String?,
-        author: String?,
+        author: String? = null,
     ): DeckValidationResult {
         require(ID_REGEX.matches(id)) { "Invalid deck id" }
         require(name.isNotBlank() && name.length <= 100) { "Invalid deck name" }
