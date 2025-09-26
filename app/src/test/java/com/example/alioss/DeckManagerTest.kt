@@ -184,8 +184,7 @@ class DeckManagerTest {
         assertEquals(listOf("banana", "apple"), result)
     }
 
-    @Test
-    fun deleteImportedDeckSoftDeletesAndDisables() = runBlocking {
+    private suspend fun setupImportedDeck(): DeckEntity {
         val deck = DeckEntity(
             id = "indie",
             name = "Indie Pack",
@@ -197,6 +196,12 @@ class DeckManagerTest {
         )
         deckRepository.setDecks(listOf(deck))
         settingsRepository.setEnabledDeckIds(setOf(deck.id))
+        return deck
+    }
+
+    @Test
+    fun deleteImportedDeckSoftDeletesAndDisables() = runBlocking {
+        val deck = setupImportedDeck()
 
         val result = deckManager.deleteDeck(deck)
 
@@ -208,17 +213,7 @@ class DeckManagerTest {
 
     @Test
     fun restoreDeletedImportedDeckReenablesDeck() = runBlocking {
-        val deck = DeckEntity(
-            id = "indie",
-            name = "Indie Pack",
-            language = "en",
-            isOfficial = false,
-            isNSFW = false,
-            version = 1,
-            updatedAt = 0L,
-        )
-        deckRepository.setDecks(listOf(deck))
-        settingsRepository.setEnabledDeckIds(setOf(deck.id))
+        val deck = setupImportedDeck()
         deckManager.deleteDeck(deck)
 
         val result = deckManager.restoreDeletedImportedDeck(deck.id)
@@ -230,17 +225,7 @@ class DeckManagerTest {
 
     @Test
     fun permanentlyDeleteImportedDeckRemovesDeckAndFlags() = runBlocking {
-        val deck = DeckEntity(
-            id = "indie",
-            name = "Indie Pack",
-            language = "en",
-            isOfficial = false,
-            isNSFW = false,
-            version = 1,
-            updatedAt = 0L,
-        )
-        deckRepository.setDecks(listOf(deck))
-        settingsRepository.setEnabledDeckIds(setOf(deck.id))
+        val deck = setupImportedDeck()
         deckManager.deleteDeck(deck)
 
         val result = deckManager.permanentlyDeleteImportedDeck(deck)
@@ -253,17 +238,7 @@ class DeckManagerTest {
 
     @Test
     fun permanentlyDeleteImportedDeckByIdRemovesDeckAndFlags() = runBlocking {
-        val deck = DeckEntity(
-            id = "indie",
-            name = "Indie Pack",
-            language = "en",
-            isOfficial = false,
-            isNSFW = false,
-            version = 1,
-            updatedAt = 0L,
-        )
-        deckRepository.setDecks(listOf(deck))
-        settingsRepository.setEnabledDeckIds(setOf(deck.id))
+        val deck = setupImportedDeck()
         deckManager.deleteDeck(deck)
 
         val result = deckManager.permanentlyDeleteImportedDeck(deck.id)

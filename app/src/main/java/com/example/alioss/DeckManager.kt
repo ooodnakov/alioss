@@ -490,8 +490,8 @@ constructor(
             withContext(Dispatchers.IO) {
                 deckRepository.deleteDeck(deck.id)
                 settingsRepository.removeDeletedImportedDeckId(deck.id)
+                settingsRepository.removeEnabledDeckId(deck.id)
             }
-            settingsRepository.removeEnabledDeckId(deck.id)
         }
 
     suspend fun restoreDeletedBundledDeck(deckId: String): Result<Unit> {
@@ -506,10 +506,10 @@ constructor(
         runCatching {
             withContext(Dispatchers.IO) {
                 settingsRepository.removeDeletedImportedDeckId(deckId)
-            }
-            val enabled = settingsRepository.settings.first().enabledDeckIds
-            if (!enabled.contains(deckId)) {
-                settingsRepository.setEnabledDeckIds(enabled + deckId)
+                val enabled = settingsRepository.settings.first().enabledDeckIds
+                if (!enabled.contains(deckId)) {
+                    settingsRepository.setEnabledDeckIds(enabled + deckId)
+                }
             }
         }
 
@@ -518,8 +518,8 @@ constructor(
             withContext(Dispatchers.IO) {
                 deckRepository.deleteDeck(deckId)
                 settingsRepository.removeDeletedImportedDeckId(deckId)
+                settingsRepository.removeEnabledDeckId(deckId)
             }
-            settingsRepository.removeEnabledDeckId(deckId)
         }
     }
 
