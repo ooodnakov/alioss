@@ -44,8 +44,8 @@ private const val TEAM_AZURE_OWLS = "Azure Owls"
 private const val TEAM_GOLDEN_FOXES = "Golden Foxes"
 private const val MATCH_ID_820 = "match-820"
 private const val MATCH_ID_821 = "match-821"
-private const val MARKETING_PREVIEW_WIDTH_DP = 1280
-private const val MARKETING_PREVIEW_HEIGHT_DP = 832
+private const val MARKETING_PREVIEW_WIDTH_DP = 414
+private const val MARKETING_PREVIEW_HEIGHT_DP = 897
 
 private val SampleDecks = listOf(
     DeckEntity(
