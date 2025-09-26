@@ -11,7 +11,7 @@
     <string name="home_hero_finished_subtitle">Команда %1$s завершила ход с результатом %2$+d.</string>
     <string name="home_hero_idle_subtitle">Начните новый матч для %1$d команд или сначала настройте игру.</string>
     <string name="home_hero_pending_subtitle">Следом ходит команда %1$s.</string>
-    <string name="home_hero_title_idle">Добро пожаловать в Alias</string>
+    <string name="home_hero_title_idle">Добро пожаловать в Alioss</string>
     <string name="home_hero_title_playing">Матч в разгаре</string>
     <string name="home_hero_title_ready">Готовы к новому раунду?</string>
     <string name="home_hero_title_victory">Матч завершён</string>

@@ -1,6 +1,6 @@
 <resources>
     <!-- Global/shared strings -->
-    <string name="app_name">Alias</string>
+    <string name="app_name">Alioss</string>
     <string name="back">Назад</string>
     <string name="cancel">Отмена</string>
     <string name="confirm">Подтвердить</string>

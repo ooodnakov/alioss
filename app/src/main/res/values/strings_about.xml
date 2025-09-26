@@ -1,7 +1,7 @@
 <resources>
     <!-- About screen strings -->
-    <string name="about_source_code_link">github.com/ooodnakov/alias-game</string>
-    <string name="about_source_code_url" translatable="false">https://github.com/ooodnakov/alias-game</string>
+    <string name="about_source_code_link">github.com/ooodnakov/alioss-game</string>
+    <string name="about_source_code_url" translatable="false">https://github.com/ooodnakov/alioss-game</string>
     <string name="author_line">Author: Aleksandr Odnakov</string>
     <string name="links_label">Links</string>
     <string name="open_github_issues_label">Open GitHub issues</string>

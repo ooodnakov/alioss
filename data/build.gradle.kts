@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.alias.data"
+    namespace = "com.example.alioss.data"
     compileSdk = 34
 
     defaultConfig {
