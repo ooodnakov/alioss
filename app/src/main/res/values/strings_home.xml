@@ -11,7 +11,7 @@
     <string name="home_hero_finished_subtitle">%1$s just wrapped their turn for %2$+d.</string>
     <string name="home_hero_idle_subtitle">Start a new match for %1$d teams or tweak the setup first.</string>
     <string name="home_hero_pending_subtitle">Next up: %1$s is waiting to play.</string>
-    <string name="home_hero_title_idle">Welcome to Alias</string>
+    <string name="home_hero_title_idle">Welcome to Alioss</string>
     <string name="home_hero_title_playing">Match in progress</string>
     <string name="home_hero_title_ready">Ready for the next round?</string>
     <string name="home_hero_title_victory">Match complete</string>

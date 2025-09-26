@@ -1,10 +1,10 @@
 {
-  "format": "alias-deck@1",
+  "format": "alioss-deck@1",
   "deck": {
     "id": "movies_en_v1",
     "name": "Movies (EN)",
     "language": "en",
-    "author": "Alias Contributors",
+    "author": "Alioss Contributors",
     "version": 1,
     "categories": [
       "movies"

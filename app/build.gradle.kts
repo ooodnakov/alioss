@@ -7,11 +7,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.alias"
+    namespace = "com.example.alioss"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.alias"
+        applicationId = "com.example.alioss"
         minSdk = 24
         targetSdk = 34
         versionCode = 2

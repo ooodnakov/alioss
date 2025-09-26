@@ -1,10 +1,10 @@
 {
-  "format": "alias-deck@1",
+  "format": "alioss-deck@1",
   "deck": {
     "id": "sample_en",
     "name": "Sample (EN)",
     "language": "en",
-    "author": "Alias Contributors",
+    "author": "Alioss Contributors",
     "isNSFW": false
   },
   "words": [

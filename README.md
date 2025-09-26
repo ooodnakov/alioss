@@ -1,6 +1,6 @@
-# Alias (Local-Only, Pass-and-Play)
+# Alioss (Local-Only, Pass-and-Play)
 
-Alias is a privacy-first, offline-only party game for Android built with Kotlin and Jetpack Compose. The project targets a relaxed, pass-and-play experience: no ads, analytics, accounts, or background networking. Gameplay focuses on predictable state, reusable decks, and local-first storage so the app works completely without internet access.
+Alioss is a privacy-first, offline-only party game for Android built with Kotlin and Jetpack Compose. The project targets a relaxed, pass-and-play experience: no ads, analytics, accounts, or background networking. Gameplay focuses on predictable state, reusable decks, and local-first storage so the app works completely without internet access.
 
 ## Project Status
 
@@ -51,13 +51,13 @@ scripts/ – Automation helpers for builds, downloads, reproducibility snapshots
 ```
 
 - Dependency injection is powered by Hilt with module wiring in `AppModule.kt` and scoped controllers in the app module.
-- Room manages deck metadata, word storage, word classes, and turn history with migrations housed in `data/src/main/java/com/example/alias/data/db/Migrations.kt`.
+- Room manages deck metadata, word storage, word classes, and turn history with migrations housed in `data/src/main/java/com/example/alioss/data/db/Migrations.kt`.
 - Settings persist via Preferences DataStore and stream into Compose screens through `SettingsController`/`MainViewModel`.
 - The domain module exports the `GameEngine` interface and `DefaultGameEngine` implementation, ensuring platform-agnostic logic that tests can exercise without Android dependencies.
 
 ## Data Packs & Formats
 
-- Bundled decks ship as JSON (`alias-deck@1`) and live under `app/src/main/assets/decks/`. Deck hashes are tracked to avoid redundant imports and respect decks that the user deleted manually.
+- Bundled decks ship as JSON (`alioss-deck@1`) and live under `app/src/main/assets/decks/`. Deck hashes are tracked to avoid redundant imports and respect decks that the user deleted manually.
 - Deck metadata may include an optional `author` field; when provided it is validated, stored alongside the deck, and displayed in the decks UI for attribution.
 - JSON packs are parsed by `PackParser`, validated via `PackValidator`, and inserted atomically to replace existing deck content.
 - Downloads require HTTPS and an allow-listed host/origin, enforce a 40 MB cap, disable redirects, and optionally verify SHA-256 checksums.
@@ -103,4 +103,4 @@ A license has not been finalized. MPL-2.0 or Apache-2.0 remain likely candidates
 
 ## Acknowledgements
 
-Alias is inspired by the classic Alias™ gameplay but is an independent, open implementation with no affiliation to the trademark holders.
+Alioss is inspired by classic word-guessing party gameplay but is an independent, open implementation with no affiliation to trademark holders.

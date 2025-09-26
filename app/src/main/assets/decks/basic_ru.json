@@ -1,10 +1,10 @@
 {
-  "format": "alias-deck@1",
+  "format": "alioss-deck@1",
   "deck": {
     "id": "basic_ru_v1",
     "name": "Базовый (RU)",
     "language": "ru",
-    "author": "Alias Contributors",
+    "author": "Alioss Contributors",
     "version": 1,
     "categories": [
       "общие"
