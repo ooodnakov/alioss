@@ -1,6 +1,12 @@
 package com.example.alioss
 
 import android.app.Application
+import android.content.ContentProviderClient
+import android.content.ContentProviderOperation
+import android.content.ContentProviderResult
+import android.content.ContentResolver
+import android.content.ContentValues
+import android.content.Context
 import com.example.alioss.achievements.AchievementsManager
 import com.example.alioss.data.DeckRepository
 import com.example.alioss.data.TurnHistoryRepository
@@ -21,6 +27,13 @@ import com.example.alioss.data.settings.Settings
 import com.example.alioss.data.settings.SettingsRepository
 import com.example.alioss.domain.GameEngine
 import com.example.alioss.domain.GameState
+import android.database.Cursor
+import android.graphics.Bitmap
+import android.net.Uri
+import android.os.Bundle
+import android.os.CancellationSignal
+import android.os.ParcelFileDescriptor
+import android.util.Size
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -35,6 +48,9 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.cancelAndJoin
 import okhttp3.OkHttpClient
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -43,6 +59,11 @@ import org.junit.Test
 import org.junit.rules.TestWatcher
 import org.junit.runner.Description
 import java.util.Locale
+import android.content.IContentProvider
+import android.content.res.AssetFileDescriptor
+import java.io.InputStream
+import java.io.OutputStream
+import java.util.ArrayList
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MainViewModelTest {
@@ -61,7 +82,7 @@ class MainViewModelTest {
 
     @Before
     fun setUp() {
-        val context = Application()
+        val context = NullInputStreamApplication()
         wordDao = TestWordDao().apply {
             setDeckData(
                 "alpha",
@@ -161,6 +182,36 @@ class MainViewModelTest {
         }
 
         assertEquals(listOf("Gamma"), updatedCategories)
+    }
+
+    @Test
+    fun downloadPackFromUrl_surfacesIllegalArgumentMessage() = runTest(dispatcherRule.dispatcher) {
+        val vm = MainViewModel(deckManager, settingsController, gameController, achievementsManager)
+        val events = mutableListOf<MainViewModel.UiEvent>()
+        val job = launch { vm.uiEvents.collect { events += it } }
+
+        vm.downloadPackFromUrl("https://example.com/deck.json", expectedSha256 = null)
+        advanceUntilIdle()
+
+        val errorEvent = events.firstOrNull { it.isError }
+        assertEquals("Host not allow-listed", errorEvent?.message)
+
+        job.cancelAndJoin()
+    }
+
+    @Test
+    fun importDeckFromFile_surfacesIllegalStateMessage() = runTest(dispatcherRule.dispatcher) {
+        val vm = MainViewModel(deckManager, settingsController, gameController, achievementsManager)
+        val events = mutableListOf<MainViewModel.UiEvent>()
+        val job = launch { vm.uiEvents.collect { events += it } }
+
+        vm.importDeckFromFile(Uri.parse("content://missing"))
+        advanceUntilIdle()
+
+        val errorEvent = events.firstOrNull { it.isError }
+        assertEquals("Empty file", errorEvent?.message)
+
+        job.cancelAndJoin()
     }
 }
 
@@ -559,6 +610,108 @@ private class TestAchievementsRepository : AchievementsRepository {
     override suspend fun recordSettingsAdjustment() = Unit
 
     override suspend fun recordSectionVisited(section: AchievementSection) = Unit
+}
+
+private class NullInputStreamApplication : Application() {
+    private val resolver = NullInputStreamContentResolver(this)
+
+    override fun getContentResolver(): ContentResolver = resolver
+}
+
+private class NullInputStreamContentResolver(context: Context) : ContentResolver(context) {
+    override fun acquireProvider(context: Context, name: String): IContentProvider? = null
+
+    override fun acquireUnstableProvider(context: Context, name: String): IContentProvider? = null
+
+    override fun releaseProvider(provider: IContentProvider) = Unit
+
+    override fun releaseUnstableProvider(provider: IContentProvider) = Unit
+
+    override fun unstableProviderDied(provider: IContentProvider) = Unit
+
+    override fun appNotRespondingViaProvider(provider: IContentProvider) = Unit
+
+    override fun insert(uri: Uri, values: ContentValues?): Uri? = null
+
+    override fun bulkInsert(uri: Uri, values: Array<out ContentValues>): Int = 0
+
+    override fun delete(uri: Uri, selection: String?, selectionArgs: Array<out String>?): Int = 0
+
+    override fun update(
+        uri: Uri,
+        values: ContentValues?,
+        selection: String?,
+        selectionArgs: Array<out String>?,
+    ): Int = 0
+
+    override fun query(
+        uri: Uri,
+        projection: Array<out String>?,
+        selection: String?,
+        selectionArgs: Array<out String>?,
+        sortOrder: String?,
+    ): Cursor? = null
+
+    override fun query(
+        uri: Uri,
+        projection: Array<out String>?,
+        queryArgs: Bundle?,
+        cancellationSignal: CancellationSignal?,
+    ): Cursor? = null
+
+    override fun getType(uri: Uri): String? = null
+
+    override fun getStreamTypes(uri: Uri, mimeTypeFilter: String): Array<String>? = null
+
+    override fun openTypedAssetFileDescriptor(
+        uri: Uri,
+        mimeType: String,
+        opts: Bundle?,
+        cancellationSignal: CancellationSignal?,
+    ): AssetFileDescriptor? = null
+
+    override fun openAssetFileDescriptor(uri: Uri, mode: String): AssetFileDescriptor? = null
+
+    override fun openAssetFileDescriptor(
+        uri: Uri,
+        mode: String,
+        cancellationSignal: CancellationSignal?,
+    ): AssetFileDescriptor? = null
+
+    override fun openFileDescriptor(uri: Uri, mode: String): ParcelFileDescriptor? = null
+
+    override fun openFileDescriptor(
+        uri: Uri,
+        mode: String,
+        cancellationSignal: CancellationSignal?,
+    ): ParcelFileDescriptor? = null
+
+    override fun canonicalize(uri: Uri): Uri? = null
+
+    override fun uncanonicalize(uri: Uri): Uri? = null
+
+    override fun applyBatch(
+        authority: String,
+        operations: ArrayList<ContentProviderOperation>,
+    ): Array<ContentProviderResult> = emptyArray()
+
+    override fun acquireProviderClient(name: String): ContentProviderClient? = null
+
+    override fun acquireUnstableProviderClient(name: String): ContentProviderClient? = null
+
+    override fun call(authority: String, method: String, arg: String?, extras: Bundle?): Bundle? = null
+
+    override fun openInputStream(uri: Uri): InputStream? = null
+
+    override fun openOutputStream(uri: Uri): OutputStream? = null
+
+    override fun openOutputStream(uri: Uri, mode: String): OutputStream? = null
+
+    override fun loadThumbnail(
+        uri: Uri,
+        size: Size,
+        cancellationSignal: CancellationSignal?,
+    ): Bitmap? = null
 }
 
 private class TestGameEngineFactory : GameEngineFactory {

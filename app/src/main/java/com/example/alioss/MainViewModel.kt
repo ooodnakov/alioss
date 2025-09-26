@@ -462,6 +462,30 @@ constructor(
                         dismissCurrent = true,
                     ),
                 )
+            } catch (e: IllegalArgumentException) {
+                Log.e(TAG, "Failed to download or import pack", e)
+                val message = e.message?.takeUnless { it.isBlank() } ?: "Unknown error"
+                _uiEvents.tryEmit(
+                    UiEvent(
+                        message = message,
+                        actionLabel = "Dismiss",
+                        duration = SnackbarDuration.Long,
+                        isError = true,
+                        dismissCurrent = true,
+                    ),
+                )
+            } catch (e: IllegalStateException) {
+                Log.e(TAG, "Failed to download or import pack", e)
+                val message = e.message?.takeUnless { it.isBlank() } ?: "Unknown error"
+                _uiEvents.tryEmit(
+                    UiEvent(
+                        message = message,
+                        actionLabel = "Dismiss",
+                        duration = SnackbarDuration.Long,
+                        isError = true,
+                        dismissCurrent = true,
+                    ),
+                )
             } catch (e: Exception) {
                 Log.e(TAG, "An unexpected error occurred", e)
                 _uiEvents.tryEmit(
@@ -504,6 +528,28 @@ constructor(
                 _uiEvents.tryEmit(
                     UiEvent(
                         message = "Failed: ${e.message}",
+                        actionLabel = "Dismiss",
+                        duration = SnackbarDuration.Long,
+                        isError = true,
+                    ),
+                )
+            } catch (e: IllegalArgumentException) {
+                Log.e(TAG, "Failed to import deck from file", e)
+                val message = e.message?.takeUnless { it.isBlank() } ?: "Unknown error"
+                _uiEvents.tryEmit(
+                    UiEvent(
+                        message = message,
+                        actionLabel = "Dismiss",
+                        duration = SnackbarDuration.Long,
+                        isError = true,
+                    ),
+                )
+            } catch (e: IllegalStateException) {
+                Log.e(TAG, "Failed to import deck from file", e)
+                val message = e.message?.takeUnless { it.isBlank() } ?: "Unknown error"
+                _uiEvents.tryEmit(
+                    UiEvent(
+                        message = message,
                         actionLabel = "Dismiss",
                         duration = SnackbarDuration.Long,
                         isError = true,
