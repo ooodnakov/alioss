@@ -136,7 +136,7 @@ fun deckDetailScreen(vm: DecksScreenViewModel, deck: DeckEntity) {
             FilledTonalButton(onClick = { confirmDelete = true }) {
                 Icon(imageVector = Icons.Filled.Delete, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
-                Text(stringResource(R.string.deck_delete_action))
+                Text(stringResource(R.string.deck_hide_action))
             }
         }
 
@@ -150,7 +150,7 @@ fun deckDetailScreen(vm: DecksScreenViewModel, deck: DeckEntity) {
                         confirmDelete = false
                         vm.deleteDeck(deck)
                     }) {
-                        Text(stringResource(R.string.deck_delete_action))
+                        Text(stringResource(R.string.deck_hide_action))
                     }
                 },
                 dismissButton = {

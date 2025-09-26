@@ -472,7 +472,7 @@ constructor(
                 if (isBundledDeck) {
                     settingsRepository.addDeletedBundledDeckId(deck.id)
                 } else {
-                    deckRepository.deleteDeck(deck.id)
+                    settingsRepository.addDeletedImportedDeckId(deck.id)
                 }
             }
             settingsRepository.removeEnabledDeckId(deck.id)
@@ -481,17 +481,16 @@ constructor(
             val error = result.exceptionOrNull()?.message ?: "Unknown error"
             return DeleteDeckResult.Failure(error)
         }
-        val message = if (isBundledDeck) {
-            "Hidden deck: ${deck.name}"
-        } else {
-            "Deleted deck: ${deck.name}"
-        }
+        val message = "Hidden deck: ${deck.name}"
         return DeleteDeckResult.Success(message)
     }
 
     suspend fun permanentlyDeleteImportedDeck(deck: DeckEntity): Result<Unit> =
         runCatching {
-            withContext(Dispatchers.IO) { deckRepository.deleteDeck(deck.id) }
+            withContext(Dispatchers.IO) {
+                deckRepository.deleteDeck(deck.id)
+                settingsRepository.removeDeletedImportedDeckId(deck.id)
+            }
             settingsRepository.removeEnabledDeckId(deck.id)
         }
 
@@ -503,13 +502,16 @@ constructor(
         }
     }
 
-    suspend fun restoreDeletedImportedDeck(deckId: String): Result<Unit> {
-        return runCatching {
+    suspend fun restoreDeletedImportedDeck(deckId: String): Result<Unit> =
+        runCatching {
             withContext(Dispatchers.IO) {
                 settingsRepository.removeDeletedImportedDeckId(deckId)
             }
+            val enabled = settingsRepository.settings.first().enabledDeckIds
+            if (!enabled.contains(deckId)) {
+                settingsRepository.setEnabledDeckIds(enabled + deckId)
+            }
         }
-    }
 
     suspend fun permanentlyDeleteImportedDeck(deckId: String): Result<Unit> {
         return runCatching {
@@ -517,6 +519,7 @@ constructor(
                 deckRepository.deleteDeck(deckId)
                 settingsRepository.removeDeletedImportedDeckId(deckId)
             }
+            settingsRepository.removeEnabledDeckId(deckId)
         }
     }
 

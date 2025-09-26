@@ -12,14 +12,13 @@
     <string name="deck_categories_empty">Категории отсутствуют</string>
     <string name="deck_categories_title">Категории</string>
     <string name="deck_cover_language">Колода %1$s</string>
-    <string name="deck_delete_action">Удалить колоду</string>
-    <string name="deck_delete_dialog_message">Удалить «%1$s» и слова в ней? Это действие не может быть отменено.</string>
-    <string name="deck_delete_dialog_title">Удалить колоду?</string>
+    <string name="deck_delete_dialog_message">Скрыть «%1$s»? Колоду можно восстановить в разделе «Удалённые колоды».</string>
+    <string name="deck_delete_dialog_title">Скрыть колоду?</string>
     <string name="deck_delete_permanently_action">Удалить навсегда</string>
     <string name="deck_deleted_bundled_hint">Удалённые встроенные колоды (нажмите, чтобы восстановить):</string>
     <string name="deck_deleted_bundled_label">Встроенная колода: %1$s</string>
     <string name="deck_deleted_empty">Удалённых колод нет</string>
-    <string name="deck_deleted_imported_hint">Важно: импортированные колоды при удалении стираются окончательно и не могут быть восстановлены.</string>
+    <string name="deck_deleted_imported_hint">Скрытые импортированные колоды (нажмите, чтобы восстановить или удалить навсегда):</string>
     <string name="deck_deleted_imported_label">Импортированная колода: %1$s</string>
     <string name="deck_difficulty_empty">Данные о сложности недоступны.</string>
     <string name="deck_difficulty_title">Распределение сложности</string>
