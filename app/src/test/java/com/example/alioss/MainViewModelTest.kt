@@ -1,6 +1,8 @@
 package com.example.alioss
 
 import android.app.Application
+import android.content.ContentResolver
+import android.content.Context
 import com.example.alioss.achievements.AchievementsManager
 import com.example.alioss.data.DeckRepository
 import com.example.alioss.data.TurnHistoryRepository
@@ -21,6 +23,9 @@ import com.example.alioss.data.settings.Settings
 import com.example.alioss.data.settings.SettingsRepository
 import com.example.alioss.domain.GameEngine
 import com.example.alioss.domain.GameState
+import android.net.Uri
+import android.os.Bundle
+import android.os.CancellationSignal
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -35,6 +40,9 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.cancelAndJoin
 import okhttp3.OkHttpClient
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -43,6 +51,8 @@ import org.junit.Test
 import org.junit.rules.TestWatcher
 import org.junit.runner.Description
 import java.util.Locale
+import android.content.IContentProvider
+import android.content.res.AssetFileDescriptor
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MainViewModelTest {
@@ -61,7 +71,7 @@ class MainViewModelTest {
 
     @Before
     fun setUp() {
-        val context = Application()
+        val context = NullInputStreamApplication()
         wordDao = TestWordDao().apply {
             setDeckData(
                 "alpha",
@@ -161,6 +171,36 @@ class MainViewModelTest {
         }
 
         assertEquals(listOf("Gamma"), updatedCategories)
+    }
+
+    @Test
+    fun downloadPackFromUrl_surfacesIllegalArgumentMessage() = runTest(dispatcherRule.dispatcher) {
+        val vm = MainViewModel(deckManager, settingsController, gameController, achievementsManager)
+        val events = mutableListOf<MainViewModel.UiEvent>()
+        val job = launch { vm.uiEvents.collect { events += it } }
+
+        vm.downloadPackFromUrl("https://example.com/deck.json", expectedSha256 = null)
+        advanceUntilIdle()
+
+        val errorEvent = events.firstOrNull { it.isError }
+        assertEquals("Host not allow-listed", errorEvent?.message)
+
+        job.cancelAndJoin()
+    }
+
+    @Test
+    fun importDeckFromFile_surfacesIllegalStateMessage() = runTest(dispatcherRule.dispatcher) {
+        val vm = MainViewModel(deckManager, settingsController, gameController, achievementsManager)
+        val events = mutableListOf<MainViewModel.UiEvent>()
+        val job = launch { vm.uiEvents.collect { events += it } }
+
+        vm.importDeckFromFile(Uri.parse("content://missing"))
+        advanceUntilIdle()
+
+        val errorEvent = events.firstOrNull { it.isError }
+        assertEquals("Empty file", errorEvent?.message)
+
+        job.cancelAndJoin()
     }
 }
 
@@ -559,6 +599,39 @@ private class TestAchievementsRepository : AchievementsRepository {
     override suspend fun recordSettingsAdjustment() = Unit
 
     override suspend fun recordSectionVisited(section: AchievementSection) = Unit
+}
+
+private class NullInputStreamApplication : Application() {
+    private val resolver = NullInputStreamContentResolver(this)
+
+    override fun getContentResolver(): ContentResolver = resolver
+}
+
+private class NullInputStreamContentResolver(context: Context) : ContentResolver(context) {
+    override fun acquireProvider(context: Context, name: String): IContentProvider? = null
+
+    override fun acquireUnstableProvider(context: Context, name: String): IContentProvider? = null
+
+    override fun releaseProvider(provider: IContentProvider) = Unit
+
+    override fun releaseUnstableProvider(provider: IContentProvider) = Unit
+
+    override fun unstableProviderDied(provider: IContentProvider) = Unit
+
+    override fun appNotRespondingViaProvider(provider: IContentProvider) = Unit
+
+    override fun openTypedAssetFileDescriptor(
+        uri: Uri,
+        mimeType: String,
+        opts: Bundle?,
+        cancellationSignal: CancellationSignal?,
+    ): AssetFileDescriptor? = null
+
+    override fun openAssetFileDescriptor(
+        uri: Uri,
+        mode: String,
+        cancellationSignal: CancellationSignal?,
+    ): AssetFileDescriptor? = null
 }
 
 private class TestGameEngineFactory : GameEngineFactory {
