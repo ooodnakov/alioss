@@ -30,6 +30,7 @@ import okio.Buffer
 import org.junit.After
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -181,6 +182,71 @@ class DeckManagerTest {
         val result = deckManager.getDeckRecentWords("alpha", limit = 2)
 
         assertEquals(listOf("banana", "apple"), result)
+    }
+
+    private suspend fun setupImportedDeck(): DeckEntity {
+        val deck = DeckEntity(
+            id = "indie",
+            name = "Indie Pack",
+            language = "en",
+            isOfficial = false,
+            isNSFW = false,
+            version = 1,
+            updatedAt = 0L,
+        )
+        deckRepository.setDecks(listOf(deck))
+        settingsRepository.setEnabledDeckIds(setOf(deck.id))
+        return deck
+    }
+
+    @Test
+    fun deleteImportedDeckSoftDeletesAndDisables() = runBlocking {
+        val deck = setupImportedDeck()
+
+        val result = deckManager.deleteDeck(deck)
+
+        assertTrue(result is DeckManager.DeleteDeckResult.Success)
+        assertTrue(settingsRepository.readDeletedImportedDeckIds().contains(deck.id))
+        assertFalse(deckRepository.deletedDeckIds.contains(deck.id))
+        assertFalse(settingsRepository.settings.first().enabledDeckIds.contains(deck.id))
+    }
+
+    @Test
+    fun restoreDeletedImportedDeckReenablesDeck() = runBlocking {
+        val deck = setupImportedDeck()
+        deckManager.deleteDeck(deck)
+
+        val result = deckManager.restoreDeletedImportedDeck(deck.id)
+
+        assertTrue(result.isSuccess)
+        assertFalse(settingsRepository.readDeletedImportedDeckIds().contains(deck.id))
+        assertTrue(settingsRepository.settings.first().enabledDeckIds.contains(deck.id))
+    }
+
+    @Test
+    fun permanentlyDeleteImportedDeckRemovesDeckAndFlags() = runBlocking {
+        val deck = setupImportedDeck()
+        deckManager.deleteDeck(deck)
+
+        val result = deckManager.permanentlyDeleteImportedDeck(deck)
+
+        assertTrue(result.isSuccess)
+        assertTrue(deckRepository.deletedDeckIds.contains(deck.id))
+        assertFalse(settingsRepository.readDeletedImportedDeckIds().contains(deck.id))
+        assertFalse(settingsRepository.settings.first().enabledDeckIds.contains(deck.id))
+    }
+
+    @Test
+    fun permanentlyDeleteImportedDeckByIdRemovesDeckAndFlags() = runBlocking {
+        val deck = setupImportedDeck()
+        deckManager.deleteDeck(deck)
+
+        val result = deckManager.permanentlyDeleteImportedDeck(deck.id)
+
+        assertTrue(result.isSuccess)
+        assertTrue(deckRepository.deletedDeckIds.contains(deck.id))
+        assertFalse(settingsRepository.readDeletedImportedDeckIds().contains(deck.id))
+        assertFalse(settingsRepository.settings.first().enabledDeckIds.contains(deck.id))
     }
 
     @Test
@@ -606,6 +672,7 @@ class DeckManagerTest {
         override val settings: Flow<Settings> = flow
         var bundledDeckHashes: Set<String> = emptySet()
         private var deletedBundledDeckIds: MutableSet<String> = mutableSetOf()
+        private var deletedImportedDeckIds: MutableSet<String> = mutableSetOf()
 
         override suspend fun updateRoundSeconds(value: Int) {
             flow.value = flow.value.copy(roundSeconds = value)
@@ -717,15 +784,22 @@ class DeckManagerTest {
             flow.value = flow.value.copy(seenTutorial = value)
         }
 
-        override suspend fun readDeletedImportedDeckIds(): Set<String> = emptySet()
+        override suspend fun readDeletedImportedDeckIds(): Set<String> = deletedImportedDeckIds
 
-        override suspend fun addDeletedImportedDeckId(deckId: String) = Unit
+        override suspend fun addDeletedImportedDeckId(deckId: String) {
+            deletedImportedDeckIds += deckId
+            flow.value = flow.value.copy(deletedImportedDeckIds = deletedImportedDeckIds.toSet())
+        }
 
-        override suspend fun removeDeletedImportedDeckId(deckId: String) = Unit
+        override suspend fun removeDeletedImportedDeckId(deckId: String) {
+            deletedImportedDeckIds -= deckId
+            flow.value = flow.value.copy(deletedImportedDeckIds = deletedImportedDeckIds.toSet())
+        }
 
         override suspend fun clearAll() {
             bundledDeckHashes = emptySet()
             deletedBundledDeckIds.clear()
+            deletedImportedDeckIds.clear()
             flow.value = Settings()
         }
 
@@ -736,6 +810,11 @@ class DeckManagerTest {
         fun setDeletedBundledDeckIds(ids: Set<String>) {
             deletedBundledDeckIds = ids.toMutableSet()
             flow.value = flow.value.copy(deletedBundledDeckIds = ids)
+        }
+
+        fun setDeletedImportedDeckIds(ids: Set<String>) {
+            deletedImportedDeckIds = ids.toMutableSet()
+            flow.value = flow.value.copy(deletedImportedDeckIds = ids)
         }
     }
 }

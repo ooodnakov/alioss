@@ -12,14 +12,13 @@
     <string name="deck_categories_empty">No categories</string>
     <string name="deck_categories_title">Categories</string>
     <string name="deck_cover_language">%1$s deck</string>
-    <string name="deck_delete_action">Delete deck</string>
-    <string name="deck_delete_dialog_message">Remove "%1$s" and its words? This cannot be undone.</string>
-    <string name="deck_delete_dialog_title">Delete deck?</string>
+    <string name="deck_delete_dialog_message">Hide "%1$s"? You can restore it later from Deleted decks.</string>
+    <string name="deck_delete_dialog_title">Hide deck?</string>
     <string name="deck_delete_permanently_action">Delete permanently</string>
     <string name="deck_deleted_bundled_hint">Deleted bundled decks (tap to restore):</string>
     <string name="deck_deleted_bundled_label">Bundled deck: %1$s</string>
     <string name="deck_deleted_empty">No deleted decks</string>
-    <string name="deck_deleted_imported_hint">Deleted imported decks (tap to restore or permanently delete):</string>
+    <string name="deck_deleted_imported_hint">Hidden imported decks (tap to restore or permanently delete):</string>
     <string name="deck_deleted_imported_label">Imported deck: %1$s</string>
     <string name="deck_difficulty_empty">Difficulty data unavailable.</string>
     <string name="deck_difficulty_title">Difficulty spread</string>
