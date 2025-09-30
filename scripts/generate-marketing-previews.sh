@@ -56,8 +56,8 @@ if not width_match or not height_match:
         "Unable to determine marketing preview dimensions from MarketingPreviews.kt"
     )
 
-expected_width = int(width_match.group(1))
-expected_height = int(height_match.group(1))
+base_width = int(width_match.group(1))
+base_height = int(height_match.group(1))
 
 errors: list[str] = []
 
@@ -88,13 +88,24 @@ for path in sorted(export_dir.glob("*.png")):
         errors.append(f"Failed to read {path.name}: {exc}")
         continue
 
-    if width != expected_width or height != expected_height:
+    if width % base_width != 0 or height % base_height != 0:
         errors.append(
-            f"{path.name} has unexpected dimensions {width}x{height}; "
-            f"expected {expected_width}x{expected_height}"
+            f"{path.name} dimensions {width}x{height} are not an integer multiple of base {base_width}x{base_height}"
         )
+        continue
 
-    print(f"Copied {path.name}: {width}x{height}px ({size_bytes} bytes)")
+    width_ratio = width // base_width
+    height_ratio = height // base_height
+
+    if width_ratio != height_ratio:
+        errors.append(
+            f"{path.name} has unexpected scaling factors for width and height: {width_ratio}x vs {height_ratio}x"
+        )
+        continue
+
+    print(
+        f"Copied {path.name}: {width}x{height}px (@{width_ratio}x, {size_bytes} bytes)"
+    )
 
 if errors:
     for message in errors:

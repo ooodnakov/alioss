@@ -209,7 +209,7 @@ private val SampleWordInfo = mapOf(
 )
 
 @Composable
-internal fun HomeMarketingPreviewContent() {
+internal fun homeMarketingPreviewContent() {
     aliossAppTheme {
         appScaffold {
             homeScreen(
@@ -245,11 +245,11 @@ internal fun HomeMarketingPreviewContent() {
 )
 @Composable
 private fun homeScreenMarketingPreview() {
-    HomeMarketingPreviewContent()
+    homeMarketingPreviewContent()
 }
 
 @Composable
-internal fun GameTurnPendingMarketingPreviewContent() {
+internal fun gameTurnPendingMarketingPreviewContent() {
     aliossAppTheme {
         appScaffold {
             gameScreen(
@@ -281,11 +281,11 @@ internal fun GameTurnPendingMarketingPreviewContent() {
 )
 @Composable
 private fun gameTurnPendingMarketingPreview() {
-    GameTurnPendingMarketingPreviewContent()
+    gameTurnPendingMarketingPreviewContent()
 }
 
 @Composable
-internal fun GameTurnActiveMarketingPreviewContent() {
+internal fun gameTurnActiveMarketingPreviewContent() {
     aliossAppTheme {
         appScaffold {
             gameScreen(
@@ -318,11 +318,11 @@ internal fun GameTurnActiveMarketingPreviewContent() {
 )
 @Composable
 private fun gameTurnActiveMarketingPreview() {
-    GameTurnActiveMarketingPreviewContent()
+    gameTurnActiveMarketingPreviewContent()
 }
 
 @Composable
-internal fun GameTurnFinishedMarketingPreviewContent() {
+internal fun gameTurnFinishedMarketingPreviewContent() {
     aliossAppTheme {
         appScaffold {
             gameScreen(
@@ -359,11 +359,11 @@ internal fun GameTurnFinishedMarketingPreviewContent() {
 )
 @Composable
 private fun gameTurnFinishedMarketingPreview() {
-    GameTurnFinishedMarketingPreviewContent()
+    gameTurnFinishedMarketingPreviewContent()
 }
 
 @Composable
-internal fun DecksMarketingPreviewContent() {
+internal fun decksMarketingPreviewContent() {
     aliossAppTheme {
         val vm = remember { PreviewDecksViewModel(SampleDecks, SampleSettings) }
         appScaffold {
@@ -380,7 +380,7 @@ internal fun DecksMarketingPreviewContent() {
 )
 @Composable
 private fun decksScreenMarketingPreview() {
-    DecksMarketingPreviewContent()
+    decksMarketingPreviewContent()
 }
 
 @Preview(
@@ -391,11 +391,11 @@ private fun decksScreenMarketingPreview() {
 )
 @Composable
 private fun deckDetailMarketingPreview() {
-    DeckDetailMarketingPreviewContent()
+    deckDetailMarketingPreviewContent()
 }
 
 @Composable
-internal fun DeckDetailMarketingPreviewContent() {
+internal fun deckDetailMarketingPreviewContent() {
     aliossAppTheme {
         val vm = remember { PreviewDecksViewModel(SampleDecks, SampleSettings) }
         appScaffold {
@@ -405,7 +405,7 @@ internal fun DeckDetailMarketingPreviewContent() {
 }
 
 @Composable
-internal fun SettingsMarketingPreviewContent() {
+internal fun settingsMarketingPreviewContent() {
     aliossAppTheme {
         val vm = remember { PreviewSettingsViewModel(SampleSettings) }
         appScaffold {
@@ -422,7 +422,7 @@ internal fun SettingsMarketingPreviewContent() {
 )
 @Composable
 private fun settingsScreenMarketingPreview() {
-    SettingsMarketingPreviewContent()
+    settingsMarketingPreviewContent()
 }
 
 @Preview(
@@ -433,11 +433,11 @@ private fun settingsScreenMarketingPreview() {
 )
 @Composable
 private fun historyScreenMarketingPreview() {
-    HistoryMarketingPreviewContent()
+    historyMarketingPreviewContent()
 }
 
 @Composable
-internal fun HistoryMarketingPreviewContent() {
+internal fun historyMarketingPreviewContent() {
     aliossAppTheme {
         appScaffold {
             historyScreen(history = SampleHistory, onResetHistory = {})
@@ -446,7 +446,7 @@ internal fun HistoryMarketingPreviewContent() {
 }
 
 @Composable
-internal fun AboutMarketingPreviewContent() {
+internal fun aboutMarketingPreviewContent() {
     aliossAppTheme {
         appScaffold { aboutScreen() }
     }
@@ -460,7 +460,7 @@ internal fun AboutMarketingPreviewContent() {
 )
 @Composable
 private fun aboutScreenMarketingPreview() {
-    AboutMarketingPreviewContent()
+    aboutMarketingPreviewContent()
 }
 
 internal data class MarketingPreviewSpec(
@@ -475,47 +475,47 @@ internal val MarketingPreviewSpecs = listOf(
     MarketingPreviewSpec(
         id = MarketingPreviewIds.HOME,
         displayName = MarketingPreviewNames.HOME,
-        content = { HomeMarketingPreviewContent() },
+        content = { homeMarketingPreviewContent() },
     ),
     MarketingPreviewSpec(
         id = MarketingPreviewIds.GAME_TURN_PENDING,
         displayName = MarketingPreviewNames.GAME_TURN_PENDING,
-        content = { GameTurnPendingMarketingPreviewContent() },
+        content = { gameTurnPendingMarketingPreviewContent() },
     ),
     MarketingPreviewSpec(
         id = MarketingPreviewIds.GAME_TURN_ACTIVE,
         displayName = MarketingPreviewNames.GAME_TURN_ACTIVE,
-        content = { GameTurnActiveMarketingPreviewContent() },
+        content = { gameTurnActiveMarketingPreviewContent() },
     ),
     MarketingPreviewSpec(
         id = MarketingPreviewIds.GAME_TURN_FINISHED,
         displayName = MarketingPreviewNames.GAME_TURN_FINISHED,
-        content = { GameTurnFinishedMarketingPreviewContent() },
+        content = { gameTurnFinishedMarketingPreviewContent() },
     ),
     MarketingPreviewSpec(
         id = MarketingPreviewIds.DECKS,
         displayName = MarketingPreviewNames.DECKS,
-        content = { DecksMarketingPreviewContent() },
+        content = { decksMarketingPreviewContent() },
     ),
     MarketingPreviewSpec(
         id = MarketingPreviewIds.DECK_DETAIL,
         displayName = MarketingPreviewNames.DECK_DETAIL,
-        content = { DeckDetailMarketingPreviewContent() },
+        content = { deckDetailMarketingPreviewContent() },
     ),
     MarketingPreviewSpec(
         id = MarketingPreviewIds.SETTINGS,
         displayName = MarketingPreviewNames.SETTINGS,
-        content = { SettingsMarketingPreviewContent() },
+        content = { settingsMarketingPreviewContent() },
     ),
     MarketingPreviewSpec(
         id = MarketingPreviewIds.HISTORY,
         displayName = MarketingPreviewNames.HISTORY,
-        content = { HistoryMarketingPreviewContent() },
+        content = { historyMarketingPreviewContent() },
     ),
     MarketingPreviewSpec(
         id = MarketingPreviewIds.ABOUT,
         displayName = MarketingPreviewNames.ABOUT,
-        content = { AboutMarketingPreviewContent() },
+        content = { aboutMarketingPreviewContent() },
     ),
 )
 

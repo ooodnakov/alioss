@@ -20,13 +20,14 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import java.io.File
-import java.io.FileOutputStream
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import java.io.File
+import java.io.FileOutputStream
+import kotlin.math.roundToInt
 
 @RunWith(AndroidJUnit4::class)
 @Config(sdk = [34])
@@ -45,25 +46,31 @@ class MarketingPreviewScreenshotTest {
             mkdirs()
         }
 
+        // Allow overriding density via system property or environment variable for higher-resolution exports.
+        val screenshotDensity = System.getProperty("marketing.preview.density")?.toFloatOrNull()
+            ?: System.getenv("MARKETING_PREVIEW_DENSITY")?.toFloatOrNull()
+            ?: 1f
+
+        check(screenshotDensity > 0f) { "Screenshot density must be greater than zero" }
+
         var currentSpec by mutableStateOf(MarketingPreviewSpecs.first())
 
         composeRule.setContent {
-            CompositionLocalProvider(LocalInspectionMode provides true) {
-                val baseDensity = LocalDensity.current
-                CompositionLocalProvider(
-                    LocalDensity provides Density(
-                        density = 1f,
-                        fontScale = baseDensity.fontScale,
-                    ),
+            val baseDensity = LocalDensity.current
+            CompositionLocalProvider(
+                LocalInspectionMode provides true,
+                LocalDensity provides Density(
+                    density = screenshotDensity,
+                    fontScale = baseDensity.fontScale,
+                ),
+            ) {
+                val activeSpec = currentSpec
+                Box(
+                    modifier = Modifier
+                        .size(activeSpec.widthDp.dp, activeSpec.heightDp.dp)
+                        .background(Color.White),
                 ) {
-                    val activeSpec = currentSpec
-                    Box(
-                        modifier = Modifier
-                            .size(activeSpec.widthDp.dp, activeSpec.heightDp.dp)
-                            .background(Color.White),
-                    ) {
-                        activeSpec.content()
-                    }
+                    activeSpec.content()
                 }
             }
         }
@@ -72,22 +79,28 @@ class MarketingPreviewScreenshotTest {
             composeRule.runOnIdle { currentSpec = spec }
             composeRule.waitForIdle()
 
+            val widthPx = (spec.widthDp * screenshotDensity).roundToInt()
+            val heightPx = (spec.heightDp * screenshotDensity).roundToInt()
+
             val targetView = composeRule.activity.findViewById<ViewGroup>(android.R.id.content).getChildAt(0)
             val measuredView = checkNotNull(targetView) { "No content view found for ${spec.displayName}" }
 
             composeRule.runOnIdle {
                 measuredView.measure(
-                    View.MeasureSpec.makeMeasureSpec(spec.widthDp, View.MeasureSpec.EXACTLY),
-                    View.MeasureSpec.makeMeasureSpec(spec.heightDp, View.MeasureSpec.EXACTLY),
+                    View.MeasureSpec.makeMeasureSpec(widthPx, View.MeasureSpec.EXACTLY),
+                    View.MeasureSpec.makeMeasureSpec(heightPx, View.MeasureSpec.EXACTLY),
                 )
-                measuredView.layout(0, 0, spec.widthDp, spec.heightDp)
+                measuredView.layout(0, 0, widthPx, heightPx)
             }
 
-            check(measuredView.width == spec.widthDp && measuredView.height == spec.heightDp) {
-                "${spec.displayName} rendered at ${measuredView.width}x${measuredView.height} instead of ${spec.widthDp}x${spec.heightDp}"
+            val expectedDimensions = "${widthPx}x${heightPx}"
+            val actualDimensions = "${measuredView.width}x${measuredView.height}"
+
+            check(measuredView.width == widthPx && measuredView.height == heightPx) {
+                "${spec.displayName} rendered at $actualDimensions instead of $expectedDimensions"
             }
 
-            val capturedBitmap = Bitmap.createBitmap(spec.widthDp, spec.heightDp, Bitmap.Config.ARGB_8888)
+            val capturedBitmap = Bitmap.createBitmap(widthPx, heightPx, Bitmap.Config.ARGB_8888)
             composeRule.runOnIdle {
                 val canvas = Canvas(capturedBitmap)
                 measuredView.draw(canvas)
