@@ -74,6 +74,7 @@ private const val CARD_ASPECT_RATIO = 1.8f
 private const val PRE_TURN_COUNTDOWN_SECONDS = 3
 private const val SOUND_DURATION_SHORT_MS = 150
 private const val SOUND_DURATION_ACTION_MS = 100
+private const val TONE_VOLUME = 80
 private const val TURN_END_COUNTDOWN_PROMPT_SECONDS = 5
 private const val VIBRATION_DURATION_FINAL_TICK_MS = 200L
 private const val VIBRATION_DURATION_COUNTDOWN_TICK_MS = 120L
@@ -700,7 +701,7 @@ private fun rememberToneGenerator(enabled: Boolean): android.media.ToneGenerator
         if (isPreview || !enabled) {
             null
         } else {
-            android.media.ToneGenerator(android.media.AudioManager.STREAM_MUSIC, 80)
+            android.media.ToneGenerator(android.media.AudioManager.STREAM_MUSIC, TONE_VOLUME)
         }
     }
     DisposableEffect(generator) {
