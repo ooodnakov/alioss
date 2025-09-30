@@ -47,6 +47,30 @@ private const val MATCH_ID_821 = "match-821"
 private const val MARKETING_PREVIEW_WIDTH_DP = 414
 private const val MARKETING_PREVIEW_HEIGHT_DP = 897
 
+internal object MarketingPreviewIds {
+    const val HOME = "home"
+    const val GAME_TURN_PENDING = "game_turn_pending"
+    const val GAME_TURN_ACTIVE = "game_turn_active"
+    const val GAME_TURN_FINISHED = "game_turn_finished"
+    const val DECKS = "decks"
+    const val DECK_DETAIL = "deck_detail"
+    const val SETTINGS = "settings"
+    const val HISTORY = "history"
+    const val ABOUT = "about"
+}
+
+internal object MarketingPreviewNames {
+    const val HOME = "Home – Marketing"
+    const val GAME_TURN_PENDING = "Game – Turn Pending"
+    const val GAME_TURN_ACTIVE = "Game – Turn Active"
+    const val GAME_TURN_FINISHED = "Game – Turn Finished"
+    const val DECKS = "Decks – Marketing"
+    const val DECK_DETAIL = "Deck Detail – Marketing"
+    const val SETTINGS = "Settings – Marketing"
+    const val HISTORY = "History – Marketing"
+    const val ABOUT = "About – Marketing"
+}
+
 private val SampleDecks = listOf(
     DeckEntity(
         id = "official-classics",
@@ -184,14 +208,8 @@ private val SampleWordInfo = mapOf(
     "Velocity" to WordInfo(difficulty = 4, category = "Science", wordClass = "Noun"),
 )
 
-@Preview(
-    name = "Home – Marketing",
-    showBackground = true,
-    widthDp = MARKETING_PREVIEW_WIDTH_DP,
-    heightDp = MARKETING_PREVIEW_HEIGHT_DP,
-)
 @Composable
-private fun homeScreenMarketingPreview() {
+internal fun homeMarketingPreviewContent() {
     aliossAppTheme {
         appScaffold {
             homeScreen(
@@ -220,13 +238,18 @@ private fun homeScreenMarketingPreview() {
 }
 
 @Preview(
-    name = "Game – Turn Pending",
+    name = MarketingPreviewNames.HOME,
     showBackground = true,
     widthDp = MARKETING_PREVIEW_WIDTH_DP,
     heightDp = MARKETING_PREVIEW_HEIGHT_DP,
 )
 @Composable
-private fun gameTurnPendingMarketingPreview() {
+private fun homeScreenMarketingPreview() {
+    homeMarketingPreviewContent()
+}
+
+@Composable
+internal fun gameTurnPendingMarketingPreviewContent() {
     aliossAppTheme {
         appScaffold {
             gameScreen(
@@ -251,13 +274,18 @@ private fun gameTurnPendingMarketingPreview() {
 }
 
 @Preview(
-    name = "Game – Turn Active",
+    name = MarketingPreviewNames.GAME_TURN_PENDING,
     showBackground = true,
     widthDp = MARKETING_PREVIEW_WIDTH_DP,
     heightDp = MARKETING_PREVIEW_HEIGHT_DP,
 )
 @Composable
-private fun gameTurnActiveMarketingPreview() {
+private fun gameTurnPendingMarketingPreview() {
+    gameTurnPendingMarketingPreviewContent()
+}
+
+@Composable
+internal fun gameTurnActiveMarketingPreviewContent() {
     aliossAppTheme {
         appScaffold {
             gameScreen(
@@ -283,13 +311,18 @@ private fun gameTurnActiveMarketingPreview() {
 }
 
 @Preview(
-    name = "Game – Turn Finished",
+    name = MarketingPreviewNames.GAME_TURN_ACTIVE,
     showBackground = true,
     widthDp = MARKETING_PREVIEW_WIDTH_DP,
     heightDp = MARKETING_PREVIEW_HEIGHT_DP,
 )
 @Composable
-private fun gameTurnFinishedMarketingPreview() {
+private fun gameTurnActiveMarketingPreview() {
+    gameTurnActiveMarketingPreviewContent()
+}
+
+@Composable
+internal fun gameTurnFinishedMarketingPreviewContent() {
     aliossAppTheme {
         appScaffold {
             gameScreen(
@@ -319,13 +352,18 @@ private fun gameTurnFinishedMarketingPreview() {
 }
 
 @Preview(
-    name = "Decks – Marketing",
+    name = MarketingPreviewNames.GAME_TURN_FINISHED,
     showBackground = true,
     widthDp = MARKETING_PREVIEW_WIDTH_DP,
     heightDp = MARKETING_PREVIEW_HEIGHT_DP,
 )
 @Composable
-private fun decksScreenMarketingPreview() {
+private fun gameTurnFinishedMarketingPreview() {
+    gameTurnFinishedMarketingPreviewContent()
+}
+
+@Composable
+internal fun decksMarketingPreviewContent() {
     aliossAppTheme {
         val vm = remember { PreviewDecksViewModel(SampleDecks, SampleSettings) }
         appScaffold {
@@ -335,13 +373,29 @@ private fun decksScreenMarketingPreview() {
 }
 
 @Preview(
-    name = "Deck Detail – Marketing",
+    name = MarketingPreviewNames.DECKS,
+    showBackground = true,
+    widthDp = MARKETING_PREVIEW_WIDTH_DP,
+    heightDp = MARKETING_PREVIEW_HEIGHT_DP,
+)
+@Composable
+private fun decksScreenMarketingPreview() {
+    decksMarketingPreviewContent()
+}
+
+@Preview(
+    name = MarketingPreviewNames.DECK_DETAIL,
     showBackground = true,
     widthDp = MARKETING_PREVIEW_WIDTH_DP,
     heightDp = MARKETING_PREVIEW_HEIGHT_DP,
 )
 @Composable
 private fun deckDetailMarketingPreview() {
+    deckDetailMarketingPreviewContent()
+}
+
+@Composable
+internal fun deckDetailMarketingPreviewContent() {
     aliossAppTheme {
         val vm = remember { PreviewDecksViewModel(SampleDecks, SampleSettings) }
         appScaffold {
@@ -350,14 +404,8 @@ private fun deckDetailMarketingPreview() {
     }
 }
 
-@Preview(
-    name = "Settings – Marketing",
-    showBackground = true,
-    widthDp = MARKETING_PREVIEW_WIDTH_DP,
-    heightDp = MARKETING_PREVIEW_HEIGHT_DP,
-)
 @Composable
-private fun settingsScreenMarketingPreview() {
+internal fun settingsMarketingPreviewContent() {
     aliossAppTheme {
         val vm = remember { PreviewSettingsViewModel(SampleSettings) }
         appScaffold {
@@ -367,13 +415,29 @@ private fun settingsScreenMarketingPreview() {
 }
 
 @Preview(
-    name = "History – Marketing",
+    name = MarketingPreviewNames.SETTINGS,
+    showBackground = true,
+    widthDp = MARKETING_PREVIEW_WIDTH_DP,
+    heightDp = MARKETING_PREVIEW_HEIGHT_DP,
+)
+@Composable
+private fun settingsScreenMarketingPreview() {
+    settingsMarketingPreviewContent()
+}
+
+@Preview(
+    name = MarketingPreviewNames.HISTORY,
     showBackground = true,
     widthDp = MARKETING_PREVIEW_WIDTH_DP,
     heightDp = MARKETING_PREVIEW_HEIGHT_DP,
 )
 @Composable
 private fun historyScreenMarketingPreview() {
+    historyMarketingPreviewContent()
+}
+
+@Composable
+internal fun historyMarketingPreviewContent() {
     aliossAppTheme {
         appScaffold {
             historyScreen(history = SampleHistory, onResetHistory = {})
@@ -381,18 +445,79 @@ private fun historyScreenMarketingPreview() {
     }
 }
 
+@Composable
+internal fun aboutMarketingPreviewContent() {
+    aliossAppTheme {
+        appScaffold { aboutScreen() }
+    }
+}
+
 @Preview(
-    name = "About – Marketing",
+    name = MarketingPreviewNames.ABOUT,
     showBackground = true,
     widthDp = MARKETING_PREVIEW_WIDTH_DP,
     heightDp = MARKETING_PREVIEW_HEIGHT_DP,
 )
 @Composable
 private fun aboutScreenMarketingPreview() {
-    aliossAppTheme {
-        appScaffold { aboutScreen() }
-    }
+    aboutMarketingPreviewContent()
 }
+
+internal data class MarketingPreviewSpec(
+    val id: String,
+    val displayName: String,
+    val widthDp: Int = MARKETING_PREVIEW_WIDTH_DP,
+    val heightDp: Int = MARKETING_PREVIEW_HEIGHT_DP,
+    val content: @Composable () -> Unit,
+)
+
+internal val MarketingPreviewSpecs = listOf(
+    MarketingPreviewSpec(
+        id = MarketingPreviewIds.HOME,
+        displayName = MarketingPreviewNames.HOME,
+        content = { homeMarketingPreviewContent() },
+    ),
+    MarketingPreviewSpec(
+        id = MarketingPreviewIds.GAME_TURN_PENDING,
+        displayName = MarketingPreviewNames.GAME_TURN_PENDING,
+        content = { gameTurnPendingMarketingPreviewContent() },
+    ),
+    MarketingPreviewSpec(
+        id = MarketingPreviewIds.GAME_TURN_ACTIVE,
+        displayName = MarketingPreviewNames.GAME_TURN_ACTIVE,
+        content = { gameTurnActiveMarketingPreviewContent() },
+    ),
+    MarketingPreviewSpec(
+        id = MarketingPreviewIds.GAME_TURN_FINISHED,
+        displayName = MarketingPreviewNames.GAME_TURN_FINISHED,
+        content = { gameTurnFinishedMarketingPreviewContent() },
+    ),
+    MarketingPreviewSpec(
+        id = MarketingPreviewIds.DECKS,
+        displayName = MarketingPreviewNames.DECKS,
+        content = { decksMarketingPreviewContent() },
+    ),
+    MarketingPreviewSpec(
+        id = MarketingPreviewIds.DECK_DETAIL,
+        displayName = MarketingPreviewNames.DECK_DETAIL,
+        content = { deckDetailMarketingPreviewContent() },
+    ),
+    MarketingPreviewSpec(
+        id = MarketingPreviewIds.SETTINGS,
+        displayName = MarketingPreviewNames.SETTINGS,
+        content = { settingsMarketingPreviewContent() },
+    ),
+    MarketingPreviewSpec(
+        id = MarketingPreviewIds.HISTORY,
+        displayName = MarketingPreviewNames.HISTORY,
+        content = { historyMarketingPreviewContent() },
+    ),
+    MarketingPreviewSpec(
+        id = MarketingPreviewIds.ABOUT,
+        displayName = MarketingPreviewNames.ABOUT,
+        content = { aboutMarketingPreviewContent() },
+    ),
+)
 
 private class PreviewGameViewModel(
     wordInfo: Map<String, WordInfo>,

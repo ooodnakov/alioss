@@ -108,4 +108,5 @@ dependencies {
     testImplementation(libs.okhttp.tls)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(project(":test-utils"))
+    testImplementation(libs.androidx.compose.ui.test.junit4)
 }

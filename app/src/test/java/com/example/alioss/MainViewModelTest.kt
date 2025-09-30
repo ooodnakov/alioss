@@ -1,8 +1,11 @@
 package com.example.alioss
 
 import android.app.Application
+import android.content.ContentProvider
 import android.content.ContentResolver
+import android.content.ContentValues
 import android.content.Context
+import android.content.pm.ProviderInfo
 import com.example.alioss.achievements.AchievementsManager
 import com.example.alioss.data.DeckRepository
 import com.example.alioss.data.TurnHistoryRepository
@@ -51,8 +54,8 @@ import org.junit.Test
 import org.junit.rules.TestWatcher
 import org.junit.runner.Description
 import java.util.Locale
-import android.content.IContentProvider
 import android.content.res.AssetFileDescriptor
+import android.database.Cursor
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MainViewModelTest {
@@ -602,36 +605,49 @@ private class TestAchievementsRepository : AchievementsRepository {
 }
 
 private class NullInputStreamApplication : Application() {
-    private val resolver = NullInputStreamContentResolver(this)
+    private val provider by lazy {
+        NullInputStreamContentProvider().also { contentProvider ->
+            contentProvider.attachInfo(
+                this,
+                ProviderInfo().apply { authority = "com.example.alioss.null" },
+            )
+        }
+    }
+
+    private val resolver by lazy { ContentResolver.wrap(provider) }
 
     override fun getContentResolver(): ContentResolver = resolver
 }
 
-private class NullInputStreamContentResolver(context: Context) : ContentResolver(context) {
-    override fun acquireProvider(context: Context, name: String): IContentProvider? = null
+private class NullInputStreamContentProvider : ContentProvider() {
+    override fun onCreate(): Boolean = true
 
-    override fun acquireUnstableProvider(context: Context, name: String): IContentProvider? = null
-
-    override fun releaseProvider(provider: IContentProvider) = Unit
-
-    override fun releaseUnstableProvider(provider: IContentProvider) = Unit
-
-    override fun unstableProviderDied(provider: IContentProvider) = Unit
-
-    override fun appNotRespondingViaProvider(provider: IContentProvider) = Unit
-
-    override fun openTypedAssetFileDescriptor(
+    override fun query(
         uri: Uri,
-        mimeType: String,
-        opts: Bundle?,
-        cancellationSignal: CancellationSignal?,
-    ): AssetFileDescriptor? = null
+        projection: Array<String>?,
+        selection: String?,
+        selectionArgs: Array<String>?,
+        sortOrder: String?,
+    ): Cursor? = null
 
-    override fun openAssetFileDescriptor(
+    override fun getType(uri: Uri): String? = null
+
+    override fun insert(uri: Uri, values: ContentValues?): Uri? = null
+
+    override fun delete(
         uri: Uri,
-        mode: String,
-        cancellationSignal: CancellationSignal?,
-    ): AssetFileDescriptor? = null
+        selection: String?,
+        selectionArgs: Array<String>?,
+    ): Int = 0
+
+    override fun update(
+        uri: Uri,
+        values: ContentValues?,
+        selection: String?,
+        selectionArgs: Array<String>?,
+    ): Int = 0
+
+    override fun openAssetFile(uri: Uri, mode: String): AssetFileDescriptor? = null
 }
 
 private class TestGameEngineFactory : GameEngineFactory {
