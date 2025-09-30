@@ -73,12 +73,37 @@ private val LARGE_BUTTON_HEIGHT = 80.dp
 private const val CARD_ASPECT_RATIO = 1.8f
 private const val PRE_TURN_COUNTDOWN_SECONDS = 3
 private const val SOUND_DURATION_SHORT_MS = 150
+private const val SOUND_DURATION_ACTION_MS = 100
+private const val TONE_VOLUME = 80
 private const val TURN_END_COUNTDOWN_PROMPT_SECONDS = 5
 private const val VIBRATION_DURATION_FINAL_TICK_MS = 200L
 private const val VIBRATION_DURATION_COUNTDOWN_TICK_MS = 120L
 private val TIMER_SAFE_COLOR = Color(0xFF4CAF50)
 private val TIMER_WARNING_COLOR = Color(0xFFFFC107)
 private val TIMER_CRITICAL_COLOR = Color(0xFFF44336)
+
+private data class ToneEffect(val toneType: Int, val durationMs: Int = SOUND_DURATION_SHORT_MS)
+
+private val TURN_START_TONE = ToneEffect(
+    android.media.ToneGenerator.TONE_PROP_ACK,
+)
+private val TURN_END_TONE = ToneEffect(
+    android.media.ToneGenerator.TONE_PROP_BEEP2,
+)
+private val COUNTDOWN_TICK_TONE = ToneEffect(
+    android.media.ToneGenerator.TONE_PROP_BEEP,
+)
+private val FINAL_SECONDS_TONE = ToneEffect(
+    android.media.ToneGenerator.TONE_PROP_PROMPT,
+)
+private val CORRECT_TONE = ToneEffect(
+    android.media.ToneGenerator.TONE_PROP_ACK,
+    SOUND_DURATION_ACTION_MS,
+)
+private val SKIP_TONE = ToneEffect(
+    android.media.ToneGenerator.TONE_PROP_NACK,
+    SOUND_DURATION_ACTION_MS,
+)
 
 @Composable
 fun gameScreen(
@@ -99,17 +124,7 @@ fun gameScreen(
         onDispose { activity?.requestedOrientation = original }
     }
     val vibrator = remember { context.getSystemService(android.os.Vibrator::class.java) }
-    val isPreview = LocalInspectionMode.current
-    val tone = remember(isPreview) {
-        if (isPreview) {
-            null
-        } else {
-            android.media.ToneGenerator(android.media.AudioManager.STREAM_MUSIC, 80)
-        }
-    }
-    DisposableEffect(tone) {
-        onDispose { tone?.release() }
-    }
+    val tone = rememberToneGenerator(settings.soundEnabled)
     val state by engine.state.collectAsState()
     val scope = rememberCoroutineScope()
     val showTutorialOnFirstTurn by vm.showTutorialOnFirstTurn.collectAsState()
@@ -124,18 +139,12 @@ fun gameScreen(
         when {
             state is GameState.TurnActive && previous !is GameState.TurnActive -> {
                 if (soundEnabled) {
-                    tone?.startTone(
-                        android.media.ToneGenerator.TONE_PROP_ACK,
-                        SOUND_DURATION_SHORT_MS,
-                    )
+                    tone?.play(TURN_START_TONE)
                 }
             }
             state is GameState.TurnFinished && previous !is GameState.TurnFinished -> {
                 if (soundEnabled) {
-                    tone?.startTone(
-                        android.media.ToneGenerator.TONE_PROP_BEEP2,
-                        SOUND_DURATION_SHORT_MS,
-                    )
+                    tone?.play(TURN_END_TONE)
                 }
             }
         }
@@ -239,10 +248,7 @@ fun gameScreen(
                                     countdownState.start(
                                         onTick = {
                                             if (soundEnabled) {
-                                                tone?.startTone(
-                                                    android.media.ToneGenerator.TONE_PROP_BEEP,
-                                                    SOUND_DURATION_SHORT_MS,
-                                                )
+                                                tone?.play(COUNTDOWN_TICK_TONE)
                                             }
                                         },
                                         onFinished = vm::startTurn,
@@ -310,10 +316,7 @@ fun gameScreen(
                                             countdownState.start(
                                                 onTick = {
                                                     if (soundEnabled) {
-                                                        tone?.startTone(
-                                                            android.media.ToneGenerator.TONE_PROP_BEEP,
-                                                            SOUND_DURATION_SHORT_MS,
-                                                        )
+                                                        tone?.play(COUNTDOWN_TICK_TONE)
                                                     }
                                                 },
                                                 onFinished = vm::startTurn,
@@ -372,10 +375,7 @@ fun gameScreen(
                 val remaining = s.timeRemaining
                 if (remaining in 1..TURN_END_COUNTDOWN_PROMPT_SECONDS) {
                     if (soundEnabled) {
-                        tone?.startTone(
-                            android.media.ToneGenerator.TONE_PROP_PROMPT,
-                            SOUND_DURATION_SHORT_MS,
-                        )
+                        tone?.play(FINAL_SECONDS_TONE)
                     }
                     if (hapticsEnabled) {
                         val durationMs = if (remaining == 1) {
@@ -453,10 +453,7 @@ fun gameScreen(
                             when (it) {
                                 WordCardAction.Correct -> {
                                     if (settings.soundEnabled) {
-                                        tone?.startTone(
-                                            android.media.ToneGenerator.TONE_PROP_ACK,
-                                            100,
-                                        )
+                                        tone?.play(CORRECT_TONE)
                                     }
                                     scope.launch {
                                         engine.correct()
@@ -466,10 +463,7 @@ fun gameScreen(
                                 WordCardAction.Skip -> {
                                     if (s.skipsRemaining > 0) {
                                         if (settings.soundEnabled) {
-                                            tone?.startTone(
-                                                android.media.ToneGenerator.TONE_PROP_NACK,
-                                                100,
-                                            )
+                                            tone?.play(SKIP_TONE)
                                         }
                                         scope.launch {
                                             engine.skip()
@@ -698,6 +692,26 @@ fun gameScreen(
 @Composable
 private fun rememberCountdownState(scope: CoroutineScope): CountdownState {
     return remember(scope) { CountdownState(scope) }
+}
+
+@Composable
+private fun rememberToneGenerator(enabled: Boolean): android.media.ToneGenerator? {
+    val isPreview = LocalInspectionMode.current
+    val generator = remember(enabled, isPreview) {
+        if (isPreview || !enabled) {
+            null
+        } else {
+            android.media.ToneGenerator(android.media.AudioManager.STREAM_MUSIC, TONE_VOLUME)
+        }
+    }
+    DisposableEffect(generator) {
+        onDispose { generator?.release() }
+    }
+    return generator
+}
+
+private fun android.media.ToneGenerator.play(effect: ToneEffect) {
+    startTone(effect.toneType, effect.durationMs)
 }
 
 @Stable
