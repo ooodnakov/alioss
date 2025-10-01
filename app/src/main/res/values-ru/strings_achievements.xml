@@ -1,0 +1,9 @@
+<resources>
+    <!-- Achievements screen strings -->
+    <string name="title_achievements">Достижения</string>
+    <string name="achievements_empty">Продолжайте играть, чтобы открывать достижения.</string>
+    <string name="achievements_progress">%1$d / %2$d</string>
+    <string name="achievements_unlocked_badge">Открыто</string>
+    <string name="achievements_locked_badge">Закрыто</string>
+    <string name="achievements_snackbar_unlocked">Открыто достижение: %1$s</string>
+</resources>

@@ -12,11 +12,15 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
@@ -27,7 +31,9 @@ import androidx.navigation.navArgument
 import com.example.alioss.MainViewModel
 import com.example.alioss.R
 import com.example.alioss.data.achievements.AchievementSection
+import com.example.alioss.data.achievements.AchievementId
 import com.example.alioss.data.settings.Settings
+import com.example.alioss.ui.achievements.achievementsScreen
 import com.example.alioss.ui.about.aboutScreen
 import com.example.alioss.ui.appScaffold
 import com.example.alioss.ui.decks.deckDetailScreen
@@ -49,6 +55,35 @@ fun aliossNavHost(
     settings: Settings,
     viewModel: MainViewModel,
 ) {
+    val achievements by viewModel.achievements.collectAsState()
+    val context = LocalContext.current
+    var seenUnlocked by remember { mutableStateOf<Set<AchievementId>?>(null) }
+
+    LaunchedEffect(achievements) {
+        val unlocked = achievements
+            .filter { it.progress.isUnlocked }
+            .map { it.definition.id }
+            .toSet()
+        val previous = seenUnlocked
+        seenUnlocked = unlocked
+        if (previous != null) {
+            val newlyUnlocked = unlocked - previous
+            if (newlyUnlocked.isNotEmpty()) {
+                achievements
+                    .filter { it.definition.id in newlyUnlocked }
+                    .forEach { state ->
+                        snackbarHostState.showSnackbar(
+                            message = context.getString(
+                                R.string.achievements_snackbar_unlocked,
+                                state.definition.title,
+                            ),
+                            withDismissAction = true,
+                        )
+                    }
+            }
+        }
+    }
+
     DisposableEffect(navController) {
         val listener = NavController.OnDestinationChangedListener { _, destination, _ ->
             val section = when (val route = destination.route) {
@@ -59,6 +94,7 @@ fun aliossNavHost(
                 "settings" -> AchievementSection.SETTINGS
                 "history" -> AchievementSection.HISTORY
                 "about" -> AchievementSection.ABOUT
+                "achievements" -> AchievementSection.ACHIEVEMENTS
                 else -> if (route != null && route.startsWith("deck/")) {
                     AchievementSection.DECKS
                 } else {
@@ -93,6 +129,7 @@ fun aliossNavHost(
                         settings = settings,
                         decks = decks,
                         recentHistory = recentHistory,
+                        achievements = achievements,
                     ),
                     actions = HomeActions(
                         onResumeMatch = { navController.navigate("game") },
@@ -103,6 +140,7 @@ fun aliossNavHost(
                         onDecks = { navController.navigate("decks") },
                         onSettings = { navController.navigate("settings") },
                         onHistory = { navController.navigate("history") },
+                        onAchievements = { navController.navigate("achievements") },
                     ),
                 )
             }
@@ -168,6 +206,14 @@ fun aliossNavHost(
                     vm = viewModel,
                     onBack = { navController.popBackStack() },
                     onAbout = { navController.navigate("about") },
+                )
+            }
+        }
+        composable("achievements") {
+            appScaffold(snackbarHostState = snackbarHostState) {
+                achievementsScreen(
+                    achievements = achievements,
+                    onBack = { navController.popBackStack() },
                 )
             }
         }
