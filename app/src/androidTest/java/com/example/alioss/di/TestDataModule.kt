@@ -2,9 +2,9 @@ package com.example.alioss.di
 
 import android.content.Context
 import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.preferencesDataStoreFile
 import androidx.room.Room
@@ -27,12 +27,14 @@ import dagger.Provides
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import dagger.hilt.testing.TestInstallIn
+import okhttp3.OkHttpClient
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 import javax.inject.Named
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import okhttp3.OkHttpClient
 
 @Module
 @TestInstallIn(
@@ -40,13 +42,15 @@ import okhttp3.OkHttpClient
     replaces = [DataModule::class],
 )
 object TestDataModule {
+    private val databaseExecutor: ExecutorService = Executors.newSingleThreadExecutor()
     private val dataStoreScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     @Provides
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): AliossDatabase {
         return Room.inMemoryDatabaseBuilder(context, AliossDatabase::class.java)
-            .allowMainThreadQueries()
+            .setQueryExecutor(databaseExecutor)
+            .setTransactionExecutor(databaseExecutor)
             .build()
     }
 

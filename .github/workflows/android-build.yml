@@ -7,6 +7,11 @@ on:
     branches:
       - master
 
+permissions:
+  contents: read
+  actions: write
+  security-events: write
+
 
 concurrency:
   group: android-build-${{ github.ref }}

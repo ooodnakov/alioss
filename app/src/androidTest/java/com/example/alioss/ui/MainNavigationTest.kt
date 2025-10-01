@@ -8,11 +8,15 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.example.alioss.MainActivity
 import com.example.alioss.R
+import com.example.alioss.data.DeckRepository
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import javax.inject.Inject
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 
 @HiltAndroidTest
 class MainNavigationTest {
@@ -23,9 +27,20 @@ class MainNavigationTest {
     @get:Rule(order = 1)
     val composeRule = createAndroidComposeRule<MainActivity>()
 
+    @Inject
+    lateinit var deckRepository: DeckRepository
+
+    private lateinit var sampleDeckName: String
+
     @Before
     fun setUp() {
         hiltRule.inject()
+        sampleDeckName = runBlocking {
+            deckRepository.getDecks()
+                .first { it.isNotEmpty() }
+                .first()
+                .name
+        }
     }
 
     @Test
@@ -57,8 +72,8 @@ class MainNavigationTest {
         waitForText(decksTitle)
         composeRule.onNodeWithText(decksTitle, useUnmergedTree = true).performClick()
 
-        waitForText("Sample (EN)")
-        composeRule.onNodeWithText("Sample (EN)", useUnmergedTree = true).assertIsDisplayed()
+        waitForText(sampleDeckName)
+        composeRule.onNodeWithText(sampleDeckName, useUnmergedTree = true).assertIsDisplayed()
     }
 
     private fun waitForText(value: String, timeoutMillis: Long = 10_000) {
