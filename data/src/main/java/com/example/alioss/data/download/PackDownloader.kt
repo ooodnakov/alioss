@@ -60,10 +60,8 @@ class PackDownloader(
     ) {
         require(!destination.isDirectory) { "Destination must be a file" }
         destination.parentFile?.let { parent ->
-            if (!parent.exists()) {
-                require(parent.mkdirs()) { "Failed to create parent directories" }
-            } else {
-                require(parent.isDirectory) { "Destination parent must be a directory" }
+            require(parent.isDirectory || parent.mkdirs()) {
+                "Could not create parent directory for $destination"
             }
         }
         var success = false
