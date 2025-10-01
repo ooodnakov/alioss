@@ -9,6 +9,7 @@ plugins {
 android {
     namespace = "com.example.alioss"
     compileSdk = 34
+    buildToolsVersion = "34.0.0"
 
     defaultConfig {
         applicationId = "com.example.alioss"
@@ -19,6 +20,7 @@ android {
 
         // Build configuration for database migrations
         buildConfigField("boolean", "ENABLE_DESTRUCTIVE_MIGRATION_FALLBACK", "true")
+        testInstrumentationRunner = "com.example.alioss.HiltTestRunner"
     }
 
     buildFeatures {
@@ -109,4 +111,10 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(project(":test-utils"))
     testImplementation(libs.androidx.compose.ui.test.junit4)
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.test.rules)
+    androidTestImplementation(libs.hilt.android.testing)
+    kaptAndroidTest(libs.hilt.compiler)
 }
