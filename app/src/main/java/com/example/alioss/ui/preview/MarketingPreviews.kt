@@ -15,6 +15,10 @@ import com.example.alioss.data.db.TurnHistoryEntity
 import com.example.alioss.data.db.WordClassCount
 import com.example.alioss.data.settings.Settings
 import com.example.alioss.domain.GameEngine
+import com.example.alioss.data.achievements.AchievementCatalog
+import com.example.alioss.data.achievements.AchievementId
+import com.example.alioss.data.achievements.AchievementProgress
+import com.example.alioss.data.achievements.AchievementState
 import com.example.alioss.domain.GameState
 import com.example.alioss.domain.MatchGoal
 import com.example.alioss.domain.MatchGoalType
@@ -136,6 +140,31 @@ private val SampleSettings = Settings(
     seenTutorial = true,
 )
 
+private val SampleAchievements = listOf(
+    sampleAchievementState(
+        id = AchievementId.WORD_CHAMPION,
+        current = 320,
+        target = 500,
+    ),
+    sampleAchievementState(
+        id = AchievementId.SPEED_RUNNER,
+        current = 1,
+        target = 1,
+        unlockedAt = SAMPLE_NOW - 48_000L,
+    ),
+    sampleAchievementState(
+        id = AchievementId.SETTINGS_TINKERER,
+        current = 6,
+        target = 10,
+    ),
+    sampleAchievementState(
+        id = AchievementId.APP_EXPLORER,
+        current = 4,
+        target = 4,
+        unlockedAt = SAMPLE_NOW - 120_000L,
+    ),
+)
+
 private val SampleHistory = listOf(
     TurnHistoryEntity(
         id = 1,
@@ -208,6 +237,20 @@ private val SampleWordInfo = mapOf(
     "Velocity" to WordInfo(difficulty = 4, category = "Science", wordClass = "Noun"),
 )
 
+private fun sampleAchievementState(
+    id: AchievementId,
+    current: Int,
+    target: Int,
+    unlockedAt: Long? = null,
+): AchievementState {
+    val definition = AchievementCatalog.definitions.first { it.id == id }
+    return AchievementState(
+        definition = definition,
+        progress = AchievementProgress(current = current, target = target),
+        unlockedAtMillis = unlockedAt,
+    )
+}
+
 @Composable
 internal fun homeMarketingPreviewContent() {
     aliossAppTheme {
@@ -224,6 +267,7 @@ internal fun homeMarketingPreviewContent() {
                     settings = SampleSettings,
                     decks = SampleDecks,
                     recentHistory = SampleHistory,
+                    achievements = SampleAchievements,
                 ),
                 actions = HomeActions(
                     onResumeMatch = {},
@@ -231,6 +275,7 @@ internal fun homeMarketingPreviewContent() {
                     onHistory = {},
                     onSettings = {},
                     onDecks = {},
+                    onAchievements = {},
                 ),
             )
         }

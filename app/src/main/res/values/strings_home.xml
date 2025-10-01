@@ -21,6 +21,8 @@
     <string name="home_more_favorites">+%1$d</string>
     <string name="home_recent_highlight">Recent highlight</string>
     <string name="home_scoreboard_placeholder">Scores appear after the first round.</string>
+    <string name="home_achievements_card_subtitle">Track your milestones and celebrate wins</string>
+    <string name="home_achievements_view_all">View all</string>
     <string name="quick_play">Quick Play</string>
     <string name="quick_play_subtitle">Start a match with current settings</string>
     <string name="resume_match">Resume match</string>

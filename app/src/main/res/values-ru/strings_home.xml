@@ -21,6 +21,8 @@
     <string name="home_more_favorites">+%1$d</string>
     <string name="home_recent_highlight">Последний момент</string>
     <string name="home_scoreboard_placeholder">Счёт появится после первого раунда.</string>
+    <string name="home_achievements_card_subtitle">Следите за прогрессом и празднуйте победы</string>
+    <string name="home_achievements_view_all">Показать всё</string>
     <string name="quick_play">Быстрая игра</string>
     <string name="quick_play_subtitle">Игра с текущими настройками</string>
     <string name="resume_match">Продолжить матч</string>

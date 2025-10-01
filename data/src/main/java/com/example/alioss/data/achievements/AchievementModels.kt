@@ -18,6 +18,7 @@ enum class AchievementSection {
     DECKS,
     SETTINGS,
     HISTORY,
+    ACHIEVEMENTS,
     ABOUT,
 }
 

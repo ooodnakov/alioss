@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -26,18 +27,23 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.LibraryBooks
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.EmojiEvents
+import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateMapOf
@@ -59,17 +65,20 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.alioss.R
+import com.example.alioss.data.achievements.AchievementState
 import com.example.alioss.data.db.DeckEntity
 import com.example.alioss.data.db.TurnHistoryEntity
 import com.example.alioss.data.settings.Settings
 import com.example.alioss.domain.GameState
 import com.example.alioss.ui.common.toScoreboardEntries
+import kotlin.math.min
 
 data class HomeViewState(
     val gameState: GameState?,
     val settings: Settings,
     val decks: List<DeckEntity>,
     val recentHistory: List<TurnHistoryEntity>,
+    val achievements: List<AchievementState>,
 )
 
 data class HomeActions(
@@ -78,6 +87,7 @@ data class HomeActions(
     val onHistory: () -> Unit,
     val onSettings: () -> Unit,
     val onDecks: () -> Unit,
+    val onAchievements: () -> Unit,
 )
 
 @Composable
@@ -85,9 +95,9 @@ fun homeScreen(
     state: HomeViewState,
     actions: HomeActions,
 ) {
-    val colors = MaterialTheme.colorScheme
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val achievements = state.achievements
 
     if (isLandscape) {
         val scrollState = rememberScrollState()
@@ -104,6 +114,10 @@ fun homeScreen(
                 verticalArrangement = Arrangement.spacedBy(20.dp),
             ) {
                 homeHeroSection(state = state, actions = actions, isLandscape = true)
+                achievementsSummaryCard(
+                    achievements = achievements,
+                    onViewAll = actions.onAchievements,
+                )
             }
             Column(
                 modifier = Modifier.weight(1f),
@@ -122,6 +136,10 @@ fun homeScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             homeHeroSection(state = state, actions = actions)
+            achievementsSummaryCard(
+                achievements = achievements,
+                onViewAll = actions.onAchievements,
+            )
             navigationActionCards(actions = actions)
         }
     }
@@ -137,6 +155,14 @@ private fun ColumnScope.navigationActionCards(actions: HomeActions) {
         onClick = actions.onStartNewMatch,
         containerColor = colors.primaryContainer,
         contentColor = colors.onPrimaryContainer,
+    )
+    homeActionCard(
+        icon = Icons.Filled.EmojiEvents,
+        title = stringResource(R.string.title_achievements),
+        subtitle = stringResource(R.string.home_achievements_card_subtitle),
+        onClick = actions.onAchievements,
+        containerColor = colors.secondaryContainer,
+        contentColor = colors.onSecondaryContainer,
     )
     homeActionCard(
         icon = Icons.AutoMirrored.Filled.LibraryBooks,
@@ -162,6 +188,137 @@ private fun ColumnScope.navigationActionCards(actions: HomeActions) {
         containerColor = colors.tertiaryContainer,
         contentColor = colors.onTertiaryContainer,
     )
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ColumnScope.achievementsSummaryCard(
+    achievements: List<AchievementState>,
+    onViewAll: () -> Unit,
+) {
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+        ),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(R.string.title_achievements),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                TextButton(onClick = onViewAll) {
+                    Text(stringResource(R.string.home_achievements_view_all))
+                }
+            }
+
+            val featured = remember(achievements) {
+                achievements.sortedWith(
+                    compareByDescending<AchievementState> { it.progress.isUnlocked }
+                        .thenByDescending { state -> state.progressFraction() }
+                        .thenBy { it.definition.title },
+                ).take(3)
+            }
+
+            if (featured.isEmpty()) {
+                Text(
+                    text = stringResource(R.string.achievements_empty),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            } else {
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    featured.forEach { state ->
+                        AchievementSummaryChip(state = state)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AchievementSummaryChip(
+    state: AchievementState,
+    modifier: Modifier = Modifier,
+) {
+    val colors = MaterialTheme.colorScheme
+    val isUnlocked = state.progress.isUnlocked
+    val containerColor = if (isUnlocked) colors.primaryContainer else colors.surfaceVariant
+    val contentColor = if (isUnlocked) colors.onPrimaryContainer else colors.onSurfaceVariant
+    val progressValue = state.progressFraction()
+    val progressLabel = if (isUnlocked) {
+        stringResource(R.string.achievements_unlocked_badge)
+    } else {
+        stringResource(
+            R.string.achievements_progress,
+            min(state.progress.current, state.progress.target),
+            state.progress.target,
+        )
+    }
+
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(18.dp),
+        tonalElevation = if (isUnlocked) 2.dp else 0.dp,
+        color = containerColor,
+    ) {
+        Column(
+            modifier = Modifier
+                .widthIn(max = 220.dp)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                val icon = if (isUnlocked) Icons.Filled.Star else Icons.Outlined.StarBorder
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = contentColor,
+                )
+                Text(
+                    text = state.definition.title,
+                    style = MaterialTheme.typography.titleSmall,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    color = contentColor,
+                )
+            }
+            LinearProgressIndicator(
+                progress = { progressValue },
+                modifier = Modifier.fillMaxWidth(),
+                color = contentColor,
+                trackColor = contentColor.copy(alpha = 0.3f),
+            )
+            Text(
+                text = progressLabel,
+                style = MaterialTheme.typography.labelMedium,
+                color = contentColor,
+            )
+        }
+    }
+}
+
+private fun AchievementState.progressFraction(): Float {
+    val target = progress.target.takeIf { it > 0 } ?: return 0f
+    return (progress.current.toFloat() / target).coerceIn(0f, 1f)
 }
 
 @Composable
