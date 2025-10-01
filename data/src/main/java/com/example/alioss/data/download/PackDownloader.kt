@@ -7,6 +7,8 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileOutputStream
 import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
 
@@ -34,6 +36,64 @@ class PackDownloader(
         maxBytes: Long = MAX_BYTES,
         onProgress: (bytesRead: Long, totalBytes: Long?) -> Unit = { _, _ -> },
     ): ByteArray {
+        val out = ByteArrayOutputStream()
+        return executeDownload(
+            url = url,
+            expectedSha256 = expectedSha256,
+            maxBytes = maxBytes,
+            onProgress = onProgress,
+            chunkWriter = { chunk, read -> out.write(chunk, 0, read) },
+            finalize = { out.toByteArray() },
+        )
+    }
+
+    /**
+     * Download the given [url] into [destination] if it passes policy checks. Optionally verify [expectedSha256] (hex).
+     * The destination file will be deleted if the download fails validation.
+     */
+    suspend fun downloadToFile(
+        url: String,
+        destination: File,
+        expectedSha256: String? = null,
+        maxBytes: Long = MAX_BYTES,
+        onProgress: (bytesRead: Long, totalBytes: Long?) -> Unit = { _, _ -> },
+    ) {
+        require(!destination.isDirectory) { "Destination must be a file" }
+        destination.parentFile?.let { parent ->
+            require(parent.isDirectory || parent.mkdirs()) {
+                "Could not create parent directory for $destination"
+            }
+        }
+        var success = false
+        try {
+            FileOutputStream(destination, /* append = */ false).use { output ->
+                executeDownload(
+                    url = url,
+                    expectedSha256 = expectedSha256,
+                    maxBytes = maxBytes,
+                    onProgress = onProgress,
+                    chunkWriter = { chunk, read -> output.write(chunk, 0, read) },
+                    finalize = {
+                        output.fd.sync()
+                    },
+                )
+            }
+            success = true
+        } finally {
+            if (!success) {
+                destination.delete()
+            }
+        }
+    }
+
+    private suspend fun <T> executeDownload(
+        url: String,
+        expectedSha256: String?,
+        maxBytes: Long,
+        onProgress: (bytesRead: Long, totalBytes: Long?) -> Unit,
+        chunkWriter: (chunk: ByteArray, read: Int) -> Unit,
+        finalize: () -> T,
+    ): T {
         val httpUrl = url.toHttpUrlOrNull() ?: error("Invalid URL")
         require(httpUrl.isHttps) { "TLS required" }
 
@@ -46,7 +106,7 @@ class PackDownloader(
             .get()
             .build()
 
-        client.newBuilder()
+        return client.newBuilder()
             .followRedirects(false)
             .followSslRedirects(false)
             .callTimeout(30, TimeUnit.SECONDS)
@@ -59,7 +119,6 @@ class PackDownloader(
                 val totalBytes = contentLength.takeUnless { it == -1L }
                 if (contentLength != -1L) require(contentLength <= maxBytes) { "File too large" }
                 val source = body.source()
-                val out = ByteArrayOutputStream()
                 val digest = MessageDigest.getInstance("SHA-256")
                 var total = 0L
                 val chunk = ByteArray(CHUNK_SIZE)
@@ -69,16 +128,16 @@ class PackDownloader(
                     if (read == -1) break
                     total += read
                     require(total <= maxBytes) { "File too large" }
-                    out.write(chunk, 0, read)
+                    chunkWriter(chunk, read)
                     digest.update(chunk, 0, read)
                     onProgress(total, totalBytes)
                 }
-                val bytes = out.toByteArray()
+                val digestBytes = digest.digest()
                 if (expectedSha256 != null) {
-                    val got = digest.digest().toHex()
+                    val got = digestBytes.toHex()
                     require(got.equals(expectedSha256, ignoreCase = true)) { "Checksum mismatch" }
                 }
-                return bytes
+                finalize()
             }
     }
 

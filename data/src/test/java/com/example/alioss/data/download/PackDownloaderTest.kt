@@ -11,8 +11,11 @@ import okhttp3.mockwebserver.MockWebServer
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
 import org.junit.Test
+import java.io.File
 import kotlin.test.assertContentEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 
 private class FakeSettingsRepo(origins: Set<String>) : SettingsRepository {
     private val flow = MutableStateFlow(
@@ -74,6 +77,25 @@ class PackDownloaderTest {
     }
 
     @Test
+    fun download_to_file_streams_and_verifies() = runBlocking {
+        val body = "hello world".toByteArray()
+        withHttpsDownloader { server, downloader ->
+            val buf = okio.Buffer().write(body)
+            server.enqueue(MockResponse().setResponseCode(200).setBody(buf))
+            val url = server.url("/pack.json").toString().replace("http://", "https://")
+            val expected = sha256Hex(body)
+            val temp = File.createTempFile("pack", ".json")
+            try {
+                downloader.downloadToFile(url, temp, expected)
+                assertTrue(temp.exists())
+                assertContentEquals(body, temp.readBytes())
+            } finally {
+                temp.delete()
+            }
+        }
+    }
+
+    @Test
     fun rejects_wrong_checksum() = runBlocking {
         val body = "content".toByteArray()
         withHttpsDownloader { server, downloader ->
@@ -83,6 +105,22 @@ class PackDownloaderTest {
             assertFailsWith<IllegalArgumentException> {
                 downloader.download(url, "deadbeef")
             }
+        }
+    }
+
+    @Test
+    fun download_to_file_removes_invalid_payload() = runBlocking {
+        val body = "payload".toByteArray()
+        withHttpsDownloader { server, downloader ->
+            val buf = okio.Buffer().write(body)
+            server.enqueue(MockResponse().setResponseCode(200).setBody(buf))
+            val url = server.url("/pack.json").toString().replace("http://", "https://")
+            val temp = File.createTempFile("pack", ".json")
+            assertTrue(temp.exists())
+            assertFailsWith<IllegalArgumentException> {
+                downloader.downloadToFile(url, temp, "deadbeef")
+            }
+            assertFalse(temp.exists())
         }
     }
 
